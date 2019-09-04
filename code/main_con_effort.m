@@ -103,7 +103,7 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     % COMPUTE MPCs
     % -----------------------------------------------------------------
     mpc_finder = statistics.MPCFinder(p,income,grdKFE,'c');
-    trans_dyn_solver = statistics.con_effort.TransitionalDynSolverConEffort(p,income,grdKFE);
+    trans_dyn_solver = solver.con_effort.TransitionalDynSolverConEffort(p,income,grdKFE);
     if p.ComputeMPCS == 1
     	fprintf('Computing MPCs out of an immediate shock...\n')
         mpc_finder.solve(KFE,stats.ptmass,Au);

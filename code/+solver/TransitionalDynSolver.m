@@ -98,14 +98,28 @@ classdef TransitionalDynSolver < handle
 			Vg_terminal = permute(Vg_terminal,[1 2 4 3]);
 			Vg_terminal_k = reshape(Vg_terminal,[],obj.p.ny);
 
+			if strcmp(obj.dim2Identity,'c')
+				KFE_terminal.c = obj.grids.c.matrix;
+			end
+
 			% iterate with implicit-explicit scheme to get V_terminal
 			reshape_vec_switched = [obj.p.nb_KFE,obj.dim2,obj.p.nz,obj.p.ny];
 		    V_terminal = Vg_terminal;
 		    V_terminal_k = reshape(Vg_terminal,[],obj.p.ny);
 		    for ii = 1:5000
 		    	V_normaldim = permute(V_terminal,[1 2 4 3]);
-		    	KFE_terminal = solver.two_asset.find_policies(obj.p,obj.income,obj.grids,V_normaldim);
-		    	A_terminal = solver.two_asset.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal,'KFE');
+
+		    	if strcmp(obj.dim2Identity,'a')
+			    	KFE_terminal = solver.two_asset.find_policies(obj.p,obj.income,obj.grids,V_normaldim);
+			    	A_terminal = solver.two_asset.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal,'KFE');
+			    elseif strcmp(obj.dim2Identity,'c')
+			    	KFE_terminal.h = solver.con_effort.find_policies(obj.p,obj.income,obj.grids,V_terminal);
+	                KFE_terminal.u = aux.u_fn(obj.grids.c.matrix,obj.p.riskaver) - aux.con_effort.con_adj_cost(obj.p,KFE_terminal.h)...
+	                    - aux.con_effort.penalty(obj.grids.b.matrix,obj.p.penalty1,obj.p.penalty2);
+	                KFE_terminal.s = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities) * obj.grids.b.matrix...
+	                    + (1-obj.p.wagetax)* obj.income.y.matrixKFE - obj.grids.c.matrix;
+			    	A_terminal = solver.con_effort.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal);
+			    end
 		    	u_switched = permute(KFE_terminal.u,[1 2 4 3]);
 		    	u_switched_k = reshape(u_switched,[],obj.p.ny);
 

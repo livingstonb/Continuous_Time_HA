@@ -13,8 +13,8 @@ classdef TransitionalDynSolverConEffort < solver.TransitionalDynSolver
 		function update_policies(obj)
 			obj.KFEint.h = solver.con_effort.find_policies(obj.p,obj.income,obj.grids,obj.V);
             obj.KFEint.u = aux.u_fn(obj.KFEint.c,obj.p.riskaver) - aux.con_effort.con_adj_cost(obj.p,obj.KFEint.h)...
-                - aux.con_effort.penalty(obj.grids.a.matrix,obj.p.penalty1,obj.p.penalty2);
-            obj.KFEint.s = (obj.p.r+obj.p.deathrate*obj.p.perfectannuities) * obj.grids.a.matrix...
+                - aux.con_effort.penalty(obj.grids.b.matrix,obj.p.penalty1,obj.p.penalty2);
+            obj.KFEint.s = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities) * obj.grids.b.matrix...
                 + (1-obj.p.wagetax)* obj.income.y.matrixKFE - obj.KFEint.c;
         end
 
@@ -22,7 +22,7 @@ classdef TransitionalDynSolverConEffort < solver.TransitionalDynSolver
 		    obj.A = solver.con_effort.construct_trans_matrix(obj.p,obj.income,obj.grids,obj.KFEint);
 		end
 
-		function deathin_cc_k = get_death_inflows(obj,cumcon_t)
+		function deathin_cc_k = get_death_inflows(obj,cumcon_t,k)
 			cumcon_t_k = reshape(cumcon_t,[],obj.income.ny);
             reshape_vec = [obj.p.nb_KFE*obj.p.nc_KFE*obj.p.nz obj.income.ny];
             cumcon_t_c_k = reshape(cumcon_t,reshape_vec);

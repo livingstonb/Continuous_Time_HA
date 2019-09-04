@@ -35,7 +35,7 @@ runopts.Server      = 0; % sets param_index=slurm env var
 runopts.IterateRho  = 0;
 runopts.fast = 1; % use small grid for  debugging
 runopts.ComputeMPCS = 1;
-runopts.ComputeMPCS_news = 0;
+runopts.ComputeMPCS_news = 1;
 runopts.SimulateMPCS = 0;
 runopts.SimulateMPCS_news = 0;
 
