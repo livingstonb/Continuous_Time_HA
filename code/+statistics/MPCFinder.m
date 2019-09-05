@@ -254,5 +254,4 @@ classdef MPCFinder < handle
 			obj.mpcs(ishock).annual = sum(mpcs,2)' * pmf(:);
 		end
 	end
-
 end

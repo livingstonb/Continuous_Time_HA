@@ -109,7 +109,7 @@ function decomp = decomp_twoasset_oneasset(s0,s1)
     
     % integrate out y, z to get g(b,a)
     pmf1_b_a = sum(sum(pmf1,4),3);
-    volumes = reshape(grdKFE1.dab_tilde.vec,p1.nb_KFE,p1.na_KFE);
+    volumes = reshape(grdKFE1.trapezoidal.vec,p1.nb_KFE,p1.na_KFE);
     pdf1_b_a = pmf1_b_a ./ volumes;
     
     % interpolate to get distr over (n,b)

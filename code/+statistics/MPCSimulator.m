@@ -22,6 +22,8 @@ classdef MPCSimulator < handle
 
 		% baseline assets
 		b0;
+        
+        below_bgrid;
 
 		interp_grids;
 
@@ -68,8 +70,8 @@ classdef MPCSimulator < handle
 
 			% initialize mpc results to NaN
 			for ishock = 1:6
-				obj.sim_mpcs(ishock).quarterly = NaN(obj.nperiods,1);
-				obj.sim_mpcs(ishock).annual = NaN;
+				obj.sim_mpcs(ishock).avg_quarterly = NaN(obj.nperiods,1);
+				obj.sim_mpcs(ishock).avg_annual = NaN;
 			end
 		end
 
@@ -92,7 +94,7 @@ classdef MPCSimulator < handle
 	    	obj.run_simulations(p,income,grids);
 
 	    	for period = 1:obj.nperiods
-	    		obj.compute_quarterly_mpcs(p,period);
+	    		obj.compute_mpcs(p,period);
             end
 
 	    	obj.simulationComplete = true;
@@ -137,6 +139,9 @@ classdef MPCSimulator < handle
 		        ishock = obj.shocks(i-1);
 		        obj.bsim(:,i) = obj.bsim(:,i) + p.mpc_shocks(ishock);
 		    end
+
+		    obj.below_bgrid = obj.bsim < grids.b.vec(1);
+		    obj.bsim(obj.below_bgrid) = grids.b.vec(1);
 		end
 
 		%% ---------------------------------------------------
@@ -173,6 +178,15 @@ classdef MPCSimulator < handle
                 for i = 1:obj.nshocks
                     ishock = obj.shocks(i);
                     obj.shock_cum_con{ishock}(:,period) = obj.cum_con(:,i+1);
+
+                    if period == 1
+                    	% adjust for states that were pushed below bottom
+                    	% of asset grid
+	                	obj.shock_cum_con{ishock}(obj.below_bgrid) = ...
+	                		obj.shock_cum_con{ishock}(obj.below_bgrid) ...
+	                		+ obj.b0(obj.below_bgrid) + p.mpc_shocks(ishock) ...
+	                		- grids.b.vec(1);
+                	end
                 end
 			end
 	    end
@@ -203,7 +217,7 @@ classdef MPCSimulator < handle
             obj.yrep = repmat(obj.ysim,obj.nshocks+1,1);
 	    end
 
-    	function compute_quarterly_mpcs(obj,p,period)
+    	function compute_mpcs(obj,p,period)
 		    for is = 1:obj.nshocks
 		    	ishock = obj.shocks(is); % index of shock in parameters
 		    	shock = p.mpc_shocks(ishock);
@@ -211,11 +225,11 @@ classdef MPCSimulator < handle
 		    	con_diff = obj.shock_cum_con{ishock}(:,period) - obj.baseline_cum_con(:,period);
             
             	if (shock > 0) || ismember(obj.shockperiod,[0,1])
-	            	obj.sim_mpcs(ishock).quarterly(period) = mean(con_diff) / shock;
+	            	obj.sim_mpcs(ishock).avg_quarterly(period) = mean(con_diff) / shock;
 	            end
 
 	            if (shock > 0) || (obj.shockperiod == 4)
-                    obj.sim_mpcs(ishock).annual = sum(mean(con_diff) / shock);
+                    obj.sim_mpcs(ishock).avg_annual = sum(mean(con_diff) / shock);
                 end
 		    end
         end

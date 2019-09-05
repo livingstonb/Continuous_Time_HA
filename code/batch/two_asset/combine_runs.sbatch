@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name=combine2a
+#SBATCH --output=/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/combine.out
+#SBATCH --error=/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/combine.err
+#SBATCH --partition=broadwl
+#SBATCH --time=00:20:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --mem-per-cpu=8000
+
+module load matlab
+
+matlab -nodisplay < /home/livingstonb/GitHub/Continuous_Time_HA/code/batch/two_asset/combine_runs.m

@@ -164,11 +164,18 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
         mpc_simulator_q4shock.solve(p,income,grdKFE,stats.pmf);
     end
     for ii = 1:6
-        stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator_immediateshock.sim_mpcs(ii).quarterly;
-        stats.sim_mpcs(ii).avg_0_annual = mpc_simulator_immediateshock.sim_mpcs(ii).annual;
-    	stats.sim_mpcs(ii).avg_1_quarterly = mpc_simulator_q1shock.sim_mpcs(ii).quarterly;
-    	stats.sim_mpcs(ii).avg_4_quarterly = mpc_simulator_q4shock.sim_mpcs(ii).quarterly;
-        stats.sim_mpcs(ii).avg_4_annual = mpc_simulator_q4shock.sim_mpcs(ii).annual;
+    	stats.sim_mpcs(ii).responders_0_quarterly = mpc_simulator_immediateshock.sim_mpcs(ii).responders_quarterly;
+        stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator_immediateshock.sim_mpcs(ii).avg_quarterly;
+        stats.sim_mpcs(ii).avg_0_quarterly_pos = mpc_simulator_immediateshock.sim_mpcs(ii).avg_quarterly_pos;
+        stats.sim_mpcs(ii).avg_0_annual = mpc_simulator_immediateshock.sim_mpcs(ii).avg_annual;
+        stats.sim_mpcs(ii).avg_0_annual_pos = mpc_simulator_immediateshock.sim_mpcs(ii).avg_annual_pos;
+        stats.sim_mpcs(ii).responders_1_quarterly = mpc_simulator_q1shock.sim_mpcs(ii).responders_quarterly;
+    	stats.sim_mpcs(ii).avg_1_quarterly = mpc_simulator_q1shock.sim_mpcs(ii).avg_quarterly;
+    	stats.sim_mpcs(ii).avg_1_quarterly_pos = mpc_simulator_q1shock.sim_mpcs(ii).avg_quarterly_pos;
+    	stats.sim_mpcs(ii).responders_1_quarterly = mpc_simulator_q4shock.sim_mpcs(ii).responders_quarterly;
+    	stats.sim_mpcs(ii).avg_4_quarterly = mpc_simulator_q4shock.sim_mpcs(ii).avg_quarterly;
+        stats.sim_mpcs(ii).avg_4_quarterly_pos = mpc_simulator_q4shock.sim_mpcs(ii).avg_quarterly_pos;
+        stats.sim_mpcs(ii).avg_4_annual = mpc_simulator_q4shock.sim_mpcs(ii).avg_annual;
     end
     clear mpc_simulator_q1shock mpc_simulator_q4shock mpc_simulator_immediateshock
 

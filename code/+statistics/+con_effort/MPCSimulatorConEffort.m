@@ -24,11 +24,18 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
             end
             obj.hinterp{1} = griddedInterpolant(obj.interp_grids,policies.h,'makima');
             
-            if shockperiod > 0
+            if (shockperiod > 0) && (p.SimulateMPCS_news==1)
                 % load times at which policy functions saved
                 fname = [p.tempdirec 'savedTimesUntilShock.mat'];
                 temp = load(fname);
                 obj.savedTimesUntilShock = temp.savedTimesUntilShock;
+            end
+
+            for ishock = 1:6
+            	obj.sim_mpcs(ishock).avg_quarterly_pos = NaN(4,1);
+            	obj.sim_mpcs(ishock).avg_annual_pos = NaN;
+                obj.sim_mpcs(ishock).responders_quarterly = NaN(4,1);
+                obj.sim_mpcs(ishock).responders_annual = NaN;
             end
 		end
 
@@ -152,6 +159,27 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 	    	else
 	    		error('logical error, hinterp failed to update')
 	    	end
+		end
+
+		function compute_mpcs(obj,p,period)
+			compute_mpcs@statistics.MPCSimulator(obj,p,period);
+
+		    for is = 1:obj.nshocks
+		    	ishock = obj.shocks(is); % index of shock in parameters
+		    	shock = p.mpc_shocks(ishock);
+
+		    	con_diff = obj.shock_cum_con{ishock}(:,period) - obj.baseline_cum_con(:,period);
+            
+            	if (shock > 0) || ismember(obj.shockperiod,[0,1])
+	            	obj.sim_mpcs(ishock).avg_quarterly_pos(period) = mean(con_diff(con_diff>0) / shock);
+					obj.sim_mpcs(ishock).responders_quarterly = mean(con_diff>0);
+	            end
+
+	            if (shock > 0) || (obj.shockperiod == 4)
+                    obj.sim_mpcs(ishock).avg_annual_pos = mean(sum(con_diff(con_diff>0),2) / shock);
+                    obj.sim_mpcs(ishock).responders_annual = mean(sum(con_diff,2)>0);
+                end
+		    end
 		end
 	end
 end

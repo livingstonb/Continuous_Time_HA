@@ -54,9 +54,9 @@ function stats = compute_statistics(p,income,grdKFE,KFE)
     wi_ratio = grdKFE.b.matrix ./ income.y.matrixKFE;
 
     % fraction with total wealth < own quarterly income / 6
-    stats.HtM_one_sixth_Q_wealth = find_constrained(wi_ratio,stats.pmf,1/6);
+    stats.HtM_one_sixth_Q_wealth = aux.find_constrained(wi_ratio,stats.pmf,1/6);
     % fraction with total wealth < own quarterly income / 12
-    stats.HtM_one_twelfth_Q_wealth = find_constrained(wi_ratio,stats.pmf,1/12);
+    stats.HtM_one_twelfth_Q_wealth = aux.find_constrained(wi_ratio,stats.pmf,1/12);
 
     %% --------------------------------------------------------------------
     % CONSUMPTION
@@ -87,7 +87,7 @@ function stats = compute_statistics(p,income,grdKFE,KFE)
     %% --------------------------------------------------------------------
     % GINI COEFFICIENTS
     % ---------------------------------------------------------------------
-    stats.wgini = direct_gini(grdKFE.b.matrix,stats.pmf);
+    stats.wgini = aux.direct_gini(grdKFE.b.matrix,stats.pmf);
 
     %% --------------------------------------------------------------------
     % OUTPUT FOR HISTOGRAMS (NOT USED)
@@ -100,19 +100,9 @@ function stats = compute_statistics(p,income,grdKFE,KFE)
     stats.beta_annualized = exp(-4 * p.rho);
 end
 
-
 %% ------------------------------------------------------------------------
 % FUNCTIONS
 % -------------------------------------------------------------------------
-
-function gini = direct_gini(level,distr)
-    % Sort distribution and levels by levels
-    sort1 = sortrows([level(:),distr(:)]);
-    level_sort = sort1(:,1);
-    dist_sort  = sort1(:,2);
-    S = [0;cumsum(dist_sort .* level_sort)];
-    gini = 1 - dist_sort' * (S(1:end-1)+S(2:end)) / S(end);
-end
 
 %% Histogram helper function
 function [bins,values] = create_bins(binwidth,vals,pdf1)
