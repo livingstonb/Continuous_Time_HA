@@ -2,11 +2,24 @@ function decomp = decomp_baseline(s0,s1)
     % Decomposition of E[mpc1] - E[mpc0]
     % 0 is baseline
     % 1 is the experiment
-
+    
     p0 = s0.p;
     stats0 = s0.stats;
     p1 = s1.p;
     stats1 = s1.stats;
+    
+    decomp.Em1_less_Em0 = NaN;
+    decomp.term1 = NaN;
+    decomp.term2 = NaN;
+    decomp.term3 = NaN;
+    decomp.term2a = NaN(numel(p0.decomp_thresholds),1);
+    decomp.term2b = NaN(numel(p0.decomp_thresholds),1);
+    decomp.term2c = NaN(numel(p0.decomp_thresholds),1);
+    
+    if isequaln(s0,s1)
+        return
+    end
+
     grdKFE0 = s0.grdKFE;
     
     income0 = s0.income;
@@ -32,13 +45,6 @@ function decomp = decomp_baseline(s0,s1)
     pmf0 = stats0.pmf(:);
 
     if all(isnan(m1)) || all(isnan(m0))
-        decomp.Em1_less_Em0 = NaN;
-        decomp.term1 = NaN;
-        decomp.term2 = NaN;
-        decomp.term3 = NaN;
-        decomp.term2a = NaN(numel(p0.decomp_thresholds),1);
-        decomp.term2b = NaN(numel(p0.decomp_thresholds),1);
-        decomp.term2c = NaN(numel(p0.decomp_thresholds),1);
         return
     end
 

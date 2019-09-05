@@ -8,14 +8,16 @@ FROM_MATFILE = false;
 %% Select directories
 % matdir = '/home/brian/Documents/GitHub/Continuous_Two_Asset/Output';
 % matdir = '/media/hdd/Other/midway2_output/continuous_time';
-% matdir = '/Users/Brian-laptop/Documents/midway2_output/8_2_19/';
-% matdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Two_Asset/Output/';
+% matdir = '/Users/brianlivingston/Documents/midway2_output/';
+% matdir = '/Users/brianlivingston/Documents/GitHub/Continuous_Two_Asset/Output/';
+
+codedir = '/Users/brianlivingston/Documents/GitHub/Continuous_Time_HA/code/';
 
 matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
-codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
+% codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/table.xlsx';
 
-addpath([codedir,'code']);
+addpath(codedir);
 
 %% read baseline one-asset for decomposition
 fpath = [matdir,'output_oneasset.mat'];
@@ -45,10 +47,10 @@ if FROM_MATFILE
             end
 
             % perform Empc1 - Empc0 decomposition
-            decomp_base{ind} = statistics.decomp_baseline(s{1},s{ind});    
+            decomp_base{ind} = statistics.two_asset.decomp_baseline(s{1},s{ind});    
 
             % perform decomp wrt one-asset model
-            decomp_oneasset{ind} = statistics.decomp_twoasset_oneasset(oneasset,s{ind});
+            decomp_oneasset{ind} = statistics.two_asset.decomp_twoasset_oneasset(oneasset,s{ind});
         else
             continue
         end
@@ -57,6 +59,10 @@ else
     s = cell(1);
     s{1}.p = p;
     s{1}.stats = stats;
+    
+    skip = true;
+    decomp_base{1} = statistics.two_asset.decomp_baseline(s{1},s{1});
+    decomp_oneasset{1} = statistics.two_asset.decomp_twoasset_oneasset(oneasset,s{1});
 end
 
 n = numel(s);
@@ -348,4 +354,4 @@ T_array = [colnames;T_array];
 T = array2table(T_array);
 T.Properties.RowNames = rownames;
 
-writetable(T,xlxpath,'WriteRowNames',true)
+% writetable(T,xlxpath,'WriteRowNames',true)

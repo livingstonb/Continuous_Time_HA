@@ -1,4 +1,4 @@
-function stats = main_two_asset(runopts)
+function [stats,p] = main_two_asset(runopts)
     % Main function file for this repository. If IterateRho = 1, this script
     % first tries to find valid lower and upper bounds for rho (this may fail
     % in some cases), and then iterates on rho once valid bounds are found.
@@ -127,8 +127,8 @@ function stats = main_two_asset(runopts)
         mpc_simulator.solve(p,income,grdKFE,stats.pmf);
     end
     for ii = 1:6
-        stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator_immediateshock.sim_mpcs(ii).avg_quarterly;
-        stats.sim_mpcs(ii).avg_0_annual = mpc_simulator_immediateshock.sim_mpcs(ii).avg_annual;
+        stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator.sim_mpcs(ii).avg_quarterly;
+        stats.sim_mpcs(ii).avg_0_annual = mpc_simulator.sim_mpcs(ii).avg_annual;
     end
 
     clear mpc_simulator

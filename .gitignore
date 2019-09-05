@@ -1,4 +1,5 @@
 output
+*.m~
 input
 temp
 *.asv
