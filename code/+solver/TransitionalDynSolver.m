@@ -44,7 +44,7 @@ classdef TransitionalDynSolver < handle
 
 		function solve(obj,KFE,pmf,cum_con_baseline)
             if obj.p.SimulateMPCS_news == 1
-				savedTimesUntilShock = [4:-0.2:0.2 obj.p.delta_mpc];
+				savedTimesUntilShock = [4:-0.1:0.1 obj.p.delta_mpc];
 				obj.savedTimesUntilShock = round(savedTimesUntilShock*40)/40;
 				save([obj.p.tempdirec 'savedTimesUntilShock.mat'],'savedTimesUntilShock')
             end

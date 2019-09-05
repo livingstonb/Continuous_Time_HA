@@ -37,7 +37,7 @@ runopts.fast = 1; % use small grid for  debugging
 runopts.ComputeMPCS = 0;
 runopts.ComputeMPCS_news = 0;
 runopts.SimulateMPCS = 1;
-runopts.SimulateMPCS_news = 0;
+runopts.SimulateMPCS_news = 1;
 
 % Select which parameterization to run
 % (ignored when runops.Server = 1)

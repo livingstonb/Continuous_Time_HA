@@ -222,14 +222,14 @@ classdef MPCSimulator < handle
 		    	ishock = obj.shocks(is); % index of shock in parameters
 		    	shock = p.mpc_shocks(ishock);
 
-		    	con_diff = obj.shock_cum_con{ishock}(:,period) - obj.baseline_cum_con(:,period);
+		    	con_diff = obj.shock_cum_con{ishock} - obj.baseline_cum_con;
             
             	if (shock > 0) || ismember(obj.shockperiod,[0,1])
-	            	obj.sim_mpcs(ishock).avg_quarterly(period) = mean(con_diff) / shock;
+	            	obj.sim_mpcs(ishock).avg_quarterly(period) = mean(con_diff(:,period)) / shock;
 	            end
 
 	            if (shock > 0) || (obj.shockperiod == 4)
-                    obj.sim_mpcs(ishock).avg_annual = sum(mean(con_diff) / shock);
+                    obj.sim_mpcs(ishock).avg_annual = mean(sum(con_diff,2) / shock);
                 end
 		    end
         end
