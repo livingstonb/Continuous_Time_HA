@@ -1,8 +1,12 @@
 classdef MPCSimulatorTwoAsset < statistics.MPCSimulator
+	% This class subclasses MPCSimulator to provide
+	% MPC simulations for the two-asset model.
 
 	properties (SetAccess=protected)
+		% illiquid asset
         asim;
 
+        % policy function interpolants
 		dinterp;
 		sinterp;
 		cinterp;
@@ -10,50 +14,55 @@ classdef MPCSimulatorTwoAsset < statistics.MPCSimulator
 
 	methods
 		function obj = MPCSimulatorTwoAsset(...
-			p,income,grids,policies,shocks,nperiods,dim2Identity)
+			p,income,grids,policies,shocks,nperiods)
 			obj = obj@statistics.MPCSimulator(...
-				p,income,grids,policies,shocks,nperiods,dim2Identity);
+				p,income,grids,policies,shocks,nperiods,'a');
 
 			if income.ny > 1
-                interp_grids = {grids.b.vec,grids.a.vec,income.y.vec};
+                interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.income.y.vec};
             else
-                interp_grids = {grids.b.vec,grids.a.vec};
+                interp_grids = {obj.grids.b.vec,obj.grids.a.vec};
             end
             obj.dinterp = griddedInterpolant(interp_grids,policies.d,'linear');
 			obj.cinterp = griddedInterpolant(interp_grids,policies.c,'linear');
 			obj.sinterp = griddedInterpolant(interp_grids,policies.s,'linear');
 		end
 
-		function draw_from_stationary_dist(obj,p,income,grids,pmf)
-
-			index = draw_from_stationary_dist@statistics.MPCSimulator(...
-				obj,p,income,grids,pmf);
+		function draw_from_stationary_dist(obj,pmf)
+			% this function draws from the stationary distribution
+			index = draw_from_stationary_dist@statistics.MPCSimulator(obj,pmf);
 
 			% initial illiquid assets
-			agrid_flat = grids.a.matrix(:);
+			agrid_flat = obj.grids.a.matrix(:);
 			obj.asim = repmat(agrid_flat(index),1,obj.nshocks+1);
 		end
 
-	    function simulate_assets_one_period(obj,p,grids,~)
+	    function simulate_assets_one_period(obj,~)
+	    	% this function simulates assets over the next time
+	    	% delta
+
+	    	% interpolate to find decisions
 	    	s = obj.sinterp(obj.bsim(:),obj.asim(:),obj.yrep);
 	    	d = obj.dinterp(obj.bsim(:),obj.asim(:),obj.yrep);
 
 	    	s = reshape(s,[],obj.nshocks+1);
 	    	d = reshape(d,[],obj.nshocks+1);
 
+	    	% update liquid assets
 	    	obj.bsim = obj.bsim + obj.mpc_delta ...
-				* (s - d - aux.two_asset.adj_cost_fn(d,obj.asim,p));
-			obj.bsim = max(obj.bsim,grids.b.vec(1));
-			obj.bsim = min(obj.bsim,grids.b.vec(end));
+				* (s - d - aux.two_asset.adj_cost_fn(d,obj.asim,obj.p));
+			obj.bsim = max(obj.bsim,obj.grids.b.vec(1));
+			obj.bsim = min(obj.bsim,obj.grids.b.vec(end));
 
+			% update illiquid assets
 	    	obj.asim = obj.asim + obj.mpc_delta ...
-	            * (d + (p.r_a+p.deathrate*p.perfectannuities) * obj.asim ...
-				+ p.directdeposit*obj.ysim);
-	        obj.asim = max(obj.asim,grids.a.vec(1));
-	        obj.asim = min(obj.asim,grids.a.vec(end));
+	            * (d + (obj.p.r_a+obj.p.deathrate*obj.p.perfectannuities) * obj.asim ...
+				+ obj.p.directdeposit*obj.ysim);
+	        obj.asim = max(obj.asim,obj.grids.a.vec(1));
+	        obj.asim = min(obj.asim,obj.grids.a.vec(end));
 	    end
 
-	    function simulate_consumption_one_period(obj,~,~,~)
+	    function simulate_consumption_one_period(obj)
 	    	c = obj.cinterp(obj.bsim(:),obj.asim(:),obj.yrep);
 	    	c = reshape(c,[],obj.nshocks+1);
 

@@ -157,7 +157,7 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     	p,income,grdKFE,KFE,shocks,0);
     if p.SimulateMPCS == 1
     	fprintf('\nSimulating MPCs...\n')
-        mpc_simulator_immediateshock.solve(p,income,grdKFE,stats.pmf);
+        mpc_simulator_immediateshock.solve(stats.pmf);
     end
 
     % mpcs out of news
@@ -169,8 +169,8 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     	p,income,grdKFE,KFE,shocks,4);
     
     if p.SimulateMPCS_news == 1
-        mpc_simulator_q1shock.solve(p,income,grdKFE,stats.pmf);
-        mpc_simulator_q4shock.solve(p,income,grdKFE,stats.pmf);
+        mpc_simulator_q1shock.solve(stats.pmf);
+        mpc_simulator_q4shock.solve(stats.pmf);
     end
     for ii = 1:6
     	stats.sim_mpcs(ii).responders_0_quarterly = mpc_simulator_immediateshock.sim_mpcs(ii).responders_quarterly;

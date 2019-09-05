@@ -118,13 +118,12 @@ function [stats,p] = main_two_asset(runopts)
     stats.sim_mpcs = struct();
     shocks = [4,5,6];
     nperiods = 1;
-    dim2Identity = 'a';
     mpc_simulator = statistics.two_asset.MPCSimulatorTwoAsset(...
-    	p,income,grdKFE,KFE,shocks,nperiods,dim2Identity);
+    	p,income,grdKFE,KFE,shocks,nperiods);
 
     if p.SimulateMPCS == 1
         fprintf('\nSimulating MPCs...\n')
-        mpc_simulator.solve(p,income,grdKFE,stats.pmf);
+        mpc_simulator.solve(stats.pmf);
     end
     for ii = 1:6
         stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator.sim_mpcs(ii).avg_quarterly;

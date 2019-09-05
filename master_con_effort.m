@@ -31,13 +31,13 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server      = 1; % sets param_index=slurm env var
-runopts.IterateRho  = 1;
-runopts.fast = 0; % use small grid for  debugging
-runopts.ComputeMPCS = 1;
+runopts.Server      = 0; % sets param_index=slurm env var
+runopts.IterateRho  = 0;
+runopts.fast = 1; % use small grid for  debugging
+runopts.ComputeMPCS = 0;
 runopts.ComputeMPCS_news = 0;
-runopts.SimulateMPCS = 1;
-runopts.SimulateMPCS_news = 0;
+runopts.SimulateMPCS = 0;
+runopts.SimulateMPCS_news = 1;
 
 runopts.params_file = 'get_params2';
 
@@ -47,7 +47,7 @@ runopts.param_index = 1;
 
 % Location of Continuous_Two_Asset directory
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/Users/brianlivingston/Documents/GitHub/Continuous_Time_HA/';
+runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE
@@ -61,6 +61,10 @@ else
 	
 	runopts.fast = 0;
 	runopts.IterateRho = 1;
+end
+
+if ~exist(runopts.direc,'dir')
+    error('directory not found')
 end
     
 % for saving

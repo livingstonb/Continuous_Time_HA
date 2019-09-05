@@ -1,13 +1,32 @@
 classdef MPCSimulatorConEffort < statistics.MPCSimulator
+	% This class subclasses MPCSimulator to provide
+	% MPC simulations for the consumption adj cost model.
 
 	properties (SetAccess=protected)
+		% interpolant for h = cdot or cdot/c policy
 		hinterp;
+
+		%  - the following are relevant only if simulating
+		%  - MPCs out of news:
+
+		% h policy function at beginning of current subperiod
         hpolicy1;
+
+        % h policy function at end of current subperiod
         hpolicy2;
         
+        % index of beginning of current supperiod within
+        % saved policy functions
         timeIndex1;
+
+        % index of end of current supperiod within
+        % saved policy functions
         timeIndex2;
         
+        % each element of this vector gives a time at
+        % which a corresponding policy function was saved,
+        % e.g. savedTimesUntilShock(5) is the time remaining
+        % until the shock for the fifth saved policy function
         savedTimesUntilShock;
 	end
 
@@ -39,28 +58,27 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
             end
 		end
 
-		function draw_from_stationary_dist(obj,p,income,grids,pmf)
+		function draw_from_stationary_dist(obj,pmf)
 
-			index = draw_from_stationary_dist@statistics.MPCSimulator(...
-				obj,p,income,grids,pmf);
+			index = draw_from_stationary_dist@statistics.MPCSimulator(obj,pmf);
 
 			% initial consumption
-			cgrid_flat = grids.c.matrix(:);
+			cgrid_flat = obj.grids.c.matrix(:);
 			obj.csim = repmat(cgrid_flat(index),1,obj.nshocks+1);
 		end
 
-	    function simulate_assets_one_period(obj,p,grids,current_csim)
+	    function simulate_assets_one_period(obj,current_csim)
 	    	obj.bsim = obj.bsim + obj.mpc_delta ...
-	            * ((p.r_b+p.deathrate*p.perfectannuities) * obj.bsim...
-	                + (1-p.wagetax) * obj.ysim - current_csim);
-	        obj.bsim = max(obj.bsim,grids.b.vec(1));
-	        obj.bsim = min(obj.bsim,grids.b.vec(end));
+	            * ((obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities) * obj.bsim...
+	                + (1-obj.p.wagetax) * obj.ysim - current_csim);
+	        obj.bsim = max(obj.bsim,obj.grids.b.vec(1));
+	        obj.bsim = min(obj.bsim,obj.grids.b.vec(end));
 	    end
 
-	    function simulate_consumption_one_period(obj,p,income,grids)
+	    function simulate_consumption_one_period(obj)
 	    	obj.cum_con = obj.cum_con + obj.csim * obj.mpc_delta;
 
-	    	hsim = zeros(p.n_mpcsim,obj.nshocks+1);
+	    	hsim = zeros(obj.p.n_mpcsim,obj.nshocks+1);
 	    	for ii = 1:obj.nshocks+1
                 if obj.shockperiod == 0
                     policyIndex = 1;
@@ -68,7 +86,7 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
                     policyIndex = ii;
                 end
                 
-	            if income.ny > 1
+	            if obj.income.ny > 1
 	                hsim(:,ii) = ...
                         obj.hinterp{policyIndex}(obj.bsim(:,ii),obj.csim(:,ii),obj.ysim);
 	            else
@@ -77,16 +95,16 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 	            end
 	        end
 
-	        if strcmp(p.hdef,'cdot')
+	        if strcmp(obj.p.hdef,'cdot')
 	            obj.csim = obj.csim + obj.mpc_delta * hsim;
 	        elseif strcmp(p.hdef,'cdot/c')
 	            obj.csim = obj.csim + obj.mpc_delta * (hsim .* obj.csim);
 	        end
-	        obj.csim = max(obj.csim,grids.c.vec(1));
-	        obj.csim = min(obj.csim,grids.c.vec(end));
+	        obj.csim = max(obj.csim,obj.grids.c.vec(1));
+	        obj.csim = min(obj.csim,obj.grids.c.vec(end));
 	    end
 
-		function update_interpolants(obj,p,time)
+		function update_interpolants(obj,time)
            if obj.shockperiod == 0
                return
            end
@@ -101,11 +119,11 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 	    		for ii = 1:numel(obj.shocks)
                     ishock = obj.shocks(ii);
 	    			name = sprintf('policy%ishock%i.mat',obj.timeIndex1,ishock);
-                    temp = load([p.tempdirec name]);
+                    temp = load([obj.p.tempdirec name]);
 	    			obj.hpolicy1{ishock} = temp.h;
                     
 	    			name = sprintf('policy%ishock%i.mat',obj.timeIndex2,ishock);
-	    			temp = load([p.tempdirec name]);
+	    			temp = load([obj.p.tempdirec name]);
 	    			obj.hpolicy2{ishock} = temp.h;
 
 	    			obj.hinterp{ii+1} = griddedInterpolant(...
@@ -125,12 +143,12 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 	    		for ii = 1:numel(obj.shocks)
                     ishock = obj.shocks(ii);
 	    			name = sprintf('policy%ishock%i.mat',obj.timeIndex1,ishock);
-	    			temp = load([p.tempdirec name]);
+	    			temp = load([obj.p.tempdirec name]);
                     obj.hpolicy1{ishock} = temp.h;
                     
                     if ~lastSavedTime
                         name = sprintf('policy%ishock%i.mat',obj.timeIndex2,ishock);
-                        temp = load([p.tempdirec name]);
+                        temp = load([obj.p.tempdirec name]);
                         obj.hpolicy2{ishock} = temp.h;
                     end
 
@@ -161,12 +179,12 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 	    	end
 		end
 
-		function compute_mpcs(obj,p,period)
-			compute_mpcs@statistics.MPCSimulator(obj,p,period);
+		function compute_mpcs(obj,period)
+			compute_mpcs@statistics.MPCSimulator(obj,period);
 
 		    for is = 1:obj.nshocks
 		    	ishock = obj.shocks(is); % index of shock in parameters
-		    	shock = p.mpc_shocks(ishock);
+		    	shock = obj.p.mpc_shocks(ishock);
 
 		    	con_diff = obj.shock_cum_con{ishock} - obj.baseline_cum_con;
             

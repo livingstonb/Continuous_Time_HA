@@ -56,6 +56,7 @@ classdef MPCFinder < handle
 			for ii = 1:6
 				obj.mpcs(ii).mpcs = NaN;
 				obj.mpcs(ii).quarterly = NaN(4,1);
+                obj.mpcs(ii).annual = NaN;
 			end
 		end
 
