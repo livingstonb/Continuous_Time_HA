@@ -55,10 +55,17 @@ runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
 
 if runopts.Server == 0
 	runopts.direc = runopts.localdir;
+	runopts.temp = [runopts.direc '/temp/con_effort/'];
 else
 	runopts.direc = runopts.serverdir;
 	runopts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));
-	
+	runopts.suffix = num2str(runopts.param_index);
+
+	scratchdir = getenv('SCRATCH');
+	mkdir([scratchdir '/con_effort'])
+	runopts.temp = [scratchdir '/con_effort/run' runopts.suffix '/'];
+	mkdir(runopts.temp)
+
 	runopts.fast = 0;
 	runopts.IterateRho = 1;
 end
@@ -66,14 +73,10 @@ end
 if ~exist(runopts.direc,'dir')
     error('directory not found')
 end
-    
-% for saving
-runopts.suffix = num2str(runopts.param_index);
 
 % directory to save output
 runopts.savedir = [runopts.direc 'output/con_effort/'];
 % temp directory
-runopts.temp = [runopts.direc 'temp/con_effort/run' runopts.suffix '/'];
 
 addpath([runopts.direc 'code']);
 addpath([runopts.direc 'code/factorization_lib']);
