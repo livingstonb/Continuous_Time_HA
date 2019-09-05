@@ -34,10 +34,11 @@ classdef MPCSimulator < handle
 		shocks; % selected shocks from the parameters, e.g. [4,5]
 		nshocks;
 		nperiods; % number of quarters to use
+		shockperiod;
 		dim2Identity;
 		dim2;
 
-		sim_mpcs = struct(); % results
+		sim_mpcs = struct();
 
 		simulationComplete = false;
 	end
@@ -46,17 +47,29 @@ classdef MPCSimulator < handle
 		%% ---------------------------------------------------
 	    % CLASS GENERATOR
 	    % ----------------------------------------------------
-		function obj = MPCSimulator(p,income,grids,policies,shocks,nperiods,dim2Identity)
+		function obj = MPCSimulator(p,income,grids,policies,shocks,shockperiod,dim2Identity)
 			obj.mpc_delta = 1 / p.T_mpcsim;
 			obj.shocks = shocks;
 			obj.nshocks = numel(shocks);
-			obj.nperiods = nperiods;
+			obj.shockperiod = shockperiod;
+
+			if shockperiod == 1
+				obj.nperiods = 1;
+			else
+				obj.nperiods = 4;
+			end
 
 			obj.dim2Identity = dim2Identity;
 			if strcmp(dim2Identity,'a')
 				obj.dim2 = p.na_KFE;
 			elseif strcmp(dim2Identity,'c')
 				obj.dim2 = p.nc_KFE;
+			end
+
+			% initialize mpc results to NaN
+			for ishock = 1:6
+				obj.sim_mpcs(ishock).meanQ = NaN(obj.nperiods,1);
+				obj.sim_mpcs(ishock).meanA = NaN;
 			end
 		end
 
@@ -80,10 +93,6 @@ classdef MPCSimulator < handle
 
 	    	for period = 1:obj.nperiods
 	    		obj.compute_quarterly_mpcs(p,period);
-            end
-            
-            if obj.nperiods == 4
-                obj.compute_annual_mpcs(p);
             end
 
 	    	obj.simulationComplete = true;
@@ -152,7 +161,7 @@ classdef MPCSimulator < handle
                     end
             
             		current_csim = obj.csim;
-            		obj.update_hinterp(p,actualTime);
+            		obj.update_interpolants(p,actualTime,obj.shockperiod);
 		    		obj.simulate_consumption_one_period(p,income,grids);
 		    		obj.simulate_assets_one_period(p,grids,current_csim);
 		    		obj.simulate_income_one_period(p,income,inc_rand_draws(:,tmod100));
@@ -194,16 +203,25 @@ classdef MPCSimulator < handle
             obj.yrep = repmat(obj.ysim,obj.nshocks+1,1);
 	    end
 
-	    function update_hinterp(obj,p,actualTime)
-	    	% skip by default
-	    end
+    	function compute_quarterly_mpcs(obj,p,period)
+		    for is = 1:obj.nshocks
+		    	ishock = obj.shocks(is); % index of shock in parameters
+		    	shock = p.mpc_shocks(ishock);
 
-	    function compute_annual_mpcs(obj,p,period)
-	    	% skip by default
-	    end
+		    	con_diff = obj.shock_cum_con{ishock}(:,period) - obj.baseline_cum_con(:,period);
+            
+            	if (shock > 0) || ismember(obj.shockperiod,[0,1])
+	            	obj.sim_mpcs(ishock).quarterly(period) = mean(con_diff) / shock;
+	            end
 
-    	function compute_quarterly_mpcs(obj,p)
-    		% skip by default
-    	end
+	            if (shock > 0) || (obj.shockperiod == 4)
+                    obj.sim_mpcs(ishock).annual = sum(mean(con_diff) / shock);
+                end
+		    end
+        end
+        
+        function update_interpolants(obj,p,actualTime,shockperiod)
+            % not needed unless simulating MPCs out of news
+        end
 	end
 end

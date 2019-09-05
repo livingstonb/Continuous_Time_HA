@@ -128,9 +128,8 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     % -----------------------------------------------------------------
     % mpcs out of immediate shock
     shocks = [4,5,6];
-    nquarters = 4;
-    mpc_simulator = statistics.MPCSimulatorImmediateShock(...
-    	p,income,grdKFE,KFE,shocks,nquarters);
+    mpc_simulator = statistics.con_effort.MPCSimulatorConEffort(...
+    	p,income,grdKFE,KFE,shocks,0);
     if p.SimulateMPCS == 1
     	fprintf('\nSimulating MPCs...\n')
         mpc_simulator.solve(p,income,grdKFE,stats.ptmass);
