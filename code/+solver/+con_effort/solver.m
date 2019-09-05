@@ -93,14 +93,12 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
 	    bdot(1,:,:) = max(bdot(1,:,:),0);
 	    
 	    c = grd.c.matrix;
-	    u = aux.u_fn(c,p.riskaver);
+	    u = aux.u_fn(c,p.riskaver) - aux.con_effort.penalty(grd.b.matrix,p.penalty1,p.penalty2);
 		V_0 = (1/(p.rho+p.deathrate)) * (u + Vb_0 .* bdot);
 	    
 		% Initial distribution
 	    gg0 = ones(nb_KFE,nc_KFE,ny);
 	    gg0 = gg0 .* permute(repmat(ydist,[1 nb_KFE nc_KFE]),[2 3 1]);
-	    invalid = (grdKFE.b.matrix==0) & (grdKFE.c.matrix > income.y.matrixKFE);
-	    gg0(invalid) = 0;
 		gg0 = gg0 / sum(gg0(:));
 		gg0 = gg0 ./ grdKFE.trapezoidal.matrix;
 		gg0 = gg0(:);

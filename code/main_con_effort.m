@@ -14,13 +14,13 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     	warning('using a curved negative asset grid may violate min_grid_spacing')
     end
 	
-    dimsHJB = [p.nb p.nc p.ny];
-    dimsKFE = [p.nb_KFE p.nc_KFE p.ny];
+    dimsHJB = [p.nb p.nc];
+    dimsKFE = [p.nb_KFE p.nc_KFE];
 	income = setup.Income(runopts,p,dimsHJB,dimsKFE,false);
     p.update_ny(income.ny);
     
-    dimsHJB = [p.nb p.nc 1];
-    dimsKFE = [p.nb_KFE p.nc_KFE 1];
+    dimsHJB = [p.nb p.nc];
+    dimsKFE = [p.nb_KFE p.nc_KFE];
 	income_norisk = setup.Income(runopts,p,dimsHJB,dimsKFE,true);
 
 	grd = setup.con_effort.GridConEffort(p,p.ny,'HJB'); % grid for HJB
@@ -30,7 +30,23 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     
 	if runopts.IterateRho == 1
         model_solver = @(x,y) solver.con_effort.solver(x,y,income,grd,grdKFE);
-        aux.searchForRhoBounds.m
+        aux.searchForRhoBounds
+        
+        %% ----------------------------------------------------------------
+        % VALID RHO BOUNDS FOUND, NOW ITERATE OVER RHO TO MATCH MEAN ASSETS
+        % -----------------------------------------------------------------
+        runopts.RunMode = 'Iterate';
+        iterate_rho = @(x) solver.con_effort.solver(runopts,p.reset_rho(x),income,grd,grdKFE);
+
+        check_evals = @(x,y,z) aux.fzero_check(x,y,z,p);
+        options = optimset('TolX',p.crit_AY,'OutputFcn',check_evals);
+        [rho_final,~,exitflag] = fzero(iterate_rho,[rho_lb,rho_ub],options);
+
+        if exitflag ~= 1
+            error(['fzero failed, exitflag = ',num2str(exitflag)])
+        end
+
+        fprintf('\nIteration over rho completed.\n\n')
 	else
         % Don't iterate
         rho_final = p.rho;
@@ -41,8 +57,7 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     % -----------------------------------------------------------------
     p.reset_rho(rho_final);
     runopts.RunMode = 'Final';
-    % update grd, grdKFE with c-grids
-	[AYdiff,HJB,KFE,Au,grd,grdKFE] = solver.con_effort.solver(runopts,p,income,grd,grdKFE);
+	[AYdiff,HJB,KFE,Au] = solver.con_effort.solver(runopts,p,income,grd,grdKFE);
     
     %% --------------------------------------------------------------------
     % POLICY FUNCTION PLOTS
@@ -128,39 +143,34 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     % -----------------------------------------------------------------
     % mpcs out of immediate shock
     shocks = [4,5,6];
-    mpc_simulator = statistics.con_effort.MPCSimulatorConEffort(...
+    mpc_simulator_immediateshock = statistics.con_effort.MPCSimulatorConEffort(...
     	p,income,grdKFE,KFE,shocks,0);
     if p.SimulateMPCS == 1
     	fprintf('\nSimulating MPCs...\n')
-        mpc_simulator.solve(p,income,grdKFE,stats.ptmass);
+        mpc_simulator_immediateshock.solve(p,income,grdKFE,stats.ptmass);
     end
-
-    stats.sim_mpcs = mpc_simulator.sim_mpcs;
-    clear mpc_simulator;
 
     % mpcs out of news
     shocks = [5];
+    mpc_simulator_q1shock = statistics.con_effort.MPCSimulatorConEffort(...
+    	p,income,grdKFE,KFE,shocks,1);
     
-    nquarters = 4;
-    shockperiod = 4;
-    mpc_simulator_news_4 = statistics.MPCSimulatorFutureShock(...
-    	p,income,grdKFE,KFE,shocks,nquarters,shockperiod);
-    
-    nquarters = 1;
-    shockperiod = 1;
-    mpc_simulator_news_1 = statistics.MPCSimulatorFutureShock(...
-    	p,income,grdKFE,KFE,shocks,nquarters,shockperiod);
+    mpc_simulator_q4shock = statistics.con_effort.MPCSimulatorConEffort(...
+    	p,income,grdKFE,KFE,shocks,4);
     
     if p.SimulateMPCS_news == 1
     	fprintf('\nSimulating MPCs out of news...\n')
-        mpc_simulator_news_1.solve(p,income,grdKFE,stats.ptmass);
-        mpc_simulator_news_4.solve(p,income,grdKFE,stats.ptmass);
+        mpc_simulator_q1shock.solve(p,income,grdKFE,stats.ptmass);
+        mpc_simulator_q4shock.solve(p,income,grdKFE,stats.ptmass);
     end
     for ii = 1:6
-    	stats.sim_mpcs(ii).avg_1_t = mpc_simulator_news_1.sim_mpcs(ii).avg_1_t;
-    	stats.sim_mpcs(ii).avg_4_t = mpc_simulator_news_4.sim_mpcs(ii).avg_4_t;
+        stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator_immediateshock.sim_mpcs(ii).quarterly;
+        stats.sim_mpcs(ii).avg_0_annual = mpc_simulator_immediateshock.sim_mpcs(ii).annual;
+    	stats.sim_mpcs(ii).avg_1_quarterly = mpc_simulator_q1shock.sim_mpcs(ii).quarterly;
+    	stats.sim_mpcs(ii).avg_4_quarterly = mpc_simulator_q4shock.sim_mpcs(ii).quarterly;
+        stats.sim_mpcs(ii).avg_4_annual = mpc_simulator_q4shock.sim_mpcs(ii).annual;
     end
-    clear mpc_simulator_news_1 mpc_simulator_news_4
+    clear mpc_simulator_q1shock mpc_simulator_q4shock mpc_simulator_immediateshock
 
     %% ----------------------------------------------------------------
     % HOUSEKEEPING

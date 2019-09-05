@@ -60,7 +60,7 @@ function g = solveKFE(p,income,grdKFE,gg,A,dim2Identity)
                 if strcmp(dim2Identity,'a')
                 	deathg(1:nb_KFE*dim2:end) = p.deathrate * income.ydist(iy) * (1/nz);
                 elseif strcmp(dim2Identity,'c')
-                	deathg(1:na_KFE:end) = p.deathrate * sum(gg_tilde_wide(:,:,iy),1);
+                	deathg(1:nb_KFE:end) = p.deathrate * sum(gg_tilde_wide(:,:,iy),1);
                 end
             end
 
@@ -95,5 +95,5 @@ function g = solveKFE(p,income,grdKFE,gg,A,dim2Identity)
 	end
 
 	g = reshape(gg,nb_KFE,dim2,nz,ny);
-	g = permute(g,[1 2 4 3]);
+	g = squeeze(permute(g,[1 2 4 3]));
 end

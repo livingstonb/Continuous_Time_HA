@@ -2,6 +2,13 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 
 	properties (SetAccess=protected)
 		hinterp;
+        hpolicy1;
+        hpolicy2;
+        
+        timeIndex1;
+        timeIndex2;
+        
+        savedTimesUntilShock;
 	end
 
 	methods
@@ -11,11 +18,18 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 				p,income,grids,policies,shocks,shockperiod,'c');
 
 			if income.ny > 1
-                interp_grids = {grids.b.vec,grids.c.vec,income.y.vec};
+                obj.interp_grids = {grids.b.vec,grids.c.vec,income.y.vec};
             else
-                interp_grids = {grids.b.vec,grids.c.vec};
+                obj.interp_grids = {grids.b.vec,grids.c.vec};
             end
-            obj.hinterp{1} = griddedInterpolant(interp_grids,policies.h,'linear');
+            obj.hinterp{1} = griddedInterpolant(obj.interp_grids,policies.h,'makima');
+            
+            if shockperiod > 0
+                % load times at which policy functions saved
+                fname = [p.tempdirec 'savedTimesUntilShock.mat'];
+                temp = load(fname);
+                obj.savedTimesUntilShock = temp.savedTimesUntilShock;
+            end
 		end
 
 		function draw_from_stationary_dist(obj,p,income,grids,pmf)
@@ -41,12 +55,18 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 
 	    	hsim = zeros(p.n_mpcsim,obj.nshocks+1);
 	    	for ii = 1:obj.nshocks+1
+                if obj.shockperiod == 0
+                    policyIndex = 1;
+                else
+                    policyIndex = ii;
+                end
+                
 	            if income.ny > 1
 	                hsim(:,ii) = ...
-	                	obj.hinterp{1}(obj.bsim(:,ii),obj.csim(:,ii),obj.ysim);
+                        obj.hinterp{policyIndex}(obj.bsim(:,ii),obj.csim(:,ii),obj.ysim);
 	            else
 	                hsim(:,ii) = ...
-	                	obj.hinterp{1}(obj.bsim(:,ii),obj.csim(:,ii));
+	                	obj.hinterp{policyIndex}(obj.bsim(:,ii),obj.csim(:,ii));
 	            end
 	        end
 
@@ -59,12 +79,79 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 	        obj.csim = min(obj.csim,grids.c.vec(end));
 	    end
 
-		function update_interpolants(obj,p,time,shockperiod)
-			if shockperiod == 0
-				% policy function does not change in equilibrium
-			else
-				error('not yet coded')
-			end
+		function update_interpolants(obj,p,time)
+           if obj.shockperiod == 0
+               return
+           end
+            
+            timeUntilShock = obj.shockperiod - time;
+            
+            if time == 0
+	    		% load first two policy functions
+	    		obj.timeIndex1 = find(obj.savedTimesUntilShock==obj.shockperiod);
+	    		obj.timeIndex2 = obj.timeIndex1 + 1;
+
+	    		for ii = 1:numel(obj.shocks)
+                    ishock = obj.shocks(ii);
+	    			name = sprintf('policy%ishock%i.mat',obj.timeIndex1,ishock);
+                    temp = load([p.tempdirec name]);
+	    			obj.hpolicy1{ishock} = temp.h;
+                    
+	    			name = sprintf('policy%ishock%i.mat',obj.timeIndex2,ishock);
+	    			temp = load([p.tempdirec name]);
+	    			obj.hpolicy2{ishock} = temp.h;
+
+	    			obj.hinterp{ii+1} = griddedInterpolant(...
+	    				obj.interp_grids,obj.hpolicy1{ishock},'makima');
+	    		end
+	    	elseif abs(timeUntilShock - obj.savedTimesUntilShock(obj.timeIndex2)) < 1e-6
+	    		% update policy functions
+	    		obj.timeIndex1 = obj.timeIndex1 + 1;
+                
+                if obj.timeIndex2 == numel(obj.savedTimesUntilShock)
+                    lastSavedTime = true;
+                else
+                    lastSavedTime = false;
+                    obj.timeIndex2 = obj.timeIndex2 + 1;
+                end
+
+	    		for ii = 1:numel(obj.shocks)
+                    ishock = obj.shocks(ii);
+	    			name = sprintf('policy%ishock%i.mat',obj.timeIndex1,ishock);
+	    			temp = load([p.tempdirec name]);
+                    obj.hpolicy1{ishock} = temp.h;
+                    
+                    if ~lastSavedTime
+                        name = sprintf('policy%ishock%i.mat',obj.timeIndex2,ishock);
+                        temp = load([p.tempdirec name]);
+                        obj.hpolicy2{ishock} = temp.h;
+                    end
+
+	    			obj.hinterp{ii+1} = griddedInterpolant(...
+	    				obj.interp_grids,obj.hpolicy1{ishock},'makima');
+	    		end
+	    	elseif timeUntilShock < obj.savedTimesUntilShock(end)
+	    		timePastTime1 = time - obj.savedTimesUntilShock(obj.timeIndex1);
+	    		timeDiff = obj.savedTimesUntilShock(obj.timeIndex2)...
+	    			- obj.savedTimesUntilShock(obj.timeIndex1);
+	    		proportion2 = timePastTime1 / timeDiff;
+
+	    		for ii = 1:numel(obj.shocks)
+                    ishock = obj.shocks(ii);
+	    			h_approximate = (1-proportion2) * obj.hpolicy1{ishock}...
+	    				+ proportion2 * obj.hpolicy2{ishock};
+	    			obj.hinterp{ii+1} = griddedInterpolant(...
+	    				obj.interp_grids,h_approximate,'makima');
+	    		end
+	    	elseif timeUntilShock > obj.savedTimesUntilShock(end)
+	    		for ii = 1:numel(obj.shocks)
+                    ishock = obj.shocks(ii);
+	    			obj.hinterp{ii+1} = griddedInterpolant(...
+	    				obj.interp_grids,obj.hpolicy1{ishock},'makima');
+	    		end
+	    	else
+	    		error('logical error, hinterp failed to update')
+	    	end
 		end
 	end
 end

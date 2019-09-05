@@ -18,7 +18,7 @@ function outparams = get_params(runopts)
 
     params(ii).rhoL = 0.01;
 
-    params(ii).hdef = "cdot/c"; % "cdot" or "cdot/c"
+    params(ii).hdef = "cdot"; % "cdot" or "cdot/c"
 
     params(ii).chi0 = 0.5;
     params(ii).chi1 = 0.5;
@@ -32,9 +32,9 @@ function outparams = get_params(runopts)
     params(ii).penalty2 = 2; % penalty for a < 0
 
     params(ii).nb = 200;
-    params(ii).nb_neg = 20;
+    params(ii).nb_pos = 180;
     params(ii).nb_KFE = 200;
-    params(ii).nb_neg_KFE = 20;
+    params(ii).nb_pos_KFE = 180;
     params(ii).b_gcurv_pos = 0.2;
     params(ii).nc = 200;
     params(ii).nc_KFE = 200;

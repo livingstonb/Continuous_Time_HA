@@ -70,6 +70,10 @@ classdef ParamsTwoAsset < setup.Params
                     obj.na = 14;
                     obj.na_KFE = 13;
                 end
+                
+            	obj.n_mpcsim = 100;
+            	obj.T_mpcsim = 1e3;
+            end
             end
 
             % check for other heterogeneity

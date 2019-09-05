@@ -59,16 +59,5 @@ classdef MPCSimulatorTwoAsset < statistics.MPCSimulator
 
 	    	obj.cum_con = obj.cum_con + c * obj.mpc_delta;
 	    end
-
-	    function compute_quarterly_mpcs(obj,p,period)
-		    for is = 1:obj.nshocks
-		    	ishock = obj.shocks(is); % index of shock in parameters
-		    	shock = p.mpc_shocks(ishock);
-
-		    	con_diff = obj.shock_cum_con{ishock}(:,period) - obj.baseline_cum_con(:,period);
-            
-	            obj.sim_mpcs(ishock).avg_0_t(period) = mean(con_diff) / shock;
-		    end
-		end
 	end
 end

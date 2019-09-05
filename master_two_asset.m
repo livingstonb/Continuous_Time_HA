@@ -37,7 +37,7 @@ runopts.mode = 'get_params'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_c
 runopts.ComputeMPCS = 0;
 runopts.SimulateMPCS = 1; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = 0; % MPCs out of news, requires ComputeMPCS = 1
-runopts.SimulateMPCS_news = 0;
+runopts.SimulateMPCS_news = 0; % NOT CODED
 
 % whether or not to account for b = bmin, a > 0 case where household
 % withdraws only enough to consume

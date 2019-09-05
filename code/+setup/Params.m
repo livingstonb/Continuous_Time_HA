@@ -138,11 +138,6 @@ classdef Params < handle
             obj.nb_neg = obj.nb - obj.nb_pos;
             obj.nb_neg_KFE = obj.nb_KFE - obj.nb_pos_KFE;
 
-            if runopts.fast == 1
-            	obj.n_mpcsim = 100;
-            	obj.T_mpcsim = 100;
-            end
-
         end
 
         function update_ny(obj,ny)

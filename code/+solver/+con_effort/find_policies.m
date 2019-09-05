@@ -19,8 +19,8 @@ function h = find_policies(p,income,grd,Vn)
 	% Derivatives wrt c
     VcF = zeros(nb,nc,ny);
     VcB = zeros(nb,nc,ny);
-    VcF(:,1:nc-1,:) = (Vn(:,2:nc,:)-Vn(:,1:nc-1,:)) ./ grd.c.dF(:,1:nc-1,:);
-    VcB(:,2:nc,:) = (Vn(:,2:nc,:)-Vn(:,1:nc-1,:)) ./ grd.c.dB(:,2:nc,:);
+    VcF(:,1:nc-1,:) = (Vn(:,2:nc,:)-Vn(:,1:nc-1,:)) ./ grd.c.dF(:,1:nc-1);
+    VcB(:,2:nc,:) = (Vn(:,2:nc,:)-Vn(:,1:nc-1,:)) ./ grd.c.dB(:,2:nc);
 
     c = cgrid_mat;
 

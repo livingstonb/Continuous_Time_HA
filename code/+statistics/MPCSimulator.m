@@ -68,8 +68,8 @@ classdef MPCSimulator < handle
 
 			% initialize mpc results to NaN
 			for ishock = 1:6
-				obj.sim_mpcs(ishock).meanQ = NaN(obj.nperiods,1);
-				obj.sim_mpcs(ishock).meanA = NaN;
+				obj.sim_mpcs(ishock).quarterly = NaN(obj.nperiods,1);
+				obj.sim_mpcs(ishock).annual = NaN;
 			end
 		end
 
@@ -161,7 +161,7 @@ classdef MPCSimulator < handle
                     end
             
             		current_csim = obj.csim;
-            		obj.update_interpolants(p,actualTime,obj.shockperiod);
+            		obj.update_interpolants(p,actualTime);
 		    		obj.simulate_consumption_one_period(p,income,grids);
 		    		obj.simulate_assets_one_period(p,grids,current_csim);
 		    		obj.simulate_income_one_period(p,income,inc_rand_draws(:,tmod100));
@@ -220,8 +220,8 @@ classdef MPCSimulator < handle
 		    end
         end
         
-        function update_interpolants(obj,p,actualTime,shockperiod)
-            % not needed unless simulating MPCs out of news
+        function update_interpolants(obj,p,actualTime)
+            % not coded yet
         end
 	end
 end

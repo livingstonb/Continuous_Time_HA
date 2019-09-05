@@ -29,11 +29,11 @@ classdef Grid < handle
 	    		% Use different-sized KFE grid
                 obj.nb = params.nb_KFE;
                 obj.nb_neg = params.nb_neg_KFE;
-                obj.nb_pos = params.nb_KFE - params.nb_neg_KFE;
+                obj.nb_pos = params.nb_pos_KFE;
 	    	elseif strcmp(gtype,'HJB')
                 obj.nb = params.nb;
                 obj.nb_neg = params.nb_neg;
-                obj.nb_pos = params.nb - params.nb_neg;
+                obj.nb_pos = params.nb_pos_KFE;
             else
 	    		error('invalid input')
 	    	end
@@ -63,7 +63,7 @@ classdef Grid < handle
 	    	% dim2 is the second dimension
 
 	    	% positive part
-			bgridpos = linspace(0,1,obj.nb_pos+1*(obj.nb_neg>0))';
+			bgridpos = linspace(0,1,obj.nb_pos+1*(obj.nb_neg>1))';
 			bgridpos = bgridpos.^(1/params.b_gcurv_pos);
 			bgridpos = params.b_soft_constraint + (params.bmax - params.b_soft_constraint) * bgridpos;
 			

@@ -55,9 +55,7 @@ classdef MPCFinder < handle
 
 			for ii = 1:6
 				obj.mpcs(ii).mpcs = NaN;
-				obj.mpcs(ii).avg_0_t = NaN(4,1);
-				obj.mpcs(ii).avg_1_t = NaN;
-				obj.mpcs(ii).avg_4_t = NaN(4,1);
+				obj.mpcs(ii).quarterly = NaN(4,1);
 			end
 		end
 
@@ -252,8 +250,8 @@ classdef MPCFinder < handle
 				obj.mpcs(5).mpcs = mpcs;
 			end
 
-			obj.mpcs(ishock).avg_0_t = mpcs' * pmf(:);
-			obj.mpcs(ishock).avg_0_0to4 = sum(mpcs,2)' * pmf(:);
+			obj.mpcs(ishock).quarterly = mpcs' * pmf(:);
+			obj.mpcs(ishock).annual = sum(mpcs,2)' * pmf(:);
 		end
 	end
 

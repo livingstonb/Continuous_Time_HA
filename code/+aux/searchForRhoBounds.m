@@ -87,20 +87,3 @@ end
 if ~rhoUpperBoundFound
     error('Rho upper bound not found')
 end
-
-%% ----------------------------------------------------------------
-% VALID RHO BOUNDS FOUND, NOW ITERATE OVER RHO TO MATCH MEAN ASSETS
-% -----------------------------------------------------------------
-
-runopts.RunMode = 'Iterate';
-iterate_rho = @(x) solver.solver(runopts,p.reset_rho(x),income,grd,grdKFE);
-
-check_evals = @(x,y,z) aux.fzero_check(x,y,z,p);
-options = optimset('TolX',p.crit_AY,'OutputFcn',check_evals);
-[rho_final,~,exitflag] = fzero(iterate_rho,[rho_lb,rho_ub],options);
-
-if exitflag ~= 1
-    error(['fzero failed, exitflag = ',num2str(exitflag)])
-end
-
-fprintf('\nIteration over rho completed.\n\n')

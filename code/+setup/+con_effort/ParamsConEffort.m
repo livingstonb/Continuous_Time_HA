@@ -29,13 +29,18 @@ classdef ParamsConEffort < setup.Params
             obj.nz = 1;
 
 			if runopts.fast == 1
-                obj.nb = 16;
-                obj.nb_pos = 14;
-                obj.nb_KFE = 15;
-                obj.nb_pos_KFE = 14;
+                obj.nb = 17;
+                obj.nb_pos = 13;
+                obj.nb_neg = 4;
+                obj.nb_KFE = 19;
+                obj.nb_pos_KFE = 13;
+                obj.nb_neg_KFE = 6;
 
                 obj.nc = 13;
                 obj.nc_KFE = 12;
+                
+            	obj.n_mpcsim = 100;
+            	obj.T_mpcsim = 1e3;
             end
         end
 
