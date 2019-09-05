@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=coneffort
-#SBATCH --output=/home/livingstonb/GitHub/Continuous_ConEffort/output/run%a.out
-#SBATCH --error=/home/livingstonb/GitHub/Continuous_ConEffort/output/run%a.err
+#SBATCH --output=/home/livingstonb/GitHub/Continuous_Time_HA/con_effort/output/run%a.out
+#SBATCH --error=/home/livingstonb/GitHub/Continuous_Time_HA/con_effort/output/run%a.err
 #SBATCH --partition=broadwl
 #SBATCH --array=1-32
 #SBATCH --time=14:00:00
@@ -11,4 +11,4 @@
 
 module load matlab
 
-matlab -nodisplay < /home/livingstonb/GitHub/Continuous_ConEffort/master.m
+matlab -nodisplay < /home/livingstonb/GitHub/Continuous_Time_HA/master_con_effort.m

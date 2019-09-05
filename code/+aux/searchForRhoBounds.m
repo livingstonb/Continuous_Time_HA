@@ -19,7 +19,7 @@ ii = 1;
 while (ii <= n_bound_max) && (~rhoLowerBoundFound)
     try
         % Attempt to solve model
-        AYdiff = model_solver(runopts,p,income,grd,grdKFE); 
+        AYdiff = model_solver(runopts,p); 
 
         % If A/Y - target > 0, rho lb has been found
         if AYdiff > 0
@@ -64,7 +64,7 @@ ii = 1;
 while (ii <= n_bound_max) && (~rhoUpperBoundFound)
     try
         % Attempt to solve model
-        AYdiff = model_solver(runopts,p,income,grd,grdKFE); 
+        AYdiff = model_solver(runopts,p); 
 
         % If A/Y - target < 0, rho ub has been found
         if AYdiff < 0

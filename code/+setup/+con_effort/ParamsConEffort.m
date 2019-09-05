@@ -33,8 +33,8 @@ classdef ParamsConEffort < setup.Params
                 obj.nb_pos = 13;
                 obj.nb_neg = 4;
                 obj.nb_KFE = 19;
-                obj.nb_pos_KFE = 13;
-                obj.nb_neg_KFE = 6;
+                obj.nb_pos_KFE = 14;
+                obj.nb_neg_KFE = 5;
 
                 obj.nc = 13;
                 obj.nc_KFE = 12;

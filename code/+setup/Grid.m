@@ -33,7 +33,7 @@ classdef Grid < handle
 	    	elseif strcmp(gtype,'HJB')
                 obj.nb = params.nb;
                 obj.nb_neg = params.nb_neg;
-                obj.nb_pos = params.nb_pos_KFE;
+                obj.nb_pos = params.nb_pos;
             else
 	    		error('invalid input')
 	    	end
@@ -63,7 +63,7 @@ classdef Grid < handle
 	    	% dim2 is the second dimension
 
 	    	% positive part
-			bgridpos = linspace(0,1,obj.nb_pos+1*(obj.nb_neg>1))';
+			bgridpos = linspace(0,1,obj.nb_pos)';
 			bgridpos = bgridpos.^(1/params.b_gcurv_pos);
 			bgridpos = params.b_soft_constraint + (params.bmax - params.b_soft_constraint) * bgridpos;
 			
@@ -77,8 +77,8 @@ classdef Grid < handle
 
 			% negative part
 			if obj.nb_neg > 0
-				nb_neg1 = ceil(obj.nb_neg/2);
-				nb_neg2 = obj.nb_neg - nb_neg1 + 1;
+				nb_neg1 = ceil(obj.nb_neg/2) + 1;
+				nb_neg2 = obj.nb_neg - nb_neg1 + 2;
 				mid_neg = (params.b_soft_constraint + params.bmin) / 2;
 
 				% part of grid close to borrowing limit

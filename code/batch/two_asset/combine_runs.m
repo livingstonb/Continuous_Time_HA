@@ -1,11 +1,9 @@
-clear all
+clearvars -except stats p
 
-% This script is used to combine the variablesX.mat files produced when run
-% in batch for the continuous time model. Produces a table with the variable
-% name 'T'. For the decompositions, variables1.mat is used as the baseline.
+%% This script is used to combine one or more variablesX.mat files. Produces a table.
 
-% User must set matdir as location of the variablesX.mat files, where X is
-% a number between 1 and 999.
+%% Set FROM_MATFILE = false if running right after model, true if running from .mat file
+FROM_MATFILE = false;
 
 %% Select directories
 % matdir = '/home/brian/Documents/GitHub/Continuous_Two_Asset/Output';
@@ -30,29 +28,35 @@ end
 
 %% Read .mat files into a cell array
 
-ind = 0;
-for run = 1:999
-    runstr = num2str(run);
-    fpath = [matdir,'output_',runstr,'.mat'];
-    if exist(fpath,'file')
-        ind = ind+1;
-        
-        % to save memory
-        s{ind} = load(fpath);
-        
-        if ind > 1
-            s{ind}.grd = [];
-            s{ind}.KFE = [];
-        end
-        
-        % perform Empc1 - Empc0 decomposition
-        decomp_base{ind} = statistics.decomp_baseline(s{1},s{ind});    
+if FROM_MATFILE
+    ind = 0;
+    for run = 1:999
+        runstr = num2str(run);
+        fpath = [matdir,'output_',runstr,'.mat'];
+        if exist(fpath,'file')
+            ind = ind+1;
 
-        % perform decomp wrt one-asset model
-        decomp_oneasset{ind} = statistics.decomp_twoasset_oneasset(oneasset,s{ind});
-    else
-        continue
+            % to save memory
+            s{ind} = load(fpath);
+
+            if ind > 1
+                s{ind}.grd = [];
+                s{ind}.KFE = [];
+            end
+
+            % perform Empc1 - Empc0 decomposition
+            decomp_base{ind} = statistics.decomp_baseline(s{1},s{ind});    
+
+            % perform decomp wrt one-asset model
+            decomp_oneasset{ind} = statistics.decomp_twoasset_oneasset(oneasset,s{ind});
+        else
+            continue
+        end
     end
+else
+    s = cell(1);
+    s{1}.p = p;
+    s{1}.stats = stats;
 end
 
 n = numel(s);
@@ -154,7 +158,6 @@ rownames = {'Name'
             'ANNUAL MPC, shock = 0.1'
             '____AVG QUARTERLY MPC OUT OF NEWS'
             'QUARTER 1 MPC, shock = -0.01 next quarter'
-            'QUARTER 1 MPC, shock = -0.01 next year'
             'ANNUAL MPC, shock = -0.01 next year'
             'QUARTER 1 MPC, shock = 0.01 next quarter'
             'QUARTER 1 MPC, shock = 0.1 next quarter'
@@ -274,7 +277,6 @@ for run = 1:n
                         s{run}.stats.mpcs(6).avg_0_annual
                         NaN
                         s{run}.stats.mpcs(2).avg_1_quarterly
-                        s{run}.stats.mpcs(2).avg_4_quarterly(1)
                         s{run}.stats.mpcs(2).avg_4_annual
                         s{run}.stats.mpcs(5).avg_1_quarterly
                         s{run}.stats.mpcs(6).avg_1_quarterly

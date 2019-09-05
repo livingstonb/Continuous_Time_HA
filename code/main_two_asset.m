@@ -1,4 +1,4 @@
-function stats = main(runopts)
+function stats = main_two_asset(runopts)
     % Main function file for this repository. If IterateRho = 1, this script
     % first tries to find valid lower and upper bounds for rho (this may fail
     % in some cases), and then iterates on rho once valid bounds are found.
@@ -78,10 +78,12 @@ function stats = main(runopts)
     % -----------------------------------------------------------------
     fprintf('\nComputing statistics\n')
     stats = statistics.two_asset.compute_statistics(p,income,grd,grdKFE,KFE);
+    
 
     %% ----------------------------------------------------------------
     % COMPUTE MPCs
     % -----------------------------------------------------------------
+    stats.mpcs = struct();
     dim2Identity = 'a';
     mpc_finder = statistics.MPCFinder(p,income,grdKFE,dim2Identity);
     trans_dyn_solver = solver.two_asset.TransitionalDynSolverTwoAsset(p,income,grdKFE);
@@ -89,6 +91,11 @@ function stats = main(runopts)
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')
     	mpc_finder.solve(KFE,stats.pmf,Au);
+    end
+    for ishock = 1:6
+        stats.mpcs(ishock).avg_0_quarterly = mpc_finder.mpcs(ishock).quarterly;
+        stats.mpcs(ishock).avg_0_annual = mpc_finder.mpcs(ishock).annual;
+        stats.mpcs(ishock).mpcs = mpc_finder.mpcs(ishock).mpcs;
     end
     
     if p.ComputeMPCS_news == 1
@@ -98,16 +105,17 @@ function stats = main(runopts)
         fprintf('Iterating backward to find policy functions for future shock...\n')
     	trans_dyn_solver.solve(KFE,stats.pmf);
     end
-    
-    stats.mpcs = mpc_finder.mpcs;
-    % for ishock = 1:6
-    % 	stats.mpcs(ishock).avg_1_t = mpc_finder_news.mpcs(ishock).avg_1_t;
-    % 	stats.mpcs(ishock).avg_4_t = mpc_finder_news.mpcs(ishock).avg_4_t;
-    % end
+    for ishock = 1:6
+        stats.mpcs(ishock).avg_1_quarterly = trans_dyn_solver.mpcs(ishock).avg_1_quarterly;
+    	stats.mpcs(ishock).avg_4_quarterly = trans_dyn_solver.mpcs(ishock).avg_4_quarterly;
+        stats.mpcs(ishock).avg_4_annual = trans_dyn_solver.mpcs(ishock).avg_4_annual;
+    end
+
 
     %% ----------------------------------------------------------------
     % SIMULATE MPCs
     % -----------------------------------------------------------------
+    stats.sim_mpcs = struct();
     shocks = [4,5,6];
     nperiods = 1;
     dim2Identity = 'a';
@@ -118,8 +126,11 @@ function stats = main(runopts)
         fprintf('\nSimulating MPCs...\n')
         mpc_simulator.solve(p,income,grdKFE,stats.pmf);
     end
+    for ii = 1:6
+        stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator_immediateshock.sim_mpcs(ii).avg_quarterly;
+        stats.sim_mpcs(ii).avg_0_annual = mpc_simulator_immediateshock.sim_mpcs(ii).avg_annual;
+    end
 
-    stats.sim_mpcs =  mpc_simulator.sim_mpcs;
     clear mpc_simulator
     
     %% ----------------------------------------------------------------

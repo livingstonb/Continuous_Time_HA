@@ -62,8 +62,10 @@ classdef ParamsTwoAsset < setup.Params
             if runopts.fast == 1
                 obj.nb = 16;
                 obj.nb_pos = 16;
+                obj.nb_neg = 0;
                 obj.nb_KFE = 15;
                 obj.nb_pos_KFE = 15;
+                obj.nb_neg_KFE = 0;
 
                 % illiquid grid parameters
                 if obj.OneAsset == 0
@@ -74,8 +76,7 @@ classdef ParamsTwoAsset < setup.Params
             	obj.n_mpcsim = 100;
             	obj.T_mpcsim = 1e3;
             end
-            end
-
+            
             % check for other heterogeneity
             if numel(obj.rho_grid) > 1
                 obj.nz = numel(obj.rho_grid);
