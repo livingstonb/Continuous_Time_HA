@@ -39,6 +39,8 @@ runopts.ComputeMPCS_news = 1;
 runopts.SimulateMPCS = 1;
 runopts.SimulateMPCS_news = 1;
 
+runopts.params_file = 'get_params2';
+
 % Select which parameterization to run
 % (ignored when runops.Server = 1)
 runopts.param_index = 1;

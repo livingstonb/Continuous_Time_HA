@@ -9,10 +9,10 @@ classdef ParamsConEffort < setup.Params
 
     	hdef;
 
-    	chi0;
-    	chi1;
-    	chi2;
-    	hbar;
+    	chi0 = 0.1;
+    	chi1 = 0.1;
+    	chi2 = 1.5;
+    	hbar = 1;
 
     	penalty1;
     	penalty2;

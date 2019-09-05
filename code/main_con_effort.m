@@ -7,7 +7,12 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     % GET PARAMETERS AND CREATE GRID, INCOME OBJECTS
     % ---------------------------------------------------------------------
 
-    p = setup.con_effort.get_params(runopts);
+
+    if strcmp(runopts.params_file,'get_params')
+        p = setup.con_effort.get_params(runopts);
+    elseif strcmp(runopts.params_file,'get_params2')
+        p = setup.con_effort.get_params2(runopts);
+    end 
     p.print();
     
     if p.b_gcurv_neg < 1
