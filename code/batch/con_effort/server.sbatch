@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=coneffort
-#SBATCH --output=/home/livingstonb/GitHub/Continuous_Time_HA/con_effort/output/run%a.out
-#SBATCH --error=/home/livingstonb/GitHub/Continuous_Time_HA/con_effort/output/run%a.err
+#SBATCH --output=/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort/run%a.out
+#SBATCH --error=/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort/run%a.err
 #SBATCH --partition=broadwl
 #SBATCH --array=1-32
 #SBATCH --time=14:00:00
