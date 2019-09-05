@@ -121,15 +121,15 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     trans_dyn_solver = solver.con_effort.TransitionalDynSolverConEffort(p,income,grdKFE);
     if p.ComputeMPCS == 1
     	fprintf('Computing MPCs out of an immediate shock...\n')
-        mpc_finder.solve(KFE,stats.ptmass,Au);
+        mpc_finder.solve(KFE,stats.pmf,Au);
     end
 
     if p.ComputeMPCS_news == 1
     	fprintf('Computing MPCs out of news...\n')
-    	trans_dyn_solver.solve(KFE,stats.ptmass,mpc_finder.cum_con_baseline);
+    	trans_dyn_solver.solve(KFE,stats.pmf,mpc_finder.cum_con_baseline);
     elseif p.SimulateMPCS_news == 1
         fprintf('Iterating backward to find policy functions for future shock...\n')
-    	trans_dyn_solver.solve(KFE,stats.ptmass);
+    	trans_dyn_solver.solve(KFE,stats.pmf);
     end
 
     stats.mpcs = mpc_finder.mpcs;
@@ -147,7 +147,7 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     	p,income,grdKFE,KFE,shocks,0);
     if p.SimulateMPCS == 1
     	fprintf('\nSimulating MPCs...\n')
-        mpc_simulator_immediateshock.solve(p,income,grdKFE,stats.ptmass);
+        mpc_simulator_immediateshock.solve(p,income,grdKFE,stats.pmf);
     end
 
     % mpcs out of news
@@ -160,8 +160,8 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     
     if p.SimulateMPCS_news == 1
     	fprintf('\nSimulating MPCs out of news...\n')
-        mpc_simulator_q1shock.solve(p,income,grdKFE,stats.ptmass);
-        mpc_simulator_q4shock.solve(p,income,grdKFE,stats.ptmass);
+        mpc_simulator_q1shock.solve(p,income,grdKFE,stats.pmf);
+        mpc_simulator_q4shock.solve(p,income,grdKFE,stats.pmf);
     end
     for ii = 1:6
         stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator_immediateshock.sim_mpcs(ii).quarterly;

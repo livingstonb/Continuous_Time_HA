@@ -26,9 +26,9 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
     % WEALTH PERCENTILES
     % ---------------------------------------------------------------------
 
-    stats.wpercentile = compute_pct(wealth_mat,stats.pmf,p.wpercentiles/100);
-    stats.lwpercentile = compute_pct(grdKFE.b.matrix,stats.pmf,p.wpercentiles/100);
-    stats.iwpercentile = compute_pct(grdKFE.a.matrix,stats.pmf,p.wpercentiles/100);
+    stats.wpercentile = aux.compute_pct(wealth_mat,stats.pmf,p.wpercentiles/100);
+    stats.lwpercentile = aux.compute_pct(grdKFE.b.matrix,stats.pmf,p.wpercentiles/100);
+    stats.iwpercentile = aux.compute_pct(grdKFE.a.matrix,stats.pmf,p.wpercentiles/100);
 
     % top wealth shares
     wsort = sortrows([wealth_mat(:) stats.pmf(:)]);
@@ -61,11 +61,11 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
 
     % wealth < epsilon
     stats.constrained(2:numel(p.epsilon_HtM)) = ...
-    	find_constrained(wealth_mat,stats.pmf,p.epsilon_HtM(2:end));
+    	aux.find_constrained(wealth_mat,stats.pmf,p.epsilon_HtM(2:end));
 
     % liquid wealth < epsilon
     stats.constrained_liq(2:numel(p.epsilon_HtM)) = ...
-    	find_constrained(grdKFE.b.matrix,stats.pmf,p.epsilon_HtM(2:end));
+    	aux.find_constrained(grdKFE.b.matrix,stats.pmf,p.epsilon_HtM(2:end));
 
     %% --------------------------------------------------------------------
     % CONSTRAINED BY OWN QUARTERLY INCOME
@@ -77,18 +77,14 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
     lwi_ratio = grdKFE.b.matrix ./ income.y.matrixKFE;
 
     % fraction with total wealth < own quarterly income / 6
-    stats.HtM_one_sixth_Q_twealth = find_constrained(wi_ratio,stats.pmf,1/6);
+    stats.HtM_one_sixth_Q_twealth = aux.find_constrained(wi_ratio,stats.pmf,1/6);
     % fraction with total wealth < own quarterly income / 12
-    stats.HtM_one_twelfth_Q_twealth = find_constrained(wi_ratio,stats.pmf,1/12);
-    % fraction with total wealth < own annual income * 0.15
-    stats.HtM_015_ann_inc_twealth = find_constrained(wi_ratio,stats.pmf,0.15*4);
+    stats.HtM_one_twelfth_Q_twealth = aux.find_constrained(wi_ratio,stats.pmf,1/12);
 
     % fraction with liquid wealth < own quarterly income / 12
-    stats.HtM_one_sixth_Q_lwealth = find_constrained(lwi_ratio,stats.pmf,1/6);
+    stats.HtM_one_sixth_Q_lwealth = aux.find_constrained(lwi_ratio,stats.pmf,1/6);
     % fraction with liquid wealth < own quarterly income / 12
-    stats.HtM_one_twelfth_Q_lwealth = find_constrained(lwi_ratio,stats.pmf,1/12);
-    % fraction with liquid wealth < own annual income * 0.15
-    stats.HtM_015_ann_inc_lwealth = find_constrained(lwi_ratio,stats.pmf,0.15*4);
+    stats.HtM_one_twelfth_Q_lwealth = aux.find_constrained(lwi_ratio,stats.pmf,1/12);
     
     %% --------------------------------------------------------------------
     % GINI COEFFICIENTS
@@ -117,17 +113,17 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
         stats.adjcosts.mean_d_div_a = d_div_a' * stats.pmf(:);
 
         % median abs(d)/a
-        stats.adjcosts.median_d_div_a = compute_pct(d_div_a,stats.pmf,0.5);
+        stats.adjcosts.median_d_div_a = aux.compute_pct(d_div_a,stats.pmf,0.5);
 
         % mean chi/abs(d) for |d| > 0
         chii = aux.two_asset.adj_cost_fn(KFE.d(:),grdKFE.a.matrix(:),p);
         chii_div_d = chii ./ abs(KFE.d(:));
-        ptmass_valid = stats.pmf(:);
-        ptmass_valid = ptmass_valid(abs(KFE.d(:))>0) ./ sum(ptmass_valid(abs(KFE.d(:))>0));
-        stats.adjcosts.mean_chi_div_d = chii_div_d(abs(KFE.d(:))>0)' * ptmass_valid;
+        pmf_valid = stats.pmf(:);
+        pmf_valid = pmf_valid(abs(KFE.d(:))>0) ./ sum(pmf_valid(abs(KFE.d(:))>0));
+        stats.adjcosts.mean_chi_div_d = chii_div_d(abs(KFE.d(:))>0)' * pmf_valid;
 
         % median chi/abs(d) for d > 0 
-        chid_sort = sortrows([chii_div_d(abs(KFE.d(:))>0) ptmass_valid]);
+        chid_sort = sortrows([chii_div_d(abs(KFE.d(:))>0) pmf_valid]);
         chid_values_sort = chid_sort(:,1);
         chid_cdf = cumsum(chid_sort(:,2));
         [chid_cdf_u,uind] = unique(chid_cdf,'last');
@@ -225,35 +221,4 @@ function [bins,values] = create_bins(binwidth,vals,pdf1)
         values(ibin) = sum(pmf(idx));
         ibin = ibin + 1;
     end
-end
-
-function percentiles_values = compute_pct(values,pmf,percentiles)
-	% finds percentiles, given a pmf over values
-
-	% 'percentiles' input vector should be fractions, i.e.
-	% to compute 99th percentile, use 0.99
-	
-	sorted_by_values = sortrows([values(:) pmf(:)]);
-	values_sorted = sorted_by_values(:,1);
-	cdf_sorted = cumsum(sorted_by_values(:,2));
-
-	[cdf_unique,unique_indices] = unique(cdf_sorted,'last');
-	values_sorted_unique = values_sorted(unique_indices);
-
-	cdf_interp = griddedInterpolant(cdf_unique,values_sorted_unique,'linear');
-	percentiles_values = cdf_interp(percentiles);
-end
-
-function fraction_below = find_constrained(values,pmf,thresholds);
-	% given values and a pmf, this functions finds the fraction
-	% of households below given thresholds
-	sorted_by_values = sortrows([values(:) pmf(:)]);
-	values_sorted = sorted_by_values(:,1);
-	cdf_sorted = cumsum(sorted_by_values(:,2));
-
-	[values_unique,unique_indices] = unique(values_sorted,'last');
-	cdf_unique = cdf_sorted(unique_indices);
-
-	values_interp = griddedInterpolant(values_unique,cdf_unique,'linear');
-	fraction_below = values_interp(thresholds);
 end

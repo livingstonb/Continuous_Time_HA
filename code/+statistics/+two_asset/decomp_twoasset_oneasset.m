@@ -105,10 +105,10 @@ function decomp = decomp_twoasset_oneasset(s0,s1)
     %% --------------------------------------------------------------------
 	% TWO ASSET CASE
 	% ---------------------------------------------------------------------
-    ptmass1 = stats1.ptmass;
+    pmf1 = stats1.pmf;
     
     % integrate out y, z to get g(b,a)
-    pmf1_b_a = sum(sum(ptmass1,4),3);
+    pmf1_b_a = sum(sum(pmf1,4),3);
     volumes = reshape(grdKFE1.dab_tilde.vec,p1.nb_KFE,p1.na_KFE);
     pdf1_b_a = pmf1_b_a ./ volumes;
     
@@ -130,34 +130,34 @@ function decomp = decomp_twoasset_oneasset(s0,s1)
 
     % get mpcs over (b,a)
     m1 = stats1.mpcs(5).mpcs(:,1);
-    ptmass1 = stats1.ptmass;
+    pmf1 = stats1.pmf;
 
-    P1ab = sum(reshape(ptmass1,[],income0.ny*p1.nz),2);
-    m1 = reshape(m1,[],income0.ny*p1.nz) .* reshape(ptmass1,[],income0.ny*p1.nz);
+    P1ab = sum(reshape(pmf1,[],income0.ny*p1.nz),2);
+    m1 = reshape(m1,[],income0.ny*p1.nz) .* reshape(pmf1,[],income0.ny*p1.nz);
     m1 = sum(m1,2) ./ P1ab;
     m1 = reshape(m1,[p1.nb_KFE p1.na_KFE]);
-    ptmass1 = reshape(P1ab,[p1.nb_KFE,p1.na_KFE]);
+    pmf1 = reshape(P1ab,[p1.nb_KFE,p1.na_KFE]);
     
     %% --------------------------------------------------------------------
 	% ONE ASSET CASE
 	% ---------------------------------------------------------------------
 
     m0 = stats0.mpcs(5).mpcs(:,1);
-    ptmass0 = stats0.ptmass;
+    pmf0 = stats0.pmf;
     
-    P0ab = sum(reshape(ptmass0,[],income0.ny),2);
-    m0 = reshape(m0,[],income0.ny) .* reshape(ptmass0,[],income0.ny);
+    P0ab = sum(reshape(pmf0,[],income0.ny),2);
+    m0 = reshape(m0,[],income0.ny) .* reshape(pmf0,[],income0.ny);
     m0 = sum(m0,2) ./ P0ab;
     m0 = reshape(m0,[p0.nb_KFE p0.na_KFE]);
     m0 = m0(:,1);
     P0ab = reshape(P0ab,[p0.nb_KFE p0.na_KFE]);
-    ptmass0 = P0ab(:,1);
+    pmf0 = P0ab(:,1);
     
     b_tilde = (grdKFE0.b.dF(:,1,1) + grdKFE0.b.dB(:,1,1)) / 2;
     b_tilde(1) = grdKFE0.b.dF(1,1,1) / 2;
     b_tilde(end) = grdKFE0.b.dB(end,1,1) / 2;
     
-    pdf0_b = ptmass0 ./ b_tilde;
+    pdf0_b = pmf0 ./ b_tilde;
     pdf0_interp = griddedInterpolant(grdKFE0.b.vec,pdf0_b,'linear','none');
     pdf0_n = pdf0_interp(ngrid);
     pmf0_n = pdf0_n .* dn_trapz;

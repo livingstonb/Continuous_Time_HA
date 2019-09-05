@@ -232,7 +232,7 @@ classdef MPCFinder < handle
 	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat);
 	            end
 
-	            if (shock < 0) && sum(below_bgrid)>0
+	            if (shock < 0) && (sum(below_bgrid)>0) && (period==1)
 	                temp = reshape(obj.cum_con_shock{ishock}(:,period),reshape_vec);
 	                temp(below_bgrid,:,:,:) = con_period(1,:,:,:) + shock + obj.grids.b.vec(below_bgrid);
 	                obj.cum_con_shock{ishock}(:,period) = temp(:);                      

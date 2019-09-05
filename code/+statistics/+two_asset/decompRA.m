@@ -16,7 +16,7 @@ function decomp = decompRA(p,grdKFE,stats)
     end
 
     m1 = stats.mpcs(5).mpcs(:,1);
-    ptmass = stats.pmf(:);
+    pmf = stats.pmf(:);
 
     if sum(isnan(m1)) > 0
         return
@@ -31,13 +31,13 @@ function decomp = decompRA(p,grdKFE,stats)
     Psmall = false(size(a_unique));
     for ia = 1:numel(a_unique)
         a = a_unique(ia);
-        Pa = sum(ptmass(assets==a));
+        Pa = sum(pmf(assets==a));
         % E[MPC|a]
         if Pa < 1e-9
             Psmall(ia) = true;
             Empc_a(ia) = NaN;
         else
-            Empc_a(ia) = m1(assets==a)' * ptmass(assets==a) / Pa;
+            Empc_a(ia) = m1(assets==a)' * pmf(assets==a) / Pa;
         end
     end
     
@@ -53,9 +53,9 @@ function decomp = decompRA(p,grdKFE,stats)
     mpc_atmean = winterp(3.5);
 
     decomp.RAmpc = m0;
-    decomp.Em1_less_mRA = ptmass' * m1 - m0;
+    decomp.Em1_less_mRA = pmf' * m1 - m0;
     decomp.term1 = mpc_atmean - m0;
     decomp.term2 = 0;
-    decomp.term3 = (m1 - m0)' * ptmass - (mpc_atmean - m0);
+    decomp.term3 = (m1 - m0)' * pmf - (mpc_atmean - m0);
 
 end
