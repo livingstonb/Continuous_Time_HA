@@ -1,6 +1,9 @@
 function A = construct_trans_matrix(p,income,grids,policies)
+	% constructs transition matrix absent income and death
+	% transitions.
+	%
+	% works on either the HJB grid or KFE grid
 
-    % A or Au built without income and death transitions
     % ------------- unpack objects-----------------
     nb = numel(grids.b.vec);
     nc = numel(grids.c.vec);

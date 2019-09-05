@@ -1,4 +1,14 @@
 classdef TransitionalDynSolver < handle
+	% This superclass provides properties and methods 
+	% for solving for policy functions given a future shock
+	% by iterating backward on the dynamic HJB.
+	%
+	% MPCs out of news can be computed with this class
+	% by iterating over the Feynman-Kac equation while
+	% iterating over the dynamic HJB.
+	%
+	% This class allows for saving the policy functions
+	% so they can be used to simulate MPCs out of news.
 
 	properties (SetAccess = protected)
 		p;
@@ -160,6 +170,8 @@ classdef TransitionalDynSolver < handle
 		end
 
 		function iterateBackwards(obj,ishock)
+			% iterate over the dynamic HJB
+			
             shock = obj.p.mpc_shocks(ishock);
 			obj.cumcon = zeros(obj.p.nb_KFE*obj.dim2*obj.income.ny*obj.p.nz,4);
 

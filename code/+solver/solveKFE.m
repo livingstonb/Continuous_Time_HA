@@ -1,4 +1,9 @@
 function g = solveKFE(p,income,grdKFE,gg,A,dim2Identity)
+	% solveKFE() iterates over the Kolmogorov Forward
+	% Equation to find the equilibrium distribution over states
+	%
+	% dim2Identity is either 'a' for the two-asset model,
+	% or 'c' for the model with consumption adjustment costs
 
 	if strcmp(dim2Identity,'a')
 		dim2 = p.na_KFE;
