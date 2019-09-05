@@ -123,6 +123,11 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     	fprintf('Computing MPCs out of an immediate shock...\n')
         mpc_finder.solve(KFE,stats.pmf,Au);
     end
+    for ii = 1:6
+        stats.mpcs(ii).avg_0_quarterly = mpc_finder.mpcs(ii).quarterly;
+        stats.mpcs(ii).avg_0_annual = mpc_finder.mpcs(ii).annual;
+        stats.mpcs(ii).mpcs = mpc_finder.mpcs(ii).mpcs;
+    end
 
     if p.ComputeMPCS_news == 1
     	fprintf('Computing MPCs out of news...\n')
@@ -131,11 +136,11 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
         fprintf('Iterating backward to find policy functions for future shock...\n')
     	trans_dyn_solver.solve(KFE,stats.pmf);
     end
-
-    stats.mpcs = mpc_finder.mpcs;
+    
     for ii = 1:6
-    	stats.mpcs(ii).avg_1_t = trans_dyn_solver.mpcs(ii).avg_1_t;
-    	stats.mpcs(ii).avg_4_t = trans_dyn_solver.mpcs(ii).avg_4_t;
+    	stats.mpcs(ii).avg_1_quarterly = trans_dyn_solver.mpcs(ii).avg_1_quarterly;
+    	stats.mpcs(ii).avg_4_quarterly = trans_dyn_solver.mpcs(ii).avg_4_quarterly;
+        stats.mpcs(ii).avg_4_annual = trans_dyn_solver.mpcs(ii).avg_4_annual;
     end
 
     %% ----------------------------------------------------------------
@@ -159,12 +164,12 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     	p,income,grdKFE,KFE,shocks,4);
     
     if p.SimulateMPCS_news == 1
-    	fprintf('\nSimulating MPCs out of news...\n')
         mpc_simulator_q1shock.solve(p,income,grdKFE,stats.pmf);
         mpc_simulator_q4shock.solve(p,income,grdKFE,stats.pmf);
     end
     for ii = 1:6
     	stats.sim_mpcs(ii).responders_0_quarterly = mpc_simulator_immediateshock.sim_mpcs(ii).responders_quarterly;
+        stats.sim_mpcs(ii).responders_0_annual= mpc_simulator_immediateshock.sim_mpcs(ii).responders_annual;
         stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator_immediateshock.sim_mpcs(ii).avg_quarterly;
         stats.sim_mpcs(ii).avg_0_quarterly_pos = mpc_simulator_immediateshock.sim_mpcs(ii).avg_quarterly_pos;
         stats.sim_mpcs(ii).avg_0_annual = mpc_simulator_immediateshock.sim_mpcs(ii).avg_annual;
@@ -172,7 +177,8 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
         stats.sim_mpcs(ii).responders_1_quarterly = mpc_simulator_q1shock.sim_mpcs(ii).responders_quarterly;
     	stats.sim_mpcs(ii).avg_1_quarterly = mpc_simulator_q1shock.sim_mpcs(ii).avg_quarterly;
     	stats.sim_mpcs(ii).avg_1_quarterly_pos = mpc_simulator_q1shock.sim_mpcs(ii).avg_quarterly_pos;
-    	stats.sim_mpcs(ii).responders_1_quarterly = mpc_simulator_q4shock.sim_mpcs(ii).responders_quarterly;
+    	stats.sim_mpcs(ii).responders_4_quarterly = mpc_simulator_q4shock.sim_mpcs(ii).responders_quarterly;
+        stats.sim_mpcs(ii).responders_4_annual = mpc_simulator_q4shock.sim_mpcs(ii).responders_annual;
     	stats.sim_mpcs(ii).avg_4_quarterly = mpc_simulator_q4shock.sim_mpcs(ii).avg_quarterly;
         stats.sim_mpcs(ii).avg_4_quarterly_pos = mpc_simulator_q4shock.sim_mpcs(ii).avg_quarterly_pos;
         stats.sim_mpcs(ii).avg_4_annual = mpc_simulator_q4shock.sim_mpcs(ii).avg_annual;
@@ -219,8 +225,11 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
         fprintf('\nSome results...\n')
         for quarter = 1:4
             fprintf('    --- Quarter %i MPC out of 0.01 shock ---\n',quarter)
-            fprintf('\tFeynman-Kac = %f\n',stats.mpcs(5).avg_0_t(quarter))
-            fprintf('\tSimulated   = %f\n',stats.sim_mpcs(5).avg_0_t(quarter))
+            fprintf('\tFeynman-Kac = %f\n',stats.mpcs(5).avg_0_quarterly(quarter))
+            fprintf('\tSimulated   = %f\n',stats.sim_mpcs(5).avg_0_quarterly(quarter))
+            fprintf('    --- Quarter %i MPC out of 0.1 shock ---\n',quarter)
+            fprintf('\tFeynman-Kac = %f\n',stats.mpcs(6).avg_0_quarterly(quarter))
+            fprintf('\tSimulated   = %f\n',stats.sim_mpcs(6).avg_0_quarterly(quarter))
         end
     end
     

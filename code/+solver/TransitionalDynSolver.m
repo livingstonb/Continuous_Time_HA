@@ -37,8 +37,9 @@ classdef TransitionalDynSolver < handle
 
 			obj.mpcs = struct();
 			for ishock = 1:6
-				obj.mpcs(ishock).avg_1_t = NaN;
-				obj.mpcs(ishock).avg_4_t = NaN(4,1);
+				obj.mpcs(ishock).avg_1_quarterly = NaN;
+				obj.mpcs(ishock).avg_4_quarterly = NaN(4,1);
+				obj.mpcs(ishock).avg_4_annual = NaN;
 			end
 		end
 
@@ -258,11 +259,12 @@ classdef TransitionalDynSolver < handle
 		function computeMPCs(obj,pmf,ishock,cum_con_baseline)
             shock = obj.p.mpc_shocks(ishock);
             
-            mpcs_1_t = (obj.cum_con_q1{ishock} - cum_con_baseline(:,1)) / shock;
-            obj.mpcs(ishock).avg_1_t = mpcs_1_t(:)' * pmf(:);
+            mpcs_1_quarterly = (obj.cum_con_q1{ishock} - cum_con_baseline(:,1)) / shock;
+            obj.mpcs(ishock).avg_1_quarterly = mpcs_1_quarterly(:)' * pmf(:);
 
-            mpcs_4_t = (obj.cum_con_q4{ishock} - cum_con_baseline) / shock;
-            obj.mpcs(ishock).avg_4_t = mpcs_4_t' * pmf(:);
+            mpcs_4_quarterly = (obj.cum_con_q4{ishock} - cum_con_baseline) / shock;
+            obj.mpcs(ishock).avg_4_quarterly = mpcs_4_quarterly' * pmf(:);
+            obj.mpcs(ishock).avg_4_annual = sum(obj.mpcs(ishock).avg_4_quarterly);
 		end
 	end
 

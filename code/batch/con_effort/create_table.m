@@ -2,8 +2,9 @@ clearvars -except stats p
 
 %% This script is used to combine one or more variablesX.mat files. Produces a table.
 %% Set FROM_MATFILE = false if running right after model, true if running from .mat file
-FROM_MATFILE = true;
+FROM_MATFILE = false;
 codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
+xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort/table.xlsx';
 % codedir = '/Users/Brian-laptop/Documents/GitHub/Continuous_ConEffort/';
 
 if FROM_MATFILE
@@ -13,7 +14,6 @@ if FROM_MATFILE
     %% Select directory of mat files
     matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort';
     % matdir = '/Users/Brian-laptop/Documents/midway2_output/8_27_19/';
-    xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort/table.xlsx';
 
     ind = 0;
     for run = 1:999
@@ -95,7 +95,7 @@ rownames = {'Name'
             'QUARTER 2 SIM MPC, shock = -0.1'
             'QUARTER 3 SIM MPC, shock = -0.1'
             'QUARTER 4 SIM MPC, shock = -0.1'
-            'ANNUAL SIM MPC, shock = 0.1'
+            'ANNUAL SIM MPC, shock = -0.1'
             '____AVG SIM MPCs OUT OF 0.01 MEAN ANNUAL INC'
             'QUARTER 1 SIM MPC, shock = 0.01'
             'QUARTER 2 SIM MPC, shock = 0.01'
@@ -136,12 +136,14 @@ rownames = {'Name'
             'QUARTER 2 MPC, SHOCK NEXT YEAR, shock = 0.01'
             'QUARTER 3 MPC, SHOCK NEXT YEAR, shock = 0.01'
             'QUARTER 4 MPC, SHOCK NEXT YEAR, shock = 0.01'
+            'ANNUAL MPC, SHOCK NEXT YEAR, shock = 0.01'
             '____AVG SIM MPCs OUT OF NEWS (need to be tested), 0.1 SHOCK'
             'QUARTER 1 MPC, SHOCK NEXT QUARTER, shock = 0.1'
             'QUARTER 1 MPC, SHOCK NEXT YEAR, shock = 0.1'
             'QUARTER 2 MPC, SHOCK NEXT YEAR, shock = 0.1'
             'QUARTER 3 MPC, SHOCK NEXT YEAR, shock = 0.1'
             'QUARTER 4 MPC, SHOCK NEXT YEAR, shock = 0.1'
+            'ANNUAL MPC, SHOCK NEXT YEAR, shock = 0.1'
             '____AVG FK MPC OUT OF -1e-5 * MEAN ANNUAL INCOME'
             'QUARTER 1 MPC, shock = -1e-5'
             'QUARTER 2 MPC, shock = -1e-5'
@@ -200,7 +202,7 @@ for run = 1:n
                         s{run}.p.penalty2
                         s{run}.stats.rho
                         s{run}.stats.beta_annualized
-                        s{run}.p.r
+                        s{run}.p.r_b
                         s{run}.stats.wealth
                         s{run}.stats.top10share
                         s{run}.stats.top1share
@@ -236,9 +238,9 @@ for run = 1:n
                         s{run}.stats.sim_mpcs(6).avg_0_quarterly(:)
                         s{run}.stats.sim_mpcs(6).avg_0_annual
                         NaN
-                        s{run}.stats.sim_mpcs(5).avg_0_responders(:)
+                        s{run}.stats.sim_mpcs(5).avg_0_quarterly_pos(:)
                         NaN
-                        s{run}.stats.sim_mpcs(6).avg_0_responders(:)
+                        s{run}.stats.sim_mpcs(6).avg_0_quarterly_pos(:)
                         NaN
                         s{run}.stats.sim_mpcs(5).responders_0_quarterly(:)
                         s{run}.stats.sim_mpcs(5).responders_0_annual
@@ -254,46 +256,46 @@ for run = 1:n
                         s{run}.stats.sim_mpcs(6).avg_4_quarterly(:)
                         s{run}.stats.sim_mpcs(6).avg_4_annual
                         NaN
-                        s{run}.stats.mpcs(1).avg_0_t(1)
-                        s{run}.stats.mpcs(1).avg_0_t(2)
-                        s{run}.stats.mpcs(1).avg_0_t(3)
-                        s{run}.stats.mpcs(1).avg_0_t(4)
-                        s{run}.stats.mpcs(1).avg_0_0to4
+                        s{run}.stats.mpcs(1).avg_0_quarterly(1)
+                        s{run}.stats.mpcs(1).avg_0_quarterly(2)
+                        s{run}.stats.mpcs(1).avg_0_quarterly(3)
+                        s{run}.stats.mpcs(1).avg_0_quarterly(4)
+                        s{run}.stats.mpcs(1).avg_0_annual
                         NaN
-                        s{run}.stats.mpcs(2).avg_0_t(1)
-                        s{run}.stats.mpcs(2).avg_0_t(2)
-                        s{run}.stats.mpcs(2).avg_0_t(3)
-                        s{run}.stats.mpcs(2).avg_0_t(4)
-                        s{run}.stats.mpcs(2).avg_0_0to4
+                        s{run}.stats.mpcs(2).avg_0_quarterly(1)
+                        s{run}.stats.mpcs(2).avg_0_quarterly(2)
+                        s{run}.stats.mpcs(2).avg_0_quarterly(3)
+                        s{run}.stats.mpcs(2).avg_0_quarterly(4)
+                        s{run}.stats.mpcs(2).avg_0_annual
                         NaN
-                        s{run}.stats.mpcs(3).avg_0_t(1)
-                        s{run}.stats.mpcs(3).avg_0_t(2)
-                        s{run}.stats.mpcs(3).avg_0_t(3)
-                        s{run}.stats.mpcs(3).avg_0_t(4)
-                        s{run}.stats.mpcs(3).avg_0_0to4
+                        s{run}.stats.mpcs(3).avg_0_quarterly(1)
+                        s{run}.stats.mpcs(3).avg_0_quarterly(2)
+                        s{run}.stats.mpcs(3).avg_0_quarterly(3)
+                        s{run}.stats.mpcs(3).avg_0_quarterly(4)
+                        s{run}.stats.mpcs(3).avg_0_annual
                         NaN
-                        s{run}.stats.mpcs(4).avg_0_t(1)
-                        s{run}.stats.mpcs(4).avg_0_t(2)
-                        s{run}.stats.mpcs(4).avg_0_t(3)
-                        s{run}.stats.mpcs(4).avg_0_t(4)
-                        s{run}.stats.mpcs(4).avg_0_0to4
+                        s{run}.stats.mpcs(4).avg_0_quarterly(1)
+                        s{run}.stats.mpcs(4).avg_0_quarterly(2)
+                        s{run}.stats.mpcs(4).avg_0_quarterly(3)
+                        s{run}.stats.mpcs(4).avg_0_quarterly(4)
+                        s{run}.stats.mpcs(4).avg_0_annual
                         NaN
-                        s{run}.stats.mpcs(5).avg_0_t(1)
-                        s{run}.stats.mpcs(5).avg_0_t(2)
-                        s{run}.stats.mpcs(5).avg_0_t(3)
-                        s{run}.stats.mpcs(5).avg_0_t(4)
-                        s{run}.stats.mpcs(5).avg_0_0to4
+                        s{run}.stats.mpcs(5).avg_0_quarterly(1)
+                        s{run}.stats.mpcs(5).avg_0_quarterly(2)
+                        s{run}.stats.mpcs(5).avg_0_quarterly(3)
+                        s{run}.stats.mpcs(5).avg_0_quarterly(4)
+                        s{run}.stats.mpcs(5).avg_0_annual
                         NaN
-                        s{run}.stats.mpcs(6).avg_0_t(1)
-                        s{run}.stats.mpcs(6).avg_0_t(2)
-                        s{run}.stats.mpcs(6).avg_0_t(3)
-                        s{run}.stats.mpcs(6).avg_0_t(4)
-                        s{run}.stats.mpcs(6).avg_0_0to4
+                        s{run}.stats.mpcs(6).avg_0_quarterly(1)
+                        s{run}.stats.mpcs(6).avg_0_quarterly(2)
+                        s{run}.stats.mpcs(6).avg_0_quarterly(3)
+                        s{run}.stats.mpcs(6).avg_0_quarterly(4)
+                        s{run}.stats.mpcs(6).avg_0_annual
                         NaN
-                        s{run}.stats.mpcs(5).avg_1_t
-                        s{run}.stats.mpcs(6).avg_1_t
-                        s{run}.stats.mpcs(5).avg_4_t(1)
-                        s{run}.stats.mpcs(6).avg_4_t(1)
+                        s{run}.stats.mpcs(5).avg_1_quarterly
+                        s{run}.stats.mpcs(6).avg_1_quarterly
+                        s{run}.stats.mpcs(5).avg_4_quarterly(1)
+                        s{run}.stats.mpcs(6).avg_4_quarterly(1)
                         ];
     T_array(:,run) = RHS;
 end

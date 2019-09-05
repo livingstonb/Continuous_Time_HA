@@ -83,6 +83,8 @@ classdef MPCSimulator < handle
 
 	    	if obj.simulationComplete
 	    		error('Simulations already run, create a new instance instead')
+	    	elseif obj.shockperiod > 0
+	    		fprintf('Simulating MPCs out of news of a shock in %i quarter(s)...\n',obj.shockperiod)
             end
             
             % discretize transition matrix

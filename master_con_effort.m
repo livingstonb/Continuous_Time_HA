@@ -34,8 +34,8 @@ warning('off','MATLAB:nearlySingularMatrix')
 runopts.Server      = 0; % sets param_index=slurm env var
 runopts.IterateRho  = 0;
 runopts.fast = 1; % use small grid for  debugging
-runopts.ComputeMPCS = 0;
-runopts.ComputeMPCS_news = 0;
+runopts.ComputeMPCS = 1;
+runopts.ComputeMPCS_news = 1;
 runopts.SimulateMPCS = 1;
 runopts.SimulateMPCS_news = 1;
 
@@ -45,7 +45,7 @@ runopts.param_index = 1;
 
 % Location of Continuous_Two_Asset directory
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
+runopts.localdir = '/Users/brianlivingston/Documents/GitHub/Continuous_Time_HA/';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE
@@ -67,7 +67,7 @@ runopts.suffix = num2str(runopts.param_index);
 % directory to save output
 runopts.savedir = [runopts.direc 'output/con_effort/'];
 % temp directory
-runopts.temp = [runopts.direc 'temp/con_effort/'];
+runopts.temp = [runopts.direc 'temp/con_effort/run' runopts.suffix '/'];
 
 addpath([runopts.direc 'code']);
 addpath([runopts.direc 'code/factorization_lib']);
@@ -94,3 +94,4 @@ tic
 toc
 
 delete([runopts.temp '*'])
+rmdir(runopts.temp)
