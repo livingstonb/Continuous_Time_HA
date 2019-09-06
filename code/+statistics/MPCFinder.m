@@ -236,7 +236,7 @@ classdef MPCFinder < handle
 
 	            if (shock < 0) && (sum(below_bgrid)>0) && (period==1)
 	                temp = reshape(obj.cum_con_shock{ishock}(:,period),reshape_vec);
-	                temp(below_bgrid,:,:,:) = con_period(1,:,:,:) + shock + obj.grids.b.vec(below_bgrid);
+	                temp(below_bgrid,:,:,:) = con_period(1,:,:,:) + shock + obj.grids.b.vec(below_bgrid) - obj.grids.b.vec(1);
 	                obj.cum_con_shock{ishock}(:,period) = temp(:);                      
 	            end
 	        end
