@@ -3,10 +3,12 @@ clearvars -except stats p
 %% This script is used to combine one or more variablesX.mat files. Produces a table.
 %% Set FROM_MATFILE = false if running right after model, true if running from .mat file
 FROM_MATFILE = true;
-codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
+codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/code';
 xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort/table.xlsx';
 % xlxpath = '';
 % codedir = '/Users/Brian-laptop/Documents/GitHub/Continuous_ConEffort/';
+
+addpath(codedir)
 
 if FROM_MATFILE
     % User must set basedir and date, where variablesX.mat files
