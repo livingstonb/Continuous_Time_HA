@@ -127,17 +127,6 @@ classdef Params < handle
             obj.ComputeMPCS_news = runopts.ComputeMPCS_news;
             obj.SimulateMPCS_news = runopts.SimulateMPCS_news;
             obj.tempdirec = runopts.temp;
-            
-            % Set default grid sizes
-            if isempty(obj.nb_pos) == 1
-                obj.nb_pos = obj.nb;
-            end
-            if isempty(obj.nb_pos_KFE) == 1
-                obj.nb_pos_KFE = obj.nb_KFE;
-            end
-            obj.nb_neg = obj.nb - obj.nb_pos;
-            obj.nb_neg_KFE = obj.nb_KFE - obj.nb_pos_KFE;
-
         end
 
         function update_ny(obj,ny)

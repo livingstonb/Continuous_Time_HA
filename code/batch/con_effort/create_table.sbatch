@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=ce_table
-#SBATCH --output=/home/livingstonb/GitHub/Continuous_ConEffort/output/create_table.out
-#SBATCH --error=/home/livingstonb/GitHub/Continuous_ConEffort/output/create_table.err
+#SBATCH --output=/home/livingstonb/GitHub/Continuous_Time_HA/output/create_table.out
+#SBATCH --error=/home/livingstonb/GitHub/Continuous_Time_HA/output/create_table.err
 #SBATCH --partition=broadwl
 #SBATCH --time=00:20:00
 #SBATCH --nodes=1
@@ -10,4 +10,4 @@
 
 module load matlab
 
-matlab -nodisplay < "/home/livingstonb/GitHub/Continuous_ConEffort/code/batch/create_table.m"
+matlab -nodisplay < "/home/livingstonb/GitHub/Continuous_Time_HA/code/batch/con_effort/create_table.m"

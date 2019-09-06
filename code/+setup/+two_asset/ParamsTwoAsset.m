@@ -77,6 +77,17 @@ classdef ParamsTwoAsset < setup.Params
             	obj.T_mpcsim = 1e3;
             end
             
+            % Set default grid sizes
+            if isempty(obj.nb_pos) == 1
+                obj.nb_pos = obj.nb;
+            end
+            if isempty(obj.nb_pos_KFE) == 1
+                obj.nb_pos_KFE = obj.nb_KFE;
+            end
+            
+            obj.nb_neg = obj.nb - obj.nb_pos;
+            obj.nb_neg_KFE = obj.nb_KFE - obj.nb_pos_KFE;
+            
             % check for other heterogeneity
             if numel(obj.rho_grid) > 1
                 obj.nz = numel(obj.rho_grid);

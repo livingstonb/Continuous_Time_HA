@@ -16,7 +16,7 @@ classdef MPCSimulatorTwoAsset < statistics.MPCSimulator
 		function obj = MPCSimulatorTwoAsset(...
 			p,income,grids,policies,shocks,nperiods)
 			obj = obj@statistics.MPCSimulator(...
-				p,income,grids,policies,shocks,nperiods,'a');
+				p,income,grids,policies,shocks,0,'a');
 
 			if income.ny > 1
                 interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.income.y.vec};

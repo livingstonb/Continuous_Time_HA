@@ -131,19 +131,20 @@ classdef MPCFinder < handle
 		function update_cumcon(obj,KFE,period)
 			% update cumulative consumption using the Feynman-Kac
 			% iterative procedure
+
+			cumcon_t = obj.cumcon(:,period);
+			cumcon_t_k = reshape(cumcon_t,[],obj.income.ny);
+
+			if strcmp(obj.dim2Identity,'a')
+				reshape_vec = [obj.p.nb_KFE*obj.dim2 obj.p.nz obj.income.ny];
+				cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
+			elseif strcmp(obj.dim2Identity,'c')
+				reshape_vec = [obj.p.nb_KFE obj.dim2 obj.income.ny];
+				cumcon_t_c_k = reshape(cumcon_t_k,reshape_vec);
+			end
+
 			for k = 1:obj.income.ny
-				cumcon_t = obj.cumcon(:,period);
-				cumcon_t_k = reshape(cumcon_t,[],obj.income.ny);
-
-				if strcmp(obj.dim2Identity,'a')
-					reshape_vec = [obj.p.nb_KFE*obj.dim2 obj.p.nz obj.income.ny];
-					cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
-				elseif strcmp(obj.dim2Identity,'c')
-					reshape_vec = [obj.p.nb_KFE obj.dim2 obj.income.ny];
-					cumcon_t_c_k = reshape(cumcon_t_k,reshape_vec);
-				end
-
-                ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* reshape(cumcon_t,[],obj.income.ny),2);
+                ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
 
                 if (obj.p.Bequests == 1) && (obj.ResetIncomeUponDeath == 1)
                 	deathin_cc_k = obj.p.deathrate * sum(obj.income.ydist' .* cumcon_t_k,2);
@@ -190,19 +191,19 @@ classdef MPCFinder < handle
 	        bgrid_mpc = repmat(bgrid_mpc_vec,dim,1);
 
 	        % grids for interpolation
-	        interp_obj.grids = {obj.grids.b.vec};
+	        interp_grids = {obj.grids.b.vec};
 	        if strcmp(obj.dim2Identity,'a')
-	        	interp_obj.grids{end+1} = obj.grids.a.vec;
+	        	interp_grids{end+1} = obj.grids.a.vec;
 	        elseif strcmp(obj.dim2Identity,'c')
-	        	interp_obj.grids{end+1} = obj.grids.c.vec;
+	        	interp_grids{end+1} = obj.grids.c.vec;
 	        end
 
 	        if obj.income.ny > 1
-	        	interp_obj.grids{end+1} = obj.income.y.vec;
+	        	interp_grids{end+1} = obj.income.y.vec;
 	        end
 
 	        if obj.p.nz > 1
-	        	interp_obj.grids{end+1} = obj.p.rhos';
+	        	interp_grids{end+1} = obj.p.rhos';
 	        end
 
 	        if strcmp(obj.dim2Identity,'a')
@@ -220,12 +221,12 @@ classdef MPCFinder < handle
 				% cumulative consumption in 'period'
 	            con_period = reshape(obj.cum_con_baseline(:,period),reshape_vec);
 	            con_period = squeeze(con_period);
-	            mpcinterp = griddedInterpolant(interp_obj.grids,con_period,'linear');
+	            mpcinterp = griddedInterpolant(interp_grids,con_period,'linear');
 	            con_period = reshape(con_period,reshape_vec);
 
 	            if (obj.income.ny > 1) && (obj.p.nz > 1)
 	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.income.y.matrixKFE(:),heterog_mpcs);
-	            elseif obj.p.nz > 1
+	            elseif (obj.income.ny==1) && (obj.p.nz > 1)
 	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,heterog_mpcs);
 	            elseif obj.income.ny > 1
 	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.income.y.matrixKFE(:));

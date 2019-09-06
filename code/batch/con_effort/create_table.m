@@ -13,7 +13,7 @@ if FROM_MATFILE
     % are stored in <basedir>/<date>
 
     %% Select directory of mat files
-    matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort';
+    matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort/';
     % matdir = '/Users/Brian-laptop/Documents/midway2_output/8_27_19/';
 
     ind = 0;

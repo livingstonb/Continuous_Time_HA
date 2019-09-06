@@ -6,7 +6,7 @@ clearvars -except stats p
 FROM_MATFILE = true;
 
 %% Select directories
-matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/two_asset';
+matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/two_asset/';
 % matdir = '/media/hdd/Other/midway2_output/continuous_time';
 % matdir = '/Users/brianlivingston/Documents/midway2_output/';
 % matdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/output/two_asset/';

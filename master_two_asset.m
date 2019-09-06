@@ -31,10 +31,10 @@ warning('off','MATLAB:nearlySingularMatrix')
 % -------------------------------------------------------------------------
 
 runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
-runopts.IterateRho = 0; % if set to zero, the parameter 'rho' is used
-runopts.fast = 1; % use small grid for debugging
+runopts.IterateRho = 1; % if set to zero, the parameter 'rho' is used
+runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'get_params'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests'
-runopts.ComputeMPCS = 0;
+runopts.ComputeMPCS = 1;
 runopts.SimulateMPCS = 0; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = 0; % MPCs out of news, requires ComputeMPCS = 1
 runopts.SimulateMPCS_news = 0; % NOT CODED

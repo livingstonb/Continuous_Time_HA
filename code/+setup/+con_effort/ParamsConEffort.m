@@ -42,6 +42,14 @@ classdef ParamsConEffort < setup.Params
             	obj.n_mpcsim = 100;
             	obj.T_mpcsim = 1e3;
             end
+            
+            % Set default grid sizes
+            if isempty(obj.nb_pos) == 1
+                obj.nb_pos = obj.nb;
+            end
+            if isempty(obj.nb_pos_KFE) == 1
+                obj.nb_pos_KFE = obj.nb_KFE;
+            end
         end
 
         function obj = reset_rho(obj,newrho)

@@ -253,8 +253,8 @@ classdef TransitionalDynSolver < handle
 		end
 
 		function update_cum_con(obj,period,FKmat)
+            cumcon_t = obj.cumcon(:,period);
 			for k = 1:obj.income.ny
-                cumcon_t = obj.cumcon(:,period);
                 ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) ...
                     .* reshape(cumcon_t,[],obj.income.ny),2);
 
