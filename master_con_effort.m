@@ -34,9 +34,9 @@ warning('off','MATLAB:nearlySingularMatrix')
 runopts.Server      = 0; % sets param_index=slurm env var
 runopts.IterateRho  = 0;
 runopts.fast = 1; % use small grid for  debugging
-runopts.ComputeMPCS = 0;
-runopts.ComputeMPCS_news = 0;
-runopts.SimulateMPCS = 0;
+runopts.ComputeMPCS = 1;
+runopts.ComputeMPCS_news = 1;
+runopts.SimulateMPCS = 1;
 runopts.SimulateMPCS_news = 1;
 
 runopts.params_file = 'get_params2';
@@ -56,6 +56,7 @@ runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
 if runopts.Server == 0
 	runopts.direc = runopts.localdir;
 	runopts.temp = [runopts.direc '/temp/con_effort/'];
+    runopts.suffix = num2str(runopts.param_index);
 else
 	runopts.direc = runopts.serverdir;
 	runopts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));

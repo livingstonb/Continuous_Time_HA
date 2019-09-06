@@ -2,9 +2,10 @@ clearvars -except stats p
 
 %% This script is used to combine one or more variablesX.mat files. Produces a table.
 %% Set FROM_MATFILE = false if running right after model, true if running from .mat file
-FROM_MATFILE = false;
+FROM_MATFILE = true;
 codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort/table.xlsx';
+% xlxpath = '';
 % codedir = '/Users/Brian-laptop/Documents/GitHub/Continuous_ConEffort/';
 
 if FROM_MATFILE
@@ -16,6 +17,7 @@ if FROM_MATFILE
     % matdir = '/Users/Brian-laptop/Documents/midway2_output/8_27_19/';
 
     ind = 0;
+    s = struct();
     for run = 1:999
         runstr = num2str(run);
         fpath = [matdir,'output_',runstr,'.mat'];
@@ -23,293 +25,173 @@ if FROM_MATFILE
             ind = ind+1;
             
             % to save memory
-            s{ind} = load(fpath);
-            s{ind}.grd = [];
-            s{ind}.grdKFE = [];
-            s{ind}.KFE = [];
+            s(ind) = load(fpath);
+            s(ind).grd = [];
+            s(ind).grdKFE = [];
+            s(ind).KFE = [];
         else
             continue
         end
     end
     
 else
-    s = cell(1);
-    s{1}.p = p;
-    s{1}.stats = stats;
+    s = struct();
+    s(1).p = p;
+    s(1).stats = stats;
 end
 
-n = numel(s);
+n = numel(s);      
+nans = num2cell(NaN(1,n));        
 
-rownames = {'Name'
-            'Definition of h'
-            'Index'
-            'chi0, coeff on |h|'
-            'chi1, coeff on |h|^chi2'
-            'chi2'
-            'penalty1, coeff on |a|^penalty2 for a<0'
-            'penalty2'
-            'Rho'
-            'Beta (Annualized)'
-            'r'
-            'Mean Wealth'
-            'Wealth Top 10% Share'
-            'Wealth Top 1% Share'
-            'Gini (Assets)'
-            'Fraction of HHs with a < 0'
-            '____WEALTH CONSTRAINED'
-            'Wealth == 0'
-            'Wealth <= 0.5% Mean Annual Income'
-            'Wealth <= 1% Mean Annual Income'
-            'Wealth <= 2% * Mean Annual Income'
-            'Wealth <= 5% * Mean Annual Income'
-            'Wealth <= 10% * Mean Annual Income'
-            'Wealth <= 15% * Mean Annual Income'
-            'Wealth <= (1/6) * Own Quarterly Income'
-            'Wealth <= (1/12) * Own Quarterly Income'
-            '____WEALTH PERCENTILES'
-            '10th'
-            '25th'
-            '50th'
-            '90th'
-            '99th'
-            '99.9th'
-            '____CONSUMPTION ADJUSTMENT'
-            'Fraction with h = 0'
-            'Fraction with h > 0'
-            'Fraction with h < 0'
-            'Mean |h|'
-            'Mean |h| condl on |h|>0'
-            '____CONSUMPTION DISTRIBUTION'
-            'c, 10th percentile'
-            'c, 95th percentile'
-            'c, 99th percentile'
-            'c, 99.9th percentile'
-            '____AVG SIM MPCs OUT OF -0.01 MEAN ANNUAL INC'
-            'QUARTER 1 SIM MPC, shock = -0.01'
-            'QUARTER 2 SIM MPC, shock = -0.01'
-            'QUARTER 3 SIM MPC, shock = -0.01'
-            'QUARTER 4 SIM MPC, shock = -0.01'
-            'ANNUAL SIM MPC, shock = -0.01'
-            '____AVG SIM MPCs OUT OF -0.1 MEAN ANNUAL INC'
-            'QUARTER 1 SIM MPC, shock = -0.1'
-            'QUARTER 2 SIM MPC, shock = -0.1'
-            'QUARTER 3 SIM MPC, shock = -0.1'
-            'QUARTER 4 SIM MPC, shock = -0.1'
-            'ANNUAL SIM MPC, shock = -0.1'
-            '____AVG SIM MPCs OUT OF 0.01 MEAN ANNUAL INC'
-            'QUARTER 1 SIM MPC, shock = 0.01'
-            'QUARTER 2 SIM MPC, shock = 0.01'
-            'QUARTER 3 SIM MPC, shock = 0.01'
-            'QUARTER 4 SIM MPC, shock = 0.01'
-            'ANNUAL SIM MPC, shock = 0.01'
-            '____AVG SIM MPCs OUT OF 0.1 MEAN ANNUAL INC'
-            'QUARTER 1 SIM MPC, shock = 0.1'
-            'QUARTER 2 SIM MPC, shock = 0.1'
-            'QUARTER 3 SIM MPC, shock = 0.1'
-            'QUARTER 4 SIM MPC, shock = 0.1'
-            'ANNUAL SIM MPC, shock = 0.1'
-            '____AVG SIM MPCs OUT OF 0.01, CONDL ON MPC > 0'
-            'QUARTER 1 SIM MPC | MPC > 0, shock = 0.01'
-            'QUARTER 2 SIM MPC | MPC > 0, shock = 0.01'
-            'QUARTER 3 SIM MPC | MPC > 0, shock = 0.01'
-            'QUARTER 4 SIM MPC | MPC > 0, shock = 0.01'
-            '____AVG SIM MPCs OUT OF 0.1, CONDL ON MPC > 0'
-            'QUARTER 1 SIM MPC | MPC > 0, shock = 0.1'
-            'QUARTER 2 SIM MPC | MPC > 0, shock = 0.1'
-            'QUARTER 3 SIM MPC | MPC > 0, shock = 0.1'
-            'QUARTER 4 SIM MPC | MPC > 0, shock = 0.1'
-            '____RESPONSE OUT OF IMMEDIATE SHOCK > 0, SHOCK = 0.01'
-            'FRACTION w/ QUARTER 1 MPC > 0, shock=0.01'
-            'FRACTION w/ QUARTER 2 MPC > 0, shock=0.01'
-            'FRACTION w/ QUARTER 3 MPC > 0, shock=0.01'
-            'FRACTION w/ QUARTER 4 MPC > 0, shock=0.01'
-            'FRACTION w/ ANNUAL MPC > 0, shock=0.01'
-            '____RESPONSE OUT OF IMMEDIATE SHOCK > 0, SHOCK = 0.1'
-            'FRACTION w/ QUARTER 1 MPC > 0, shock=0.1'
-            'FRACTION w/ QUARTER 2 MPC > 0, shock=0.1'
-            'FRACTION w/ QUARTER 3 MPC > 0, shock=0.1'
-            'FRACTION w/ QUARTER 4 MPC > 0, shock=0.1'
-            'FRACTION w/ ANNUAL MPC > 0, shock=0.1'
-            '____AVG SIM MPCs OUT OF NEWS (need to be tested), 0.01 SHOCK'
-            'QUARTER 1 MPC, SHOCK NEXT QUARTER, shock = 0.01'
-            'QUARTER 1 MPC, SHOCK NEXT YEAR, shock = 0.01'
-            'QUARTER 2 MPC, SHOCK NEXT YEAR, shock = 0.01'
-            'QUARTER 3 MPC, SHOCK NEXT YEAR, shock = 0.01'
-            'QUARTER 4 MPC, SHOCK NEXT YEAR, shock = 0.01'
-            'ANNUAL MPC, SHOCK NEXT YEAR, shock = 0.01'
-            '____AVG SIM MPCs OUT OF NEWS (need to be tested), 0.1 SHOCK'
-            'QUARTER 1 MPC, SHOCK NEXT QUARTER, shock = 0.1'
-            'QUARTER 1 MPC, SHOCK NEXT YEAR, shock = 0.1'
-            'QUARTER 2 MPC, SHOCK NEXT YEAR, shock = 0.1'
-            'QUARTER 3 MPC, SHOCK NEXT YEAR, shock = 0.1'
-            'QUARTER 4 MPC, SHOCK NEXT YEAR, shock = 0.1'
-            'ANNUAL MPC, SHOCK NEXT YEAR, shock = 0.1'
-            '____AVG FK MPC OUT OF -1e-5 * MEAN ANNUAL INCOME'
-            'QUARTER 1 MPC, shock = -1e-5'
-            'QUARTER 2 MPC, shock = -1e-5'
-            'QUARTER 3 MPC shock = -1e-5'
-            'QUARTER 4 MPC shock = -1e-5'
-            'ANNUAL FK MPC, shock = -1e-5'
-            '____AVG FK MPC OUT OF -0.01 * MEAN ANNUAL INCOME'
-            'QUARTER 1 MPC, shock = -0.01'
-            'QUARTER 2 MPC, shock = -0.01'
-            'QUARTER 3 MPC shock = -0.01'
-            'QUARTER 4 MPC shock = -0.01'
-            'ANNUAL MPC, shock = -0.01'
-            '____AVG FK MPC OUT OF -0.1 * MEAN ANNUAL INCOME'
-            'QUARTER 1 MPC, shock = -0.1'
-            'QUARTER 2 MPC, shock = -0.1'
-            'QUARTER 3 MPC shock = -0.1'
-            'QUARTER 4 MPC shock = -0.1'
-            'ANNUAL MPC, shock = -0.1'
-            '____AVG FK MPC OUT OF 1e-5 * MEAN ANNUAL INCOME'
-            'QUARTER 1 MPC, shock = 1e-5'
-            'QUARTER 2 MPC, shock = 1e-5'
-            'QUARTER 3 MPC shock = 1-5'
-            'QUARTER 4 MPC shock = 1e-5'
-            'ANNUAL MPC, shock = 1e-5'
-            '____AVG FK MPC OUT OF 0.01 * MEAN ANNUAL INCOME'
-            'QUARTER 1 MPC, shock = 0.01'
-            'QUARTER 2 MPC, shock = 0.01'
-            'QUARTER 3 MPC shock = 0.01'
-            'QUARTER 4 MPC shock = 0.01'
-            'ANNUAL MPC, shock = 0.01'
-            '____AVG FK MPC OUT OF 0.1 * MEAN ANNUAL INCOME'
-            'QUARTER 1 MPC, shock = 0.1'
-            'QUARTER 2 MPC, shock = 0.1'
-            'QUARTER 3 MPC shock = 0.1'
-            'QUARTER 4 MPC shock = 0.1'
-            'ANNUAL MPC, shock = 0.1'
-            '____AVG FK QUARTERLY MPC OUT OF NEWS'
-            'QUARTERLY MPC, shock = 0.01 next quarter'
-            'QUARTERLY MPC, shock = 0.1 next quarter'
-            'QUARTERLY MPC, shock = 0.01 next year'
-            'QUARTERLY MPC, shock = 0.1 next year'
-            };
-        
-colnames = {};
-hdefs = {};
+tableRows = 		[{'Name'}, aux.get_all_values(s,'p',1,'name')
+			        {'Definition of h'}, aux.get_all_values(s,'p',1,'hdef')
+			        {'Index'}, 1:n
+			        {'chi0, coeff on |h|'}, aux.get_all_values(s,'p',1,'chi0')
+			        {'chi1, coeff on |h|^chi2'}, aux.get_all_values(s,'p',1,'chi1')
+			        {'chi2'}, aux.get_all_values(s,'p',1,'chi2')
+			        {'penalty1, coeff on |a|^penalty2 for a<0'}, aux.get_all_values(s,'p',1,'penalty1')
+			        {'penalty2'}, aux.get_all_values(s,'p',1,'penalty2')
+			        {'Rho'}, aux.get_all_values(s,'p',1,'rho')
+			        {'Beta (Annualized)'}, aux.get_all_values(s,'stats',1,'beta_annualized')
+			        {'r'}, aux.get_all_values(s,'p',1,'r_b')
+			        {'Mean Wealth'}, aux.get_all_values(s,'stats',1,'wealth')
+			        {'Wealth Top 10% Share'}, aux.get_all_values(s,'stats',1,'top10share')
+			        {'Wealth Top 1% Share'}, aux.get_all_values(s,'stats',1,'top1share')
+			        {'Gini (Assets)'}, aux.get_all_values(s,'stats',1,'wgini')
+			        {'Fraction of HHs with a < 0'}, aux.get_all_values(s,'stats',1,'anegative')
+			        {'____WEALTH CONSTRAINED'}, nans
+			        {'Wealth == 0'}, aux.get_all_values(s,'stats',1,'constrained',1)
+			        {'Wealth <= 0.5% Mean Annual Income'}, aux.get_all_values(s,'stats',1,'constrained',2)
+			        {'Wealth <= 1% Mean Annual Income'}, aux.get_all_values(s,'stats',1,'constrained',3)
+			        {'Wealth <= 2% * Mean Annual Income'}, aux.get_all_values(s,'stats',1,'constrained',4)
+			        {'Wealth <= 5% * Mean Annual Income'}, aux.get_all_values(s,'stats',1,'constrained',5)
+			        {'Wealth <= 10% * Mean Annual Income'}, aux.get_all_values(s,'stats',1,'constrained',6)
+			        {'Wealth <= 15% * Mean Annual Income'}, aux.get_all_values(s,'stats',1,'constrained',7)
+			        {'Wealth <= (1/6) * Own Quarterly Income'}, aux.get_all_values(s,'stats',1,'HtM_one_sixth_Q_wealth')
+			        {'Wealth <= (1/12) * Own Quarterly Income'}, aux.get_all_values(s,'stats',1,'HtM_one_twelfth_Q_wealth')
+			        {'____WEALTH PERCENTILES'}, nans
+			        {'10th'}, aux.get_all_values(s,'stats',1,'wpercentile',1)
+			        {'25th'}, aux.get_all_values(s,'stats',1,'wpercentile',2)
+			        {'50th'}, aux.get_all_values(s,'stats',1,'wpercentile',3)
+			        {'90th'}, aux.get_all_values(s,'stats',1,'wpercentile',4)
+			        {'99th'}, aux.get_all_values(s,'stats',1,'wpercentile',5)
+			        {'99.9th'}, aux.get_all_values(s,'stats',1,'wpercentile',6)
+			        {'____CONSUMPTION ADJUSTMENT'}, nans
+			        {'Fraction with h = 0'}, aux.get_all_values(s,'stats',1,'h0')
+			        {'Fraction with h > 0'}, aux.get_all_values(s,'stats',1,'hpos')
+			        {'Fraction with h < 0'}, aux.get_all_values(s,'stats',1,'hneg')
+			        {'Mean |h|'}, aux.get_all_values(s,'stats',1,'mean_absh_total')
+			        {'Mean |h| condl on |h|>0'}, aux.get_all_values(s,'stats',1,'mean_absh_ofchangers')
+			        {'____CONSUMPTION DISTRIBUTION'}, nans
+			        {'c, 10th percentile'}, aux.get_all_values(s,'stats',1,'c10')
+			        {'c, 95th percentile'}, aux.get_all_values(s,'stats',1,'c95')
+			        {'c, 99th percentile'}, aux.get_all_values(s,'stats',1,'c99')
+			        {'c, 99.9th percentile'}, aux.get_all_values(s,'stats',1,'c999')
+			        {'____AVG SIM MPCs OUT OF -0.01 MEAN ANNUAL INC'}, nans
+			        {'QUARTER 1 SIM MPC, shock = -0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'avg_0_quarterly',1)
+			        {'QUARTER 2 SIM MPC, shock = -0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'avg_0_quarterly',2)
+			        {'QUARTER 3 SIM MPC, shock = -0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'avg_0_quarterly',3)
+			        {'QUARTER 4 SIM MPC, shock = -0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'avg_0_quarterly',4)
+			        {'ANNUAL SIM MPC, shock = -0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'avg_0_annual')
+			        {'____AVG SIM MPCs OUT OF -0.1 MEAN ANNUAL INC'}, nans
+			        {'QUARTER 1 SIM MPC, shock = -0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',3,'avg_0_quarterly',1)
+			        {'QUARTER 2 SIM MPC, shock = -0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',3,'avg_0_quarterly',2)
+			        {'QUARTER 3 SIM MPC, shock = -0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',3,'avg_0_quarterly',3)
+			        {'QUARTER 4 SIM MPC, shock = -0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',3,'avg_0_quarterly',4)
+			        {'ANNUAL SIM MPC, shock = -0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',3,'avg_0_annual')
+			        {'____AVG SIM MPCs OUT OF 0.01 MEAN ANNUAL INC'}, nans
+			        {'QUARTER 1 SIM MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',1)
+			        {'QUARTER 2 SIM MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',2)
+			        {'QUARTER 3 SIM MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',3)
+			        {'QUARTER 4 SIM MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',4)
+			        {'ANNUAL SIM MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_annual')
+			        {'____AVG SIM MPCs OUT OF 0.1 MEAN ANNUAL INC'}, nans
+			        {'QUARTER 1 SIM MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',1)
+			        {'QUARTER 2 SIM MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',2)
+			        {'QUARTER 3 SIM MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',3)
+			        {'QUARTER 4 SIM MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',4)
+			        {'ANNUAL SIM MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',1)
+			        {'____AVG SIM MPCs OUT OF 0.01, CONDL ON MPC > 0'}, nans
+			        {'QUARTER 1 SIM MPC | MPC > 0, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly_pos',1)
+			        {'QUARTER 2 SIM MPC | MPC > 0, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly_pos',2)
+			        {'QUARTER 3 SIM MPC | MPC > 0, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly_pos',3)
+			        {'QUARTER 4 SIM MPC | MPC > 0, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly_pos',4)
+			        {'____AVG SIM MPCs OUT OF 0.1, CONDL ON MPC > 0'}, nans
+			        {'QUARTER 1 SIM MPC | MPC > 0, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly_pos',1)
+			        {'QUARTER 2 SIM MPC | MPC > 0, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly_pos',2)
+			        {'QUARTER 3 SIM MPC | MPC > 0, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly_pos',3)
+			        {'QUARTER 4 SIM MPC | MPC > 0, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly_pos',4)
+			        {'____RESPONSE OUT OF IMMEDIATE SHOCK > 0, SHOCK = 0.01'}, nans
+			        {'FRACTION w/ QUARTER 1 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',1)
+			        {'FRACTION w/ QUARTER 2 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',2)
+			        {'FRACTION w/ QUARTER 3 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',3)
+			        {'FRACTION w/ QUARTER 4 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',4)
+			        {'FRACTION w/ ANNUAL MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_annual')
+			        {'____RESPONSE OUT OF IMMEDIATE SHOCK > 0, SHOCK = 0.1'}, nans
+			        {'FRACTION w/ QUARTER 1 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',1)
+			        {'FRACTION w/ QUARTER 2 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',2)
+			        {'FRACTION w/ QUARTER 3 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',3)
+			        {'FRACTION w/ QUARTER 4 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',4)
+			        {'FRACTION w/ ANNUAL MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_annual')
+			        {'____AVG SIM MPCs OUT OF NEWS (need to be tested), 0.01 SHOCK'}, nans
+			        {'QUARTER 1 MPC, SHOCK NEXT QUARTER, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_1_quarterly',1)
+			        {'QUARTER 1 MPC, SHOCK NEXT YEAR, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_4_quarterly',1)
+			        {'QUARTER 2 MPC, SHOCK NEXT YEAR, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_4_quarterly',2)
+			        {'QUARTER 3 MPC, SHOCK NEXT YEAR, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_4_quarterly',3)
+			        {'QUARTER 4 MPC, SHOCK NEXT YEAR, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_4_quarterly',4)
+			        {'ANNUAL MPC, SHOCK NEXT YEAR, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_4_annual')
+			        {'____AVG SIM MPCs OUT OF NEWS (need to be tested), 0.1 SHOCK'}, nans
+			        {'QUARTER 1 MPC, SHOCK NEXT QUARTER, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_1_quarterly',1)
+			        {'QUARTER 1 MPC, SHOCK NEXT YEAR, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_4_quarterly',1)
+			        {'QUARTER 2 MPC, SHOCK NEXT YEAR, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_4_quarterly',2)
+			        {'QUARTER 3 MPC, SHOCK NEXT YEAR, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_4_quarterly',3)
+			        {'QUARTER 4 MPC, SHOCK NEXT YEAR, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_4_quarterly',4)
+			        {'ANNUAL MPC, SHOCK NEXT YEAR, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_4_annual')
+			        {'____AVG FK MPC OUT OF -1e-5 * MEAN ANNUAL INCOME'}, nans
+			        {'QUARTER 1 MPC, shock = -1e-5'}, aux.get_all_values(s,'stats',1,'mpcs',1,'avg_0_quarterly',1)
+			        {'QUARTER 2 MPC, shock = -1e-5'}, aux.get_all_values(s,'stats',1,'mpcs',1,'avg_0_quarterly',2)
+			        {'QUARTER 3 MPC, shock = -1e-5'}, aux.get_all_values(s,'stats',1,'mpcs',1,'avg_0_quarterly',3)
+			        {'QUARTER 4 MPC, shock = -1e-5'}, aux.get_all_values(s,'stats',1,'mpcs',1,'avg_0_quarterly',4)
+			        {'ANNUAL FK MPC, shock = -1e-5'}, aux.get_all_values(s,'stats',1,'mpcs',1,'avg_0_annual')
+			        {'____AVG FK MPC OUT OF -0.01 * MEAN ANNUAL INCOME'}, nans
+			        {'QUARTER 1 MPC, shock = -0.01'}, aux.get_all_values(s,'stats',1,'mpcs',2,'avg_0_quarterly',1)
+			        {'QUARTER 2 MPC, shock = -0.01'}, aux.get_all_values(s,'stats',1,'mpcs',2,'avg_0_quarterly',2)
+			        {'QUARTER 3 MPC, shock = -0.01'}, aux.get_all_values(s,'stats',1,'mpcs',2,'avg_0_quarterly',3)
+			        {'QUARTER 4 MPC, shock = -0.01'}, aux.get_all_values(s,'stats',1,'mpcs',2,'avg_0_quarterly',4)
+			        {'ANNUAL MPC, shock = -0.01'}, aux.get_all_values(s,'stats',1,'mpcs',2,'avg_0_annual')
+			        {'____AVG FK MPC OUT OF -0.1 * MEAN ANNUAL INCOME'}, nans
+			        {'QUARTER 1 MPC, shock = -0.1'}, aux.get_all_values(s,'stats',1,'mpcs',3,'avg_0_quarterly',1)
+			        {'QUARTER 2 MPC, shock = -0.1'}, aux.get_all_values(s,'stats',1,'mpcs',3,'avg_0_quarterly',2)
+			        {'QUARTER 3 MPC, shock = -0.1'}, aux.get_all_values(s,'stats',1,'mpcs',3,'avg_0_quarterly',3)
+			        {'QUARTER 4 MPC, shock = -0.1'}, aux.get_all_values(s,'stats',1,'mpcs',3,'avg_0_quarterly',4)
+			        {'ANNUAL MPC, shock = -0.1'}, aux.get_all_values(s,'stats',1,'mpcs',3,'avg_0_annual')
+			        {'____AVG FK MPC OUT OF 1e-5 * MEAN ANNUAL INCOME'}, nans
+			        {'QUARTER 1 MPC, shock = 1e-5'}, aux.get_all_values(s,'stats',1,'mpcs',4,'avg_0_quarterly',1)
+			        {'QUARTER 2 MPC, shock = 1e-5'}, aux.get_all_values(s,'stats',1,'mpcs',4,'avg_0_quarterly',2)
+			        {'QUARTER 3 MPC, shock = 1e-5'}, aux.get_all_values(s,'stats',1,'mpcs',4,'avg_0_quarterly',3)
+			        {'QUARTER 4 MPC, shock = 1e-5'}, aux.get_all_values(s,'stats',1,'mpcs',4,'avg_0_quarterly',4)
+			        {'ANNUAL MPC, shock = 1e-5'}, aux.get_all_values(s,'stats',1,'mpcs',4,'avg_0_annual')
+			        {'____AVG FK MPC OUT OF 0.01 * MEAN ANNUAL INCOME'}, nans
+			        {'QUARTER 1 MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_0_quarterly',1)
+			        {'QUARTER 2 MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_0_quarterly',2)
+			        {'QUARTER 3 MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_0_quarterly',3)
+			        {'QUARTER 4 MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_0_quarterly',4)
+			        {'ANNUAL MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_0_annual')
+			        {'____AVG FK MPC OUT OF 0.1 * MEAN ANNUAL INCOME'}, nans
+			        {'QUARTER 1 MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_0_quarterly',1)
+			        {'QUARTER 2 MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_0_quarterly',2)
+			        {'QUARTER 3 MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_0_quarterly',3)
+			        {'QUARTER 4 MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_0_quarterly',4)
+			        {'ANNUAL MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_0_annual')
+			        {'____AVG FK QUARTERLY MPC OUT OF NEWS'}, nans
+			        {'QUARTERLY MPC, shock = 0.01 next quarter'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_1_quarterly',1)
+			        {'QUARTERLY MPC, shock = 0.1 next quarter'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_1_quarterly',1)
+			        {'QUARTERLY MPC, shock = 0.01 next year'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_4_quarterly',1)
+			        {'QUARTERLY MPC, shock = 0.1 next year'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_4_quarterly',1)];
 
-T_array = NaN(numel(rownames)-2,n);
-for run = 1:n
-    colnames{end+1} = s{run}.p.name;
-    hdefs{end+1} = s{run}.p.hdef;
-    RHS =  [            run
-                        s{run}.p.chi0
-                        s{run}.p.chi1
-                        s{run}.p.chi2
-                        s{run}.p.penalty1
-                        s{run}.p.penalty2
-                        s{run}.stats.rho
-                        s{run}.stats.beta_annualized
-                        s{run}.p.r_b
-                        s{run}.stats.wealth
-                        s{run}.stats.top10share
-                        s{run}.stats.top1share
-                        s{run}.stats.wgini
-                        s{run}.stats.anegative
-                        NaN
-                        s{run}.stats.constrained(:)
-                        s{run}.stats.HtM_one_sixth_Q_wealth
-                        s{run}.stats.HtM_one_twelfth_Q_wealth
-                        NaN
-                        s{run}.stats.wpercentile(:)
-            			NaN
-            			s{run}.stats.h0
-            			s{run}.stats.hpos
-            			s{run}.stats.hneg
-            			s{run}.stats.mean_absh_total
-            			s{run}.stats.mean_absh_ofchangers
-                        NaN
-                        s{run}.stats.c10
-                        s{run}.stats.c95
-                        s{run}.stats.c99
-                        s{run}.stats.c999
-                        NaN
-                        s{run}.stats.sim_mpcs(2).avg_0_quarterly(:)
-                        s{run}.stats.sim_mpcs(2).avg_0_annual
-                        NaN
-                        s{run}.stats.sim_mpcs(3).avg_0_quarterly(:)
-                        s{run}.stats.sim_mpcs(3).avg_0_annual
-                        NaN
-                        s{run}.stats.sim_mpcs(5).avg_0_quarterly(:)
-                        s{run}.stats.sim_mpcs(5).avg_0_annual
-                        NaN
-                        s{run}.stats.sim_mpcs(6).avg_0_quarterly(:)
-                        s{run}.stats.sim_mpcs(6).avg_0_annual
-                        NaN
-                        s{run}.stats.sim_mpcs(5).avg_0_quarterly_pos(:)
-                        NaN
-                        s{run}.stats.sim_mpcs(6).avg_0_quarterly_pos(:)
-                        NaN
-                        s{run}.stats.sim_mpcs(5).responders_0_quarterly(:)
-                        s{run}.stats.sim_mpcs(5).responders_0_annual
-                        NaN
-                        s{run}.stats.sim_mpcs(6).responders_0_quarterly(:)
-                        s{run}.stats.sim_mpcs(6).responders_0_annual
-                        NaN
-                        s{run}.stats.sim_mpcs(5).avg_1_quarterly
-                        s{run}.stats.sim_mpcs(5).avg_4_quarterly(:)
-                        s{run}.stats.sim_mpcs(5).avg_4_annual
-                        NaN
-                        s{run}.stats.sim_mpcs(6).avg_1_quarterly
-                        s{run}.stats.sim_mpcs(6).avg_4_quarterly(:)
-                        s{run}.stats.sim_mpcs(6).avg_4_annual
-                        NaN
-                        s{run}.stats.mpcs(1).avg_0_quarterly(1)
-                        s{run}.stats.mpcs(1).avg_0_quarterly(2)
-                        s{run}.stats.mpcs(1).avg_0_quarterly(3)
-                        s{run}.stats.mpcs(1).avg_0_quarterly(4)
-                        s{run}.stats.mpcs(1).avg_0_annual
-                        NaN
-                        s{run}.stats.mpcs(2).avg_0_quarterly(1)
-                        s{run}.stats.mpcs(2).avg_0_quarterly(2)
-                        s{run}.stats.mpcs(2).avg_0_quarterly(3)
-                        s{run}.stats.mpcs(2).avg_0_quarterly(4)
-                        s{run}.stats.mpcs(2).avg_0_annual
-                        NaN
-                        s{run}.stats.mpcs(3).avg_0_quarterly(1)
-                        s{run}.stats.mpcs(3).avg_0_quarterly(2)
-                        s{run}.stats.mpcs(3).avg_0_quarterly(3)
-                        s{run}.stats.mpcs(3).avg_0_quarterly(4)
-                        s{run}.stats.mpcs(3).avg_0_annual
-                        NaN
-                        s{run}.stats.mpcs(4).avg_0_quarterly(1)
-                        s{run}.stats.mpcs(4).avg_0_quarterly(2)
-                        s{run}.stats.mpcs(4).avg_0_quarterly(3)
-                        s{run}.stats.mpcs(4).avg_0_quarterly(4)
-                        s{run}.stats.mpcs(4).avg_0_annual
-                        NaN
-                        s{run}.stats.mpcs(5).avg_0_quarterly(1)
-                        s{run}.stats.mpcs(5).avg_0_quarterly(2)
-                        s{run}.stats.mpcs(5).avg_0_quarterly(3)
-                        s{run}.stats.mpcs(5).avg_0_quarterly(4)
-                        s{run}.stats.mpcs(5).avg_0_annual
-                        NaN
-                        s{run}.stats.mpcs(6).avg_0_quarterly(1)
-                        s{run}.stats.mpcs(6).avg_0_quarterly(2)
-                        s{run}.stats.mpcs(6).avg_0_quarterly(3)
-                        s{run}.stats.mpcs(6).avg_0_quarterly(4)
-                        s{run}.stats.mpcs(6).avg_0_annual
-                        NaN
-                        s{run}.stats.mpcs(5).avg_1_quarterly
-                        s{run}.stats.mpcs(6).avg_1_quarterly
-                        s{run}.stats.mpcs(5).avg_4_quarterly(1)
-                        s{run}.stats.mpcs(6).avg_4_quarterly(1)
-                        ];
-    T_array(:,run) = RHS;
+rownames = tableRows(:,1);
+T = cell2table(tableRows(:,2:n+1),'RowNames',rownames);
+
+if ~isempty(xlxpath)
+	writetable(T,xlxpath,'WriteRowNames',true)
 end
-
-% sort by chi2 and chi1
-% [T_array,ind] = sortrows(T_array',[4 3 2]);
-% T_array = T_array';
-% colnames = {colnames{ind}};
-% hdefs = {hdefs{ind}};
-
-Tnum = T_array;
-T_array = num2cell(T_array);
-T_array = [colnames;hdefs;T_array];
-T = array2table(T_array);
-T.Properties.RowNames = rownames;
-
-writetable(T,xlxpath,'WriteRowNames',true)
