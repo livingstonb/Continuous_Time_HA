@@ -5,9 +5,9 @@ function outparams = get_params2(runopts)
     % Any parameters shown here override the defaults set in
     % Classes/Params.m
     
-    targetAYs = [0.5,1];
-    chi0s = [1,2,5,10];
-    hbars = [1,5];
+    targetAYs = [0.5,1,2];
+    chi0s = [1,2,5];
+    hbars = [5,10];
     hdefs = {'cdot','cdot/c'};
     
     ii = 1;

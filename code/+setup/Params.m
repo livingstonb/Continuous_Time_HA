@@ -91,7 +91,7 @@ classdef Params < handle
         mpc_shocks = [-1e-5 -0.01 -0.1 1e-5 0.01 0.1];
         
         T_mpcsim = 1e3;
-        n_mpcsim = 1e4;
+        n_mpcsim = 1e5;
 	end
 
 

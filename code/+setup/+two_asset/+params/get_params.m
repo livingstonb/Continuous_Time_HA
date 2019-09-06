@@ -23,7 +23,7 @@ function outparams = get_params(runopts)
         params(i).targetAY = target;
         params(i).Bequests = 1;
         params(i).rho = 0.008;
-        params(i).n_mpcsim = 1e5;
+        params(i).n_mpcsim = 5e5;
         i = i + 1;
 
         params(i).name = 'continuous_b';
