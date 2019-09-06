@@ -2,9 +2,11 @@ clearvars -except stats p
 
 %% This script is used to combine one or more variablesX.mat files. Produces a table.
 %% Set FROM_MATFILE = false if running right after model, true if running from .mat file
-FROM_MATFILE = true;
+FROM_MATFILE = false;
 codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/code';
-xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort/table.xlsx';
+xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort/';
+largepath = [xlxpath 'large_table.xlsx'];
+smallpath = [xlxpath 'small_table.xlsx'];
 % xlxpath = '';
 % codedir = '/Users/Brian-laptop/Documents/GitHub/Continuous_ConEffort/';
 
@@ -45,7 +47,8 @@ end
 n = numel(s);      
 nans = num2cell(NaN(1,n));        
 
-tableRows = 		[{'Name'}, aux.get_all_values(s,'p',1,'name')
+%% TABLE WITH ALL STATISTICS
+largeTable = 		[{'Name'}, aux.get_all_values(s,'p',1,'name')
 			        {'Definition of h'}, aux.get_all_values(s,'p',1,'hdef')
 			        {'Index'}, 1:n
 			        {'chi0, coeff on |h|'}, aux.get_all_values(s,'p',1,'chi0')
@@ -60,8 +63,8 @@ tableRows = 		[{'Name'}, aux.get_all_values(s,'p',1,'name')
 			        {'Wealth Top 10% Share'}, aux.get_all_values(s,'stats',1,'top10share')
 			        {'Wealth Top 1% Share'}, aux.get_all_values(s,'stats',1,'top1share')
 			        {'Gini (Assets)'}, aux.get_all_values(s,'stats',1,'wgini')
-			        {'Fraction of HHs with a < 0'}, aux.get_all_values(s,'stats',1,'anegative')
 			        {'____WEALTH CONSTRAINED'}, nans
+			        {'Wealth < 0'}, aux.get_all_values(s,'stats',1,'anegative')
 			        {'Wealth == 0'}, aux.get_all_values(s,'stats',1,'constrained',1)
 			        {'Wealth <= 0.5% Mean Annual Income'}, aux.get_all_values(s,'stats',1,'constrained',2)
 			        {'Wealth <= 1% Mean Annual Income'}, aux.get_all_values(s,'stats',1,'constrained',3)
@@ -124,17 +127,17 @@ tableRows = 		[{'Name'}, aux.get_all_values(s,'p',1,'name')
 			        {'QUARTER 3 SIM MPC | MPC > 0, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly_pos',3)
 			        {'QUARTER 4 SIM MPC | MPC > 0, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly_pos',4)
 			        {'____RESPONSE OUT OF IMMEDIATE SHOCK > 0, SHOCK = 0.01'}, nans
-			        {'FRACTION w/ QUARTER 1 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',1)
-			        {'FRACTION w/ QUARTER 2 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',2)
-			        {'FRACTION w/ QUARTER 3 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',3)
-			        {'FRACTION w/ QUARTER 4 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',4)
-			        {'FRACTION w/ ANNUAL MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_annual')
+			        {'FRACTION w/ QUARTER 1 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'responders_0_quarterly',1)
+			        {'FRACTION w/ QUARTER 2 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'responders_0_quarterly',2)
+			        {'FRACTION w/ QUARTER 3 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'responders_0_quarterly',3)
+			        {'FRACTION w/ QUARTER 4 MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'responders_0_quarterly',4)
+			        {'FRACTION w/ ANNUAL MPC > 0, shock=0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'responders_0_annual')
 			        {'____RESPONSE OUT OF IMMEDIATE SHOCK > 0, SHOCK = 0.1'}, nans
-			        {'FRACTION w/ QUARTER 1 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',1)
-			        {'FRACTION w/ QUARTER 2 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',2)
-			        {'FRACTION w/ QUARTER 3 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',3)
-			        {'FRACTION w/ QUARTER 4 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',4)
-			        {'FRACTION w/ ANNUAL MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_annual')
+			        {'FRACTION w/ QUARTER 1 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'responders_0_quarterly',1)
+			        {'FRACTION w/ QUARTER 2 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'responders_0_quarterly',2)
+			        {'FRACTION w/ QUARTER 3 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'responders_0_quarterly',3)
+			        {'FRACTION w/ QUARTER 4 MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'responders_0_quarterly',4)
+			        {'FRACTION w/ ANNUAL MPC > 0, shock=0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'responders_0_annual')
 			        {'____AVG SIM MPCs OUT OF NEWS (need to be tested), 0.01 SHOCK'}, nans
 			        {'QUARTER 1 MPC, SHOCK NEXT QUARTER, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_1_quarterly',1)
 			        {'QUARTER 1 MPC, SHOCK NEXT YEAR, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_4_quarterly',1)
@@ -191,9 +194,35 @@ tableRows = 		[{'Name'}, aux.get_all_values(s,'p',1,'name')
 			        {'QUARTERLY MPC, shock = 0.01 next year'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_4_quarterly',1)
 			        {'QUARTERLY MPC, shock = 0.1 next year'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_4_quarterly',1)];
 
-rownames = tableRows(:,1);
-T = cell2table(tableRows(:,2:n+1),'RowNames',rownames);
+rownames = largeTable(:,1);
+Tlarge = cell2table(largeTable(:,2:n+1),'RowNames',rownames);
 
-if ~isempty(xlxpath)
-	writetable(T,xlxpath,'WriteRowNames',true)
+smallTable = [	{'E[MPC] (-0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'avg_0_quarterly',1)
+				{'E[MPC] (-0.1)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',3,'avg_0_quarterly',1)
+				{'E[MPC] (0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',1)
+				{'E[MPC] (0.1)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',1)
+				{'E[MPC] (0.01 next quarter)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_1_quarterly',1)
+				{'E[MPC] (0.1 next quarter)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_1_quarterly',1)
+				{'E[MPC|MPC>0] (-0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'avg_0_quarterly_pos',1)
+				{'E[MPC|MPC>0] (-0.1)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',3,'avg_0_quarterly_pos',1)
+				{'E[MPC|MPC>0] (0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly_pos',1)
+				{'E[MPC|MPC>0] (0.1)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly_pos',1)
+				{'E[MPC|MPC>0] (0.01 next quarter)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_1_quarterly_pos',1)
+				{'E[MPC|MPC>0] (0.1 next quarter)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_1_quarterly_pos',1)
+				{'P(MPC>0) (-0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'responders_0_quarterly',1)
+				{'P(MPC>0) (-0.1)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',3,'responders_0_quarterly',1)
+				{'P(MPC>0) (0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'responders_0_quarterly',1)
+				{'P(MPC>0) (0.1)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'responders_0_quarterly',1)
+				{'P(MPC>0) (0.01 next quarter)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'responders_1_quarterly',1)
+				{'P(MPC>0) (0.1 next quarter)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'responders_1_quarterly',1)
+				];
+smallTable = smallTable';
+
+rownames = aux.get_all_values(s,'p',1,'name')';
+rownames = [{'specification'}; rownames];
+Tsmall = cell2table(smallTable,'RowNames',rownames);
+
+if ~isempty(xlxpath) && exist(xlxpath,'dir')
+	writetable(Tlarge,largepath,'WriteRowNames',true,'WriteVariableNames',false)
+	writetable(Tsmall,smallpath,'WriteRowNames',true,'WriteVariableNames',false)
 end

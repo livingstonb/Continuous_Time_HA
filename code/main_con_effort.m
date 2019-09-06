@@ -152,7 +152,7 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     % SIMULATE MPCs
     % -----------------------------------------------------------------
     % mpcs out of immediate shock
-    shocks = [4,5,6];
+    shocks = [5,6];
     mpc_simulator_immediateshock = statistics.con_effort.MPCSimulatorConEffort(...
     	p,income,grdKFE,KFE,shocks,0);
     if p.SimulateMPCS == 1
@@ -161,7 +161,7 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     end
 
     % mpcs out of news
-    shocks = [5];
+    shocks = [5,6];
     mpc_simulator_q1shock = statistics.con_effort.MPCSimulatorConEffort(...
     	p,income,grdKFE,KFE,shocks,1);
     
