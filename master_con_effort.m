@@ -45,7 +45,6 @@ runopts.params_file = 'get_params2';
 % (ignored when runops.Server = 1)
 runopts.param_index = 1;
 
-% Location of Continuous_Two_Asset directory
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
 

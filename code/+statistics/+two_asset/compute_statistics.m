@@ -12,7 +12,7 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
 	stats.pmf = KFE.g .* grdKFE.trapezoidal.matrix;
     stats.pmf_norisk = sum(stats.pmf,3);
     stats.rho = p.rho;
-    stats.beta = exp(-4*p.rho);
+    stats.beta_annualized = exp(-4*p.rho);
 	wealth_mat = grdKFE.b.matrix + grdKFE.a.matrix;
 
     %% --------------------------------------------------------------------
@@ -85,6 +85,9 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
     stats.HtM_one_sixth_Q_lwealth = aux.find_constrained(lwi_ratio,stats.pmf,1/6);
     % fraction with liquid wealth < own quarterly income / 12
     stats.HtM_one_twelfth_Q_lwealth = aux.find_constrained(lwi_ratio,stats.pmf,1/12);
+
+    stats.ratio_WHtM_HtM_sixth = 1 -  stats.HtM_one_sixth_Q_twealth / stats.HtM_one_sixth_Q_lwealth;
+    stats.ratio_WHtM_HtM_twelfth = 1 -  stats.HtM_one_twelfth_Q_twealth / stats.HtM_one_twelfth_Q_lwealth;
     
     %% --------------------------------------------------------------------
     % GINI COEFFICIENTS
@@ -153,7 +156,6 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
     %% --------------------------------------------------------------------
     % OTHER
     % ---------------------------------------------------------------------
-    stats.beta = exp(-4 * p.rho);
     stats.meanc = KFE.c(:)' * stats.pmf(:);
     
     % households that choose special case: to consume everything 
