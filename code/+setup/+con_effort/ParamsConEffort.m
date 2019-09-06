@@ -50,6 +50,9 @@ classdef ParamsConEffort < setup.Params
             if isempty(obj.nb_pos_KFE) == 1
                 obj.nb_pos_KFE = obj.nb_KFE;
             end
+            
+            obj.nb_neg = obj.nb - obj.nb_pos;
+            obj.nb_neg_KFE = obj.nb_KFE - obj.nb_pos_KFE;
         end
 
         function obj = reset_rho(obj,newrho)
