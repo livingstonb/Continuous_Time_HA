@@ -86,7 +86,8 @@ function [stats,p] = main_two_asset(runopts)
     stats.mpcs = struct();
     dim2Identity = 'a';
     mpc_finder = statistics.MPCFinder(p,income,grdKFE,dim2Identity);
-    trans_dyn_solver = solver.two_asset.TransitionalDynSolverTwoAsset(p,income,grdKFE);
+    shocks = [4,5,6];
+    trans_dyn_solver = solver.two_asset.TransitionalDynSolverTwoAsset(p,income,grdKFE,shocks);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')

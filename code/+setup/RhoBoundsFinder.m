@@ -37,7 +37,7 @@ classdef RhoBoundsFinder < handle
         function decrease(obj)
         	disp('Reducing candidate for rho bound')
         	if strcmp(obj.lastDirection,'none') || strcmp(obj.lastDirection,'down')
-        		% increase by step
+        		% decrease by step
         		obj.current_rho_bound = obj.current_rho_bound + obj.neg_stepsize;
         		obj.lag = 1;
         	elseif strcmp(obj.lastDirection,'up')

@@ -54,7 +54,7 @@ runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
 
 if runopts.Server == 0
 	runopts.direc = runopts.localdir;
-	runopts.temp = [runopts.direc '/temp/con_effort/'];
+	runopts.temp = [runopts.direc 'temp/con_effort/'];
     runopts.suffix = num2str(runopts.param_index);
 else
 	runopts.direc = runopts.serverdir;

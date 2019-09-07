@@ -8,8 +8,8 @@ classdef TransitionalDynSolverTwoAsset < solver.TransitionalDynSolver
 	end
 
 	methods
-		function obj = TransitionalDynSolverTwoAsset(params,income,grids)
-			obj = obj@solver.TransitionalDynSolver(params,income,grids);
+		function obj = TransitionalDynSolverTwoAsset(params,income,grids,shocks)
+			obj = obj@solver.TransitionalDynSolver(params,income,grids,shocks);
             obj.dim2 = params.na_KFE;
 		end
 

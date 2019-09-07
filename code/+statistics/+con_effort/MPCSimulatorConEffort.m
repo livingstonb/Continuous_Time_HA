@@ -97,7 +97,7 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 
 	        if strcmp(obj.p.hdef,'cdot')
 	            obj.csim = obj.csim + obj.mpc_delta * hsim;
-	        elseif strcmp(p.hdef,'cdot/c')
+	        elseif strcmp(obj.p.hdef,'cdot/c')
 	            obj.csim = obj.csim + obj.mpc_delta * (hsim .* obj.csim);
 	        end
 	        obj.csim = max(obj.csim,obj.grids.c.vec(1));

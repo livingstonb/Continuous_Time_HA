@@ -123,7 +123,8 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     % COMPUTE MPCs
     % -----------------------------------------------------------------
     mpc_finder = statistics.MPCFinder(p,income,grdKFE,'c');
-    trans_dyn_solver = solver.con_effort.TransitionalDynSolverConEffort(p,income,grdKFE);
+    shocks = [4,5,6];
+    trans_dyn_solver = solver.con_effort.TransitionalDynSolverConEffort(p,income,grdKFE,shocks);
     if p.ComputeMPCS == 1
     	fprintf('Computing MPCs out of an immediate shock...\n')
         mpc_finder.solve(KFE,stats.pmf,Au);
@@ -152,7 +153,7 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     % SIMULATE MPCs
     % -----------------------------------------------------------------
     % mpcs out of immediate shock
-    shocks = [5,6];
+    shocks = [2,3,5,6];
     mpc_simulator_immediateshock = statistics.con_effort.MPCSimulatorConEffort(...
     	p,income,grdKFE,KFE,shocks,0);
     if p.SimulateMPCS == 1

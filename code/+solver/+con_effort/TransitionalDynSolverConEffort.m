@@ -8,8 +8,8 @@ classdef TransitionalDynSolverConEffort < solver.TransitionalDynSolver
 	end
 
 	methods
-		function obj = TransitionalDynSolverConEffort(params,income,grids)
-			obj = obj@solver.TransitionalDynSolver(params,income,grids);
+		function obj = TransitionalDynSolverConEffort(params,income,grids,shocks)
+			obj = obj@solver.TransitionalDynSolver(params,income,grids,shocks);
             obj.dim2 = params.nc_KFE;
 		end
 

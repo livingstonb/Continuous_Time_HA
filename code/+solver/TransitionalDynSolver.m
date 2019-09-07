@@ -22,7 +22,7 @@ classdef TransitionalDynSolver < handle
 		A;
 		KFEint;
         
-        shocks = [5];
+        shocks;
         savedTimesUntilShock;
 
 		cumcon;
@@ -38,10 +38,11 @@ classdef TransitionalDynSolver < handle
 	end
 
 	methods
-		function obj = TransitionalDynSolver(params,income,grids)
+		function obj = TransitionalDynSolver(params,income,grids,shocks)
 			obj.p = params;
 			obj.income = income;
 			obj.grids = grids;
+            obj.shocks = shocks;
 
 			obj.ytrans_offdiag = income.ytrans - diag(diag(income.ytrans));
 
@@ -206,7 +207,7 @@ classdef TransitionalDynSolver < handle
 		                 	\ (u_switch_k(:,k) + Vk_stacked...
 		                 		+ V_k(:,k)/obj.p.delta_mpc);
                 end
-                obj.V = reshape(V_k1,[obj.p.nb_KFE,obj.dim2,obj.p.nx,income.ny])
+                obj.V = reshape(V_k1,[obj.p.nb_KFE,obj.dim2,obj.income.ny,obj.p.nz]);
 
 		        % find policies a fraction of a period back
 		        obj.update_policies();
