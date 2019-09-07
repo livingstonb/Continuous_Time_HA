@@ -6,12 +6,12 @@ clearvars -except stats p
 FROM_MATFILE = true;
 
 %% Select directories
-matdir = '/home/livingstonb/Documents/GitHub/Continuous_Time_HA/output/two_asset/';
+matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
 % matdir = '/media/hdd/Other/midway2_output/continuous_time';
 % matdir = '/Users/brianlivingston/Documents/midway2_output/';
 % matdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/output/two_asset/';
 
-codedir = '/home/livingstonb/Documents/GitHub/Continuous_Time_HA/code/';
+codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/code/';
 
 % matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
 % codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
