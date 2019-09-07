@@ -123,8 +123,6 @@ classdef MPCFinder < handle
 			end
 
 			reshape_vec = [obj.p.nb_KFE,obj.dim2,obj.p.nz,obj.income.ny,4];
-			obj.cum_con_baseline = reshape(obj.cum_con_baseline,reshape_vec);
-		    obj.cum_con_baseline = permute(obj.cum_con_baseline,[1 2 4 3 5]);
 		    obj.cum_con_baseline = reshape(obj.cum_con_baseline,[],4);
 		end
 
@@ -139,8 +137,8 @@ classdef MPCFinder < handle
 				reshape_vec = [obj.p.nb_KFE*obj.dim2 obj.p.nz obj.income.ny];
 				cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
 			elseif strcmp(obj.dim2Identity,'c')
-				reshape_vec = [obj.p.nb_KFE obj.dim2 obj.income.ny];
-				cumcon_t_c_k = reshape(cumcon_t_k,reshape_vec);
+				reshape_vec = [obj.p.nb_KFE obj.dim2*obj.p.nz obj.income.ny];
+				cumcon_t_cz_k = reshape(cumcon_t_k,reshape_vec);
 			end
 
 			for k = 1:obj.income.ny
@@ -163,14 +161,14 @@ classdef MPCFinder < handle
 	                	deathin_cc_k = obj.p.deathrate * cumcon_t_z_k(1,:,k)';
 	                    deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.dim2,1));
 	                elseif strcmp(obj.dim2Identity,'c')
-	                    deathin_cc_k = obj.p.deathrate * cumcon_t_c_k(1,:,k);
+	                    deathin_cc_k = obj.p.deathrate * cumcon_t_cz_k(1,:,k);
 	                    deathin_cc_k = kron(deathin_cc_k,ones(obj.dim2,1));
 	                end
                 end
 
                 ind1 = 1+obj.dim2*obj.p.nb_KFE*obj.p.nz*(k-1);
                 ind2 = obj.dim2*obj.p.nb_KFE*obj.p.nz*k;
-                RHS = reshape(KFE.c(:,:,k,:),[],1) + ytrans_cc_k + deathin_cc_k ...
+                RHS = reshape(KFE.c(:,:,:,k),[],1) + ytrans_cc_k + deathin_cc_k ...
                             + cumcon_t(ind1:ind2)/obj.p.delta_mpc;
                 obj.cumcon(ind1:ind2,period) = obj.FKmat{k}*RHS;
 			end
@@ -198,36 +196,30 @@ classdef MPCFinder < handle
 	        	interp_grids{end+1} = obj.grids.c.vec;
 	        end
 
+	        if obj.p.nz > 1
+	        	interp_grids{end+1} = obj.grids.z.vec;
+	        end
+
 	        if obj.income.ny > 1
 	        	interp_grids{end+1} = obj.income.y.vec;
 	        end
 
-	        if obj.p.nz > 1
-	        	interp_grids{end+1} = obj.p.rhos';
-	        end
-
 	        if strcmp(obj.dim2Identity,'a')
 	        	dim2_mat = obj.grids.a.matrix(:);
-	        	if numel(obj.p.rhos) > 1
-		        	dim = obj.p.nb_KFE*obj.dim2*obj.income.ny;
-		        	heterog_mpcs = kron(obj.p.rhos',ones(dim,1));
-				end
 			else
 				dim2_mat = obj.grids.c.matrix(:);
 			end
 
-			reshape_vec = [obj.p.nb_KFE,obj.dim2,obj.income.ny,obj.p.nz];
+			reshape_vec = [obj.p.nb_KFE,obj.dim2,obj.p.nz,obj.income.ny];
 			for period = 1:4
 				% cumulative consumption in 'period'
 	            con_period = reshape(obj.cum_con_baseline(:,period),reshape_vec);
-	            con_period = squeeze(con_period);
-	            mpcinterp = griddedInterpolant(interp_grids,con_period,'linear');
-	            con_period = reshape(con_period,reshape_vec);
+	            mpcinterp = griddedInterpolant(interp_grids,squeeze(con_period),'linear');
 
 	            if (obj.income.ny > 1) && (obj.p.nz > 1)
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.income.y.matrixKFE(:),heterog_mpcs);
+	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.income.y.matrixKFE(:),obj.grids.z.matrix(:));
 	            elseif (obj.income.ny==1) && (obj.p.nz > 1)
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,heterog_mpcs);
+	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.grids.z.matrix(:));
 	            elseif obj.income.ny > 1
 	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.income.y.matrixKFE(:));
 	            else

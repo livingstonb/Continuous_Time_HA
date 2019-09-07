@@ -22,7 +22,7 @@ classdef GridConEffort < setup.Grid
 
             % -------------- call methods/create grids----------------
 		    % create grids
-		    [obj.c.vec, obj.c.matrix] = obj.create_generic_grid(...
+		    [obj.c.vec, obj.c.wide, obj.c.matrix] = obj.create_generic_grid(...
 	    		params,obj.nc,params.c_gcurv,params.cmin,params.cmax);
 		    [obj.b.vec, obj.b.matrix] = obj.create_bgrid(params,obj.nc);
 		   
@@ -32,9 +32,11 @@ classdef GridConEffort < setup.Grid
 
 		    % use trapezoidal rule
 		    obj.trapezoidal.vec = kron(dc_tilde,db_tilde);
-		    obj.trapezoidal.matrix = reshape(repmat(obj.trapezoidal.vec,ny*nz,1),obj.nb,obj.nc,ny,nz);
-            obj.trapezoidal.matrix_switched = reshape(repmat(obj.trapezoidal.vec,ny*nz,1),obj.nb,obj.nc,nz,ny);
+		    obj.trapezoidal.matrix = reshape(repmat(obj.trapezoidal.vec,ny*nz,1),obj.nb,obj.nc,nz,ny);
 			obj.trapezoidal.diagm = spdiags(repmat(obj.trapezoidal.vec,ny*nz,1),0,obj.nb*obj.nc*ny*nz,obj.nb*obj.nc*ny*nz);
+
+			% find location of zero assets in b vector (for death without bequests)
+			obj.loc0b = find(obj.b.vec==0);
 		end
 	end
 

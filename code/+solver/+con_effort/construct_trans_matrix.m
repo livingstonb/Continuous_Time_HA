@@ -8,6 +8,7 @@ function A = construct_trans_matrix(p,income,grids,policies)
     nb = numel(grids.b.vec);
     nc = numel(grids.c.vec);
     ny = income.ny;
+    nz = p.nz;
     
     c = policies.c;
     s = policies.s;
@@ -16,7 +17,7 @@ function A = construct_trans_matrix(p,income,grids,policies)
     
     if strcmp(p.hdef,"cdot/c")
         cdot = h .* c;
-    elseif ismember(p.hdef,{'cdot','inf'})
+    elseif strcmp(p.hdef,"cdot")
         cdot = h;
     end
 
@@ -25,9 +26,9 @@ function A = construct_trans_matrix(p,income,grids,policies)
     % ----------------------------------------------
 
     sneg = min(s,0);
-    sneg(1,:,:) = 0;
+    sneg(1,:,:,:) = 0;
     spos = max(s,0);
-    spos(nb,:,:) = 0;
+    spos(nb,:,:,:) = 0;
 
     % lower diagonal
     xx = - sneg ./ grids.b.dB;
@@ -45,15 +46,15 @@ function A = construct_trans_matrix(p,income,grids,policies)
             
     yy = yy(:);
 
-    A = spdiags([xx yy zz],[-1 0 1],nb*nc*ny,nb*nc*ny);
+    A = spdiags([xx yy zz],[-1 0 1],nb*nc*nz*ny,nb*nc*nz*ny);
 
     %% ---------------------------------------------
     % CONSUMPTION
     % ----------------------------------------------
     cdotneg = min(cdot,0);
-    cdotneg(:,1,:) = 0;
+    cdotneg(:,1,:,:) = 0;
     cdotpos = max(cdot,0);
-    cdotpos(:,nc,:) = 0;
+    cdotpos(:,nc,:,:) = 0;
 
     % lower diag
     clower = - cdotneg ./ grids.c.dB;
@@ -70,4 +71,4 @@ function A = construct_trans_matrix(p,income,grids,policies)
     cupper = cupper(:);
     cupper = [zeros(nb,1);cupper(1:end-nb)];
     
-    A = A + spdiags([clower cmain cupper],[-nb 0 nb],nb*nc*ny,nb*nc*ny);
+    A = A + spdiags([clower cmain cupper],[-nb 0 nb],nb*nc*nz*ny,nb*nc*nz*ny);

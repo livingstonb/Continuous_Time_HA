@@ -3,15 +3,15 @@ function [H_special,c_special,d_special] = deal_with_special_case(p,income,grids
 	% with the special case that b = bmin, a > 0 and households
 	% withdraw only enough to consume, so that a does not accumulate
 	
-	lambda = zeros(p.nb,p.na,p.ny,p.nz);
+	lambda = zeros(p.nb,p.na,p.nz,income.ny);
 	rb = r_b_mat(1,1,1,1) * p.bmin;
 	for ia = 2:p.na
-	for k = 1:p.ny
 	for iz = 1:p.nz
-		l_fn = @(x) aux.lambda_function(x,VaB(1,ia,k,iz),rb,grids.a.vec(ia),income.y.vec(k),p);
+	for k = 1:p.ny
+		l_fn = @(x) aux.lambda_function(x,VaB(1,ia,iz,k),rb,grids.a.vec(ia),income.y.vec(k),p);
 
 		options = optimset('TolX',1e-8,'TolFun',1e-11);
-        [lambda(1,ia,k,iz),fval] = fminbnd(@(x) l_fn(x)^2,0,1e9,options);
+        [lambda(1,ia,iz,k),fval] = fminbnd(@(x) l_fn(x)^2,0,1e9,options);
 
         if fval > 1e-10
             error('no convergence for special case')
@@ -25,9 +25,9 @@ function [H_special,c_special,d_special] = deal_with_special_case(p,income,grids
     d_special(~isfinite(d_special)) = 0;
 
 
-    c_special = zeros(p.nb,p.na,p.ny,p.nz);
+    c_special = zeros(p.nb,p.na,p.nz,p.ny);
     c_special(1,2:p.na,:,:) = lambda(1,2:p.na,:,:) .^(-1/p.riskaver);
 
-    H_special = - 1e12 * ones(p.nb,p.na,p.ny,p.nz);
+    H_special = - 1e12 * ones(p.nb,p.na,p.nz,p.ny);
     H_special(1,2:p.na,:,:) = VaB(1,2:p.na,:,:) .* d_special(1,2:p.na,:,:);
 end

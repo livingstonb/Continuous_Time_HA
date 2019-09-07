@@ -27,9 +27,10 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
 	ydist = income.ydist;
 	y_mat = income.y.matrix;
 	ny = income.ny;
+
+	nz = p.nz;
 	% ----------------------------------------------
 
-	
 
 	%% -----------------------------------------------------------
 	% INITIALIZATION FOR HJB
@@ -65,40 +66,41 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
 		[V_0, c_0] = solver.con_effort.find_guess(p,income,grd);
 	    
 		% adjust guess
-		VbF_0 = zeros(nb,ny);
-		VbF_0(1:nb-1,:) = (V_0(2:nb,:) - V_0(1:nb-1,:)) ./ squeeze(grd.b.dF(1:nb-1,1,:));
-		VbF_0 = reshape(VbF_0,[nb 1 ny]);
-		VbF_0 = repmat(VbF_0,[1 nc 1]);
+		VbF_0 = zeros(nb,nz,ny);
+		VbF_0(1:nb-1,:,:) = (V_0(2:nb,:,:) - V_0(1:nb-1,:,:)) ./ squeeze(grd.b.dF(1:nb-1,1));
+		VbF_0 = reshape(VbF_0,[nb 1 nz ny]);
+		VbF_0 = repmat(VbF_0,[1 nc 1 1]);
 
-		VbB_0 = zeros(nb,ny);
-		VbB_0(2:nb,:) = (V_0(2:nb,:) - V_0(1:nb-1,:)) ./ squeeze(grd.b.dB(2:nb,1,:));
-		VbB_0 = reshape(VbB_0,[nb 1 ny]);
+		VbB_0 = zeros(nb,nz,ny);
+		VbB_0(2:nb,:,:) = (V_0(2:nb,:,:) - V_0(1:nb-1,:,:)) ./ squeeze(grd.b.dB(2:nb,1));
+		VbB_0 = reshape(VbB_0,[nb 1 nz ny]);
 		VbB_0 = repmat(VbB_0,[1 nc 1]);
 	    
-	    VbC_0 = zeros(nb,ny);
-	    bdC = zeros(nb,ny);
-	    bdC(2:nb-1,:) = repmat(grd.b.vec(3:nb) - grd.b.vec(1:nb-2),[1 ny]);
-	    bdC(1,:) = bdC(2,:);
-	    bdC(end,:) = bdC(end-1,:);
-	    VbC_0(2:nb-1,:) = (V_0(3:nb,:) - V_0(1:nb-2,:)) ./ bdC(2:nb-1,:);
-	    VbC_0 = reshape(VbC_0,[nb 1 ny]);
-	    VbC_0 = repmat(VbC_0,[1 nc 1]);
-	    VbC_0(nb,:,:) = VbB_0(nb,:,:);
-	    VbC_0(1,:,:) = VbF_0(1,:,:);
+	    VbC_0 = zeros(nb,nz,ny);
+	    bdC = zeros(nb,nz,ny);
+	    bdC(2:nb-1,:,:) = repmat(grd.b.vec(3:nb) - grd.b.vec(1:nb-2),[1 ny]);
+	    bdC(1,:,:) = bdC(2,:,:);
+	    bdC(end,:,:) = bdC(end-1,:,:);
+	    VbC_0(2:nb-1,:,:) = (V_0(3:nb,:,:) - V_0(1:nb-2,:,:)) ./ bdC(2:nb-1,:,:);
+	    VbC_0 = reshape(VbC_0,[nb 1 nz ny]);
+	    VbC_0 = repmat(VbC_0,[1 nc 1 1]);
+	    VbC_0(nb,:,:,:) = VbB_0(nb,:,:,:);
+	    VbC_0(1,:,:,:) = VbF_0(1,:,:,:);
 
-	    bdot_0 = (p.r_b+p.deathrate*p.perfectannuities) * grd.b.matrix + (1-p.wagetax)*y_mat - repmat(reshape(c_0,[nb 1 ny]),[1 nc 1]);
+	    bdot_0 = (p.r_b+p.deathrate * p.perfectannuities) * grd.b.matrix ...
+	    	+ (1-p.wagetax) * y_mat - repmat(reshape(c_0,[nb 1 nz ny]),[1 nc 1 1]);
 	    Vb_0 = VbF_0 .* (bdot_0>0)  + VbB_0 .* (bdot_0<0) + VbC_0 .* (bdot_0==0);
 
 		bdot =  (p.r_b+p.deathrate*p.perfectannuities) * grd.b.matrix + (1-p.wagetax)*y_mat - grd.c.matrix;
-	    bdot(1,:,:) = max(bdot(1,:,:),0);
+	    bdot(1,:,:,:) = max(bdot(1,:,:,:),0);
 	    
 	    c = grd.c.matrix;
 	    u = aux.u_fn(c,p.riskaver) - aux.con_effort.penalty(grd.b.matrix,p.penalty1,p.penalty2);
 		V_0 = (1/(p.rho+p.deathrate)) * (u + Vb_0 .* bdot);
 	    
 		% Initial distribution
-	    gg0 = ones(nb_KFE,nc_KFE,ny);
-	    gg0 = gg0 .* permute(repmat(ydist,[1 nb_KFE nc_KFE]),[2 3 1]);
+	    gg0 = ones(nb_KFE,nc_KFE,nz,ny);
+	    gg0 = gg0 .* permute(repmat(ydist,[1 nb_KFE nc_KFE nz]),[2 3 4 1]);
 		gg0 = gg0 / sum(gg0(:));
 		gg0 = gg0 ./ grdKFE.trapezoidal.matrix;
 		gg0 = gg0(:);
@@ -106,7 +108,7 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
     
     % Create interpolation matrix between KFE grid and regular grid
 	interp_decision = aux.interpTwoD(grdKFE.b.vec,grdKFE.c.vec,grd.b.vec,grd.c.vec);
-	interp_decision = kron(speye(ny),interp_decision);
+	interp_decision = kron(speye(ny*nz),interp_decision);
 
 	%% --------------------------------------------------------------------
     % FIND VALUE FUNCTION
@@ -120,47 +122,20 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
     end
 
     Vn = V_0;
-
-    feasible = true(nb,nc,ny);
-    for iy = 1:ny
-        % a = 0 but c <= y
-        temp = grd.c.vec <= income.y.vec(iy);
-    	feasible(1,:,iy) = temp;
-    end
-
-    if strcmp(p.hdef,'inf')
-    	% instantaneous switching
-        HJB.h = zeros(nb,nc,ny);
-        HJB.c = grd.c.matrix;
-        HJB.s = (p.r+p.deathrate*p.perfectannuities) * grd.b.matrix + (1-p.wagetax)* y_mat - HJB.c;
-        util = (u_fn(HJB.c,p.riskaver) - aux.con_effort.con_adj_cost(p,HJB.h))...
-                - aux.con_effort.penalty(grd.b.matrix,p.penalty1,p.penalty2);
-        A = solver.con_effort.construct_trans_matrix(p,income,grd,HJB);
-
-        income_diagm = diag(diag(income.ytrans));
-        income_offdiag = kron(income.ytrans-income_diagm,speye(nb*nc));
-        income_diag = kron(income_diagm,speye(nb*nc));
-    end
     
     fprintf('    --- Iterating over HJB ---\n')
     dst = 1e5;
+    HJB.c = grd.c.matrix;
+    HJB.s = (p.r_b+p.deathrate*p.perfectannuities) * grd.b.matrix + (1-p.wagetax) * y_mat - HJB.c;
 	for nn	= 1:p.maxit_HJB
-        if ismember(p.hdef,{'cdot','cdot/c'})
-            % drift in c
-            HJB.h = solver.con_effort.find_policies(p,income,grd,Vn);
-            HJB.c = grd.c.matrix;
-            HJB.s = (p.r_b+p.deathrate*p.perfectannuities) * grd.b.matrix + (1-p.wagetax)* y_mat - HJB.c;
-            util = aux.u_fn(HJB.c,p.riskaver) - aux.con_effort.con_adj_cost(p,HJB.h)...
-                    - aux.con_effort.penalty(grd.b.matrix,p.penalty1,p.penalty2);
+        % drift in c
+        HJB.h = solver.con_effort.find_policies(p,income,grd,Vn);
+        util = aux.u_fn(HJB.c,p.riskaver) - aux.con_effort.con_adj_cost(p,HJB.h)...
+                - aux.con_effort.penalty(grd.b.matrix,p.penalty1,p.penalty2);
 
-            A = solver.con_effort.construct_trans_matrix(p,income,grd,HJB); % A matrix
+        A = solver.con_effort.construct_trans_matrix(p,income,grd,HJB); % A matrix
 
-            Vn1 = solver.con_effort.update_value_function_with_drift(p,income,A,util,HJB,Vn);
-
-        elseif strcmp(p.hdef,'inf')
-            % instantaneous switching
-            Vn1 = solver.con_effort.update_value_function_with_switching(p,income,A,util,Vn);
-        end
+        Vn1 = solver.con_effort.update_value_function(p,income,A,util,HJB,Vn);
             
         dst = max(abs(Vn1(:)-Vn(:)));
         Vn = Vn1;
@@ -193,54 +168,40 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
     % SOLVE KFE
 	% ---------------------------------------------------------------------
 	% put value functions onto KFE grid
-    if ismember(p.hdef,{'cdot','cdot/c'})
-    	% drift in c
-        grids = {grd.b.vec,grd.c.vec,income.y.vec};
-        hinterp = griddedInterpolant(grids,HJB.h,'makima');
 
-        vinterp = griddedInterpolant(grids,HJB.Vn,'linear');
-        v = vinterp(grdKFE.b.matrix(:),grdKFE.c.matrix(:),income.y.matrixKFE(:));
-        KFE.Vn = reshape(v,[nb_KFE,nc_KFE,income.ny]);
-        
-        KFE.h = solver.con_effort.find_policies(p,income,grdKFE,KFE.Vn);
-    elseif strcmp(p.hdef,'inf')
-    	% instantaneous switching
-        KFE.Vn = reshape(interp_decision*HJB.Vn(:),[nb_KFE,nc_KFE,ny]);
-        KFE.h = zeros(nb_KFE,nc_KFE,ny);
-        % find switches
-        [Wn_KFE,cbest] = max(KFE.Vn-p.chi,[],2);
-        Wn_KFE = repmat(Wn_KFE,[1,nc_KFE,1]);
-        cbest = repmat(cbest,[1,nc_KFE,1]);
+	if (p.ny>1) && (p.nz>1)
+		interp_grids = {grd.b.vec,grd.c.vec,grd.z.vec,income.y.vec};
+	elseif p.ny > 1
+		interp_grids = {grd.b.vec,grd.c.vec,income.y.vec};
+	elseif p.nz > 1
+		interp_grids = {grd.b.vec,grd.c.vec,grd.z.vec};
+	else
+		interp_grids = {grd.b.vec,grd.c.vec};
+	end
+	vinterp = griddedInterpolant(interp_grids,squeeze(HJB.Vn),'linear');
 
-        % convert best consumption to linear index
-        cbest = cbest .* reshape(1:nb_KFE,[nb_KFE 1 1]);
-        cbest = cbest .* reshape(1:ny,[1 1 ny]);
-        cbest = cbest(:);
+	if (p.ny>1) && (p.nz>1)
+		v = vinterp(grdKFE.b.matrix(:),grdKFE.c.matrix(:),grd.z.matrix(:),income.y.matrixKFE(:));
+	elseif p.ny > 1
+		v = vinterp(grdKFE.b.matrix(:),grdKFE.c.matrix(:),income.y.matrixKFE(:));
+	elseif p.nz > 1
+		v = vinterp(grdKFE.b.matrix(:),grdKFE.c.matrix(:),grd.z.matrix(:));
+	else
+		v = vinterp(grdKFE.b.matrix(:),grdKFE.c.matrix(:));
+	end
 
-        % replace states with no switching
-        stay = KFE.Vn(:) > Wn_KFE(:);
-        cswitches = cbest;
-        cswitches(stay) = find(stay);  
-  	end
+	KFE.Vn = reshape(v,[nb_KFE,nc_KFE,nz,income.ny]);
+
+	KFE.h = solver.con_effort.find_policies(p,income,grdKFE,KFE.Vn);
 
     KFE.c = grdKFE.c.matrix;
+     KFE.b = grdKFE.b.matrix;
     KFE.s = (p.r_b+p.deathrate*p.perfectannuities) * grdKFE.b.matrix...
             + (1-p.wagetax)*income.y.matrixKFE - grdKFE.c.matrix;
 
     % Construct A matrix for KFE
     Au = solver.con_effort.construct_trans_matrix(p,income,grdKFE,KFE);
-
-    if ismember(p.hdef,{'cdot','cdot/c'})
-        KFE.b = grdKFE.b.matrix;
-    elseif strcmp(p.hdef,'inf')
-        Au = Au(cswitches,:);
-
-        % adjust variables according to which state is switched to
-        KFE.c = reshape(KFE.c(cswitches),[nb_KFE,nc_KFE,ny]);
-        KFE.s = (p.r_b+p.deathrate*p.perfectannuities) * grd.b.matrix...
-            + (1-p.wagetax)*income.y.matrixKFE - KFE.c;
-    end
-
+    
     % solve
 	KFE.g = solver.solveKFE(p,income,grdKFE,gg0,Au,'c');
     KFE.u = aux.u_fn(KFE.c,p.riskaver) - aux.con_effort.con_adj_cost(p,KFE.h)...

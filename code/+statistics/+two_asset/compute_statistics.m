@@ -10,7 +10,7 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
     nz = p.nz;
 
 	stats.pmf = KFE.g .* grdKFE.trapezoidal.matrix;
-    stats.pmf_norisk = sum(stats.pmf,3);
+    stats.pmf_norisk = sum(stats.pmf,4);
     stats.rho = p.rho;
     stats.beta_annualized = exp(-4*p.rho);
 	wealth_mat = grdKFE.b.matrix + grdKFE.a.matrix;

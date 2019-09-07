@@ -30,7 +30,7 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	% INITIALIZATION FOR HJB
 	% ---------------------------------------------------------------------
 	if numel(p.rhos) > 1
-		rho_mat = reshape(p.rhos,[1 1 1 numel(p.rhos)]);
+		rho_mat = reshape(p.rhos,[1 1 numel(p.rhos)]);
 	else
 		rho_mat =  p.rho;
 	end
@@ -51,11 +51,11 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 %         V_0 = (kron(diag(p.rhos'),speye(p.nb*p.na*ny)) - inc_trans) \ u_0;
 %     end
 
-    V_0 = reshape(V_0,[nb na ny nz]);
+    V_0 = reshape(V_0,[nb na nz ny]);
 
 	% Initial distribution
-    gg0 = ones(nb_KFE,na_KFE,ny,nz);
-    gg0 = gg0 .* permute(repmat(income.ydist,[1 nb_KFE na_KFE nz]),[2 3 1 4]);
+    gg0 = ones(nb_KFE,na_KFE,nz,ny);
+    gg0 = gg0 .* permute(repmat(income.ydist,[1 nb_KFE na_KFE nz]),[2 3 4 1]);
     if p.OneAsset == 1
         gg0(:,grdKFE.a.vec>0,:,:) = 0;
     end
@@ -132,7 +132,7 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
     
     % Store value function and polices on both grids
     HJB.Vn = Vn;
-    KFE_Vn = reshape(interp_decision*Vn(:),nb_KFE,na_KFE,ny,nz);
+    KFE_Vn = reshape(interp_decision*Vn(:),nb_KFE,na_KFE,nz,ny);
     KFE = solver.two_asset.find_policies(p,income,grdKFE,KFE_Vn);
     KFE.Vn = KFE_Vn;
 

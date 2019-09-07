@@ -36,12 +36,16 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 			obj = obj@statistics.MPCSimulator(...
 				p,income,grids,policies,shocks,shockperiod,'c');
 
-			if income.ny > 1
+			if (income.ny > 1) && (p.nz > 1)
+                obj.interp_grids = {grids.b.vec,grids.c.vec,grids.z.vec,income.y.vec};
+            elseif income.ny > 1
                 obj.interp_grids = {grids.b.vec,grids.c.vec,income.y.vec};
+            elseif p.nz > 1
+                obj.interp_grids = {grids.b.vec,grids.c.vec,grids.z.vec};
             else
                 obj.interp_grids = {grids.b.vec,grids.c.vec};
             end
-            obj.hinterp{1} = griddedInterpolant(obj.interp_grids,policies.h,'makima');
+            obj.hinterp{1} = griddedInterpolant(obj.interp_grids,squeeze(policies.h),'makima');
             
             if (shockperiod > 0) && (p.SimulateMPCS_news==1)
                 % load times at which policy functions saved
@@ -127,7 +131,7 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 	    			obj.hpolicy2{ishock} = temp.h;
 
 	    			obj.hinterp{ii+1} = griddedInterpolant(...
-	    				obj.interp_grids,obj.hpolicy1{ishock},'makima');
+	    				obj.interp_grids,squeeze(obj.hpolicy1{ishock}),'makima');
 	    		end
 	    	elseif abs(timeUntilShock - obj.savedTimesUntilShock(obj.timeIndex2)) < 1e-6
 	    		% update policy functions
@@ -153,7 +157,7 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
                     end
 
 	    			obj.hinterp{ii+1} = griddedInterpolant(...
-	    				obj.interp_grids,obj.hpolicy1{ishock},'makima');
+	    				obj.interp_grids,squeeze(obj.hpolicy1{ishock}),'makima');
 	    		end
 	    	elseif timeUntilShock > obj.savedTimesUntilShock(obj.timeIndex2)
 	    		timePastTime1 = time - obj.savedTimesUntilShock(obj.timeIndex1);
@@ -166,13 +170,13 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 	    			h_approximate = (1-proportion2) * obj.hpolicy1{ishock}...
 	    				+ proportion2 * obj.hpolicy2{ishock};
 	    			obj.hinterp{ii+1} = griddedInterpolant(...
-	    				obj.interp_grids,h_approximate,'makima');
+	    				obj.interp_grids,squeeze(h_approximate),'makima');
 	    		end
 	    	elseif timeUntilShock < obj.savedTimesUntilShock(end)
 	    		for ii = 1:numel(obj.shocks)
                     ishock = obj.shocks(ii);
 	    			obj.hinterp{ii+1} = griddedInterpolant(...
-	    				obj.interp_grids,obj.hpolicy1{ishock},'makima');
+	    				obj.interp_grids,squeeze(obj.hpolicy1{ishock}),'makima');
 	    		end
 	    	else
 	    		error('logical error, hinterp failed to update')

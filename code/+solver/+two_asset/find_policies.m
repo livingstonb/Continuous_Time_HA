@@ -7,7 +7,7 @@ function policies = find_policies(p,income,grd,Vn)
     nb = numel(grd.b.vec);
     nz = p.nz;
     ny = numel(income.y.vec);
-    y_mat = repmat(reshape(income.y.vec,[1 1 ny 1]),[nb na 1 nz]);
+    y_mat = repmat(reshape(income.y.vec,[1 1 1 ny]),[nb na nz 1]);
 
     % Returns grid
     r_b_mat = p.r_b .* (grd.b.matrix>=0) +  p.r_b_borr .* (grd.b.matrix<0);
@@ -15,27 +15,27 @@ function policies = find_policies(p,income,grd,Vn)
     %% --------------------------------------------------------------------
 	% INITIALIZATION
 	% ---------------------------------------------------------------------
-    VaF = zeros(nb,na,ny,nz);
-    VaB = zeros(nb,na,ny,nz);
-    VbF = zeros(nb,na,ny,nz);
-    VbB = zeros(nb,na,ny,nz);
+    VaF = zeros(nb,na,nz,ny);
+    VaB = zeros(nb,na,nz,ny);
+    VbF = zeros(nb,na,nz,ny);
+    VbB = zeros(nb,na,nz,ny);
 
-    cF = NaN(nb,na,ny,nz);
-    sF = NaN(nb,na,ny,nz);
-    HcF = NaN(nb,na,ny,nz,'single');
+    cF = NaN(nb,na,nz,ny);
+    sF = NaN(nb,na,nz,ny);
+    HcF = NaN(nb,na,nz,ny,'single');
 
-    cB = NaN(nb,na,ny,nz);
-    sB = NaN(nb,na,ny,nz);
+    cB = NaN(nb,na,nz,ny);
+    sB = NaN(nb,na,nz,ny);
 
-    c0 = NaN(nb,na,ny,nz);
-    s0 = NaN(nb,na,ny,nz);
+    c0 = NaN(nb,na,nz,ny);
+    s0 = NaN(nb,na,nz,ny);
 
-    dFB = NaN(nb,na,ny,nz);
-    HdFB = NaN(nb,na,ny,nz,'single');
-    dBF = NaN(nb,na,ny,nz);
-    HdBF = NaN(nb,na,ny,nz,'single');
-    dBB = NaN(nb,na,ny,nz);
-    HdBB = NaN(nb,na,ny,nz,'single');
+    dFB = NaN(nb,na,nz,ny);
+    HdFB = NaN(nb,na,nz,ny,'single');
+    dBF = NaN(nb,na,nz,ny);
+    HdBF = NaN(nb,na,nz,ny,'single');
+    dBB = NaN(nb,na,nz,ny);
+    HdBB = NaN(nb,na,nz,ny,'single');
 
     Vamin = 0;
     Vbmin = 1e-8;
@@ -57,13 +57,13 @@ function policies = find_policies(p,income,grd,Vn)
 
     % consumption and savings from forward-differenced V
     cF(1:nb-1,:,:,:) 	= VbF(1:nb-1,:,:,:).^(-1/p.riskaver);
-    cF(nb,:,:,:) 		= zeros(1,na,ny,nz);
+    cF(nb,:,:,:) 		= zeros(1,na,nz,ny);
     sF(1:nb-1,:,:,:) 	= (1-p.directdeposit-p.wagetax) .* y_mat(1:nb-1,:,:,:)...
                         + grd.b.matrix(1:nb-1,:,:,:) .* (r_b_mat(1:nb-1,:,:,:) ...
                         + p.deathrate*p.perfectannuities) + p.transfer - cF(1:nb-1,:,:,:);
-    sF(nb,:,:,:) 		= zeros(1,na,ny,nz); % impose a state constraint at the top to improve stability
+    sF(nb,:,:,:) 		= zeros(1,na,nz,ny); % impose a state constraint at the top to improve stability
     HcF(1:nb-1,:,:,:)	= aux.u_fn(cF(1:nb-1,:,:,:),p.riskaver) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
-    HcF(nb,:,:,:) 		= -1e12 * ones(1,na,ny,nz);
+    HcF(nb,:,:,:) 		= -1e12 * ones(1,na,nz,ny);
     validcF         	= cF > 0;
 
     % consumption and savings from backward-differenced V
@@ -73,13 +73,13 @@ function policies = find_policies(p,income,grd,Vn)
     sB(2:nb,:,:,:) 	= ((1-p.directdeposit)-p.wagetax) .* y_mat(2:nb,:,:,:)...
                         + grd.b.matrix(2:nb,:,:,:) .* (r_b_mat(2:nb,:,:,:) ...
                         + p.deathrate*p.perfectannuities) + p.transfer - cB(2:nb,:,:,:);
-    sB(1,:,:,:) 	= zeros(1,na,ny,nz);
+    sB(1,:,:,:) 	= zeros(1,na,nz,ny);
     HcB 		    = aux.u_fn(cB,p.riskaver) + VbB .* sB;
     validcB         = cB > 0;
 
     % no drift
     c0 				= (1-p.directdeposit-p.wagetax) .* y_mat + grd.b.matrix .* (r_b_mat+ p.deathrate*p.perfectannuities) + p.transfer;
-    s0 				= zeros(nb,na,ny,nz);
+    s0 				= zeros(nb,na,nz,ny);
     Hc0 			= aux.u_fn(c0,p.riskaver);
     validc0         = c0 > 0;
 
@@ -87,7 +87,7 @@ function policies = find_policies(p,income,grd,Vn)
     IcF 			= validcF & (sF > 0) & ((sB>=0) | ((HcF>=HcB) | ~validcB)) & ((HcF>=Hc0) | ~validc0);
     IcB 			= validcB & (sB < 0) & ((sF<=0) | ((HcB>=HcF) | ~validcF)) & ((HcB>=Hc0) | ~validc0);
     Ic0 			= validc0 & ~(IcF | IcB);
-    assert(isequal(IcF+IcB+Ic0,ones(nb,na,ny,nz,'logical')),'logicals do not sum to unity')
+    assert(isequal(IcF+IcB+Ic0,ones(nb,na,nz,ny,'logical')),'logicals do not sum to unity')
     c 				= IcF .* cF + IcB .* cB + Ic0 .* c0;
     s 				= IcF .* sF + IcB .* sB + Ic0 .* s0;
     u				= aux.u_fn(c,p.riskaver);
@@ -97,31 +97,31 @@ function policies = find_policies(p,income,grd,Vn)
 	% ---------------------------------------------------------------------
     % Deposit decision
     dFB(2:nb,1:na-1,:,:) = aux.two_asset.opt_deposits(VaF(2:nb,1:na-1,:,:),VbB(2:nb,1:na-1,:,:),grd.a.matrix(2:nb,1:na-1,:,:),p);
-    dFB(:,na,:,:) = zeros(nb,1,ny,nz);
-    dFB(1,1:na-1,:,:) = zeros(1,na-1,ny,nz);
+    dFB(:,na,:,:) = zeros(nb,1,nz,ny);
+    dFB(1,1:na-1,:,:) = zeros(1,na-1,nz,ny);
     HdFB(2:nb,1:na-1,:,:) = VaF(2:nb,1:na-1,:,:) .* dFB(2:nb,1:na-1,:,:) ...
                             - VbB(2:nb,1:na-1,:,:) ...
                             .* (dFB(2:nb,1:na-1,:,:) + aux.two_asset.adj_cost_fn(dFB(2:nb,1:na-1,:,:),grd.a.matrix(2:nb,1:na-1,:,:),p));
-    HdFB(:,na,:,:) = -1.0e12 * ones(nb,1,ny,nz);
-    HdFB(1,1:na-1,:,:) = -1.0e12 * ones(1,na-1,ny,nz);
+    HdFB(:,na,:,:) = -1.0e12 * ones(nb,1,nz,ny);
+    HdFB(1,1:na-1,:,:) = -1.0e12 * ones(1,na-1,nz,ny);
     validFB = (dFB > 0) & (HdFB > 0);
 
     dBF(1:nb-1,2:na,:,:) = aux.two_asset.opt_deposits(VaB(1:nb-1,2:na,:,:),VbF(1:nb-1,2:na,:,:),grd.a.matrix(1:nb-1,2:na,:,:),p);
-    dBF(:,1,:,:) = zeros(nb,1,ny,nz);
-    dBF(nb,2:na,:,:) = zeros(1,na-1,ny,nz);
+    dBF(:,1,:,:) = zeros(nb,1,nz,ny);
+    dBF(nb,2:na,:,:) = zeros(1,na-1,nz,ny);
     HdBF(1:nb-1,2:na,:,:) = VaB(1:nb-1,2:na,:,:) .* dBF(1:nb-1,2:na,:,:) - VbF(1:nb-1,2:na,:,:)...
                                  .* (dBF(1:nb-1,2:na,:,:) + aux.two_asset.adj_cost_fn(dBF(1:nb-1,2:na,:,:),grd.a.matrix(1:nb-1,2:na,:,:),p));
-    HdBF(:,1,:,:) = -1.0e12 * ones(nb,1,ny,nz);
-    HdBF(nb,2:na,:,:) = -1.0e12 * ones(1,na-1,ny,nz);
+    HdBF(:,1,:,:) = -1.0e12 * ones(nb,1,nz,ny);
+    HdBF(nb,2:na,:,:) = -1.0e12 * ones(1,na-1,nz,ny);
     validBF = (dBF <= - aux.two_asset.adj_cost_fn(dBF,grd.a.matrix,p)) & (HdBF > 0);
 
     VbB(1,2:na,:,:) = aux.u_fn(cB(1,2:na,:,:),p.riskaver);
     dBB(:,2:na,:,:) = aux.two_asset.opt_deposits(VaB(:,2:na,:,:),VbB(:,2:na,:,:),grd.a.matrix(:,2:na,:,:),p);
-    dBB(:,1,:,:) = zeros(nb,1,ny,nz);
+    dBB(:,1,:,:) = zeros(nb,1,nz,ny);
     HdBB(:,2:na,:,:) = VaB(:,2:na,:,:) .* dBB(:,2:na,:,:)...
                         - VbB(:,2:na,:,:) .* (dBB(:,2:na,:,:)...
                         + aux.two_asset.adj_cost_fn(dBB(:,2:na,:,:),grd.a.matrix(:,2:na,:,:),p));
-    HdBB(:,1,:,:) = -1.0e12 * ones(nb,1,ny,nz);
+    HdBB(:,1,:,:) = -1.0e12 * ones(nb,1,nz,ny);
     validBB = (dBB > - aux.two_asset.adj_cost_fn(dBB,grd.a.matrix,p)) & (dBB <= 0) & (HdBB > 0);
     
     if (p.OneAsset == 0) && (p.DealWithSpecialCase == 1)
@@ -139,8 +139,8 @@ function policies = find_policies(p,income,grd,Vn)
         s(Ic_special) = s_special(Ic_special);
         u = aux.u_fn(c,p.riskaver);
     else
-        Ic_special = false(nb,na,ny,nz);
-        d_special = zeros(nb,na,ny,nz);
+        Ic_special = false(nb,na,nz,ny);
+        d_special = zeros(nb,na,nz,ny);
     end
     IcFB 	= validFB & (~validBF | (HdFB >= HdBF)) ...
                 & (~validBB | (HdFB >= HdBB)) & (~Ic_special);
@@ -151,9 +151,9 @@ function policies = find_policies(p,income,grd,Vn)
     Ic00 	= (~validFB) & (~validBF) & (~validBB) & (~Ic_special);
 
     Isum = Ic_special+IcFB+IcBF+IcBB+Ic00;
-    assert(isequal(Isum,ones(nb,na,ny,nz,'logical')),'logicals do not sum to unity')
+    assert(isequal(Isum,ones(nb,na,nz,ny,'logical')),'logicals do not sum to unity')
 
-    d 	= IcFB .* dFB + IcBF .* dBF + IcBB .* dBB + Ic00 .* zeros(nb,na,ny,nz) ...
+    d 	= IcFB .* dFB + IcBF .* dBF + IcBB .* dBB + Ic00 .* zeros(nb,na,nz,ny) ...
             + Ic_special .* d_special;
 
     %% --------------------------------------------------------------------

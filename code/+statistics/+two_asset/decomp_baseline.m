@@ -28,18 +28,6 @@ function decomp = decomp_baseline(s0,s1)
 
     m1 = stats1.mpcs(5).mpcs(:,1);
     pmf1 = stats1.pmf(:);
-    
-    % get rid of z-dimension if present
-    if p1.nz > 1
-        dims = [p1.nb_KFE p1.na_KFE income0.ny p1.nz];
-        m1 = reshape(m1,[],p1.nz);
-        pmf1 = reshape(pmf1,[],p1.nz);
-        
-        m1 = sum(m1 .* pmf1,2) ./ sum(pmf1,2);
-        m1 = m1(:);
-        m1(sum(pmf1,2)<1e-7) = 0;
-        pmf1 = sum(pmf1,2);
-    end
 
     m0 = stats0.mpcs(5).mpcs(:,1);
     pmf0 = stats0.pmf(:);

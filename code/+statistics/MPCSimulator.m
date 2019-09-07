@@ -104,6 +104,11 @@ classdef MPCSimulator < handle
 	    	% solve() calls functions to draw from the stationary
 	    	% distribution, run simulations, and compute MPCs
 
+	    	if obj.p.nz > 1
+	    		warning('MPCSimulator not yet configured for nz > 1')
+	    		return
+	    	end
+
 	    	rng(15996);
 
 	    	if obj.simulationComplete

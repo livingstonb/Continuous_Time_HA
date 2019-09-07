@@ -7,7 +7,6 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
     nz = p.nz;
     
     if numel(p.rhos) > 1
-        % switch y and z order to match A matrix
         rhocol = kron(p.rhos',ones(nb*na,1));
         rho_mat = spdiags(rhocol,0,nb*na*nz,nb*na*nz);
     else
@@ -15,51 +14,44 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
 	end
 
     % Update value function
+    u_k = reshape(u,[],ny);
 
-    Vn1 = NaN(nb,na,ny,nz);
+    Vn1_k = NaN(nb*na*nz,ny);
+    Vn_k = reshape(Vn,[],ny);
     Bik_all = cell(ny,1);
     for kk = 1:ny
         Ak = A(1+(kk-1)*(nb*na*nz):kk*(nb*na*nz),1+(kk-1)*(nb*na*nz):kk*(nb*na*nz));
 
         Bk = p.delta_HJB * rho_mat + ...
             (1 + p.delta_HJB * p.deathrate...
-            - p.delta_HJB*income.ytrans(kk,kk))*speye(nb*na*nz)...
+            - p.delta_HJB*income.ytrans(kk,kk)) * speye(nb*na*nz)...
             - p.delta_HJB*Ak;
         
         Bik_all{kk} 	= inverse(Bk);
-        uk_stacked 		= reshape(u(:,:,kk,:),nb*na*nz,1);
-        Vk_stacked 		= reshape(Vn(:,:,kk,:),nb*na*nz,1);
         indx_k 			= ~ismember(1:ny,kk);
-        Vn_permuted     = permute(Vn,[1 2 4 3]);
-        Vkp_stacked 	= sum(repmat(income.ytrans(kk,indx_k),nb*na*nz,1) ...
-                            .* reshape(Vn_permuted(:,:,:,indx_k),nb*na*nz,ny-1),2);
-        qk 				= p.delta_HJB*uk_stacked + Vk_stacked + p.delta_HJB*Vkp_stacked;
-        Vn1k_stacked 	= Bik_all{kk}*qk;
-        Vn1(:,:,kk,:) 	= reshape(Vn1k_stacked,nb,na,1,nz);
+        Vkp_stacked 	= sum(repmat(income.ytrans(kk,indx_k),nb*na*nz,1) .* Vn_k(:,indx_k),2);
+        qk 				= p.delta_HJB * u_k(:,kk) + Vn_k(:,kk) + p.delta_HJB*Vkp_stacked;
+        Vn1_k(:,kk) 	= Bik_all{kk} * qk;
     end
 
     % Howard improvement step
     if nn >= p.start_HIS
         for jj = 1:p.maxit_HIS
-            Vn2 = NaN(nb,na,ny,nz);
+            Vn2_k = NaN(nb*na*nz,ny);
             for kk = 1:ny
-                uk_stacked 		= reshape(u(:,:,kk,:),nb*na*nz,1);
-                Vk_stacked 		= reshape(Vn1(:,:,kk,:),nb*na*nz,1);
                 indx_k 			= ~ismember(1:ny,kk);
-                Vn1_permuted    = permute(Vn1,[1 2 4 3]);
-                Vkp_stacked 	= sum(repmat(income.ytrans(kk,indx_k),nb*na*nz,1) ...
-                                    .* reshape(Vn1_permuted(:,:,:,indx_k),nb*na*nz,ny-1),2);
-                qk 				= p.delta_HJB*uk_stacked + Vk_stacked + p.delta_HJB*Vkp_stacked;
-                Vn2k_stacked 	= Bik_all{kk}*qk;
-                Vn2(:,:,kk,:) 		= reshape(Vn2k_stacked,nb,na,1,nz);
+                Vkp_stacked 	= sum(repmat(income.ytrans(kk,indx_k),nb*na*nz,1) .* Vn1_k(:,indx_k),2);
+                qk 				= p.delta_HJB * u_k(:,kk) + Vn1_k(:,kk) + p.delta_HJB * Vkp_stacked;
+                Vn2_k(:,kk) 	= Bik_all{kk} * qk;
             end
-            dst = max(abs(Vn2(:) - Vn1(:)));
-            Vn1 = Vn2;
+
+            dst = max(abs(Vn2_k(:) - Vn1_k(:)));
+            Vn1_k = Vn2_k;
             if dst < p.crit_HIS
                 break
             end
         end
     end
 
-    
+    Vn1 = reshape(Vn1_k,nb,na,nz,ny);
 end

@@ -19,10 +19,6 @@ classdef ParamsTwoAsset < setup.Params
         borrwedge = 0.08/4; % steady-state borrowing wedge, liquid assets
 		r_b_borr; % steady-state borrowing rate, liquid assets
 
-		% with pref heterog, rho values are rho + rho_grid
-        rho_grid = 0; % e.g. [-0.001,0,0.001]
-        rhos; % equals rho + rho_grid
-
         % adjustment cost function
 		chi0 = 0.070046;
 		chi1 = 0.535791;
@@ -94,7 +90,6 @@ classdef ParamsTwoAsset < setup.Params
             else
                 obj.nz = 1;
             end
-            obj.rhos = obj.rho + obj.rho_grid;
 
             if obj.OneAsset == 1
                 obj.rhoL = obj.r_a + obj.perfectannuities*obj.deathrate - obj.deathrate;

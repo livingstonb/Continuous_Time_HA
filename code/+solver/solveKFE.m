@@ -7,23 +7,21 @@ function g = solveKFE(p,income,grdKFE,gg,A,dim2Identity)
 
 	if strcmp(dim2Identity,'a')
 		dim2 = p.na_KFE;
-		nz = p.nz;
 		ResetIncomeUponDeath = p.ResetIncomeUponDeath;
 	elseif strcmp(dim2Identity,'c')
 		dim2 = p.nc_KFE;
-		nz = 1;
 		ResetIncomeUponDeath = 0;
 	else
 		error('no second dimension in grids')
 	end
 
+	nz = p.nz;
 	nb_KFE = p.nb_KFE;
 	ny = numel(income.y.vec);
 
 	if nz > 1
 		% temporarily switch order of y and z to loop over income
-	    gg = reshape(gg,[nb_KFE dim2 ny nz]);
-	    gg = permute(gg,[1 2 4 3]);
+	    gg = reshape(gg,[nb_KFE dim2 nz ny]);
         gg = gg(:);
 	end
 
@@ -100,5 +98,4 @@ function g = solveKFE(p,income,grdKFE,gg,A,dim2Identity)
 	end
 
 	g = reshape(gg,nb_KFE,dim2,nz,ny);
-	g = squeeze(permute(g,[1 2 4 3]));
 end

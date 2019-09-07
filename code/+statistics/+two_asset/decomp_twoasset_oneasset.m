@@ -146,16 +146,16 @@ function decomp = decomp_twoasset_oneasset(s0,s1)
     pmf0 = stats0.pmf;
     
     P0ab = sum(reshape(pmf0,[],income0.ny),2);
-    m0 = reshape(m0,[],income0.ny) .* reshape(pmf0,[],income0.ny);
+    m0 = reshape(m0,[],income0.ny*p0.nz) .* reshape(pmf0,[],income0.ny*p0.nz);
     m0 = sum(m0,2) ./ P0ab;
     m0 = reshape(m0,[p0.nb_KFE p0.na_KFE]);
     m0 = m0(:,1);
     P0ab = reshape(P0ab,[p0.nb_KFE p0.na_KFE]);
     pmf0 = P0ab(:,1);
     
-    b_tilde = (grdKFE0.b.dF(:,1,1) + grdKFE0.b.dB(:,1,1)) / 2;
-    b_tilde(1) = grdKFE0.b.dF(1,1,1) / 2;
-    b_tilde(end) = grdKFE0.b.dB(end,1,1) / 2;
+    b_tilde = (grdKFE0.b.dF(:,1) + grdKFE0.b.dB(:,1)) / 2;
+    b_tilde(1) = grdKFE0.b.dF(1,1) / 2;
+    b_tilde(end) = grdKFE0.b.dB(end,1) / 2;
     
     pdf0_b = pmf0 ./ b_tilde;
     pdf0_interp = griddedInterpolant(grdKFE0.b.vec,pdf0_b,'linear','none');

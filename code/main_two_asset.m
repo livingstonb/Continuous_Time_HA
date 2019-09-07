@@ -32,6 +32,13 @@ function [stats,p] = main_two_asset(runopts)
     grd_norisk = setup.two_asset.GridTwoAsset(p,1,'HJB');
 	grdKFE = setup.two_asset.GridTwoAsset(p,income.ny,'KFE');% grid for KFE
     grdKFE_norisk = setup.two_asset.GridTwoAsset(p,1,'KFE');
+
+    if numel(p.rhos) > 1
+    	grd.add_zgrid(p.rhos',p.na);
+    	grd_norisk.add_zgrid(p.rhos',p.na);
+    	grdKFE.add_zgrid(p.rhos',p.na_KFE);
+    	grdKFE_norisk.add_zgrid(p.rhos',p.na_KFE);
+    end
     
     % check that borrowing limit does not violate NBL
     NBL = - min((1-p.wagetax-p.directdeposit)*income.y.vec+p.transfer) ...

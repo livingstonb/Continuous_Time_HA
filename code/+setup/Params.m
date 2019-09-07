@@ -51,6 +51,8 @@ classdef Params < handle
 		deathrate = 1 /200; % death rate (quarterly)
 		rho = 0.015; % discount factor (quarterly)
 		rhoL; % starting point to find rho lower bounds
+		rhos;
+		rho_grid;
 
 		% ------------ income process ---------------------
 		DirIncomeProcess = 'input/IncomeGrids/continuous_a';
@@ -127,6 +129,8 @@ classdef Params < handle
             obj.ComputeMPCS_news = runopts.ComputeMPCS_news;
             obj.SimulateMPCS_news = runopts.SimulateMPCS_news;
             obj.tempdirec = runopts.temp;
+
+            obj.rhos = obj.rho + obj.rho_grid;
         end
 
         function update_ny(obj,ny)

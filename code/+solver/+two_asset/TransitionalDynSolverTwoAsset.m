@@ -24,14 +24,14 @@ classdef TransitionalDynSolverTwoAsset < solver.TransitionalDynSolver
 		    	obj.p,obj.income,obj.grids,obj.KFEint,'KFE');
 		end
 
-		function deathin_cc_k = get_death_inflows(obj,cumcon_t,k)
-			cumcon_t_k = reshape(cumcon_t,[],obj.p.ny);
+		function deathin_cc_k = get_death_inflows(obj,cumcon_t_k,k)
             reshape_vec = [obj.p.nb_KFE*obj.p.na_KFE obj.p.nz obj.p.ny];
 			cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
-            ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* reshape(cumcon_t,[],obj.p.ny),2);
+            ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
 
             if (obj.p.Bequests == 1) && (obj.p.ResetIncomeUponDeath == 1)
                 deathin_cc_k = obj.p.deathrate * sum(obj.income.ydist' .* cumcon_t_k,2);
+                error('need to recode')
                 if nz > 1
                     error('not correctly coded for nz > 1')
                 end
@@ -39,11 +39,12 @@ classdef TransitionalDynSolverTwoAsset < solver.TransitionalDynSolver
                 deathin_cc_k = obj.p.deathrate * cumcon_t_k(:,k);
             elseif (obj.p.Bequests == 0) && (obj.p.ResetIncomeUponDeath == 1)
                 deathin_cc_k = obj.p.deathrate * sum(obj.income.ydist' .* cumcon_t_k(1,:),2);
+                error('neet to recode')
                 if nz > 1
                     error('not correctly coded for nz > 1')
                 end
             elseif (obj.p.Bequests == 0) && (obj.p.ResetIncomeUponDeath == 0)
-                deathin_cc_k = obj.p.deathrate * cumcon_t_z_k(1,:,k)';
+                deathin_cc_k = obj.p.deathrate * squeeze(cumcon_t_z_k(obj.grids.loc0b,1,:,k));
                 deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.p.na_KFE,1));
             end
         end

@@ -5,6 +5,7 @@ classdef Grid < handle
 		b = struct(); % liquid asset grid
 		a = struct(); % illiquid asset grid
 		c = struct(); % consumption grid
+		z = struct(); % dimension for preference/other heterogeneity
 
         trapezoidal = struct(); % from trapezoidal rule
 
@@ -16,6 +17,12 @@ classdef Grid < handle
         nb;
         nb_pos;
         nb_neg;
+
+        % with pref heterog, rho values are rho + rho_grid
+        rho_grid = 0; % e.g. [-0.001,0,0.001]
+        rhos; % equals rho + rho_grid
+
+        loc0b;
 	end
 
 	methods
@@ -39,7 +46,7 @@ classdef Grid < handle
 	    	end
 	    end
 
-	    function [grid_vec,grid_mat] = create_generic_grid(...
+	    function [grid_vec,grid_wide,grid_mat] = create_generic_grid(...
 	    	obj,params,dim,curv,gmin,gmax)
 
 			grid_vec = linspace(0,1,dim)';
@@ -52,9 +59,10 @@ classdef Grid < handle
 		        else
 		            break
 		        end
-			end
+            end
 
-			grid_mat = permute(repmat(grid_vec,[1,obj.nb,obj.ny,obj.nz]),[2 1 3 4]);
+            grid_wide = reshape(grid_vec,[1 dim 1 1]);
+			grid_mat = repmat(grid_wide,[obj.nb,1,obj.nz,obj.ny]);
 	    end
 
 	    function [bgrid_vec,bgrid_mat] = create_bgrid(obj,params,dim2)
@@ -134,7 +142,7 @@ classdef Grid < handle
 			else
 			    bgrid_vec = bgridpos;
 			end
-			bgrid_mat = repmat(bgrid_vec,[1,dim2,obj.ny,obj.nz]);
+			bgrid_mat = repmat(bgrid_vec,[1,dim2,obj.nz,obj.ny]);
 		    
 		    assert(all(diff(bgrid_vec)>0),'bgrid not strictly increasing')
 	    end
@@ -179,6 +187,12 @@ classdef Grid < handle
 		        dF = permute(dF,[2 1]);
 		        dB = permute(dB,[2 1]);
 		    end
+		end
+
+		function add_zgrid(obj, z_vector, dim2)
+			obj.z.vec = z_vector;
+			obj.z.wide = reshape(z_vector,[1 1 obj.nz 1]);
+			obj.z.matrix = repmat(obj.z.wide,[obj.nb dim2 1 obj.ny]);
 		end
     end
 end

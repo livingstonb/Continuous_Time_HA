@@ -50,7 +50,7 @@ function decomp = decompRA(p,grdKFE,stats)
     Empc_sort = wsort(:,2);
 
     winterp = griddedInterpolant(assets_sort,Empc_sort,'linear');
-    mpc_atmean = winterp(3.5);
+    mpc_atmean = winterp(p.targetAY);
 
     decomp.RAmpc = m0;
     decomp.Em1_less_mRA = pmf' * m1 - m0;

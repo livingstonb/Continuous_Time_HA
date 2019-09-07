@@ -1,6 +1,8 @@
 classdef MPCSimulatorTwoAsset < statistics.MPCSimulator
 	% This class subclasses MPCSimulator to provide
 	% MPC simulations for the two-asset model.
+	%
+	% Simulations for MPCs out of news are not available.
 
 	properties (SetAccess=protected)
 		% illiquid asset
@@ -18,14 +20,18 @@ classdef MPCSimulatorTwoAsset < statistics.MPCSimulator
 			obj = obj@statistics.MPCSimulator(...
 				p,income,grids,policies,shocks,0,'a');
 
-			if income.ny > 1
+			if (income.ny > 1) && (p.nz > 1)
+                interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.grids.z.vec,obj.income.y.vec};
+            elseif p.nz > 1
+            	interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.grids.z.vec};
+            elseif income.ny > 1
                 interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.income.y.vec};
             else
                 interp_grids = {obj.grids.b.vec,obj.grids.a.vec};
             end
-            obj.dinterp = griddedInterpolant(interp_grids,policies.d,'linear');
-			obj.cinterp = griddedInterpolant(interp_grids,policies.c,'linear');
-			obj.sinterp = griddedInterpolant(interp_grids,policies.s,'linear');
+            obj.dinterp = griddedInterpolant(interp_grids,squeeze(policies.d),'linear');
+			obj.cinterp = griddedInterpolant(interp_grids,squeeze(policies.c),'linear');
+			obj.sinterp = griddedInterpolant(interp_grids,squeeze(policies.s),'linear');
 		end
 
 		function draw_from_stationary_dist(obj,pmf)

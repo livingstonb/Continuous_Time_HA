@@ -41,9 +41,9 @@ classdef Income
 	        end
 
 	        obj.ny = numel(obj.y.vec);
-
-		    obj.y.matrix = permute(repmat(obj.y.vec,[1 dimsHJB]),[2 3 1 4]);
-            obj.y.matrixKFE = permute(repmat(obj.y.vec,[1 dimsKFE]),[2 3 1 4]);
+            obj.y.wide = reshape(obj.y.vec,[1 1 1 obj.ny]);
+		    obj.y.matrix = repmat(obj.y.wide,[dimsHJB 1]);
+            obj.y.matrixKFE = repmat(obj.y.wide,[dimsKFE 1]);
         end
 	end
 end

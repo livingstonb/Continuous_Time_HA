@@ -1,10 +1,6 @@
 function A = construct_trans_matrix(p,income,grids,model,modeltype)
     % Constructs transition matrix for the HJB when modeltype='HJB' and for
-    % the KFE when modeltype='KFE'. To allow for looping over income, the last 
-    % two dimensions are flipped when nz>1 (i.e. the last dimension is income and
-    % the second-to-last dimension is the z-variable such as rho
-    % heterogeneity).
-
+    % the KFE when modeltype='KFE'.
 	na = numel(grids.a.vec);
 	nb = numel(grids.b.vec);
     
@@ -30,34 +26,24 @@ function A = construct_trans_matrix(p,income,grids,model,modeltype)
     X = NaN(nb,na,nz,ny);
     Y = NaN(nb,na,nz,ny);
     Z = NaN(nb,na,nz,ny);
-    
-    %% --------------------------------------------------------------------
-    % ADJUST FOR nz > 1
-	% ---------------------------------------------------------------------
-    % swap z and y
-    permute_vec = [1 2 4 3];
-    agrid_matrix_switched = permute(grids.a.matrix,permute_vec);
-    y_mat = permute(y_mat,permute_vec);
-    d = permute(d,permute_vec);
-    s = permute(s,permute_vec);
 	
 	%% --------------------------------------------------------------------
     % COMPUTE ASSET DRIFTS
 	% ---------------------------------------------------------------------
     if strcmp(modeltype,'KFE')
-        adriftB = min(d + agrid_matrix_switched * (p.r_a + p.deathrate*p.perfectannuities)...
+        adriftB = min(d + grids.a.matrix * (p.r_a + p.deathrate*p.perfectannuities)...
                                                  + p.directdeposit * y_mat,0);
-        adriftF = max(d + agrid_matrix_switched * (p.r_a + p.deathrate*p.perfectannuities)...
+        adriftF = max(d + grids.a.matrix * (p.r_a + p.deathrate*p.perfectannuities)...
                                                  + p.directdeposit * y_mat,0);
 
-        bdriftB = min(s - d - aux.two_asset.adj_cost_fn(d,agrid_matrix_switched,p),0);
-        bdriftF = max(s - d - aux.two_asset.adj_cost_fn(d,agrid_matrix_switched,p),0);
+        bdriftB = min(s - d - aux.two_asset.adj_cost_fn(d,grids.a.matrix,p),0);
+        bdriftF = max(s - d - aux.two_asset.adj_cost_fn(d,grids.a.matrix,p),0);
     elseif strcmp(modeltype,'HJB')
-        adriftB = min(d,0) + min(agrid_matrix_switched * (p.r_a + p.deathrate*p.perfectannuities) + p.directdeposit * y_mat,0);
-        adriftF = max(d,0) + max(agrid_matrix_switched * (p.r_a + p.deathrate*p.perfectannuities) + p.directdeposit * y_mat,0);
+        adriftB = min(d,0) + min(grids.a.matrix * (p.r_a + p.deathrate*p.perfectannuities) + p.directdeposit * y_mat,0);
+        adriftF = max(d,0) + max(grids.a.matrix * (p.r_a + p.deathrate*p.perfectannuities) + p.directdeposit * y_mat,0);
 
-        bdriftB = min(-d - aux.two_asset.adj_cost_fn(d,agrid_matrix_switched,p),0) + min(s,0);
-        bdriftF = max(-d - aux.two_asset.adj_cost_fn(d,agrid_matrix_switched,p),0) + max(s,0);    
+        bdriftB = min(-d - aux.two_asset.adj_cost_fn(d,grids.a.matrix,p),0) + min(s,0);
+        bdriftF = max(-d - aux.two_asset.adj_cost_fn(d,grids.a.matrix,p),0) + max(s,0);    
     end
 
 	%% --------------------------------------------------------------------
