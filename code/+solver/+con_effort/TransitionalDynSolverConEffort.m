@@ -27,14 +27,13 @@ classdef TransitionalDynSolverConEffort < solver.TransitionalDynSolver
 
 		function deathin_cc_k = get_death_inflows(obj,cumcon_t,k)
 			cumcon_t_k = reshape(cumcon_t,[],obj.income.ny);
-            reshape_vec = [obj.p.nb_KFE*obj.p.nc_KFE*obj.p.nz obj.income.ny];
-            cumcon_t_c_k = reshape(cumcon_t,reshape_vec);
-            ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* reshape(cumcon_t,[],obj.income.ny),2);
+            reshape_vec = [obj.p.nb_KFE obj.p.nc_KFE*obj.p.nz obj.income.ny];
+            cumcon_cz_k = reshape(cumcon_t,reshape_vec);
 
             if obj.p.Bequests == 1
                 deathin_cc_k = obj.p.deathrate * cumcon_t_k(:,k);
             elseif obj.p.Bequests == 0
-                deathin_cc_k = obj.p.deathrate * cumcon_t_c_k(1,:,k)';
+                deathin_cc_k = obj.p.deathrate * cumcon_cz_k(obj.grids.locb0,:,k)';
                 deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE,1));
             end
         end

@@ -2,7 +2,7 @@ clearvars -except stats p
 
 %% This script is used to combine one or more variablesX.mat files. Produces a table.
 %% Set FROM_MATFILE = false if running right after model, true if running from .mat file
-FROM_MATFILE = false;
+FROM_MATFILE = true;
 codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/code';
 xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/con_effort/';
 largepath = [xlxpath 'large_table.xlsx'];
@@ -21,7 +21,6 @@ if FROM_MATFILE
     % matdir = '/Users/Brian-laptop/Documents/midway2_output/8_27_19/';
 
     ind = 0;
-    s = struct();
     for run = 1:999
         runstr = num2str(run);
         fpath = [matdir,'output_',runstr,'.mat'];
@@ -219,6 +218,8 @@ smallTable = [	{'E[MPC] (-0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'
 smallTable = smallTable';
 
 rownames = aux.get_all_values(s,'p',1,'name')';
+size({'specification'})
+size(rownames)
 rownames = [{'specification'}; rownames];
 Tsmall = cell2table(smallTable,'RowNames',rownames);
 
