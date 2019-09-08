@@ -193,9 +193,6 @@ largeTable = 		[{'Name'}, aux.get_all_values(s,'p',1,'name')
 			        {'QUARTERLY MPC, shock = 0.01 next year'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_4_quarterly',1)
 			        {'QUARTERLY MPC, shock = 0.1 next year'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_4_quarterly',1)];
 
-rownames = largeTable(:,1);
-Tlarge = cell2table(largeTable(:,2:n+1),'RowNames',rownames);
-
 smallTable = [	{'E[MPC] (-0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'avg_0_quarterly',1)
 				{'E[MPC] (-0.1)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',3,'avg_0_quarterly',1)
 				{'E[MPC] (0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',1)
@@ -215,12 +212,14 @@ smallTable = [	{'E[MPC] (-0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'
 				{'P(MPC>0) (0.01 next quarter)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'responders_1_quarterly',1)
 				{'P(MPC>0) (0.1 next quarter)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'responders_1_quarterly',1)
 				];
+
+largeTable = largeTable';
 smallTable = smallTable';
 
-rownames = aux.get_all_values(s,'p',1,'name')';
-size({'specification'})
-size(rownames)
-rownames = [{'specification'}; rownames];
+rownames = aux.get_all_values(s,'p',1,'name');
+rownames = [{'specification'}, rownames];
+
+Tlarge = cell2table(largeTable,'RowNames',rownames)
 Tsmall = cell2table(smallTable,'RowNames',rownames);
 
 if ~isempty(xlxpath) && exist(xlxpath,'dir')
