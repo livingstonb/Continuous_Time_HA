@@ -49,7 +49,7 @@ nans = num2cell(NaN(1,n));
 %% TABLE WITH ALL STATISTICS
 largeTable = 		[{'Name'}, aux.get_all_values(s,'p',1,'name')
 			        {'Definition of h'}, aux.get_all_values(s,'p',1,'hdef')
-			        {'Index'}, 1:n
+			        {'Index'}, num2cell(1:n)
 			        {'chi0, coeff on |h|'}, aux.get_all_values(s,'p',1,'chi0')
 			        {'chi1, coeff on |h|^chi2'}, aux.get_all_values(s,'p',1,'chi1')
 			        {'chi2'}, aux.get_all_values(s,'p',1,'chi2')
@@ -219,7 +219,7 @@ smallTable = smallTable';
 rownames = aux.get_all_values(s,'p',1,'name');
 rownames = [{'specification'}, rownames];
 
-Tlarge = cell2table(largeTable,'RowNames',rownames)
+Tlarge = cell2table(largeTable,'RowNames',rownames);
 Tsmall = cell2table(smallTable,'RowNames',rownames);
 
 if ~isempty(xlxpath) && exist(xlxpath,'dir')
