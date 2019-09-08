@@ -213,13 +213,14 @@ smallTable = [	{'E[MPC] (-0.01)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',2,'
 				{'P(MPC>0) (0.1 next quarter)'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'responders_1_quarterly',1)
 				];
 
-largeTable = largeTable';
+largeTable = largeTable;
 smallTable = smallTable';
+
+
+Tlarge = cell2table(largeTable(:,2:end),'RowNames',largeTable(:,1));
 
 rownames = aux.get_all_values(s,'p',1,'name');
 rownames = [{'specification'}, rownames];
-
-Tlarge = cell2table(largeTable,'RowNames',rownames);
 Tsmall = cell2table(smallTable,'RowNames',rownames);
 
 if ~isempty(xlxpath) && exist(xlxpath,'dir')

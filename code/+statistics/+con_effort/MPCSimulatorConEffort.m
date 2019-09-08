@@ -193,12 +193,12 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 		    	con_diff = obj.shock_cum_con{ishock} - obj.baseline_cum_con;
             
             	if (shock > 0) || ismember(obj.shockperiod,[0,1])
-	            	obj.sim_mpcs(ishock).avg_quarterly_pos(period) = mean(con_diff(con_diff(:,period)>0,period) / shock);
+	            	obj.sim_mpcs(ishock).avg_quarterly_pos(period) = mean(con_diff(con_diff(:,period)/shock>0,period) / shock);
 					obj.sim_mpcs(ishock).responders_quarterly(period) = mean(con_diff(:,period)>0);
 	            end
 
 	            if (shock > 0) || (obj.shockperiod == 4)
-                    obj.sim_mpcs(ishock).avg_annual_pos = mean(sum(con_diff(con_diff>0),2) / shock);
+                    obj.sim_mpcs(ishock).avg_annual_pos = mean(sum(con_diff(con_diff/shock>0),2) / shock);
                     obj.sim_mpcs(ishock).responders_annual = mean(sum(con_diff,2)>0);
                 end
 		    end
