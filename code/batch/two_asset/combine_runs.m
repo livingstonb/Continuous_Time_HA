@@ -47,7 +47,7 @@ if FROM_MATFILE
             end
 
             % perform Empc1 - Empc0 decomposition
-            decomp_base(ind) = statistics.two_asset.decomp_baseline(s(ind),s(ind));    
+            decomp_base(ind) = statistics.two_asset.decomp_baseline(s(1),s(ind));    
 
             % perform decomp wrt one-asset model
             decomp_oneasset(ind) = statistics.two_asset.decomp_twoasset_oneasset(oneasset,s(ind));
@@ -170,6 +170,9 @@ tableRows = [{'Name'}, aux.get_all_values(s,'p',1,'name')
             {'QUARTER 1 MPC, shock = 0.1 next year'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_4_quarterly',1)
             {'ANNUAL MPC, shock = 0.01 next year'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_4_annual')
             {'ANNUAL MPC, shock = 0.1 next year'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_4_annual')
+            {'____SOME SIMULATED MEAN MPCs'}, nans
+            {'QUARTER 1 MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly')
+            {'QUARTER 1 MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly')
             {'___DECOMP OF EM1 AROUND 0'}, nans
             {'Decomp around 0, RA MPC'}, aux.get_all_values(s,'stats',1,'decomp_norisk',1,'term1',1)
             {'Decomp around 0, HtM Effect'}, aux.get_all_values(s,'stats',1,'decomp_norisk',1,'term2',1)

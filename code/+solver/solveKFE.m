@@ -19,11 +19,7 @@ function g = solveKFE(p,income,grdKFE,gg,A,dim2Identity)
 	nb_KFE = p.nb_KFE;
 	ny = numel(income.y.vec);
 
-	if nz > 1
-		% temporarily switch order of y and z to loop over income
-	    gg = reshape(gg,[nb_KFE dim2 nz ny]);
-        gg = gg(:);
-	end
+	gg = gg(:);
 
     gg1_denom = cell(1,ny);
     for iy = 1:ny
@@ -44,7 +40,10 @@ function g = solveKFE(p,income,grdKFE,gg,A,dim2Identity)
 		iter = iter + 1;
 
 	    gg_tilde = grdKFE.trapezoidal.diagm * gg;
-	    gg_tilde_wide = reshape(gg_tilde,[nb_KFE dim2 ny nz]);
+
+	    if strcmp(dim2Identity,'c')
+	   		gg_tilde_cz_k = reshape(gg_tilde,[nb_KFE dim2*nz ny]);
+	    end
 	    gg1 = NaN(nb_KFE*dim2*nz,ny);
 
 	    for iy = 1:ny    
@@ -63,7 +62,7 @@ function g = solveKFE(p,income,grdKFE,gg,A,dim2Identity)
                 if strcmp(dim2Identity,'a')
                 	deathg(1:nb_KFE*dim2:end) = p.deathrate * income.ydist(iy) * (1/nz);
                 elseif strcmp(dim2Identity,'c')
-                	deathg(1:nb_KFE:end) = p.deathrate * sum(gg_tilde_wide(:,:,iy),1);
+                	deathg(1:nb_KFE:end) = p.deathrate * sum(gg_tilde_cz_k(:,:,iy),1);
                 end
             end
 

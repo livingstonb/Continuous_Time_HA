@@ -14,9 +14,8 @@ classdef TransitionalDynSolverTwoAsset < solver.TransitionalDynSolver
 		end
 
 		function update_policies(obj)
-            V_normaldim = permute(obj.V,[1 2 4 3]);
 			obj.KFEint = solver.two_asset.find_policies(...
-				obj.p,obj.income,obj.grids,V_normaldim);
+				obj.p,obj.income,obj.grids,obj.V);
 		end
 
 		function update_A_matrix(obj)

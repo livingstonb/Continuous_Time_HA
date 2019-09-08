@@ -25,7 +25,7 @@ function outparams = get_params2(runopts)
         params(ii).b_gcurv_neg = 0.7;
         params(ii).b_gcurv_pos = 0.08;
         params(ii).rho = 0.02; % only relevant if runopts.IterateRho = 0 in master.m
-        params(ii).rhoL = 0.005;
+        params(ii).rhoL = 0.03;
 
         params(ii).hdef = hdef{1}; % "cdot" or "cdot/c"
 
