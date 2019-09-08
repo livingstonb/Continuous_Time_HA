@@ -35,7 +35,7 @@ runopts.IterateRho = 1; % if set to zero, the parameter 'rho' is used
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'table_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests'
 runopts.ComputeMPCS = 1;
-runopts.SimulateMPCS = 1; % also estimate MPCs by simulation
+runopts.SimulateMPCS = 0; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = 0; % MPCs out of news, requires ComputeMPCS = 1
 runopts.SimulateMPCS_news = 0; % NOT CODED
 
@@ -45,7 +45,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 1;
+runopts.param_index = 2;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';

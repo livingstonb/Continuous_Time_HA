@@ -15,8 +15,8 @@ codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/code/';
 
 % matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
 % codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/table.xlsx';
-% xlxpath = '';
+xlxpath1 = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/detailedResults.xlsx';
+xlxpath2 = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/decomposition.xlsx';
 
 addpath(codedir);
 
@@ -67,7 +67,7 @@ end
 n = numel(s);
 nans = num2cell(NaN(1,n));
 
-tableRows = [{'Name'}, aux.get_all_values(s,'p',1,'name')
+detailedResults = [{'Name'}, aux.get_all_values(s,'p',1,'name')
             {'chi0'}, aux.get_all_values(s,'p',1,'chi0')
             {'chi1'}, aux.get_all_values(s,'p',1,'chi1')
             {'chi2'}, aux.get_all_values(s,'p',1,'chi2')
@@ -223,8 +223,32 @@ tableRows = [{'Name'}, aux.get_all_values(s,'p',1,'name')
             {'Em1 - EmRA, Effect of distr'}, aux.get_all_values(s,'stats',1,'decompRA',1,'term2')
             {'Em1 - EmRA. Interaction'}, aux.get_all_values(s,'stats',1,'decompRA',1,'term3')];
 
-T = cell2table(tableRows(:,2:n+1),'RowNames',tableRows(:,1));
+Em1_less_Em0 = cell2mat(aux.get_all_values(decomp_base,'Em1_less_Em0'));
+decompTable = [	{'Name'}, aux.get_all_values(s,'p',1,'name')
+				{'Em1 - Em0'}, aux.get_all_values(decomp_base,'Em1_less_Em0')
+				{'Effect of MPC fcn'}, aux.get_all_values(decomp_base,'term1')
+				{'Effect of distr'}, aux.get_all_values(decomp_base,'term2')
+				{'Distr effect around 0, PHtM only'}, aux.get_all_values(decomp_base,'term2a',1)
+	            {'Distr effect around 0, WHtM only'}, aux.get_all_values(decomp_base,'term2b',1)
+	            {'Distr effect around 0, non-HtM only'}, aux.get_all_values(decomp_base,'term2c',1)
+	            {'Distr effect around 0.01, PHtM only'}, aux.get_all_values(decomp_base,'term2a',2)
+	            {'Distr effect around 0.01, WHtM only'}, aux.get_all_values(decomp_base,'term2b',2)
+	            {'Distr effect around 0.01, non-HtM only'}, aux.get_all_values(decomp_base,'term2c',2)
+            	{'Em1 - Em0, Interaction'}, aux.get_all_values(decomp_base,'term3')
+            	{'% Effect of MPC fcn'}, num2cell(cell2mat(aux.get_all_values(decomp_base,'term1')) ./ Em1_less_Em0 * 100)
+				{'% Effect of distr'}, num2cell(cell2mat(aux.get_all_values(decomp_base,'term2')) ./ Em1_less_Em0 * 100)
+				{'% Distr effect around 0, PHtM only'}, num2cell(cell2mat(aux.get_all_values(decomp_base,'term2a',1)) ./ Em1_less_Em0 * 100)
+	            {'% Distr effect around 0, WHtM only'}, num2cell(cell2mat(aux.get_all_values(decomp_base,'term2b',1)) ./ Em1_less_Em0 * 100)
+	            {'% Distr effect around 0, non-HtM only'}, num2cell(cell2mat(aux.get_all_values(decomp_base,'term2c',1)) ./ Em1_less_Em0 * 100)
+	            {'% Distr effect around 0.01, PHtM only'}, num2cell(cell2mat(aux.get_all_values(decomp_base,'term2a',2)) ./ Em1_less_Em0 * 100)
+	            {'% Distr effect around 0.01, WHtM only'}, num2cell(cell2mat(aux.get_all_values(decomp_base,'term2b',2)) ./ Em1_less_Em0 * 100)
+	            {'% Distr effect around 0.01, non-HtM only'}, num2cell(cell2mat(aux.get_all_values(decomp_base,'term2c',2)) ./ Em1_less_Em0 * 100)
+            	{'% Em1 - Em0, Interaction'}, num2cell(cell2mat(aux.get_all_values(decomp_base,'term3')) ./ Em1_less_Em0 * 100)];
+
+TdetailedResults = cell2table(detailedResults(:,2:n+1),'RowNames',detailedResults(:,1));
+TdecompTable = cell2table(decompTable(:,2:n+1),'RowNames',decompTable(:,1));
 
 if ~isempty(xlxpath)
-	writetable(T,xlxpath,'WriteRowNames',true)
+	writetable(TdetailedResults,xlxpath1,'WriteRowNames',true)
+	writetable(TdecompTable,xlxpath2,'WriteRowNames',true)
 end
