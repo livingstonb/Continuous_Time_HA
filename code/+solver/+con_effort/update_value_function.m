@@ -1,4 +1,4 @@
-function Vn_update = update_value_function(p,income,A,util,HJB,Vn)
+function Vn_update = update_value_function(p,income,A,util,HJB,Vn,rho_diag)
 	Vn_update = zeros(p.nb*p.nc*p.nz,income.ny);
 
 	Vn_k = reshape(Vn,[],income.ny);
@@ -7,7 +7,7 @@ function Vn_update = update_value_function(p,income,A,util,HJB,Vn)
 	for kk = 1:income.ny
 		indices = 1+(kk-1)*(p.nb*p.nc*p.nz):kk*(p.nb*p.nc*p.nz);
         Ak = A(indices,indices);
-        Bk = (1 + p.delta_HJB*(p.rho + p.deathrate)...
+        Bk = p.delta_HJB*rho_diag + (1 + p.delta_HJB*p.deathrate...
             	- p.delta_HJB*income.ytrans(kk,kk))*speye(p.nb*p.nc*p.nz)...
                 - p.delta_HJB*Ak;
         indx_k = ~ismember(1:income.ny,kk);

@@ -121,6 +121,13 @@ classdef Params < handle
 		         	error('Invalid argument type passed to constructor')
                 end
             end
+
+            % check for other heterogeneity
+            if numel(obj.rho_grid) > 1
+                obj.nz = numel(obj.rho_grid);
+            else
+                obj.nz = 1;
+            end
             
             obj.param_index = runopts.param_index;
             obj.IterateRho = runopts.IterateRho;
@@ -131,6 +138,11 @@ classdef Params < handle
             obj.tempdirec = runopts.temp;
 
             obj.rhos = obj.rho + obj.rho_grid;
+        end
+
+        function obj = reset_rho(obj,newrho)
+            obj.rho = newrho;
+            obj.rhos = newrho + obj.rho_grid;
         end
 
         function update_ny(obj,ny)

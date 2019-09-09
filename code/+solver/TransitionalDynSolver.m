@@ -35,6 +35,8 @@ classdef TransitionalDynSolver < handle
 		% results
 		mpcs = struct();
 
+		rho_diag;
+
 	end
 
 	methods
@@ -52,6 +54,14 @@ classdef TransitionalDynSolver < handle
 				obj.mpcs(ishock).avg_1_quarterly = NaN;
 				obj.mpcs(ishock).avg_4_quarterly = NaN(4,1);
 				obj.mpcs(ishock).avg_4_annual = NaN;
+			end
+
+			blockDim = params.nb_KFE*params.na_KFE*params.nz;
+			if numel(params.rhos) > 1
+		        rhocol = kron(params.rhos',ones(params.nb_KFE*params.na_KFE,1));
+		        obj.rho_diag = spdiags(rhocol,0,blockDim,blockDim);
+		    else
+		        obj.rho_diag = params.rho * speye(blockDim);
 			end
 		end
 
@@ -157,7 +167,7 @@ classdef TransitionalDynSolver < handle
 		    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.dim2*obj.p.nz,1) ...
                             .* V_terminal_k(:,indx_k),2);
 
-		    		V1_terminal_k(:,k) = ((1/obj.p.delta_mpc + 1/(1e-4) + obj.p.rho + obj.p.deathrate - obj.income.ytrans(k,k))...
+		    		V1_terminal_k(:,k) = obj.rho_diag + ((1/obj.p.delta_mpc + 1/(1e-4) + obj.p.deathrate - obj.income.ytrans(k,k))...
 		        				*speye(obj.p.nb_KFE*obj.dim2*obj.p.nz) - Ak)...
 		                 	\ (u_k(:,k) + Vk_stacked...
 		                 		+ Vg_terminal_k(:,k)/(1e-4) + V_terminal_k(:,k)/obj.p.delta_mpc);
@@ -213,7 +223,7 @@ classdef TransitionalDynSolver < handle
 		    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.dim2*obj.p.nz,1) ...
                             .* V_k(:,indx_k),2);
                         
-                    V_k1(:,k) = ((1/obj.p.delta_mpc + obj.p.rho + obj.p.deathrate - obj.income.ytrans(k,k))...
+                    V_k1(:,k) = obj.rho_diag + ((1/obj.p.delta_mpc + obj.p.deathrate - obj.income.ytrans(k,k))...
 		        				* speye(obj.p.nb_KFE*obj.dim2*obj.p.nz) - Ak)...
 		                 	\ (u_k(:,k) + Vk_stacked + V_k(:,k)/obj.p.delta_mpc);
                 end

@@ -35,6 +35,12 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
 	%% -----------------------------------------------------------
 	% INITIALIZATION FOR HJB
 	% ------------------------------------------------------------
+	if numel(p.rhos) > 1
+		rho_mat = reshape(p.rhos,[1 1 numel(p.rhos)]);
+	else
+		rho_mat =  p.rho;
+	end
+
 	% In some cases, replace value function guess and distribution with 
     % previous V and g`
     if ~ismember(runopts.RunMode,{'Iterate','Final'}) || (runopts.IterateRho==0)
@@ -96,7 +102,7 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
 	    
 	    c = grd.c.matrix;
 	    u = aux.u_fn(c,p.riskaver) - aux.con_effort.penalty(grd.b.matrix,p.penalty1,p.penalty2);
-		V_0 = (1/(p.rho+p.deathrate)) * (u + Vb_0 .* bdot);
+		V_0 = (1/(rho_mat+p.deathrate)) * (u + Vb_0 .* bdot);
 	    
 		% Initial distribution
 	    gg0 = ones(nb_KFE,nc_KFE,nz,ny);
@@ -122,6 +128,13 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
     end
 
     Vn = V_0;
+
+    if numel(p.rhos) > 1
+        rhocol = kron(p.rhos',ones(nb*na,1));
+        rho_diag = spdiags(rhocol,0,nb*na*nz,nb*na*nz);
+    else
+        rho_diag = p.rho * speye(nb*na*nz);
+	end
     
     fprintf('    --- Iterating over HJB ---\n')
     dst = 1e5;
@@ -135,7 +148,7 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
 
         A = solver.con_effort.construct_trans_matrix(p,income,grd,HJB); % A matrix
 
-        Vn1 = solver.con_effort.update_value_function(p,income,A,util,HJB,Vn);
+        Vn1 = solver.con_effort.update_value_function(p,income,A,util,HJB,Vn,rho_diag);
             
         dst = max(abs(Vn1(:)-Vn(:)));
         Vn = Vn1;

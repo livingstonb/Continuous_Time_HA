@@ -32,6 +32,13 @@ function [stats,p,grdKFE,KFE] = main_con_effort(runopts)
     grdKFE = setup.con_effort.GridConEffort(p,p.ny,'KFE'); % grid for KFE
     grd_norisk = setup.con_effort.GridConEffort(p,1,'HJB');
     grdKFE_norisk = setup.con_effort.GridConEffort(p,1,'KFE');
+
+    if numel(p.rhos) > 1
+    	grd.add_zgrid(p.rhos',p.nc);
+    	grd_norisk.add_zgrid(p.rhos',p.nc);
+    	grdKFE.add_zgrid(p.rhos',p.nc_KFE);
+    	grdKFE_norisk.add_zgrid(p.rhos',p.nc_KFE);
+    end
     
 	if runopts.IterateRho == 1
         model_solver = @(x,y) solver.con_effort.solver(x,y,income,grd,grdKFE);

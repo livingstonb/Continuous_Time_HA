@@ -54,10 +54,6 @@ classdef ParamsConEffort < setup.Params
             obj.nb_neg = obj.nb - obj.nb_pos;
             obj.nb_neg_KFE = obj.nb_KFE - obj.nb_pos_KFE;
         end
-
-        function obj = reset_rho(obj,newrho)
-            obj.rho = newrho;
-        end
         
         function print(obj)
         	fprintf('\n\nSelected parameterization %i:\n',num2str(obj.param_index)) 

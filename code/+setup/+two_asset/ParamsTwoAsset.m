@@ -84,13 +84,6 @@ classdef ParamsTwoAsset < setup.Params
             obj.nb_neg = obj.nb - obj.nb_pos;
             obj.nb_neg_KFE = obj.nb_KFE - obj.nb_pos_KFE;
             
-            % check for other heterogeneity
-            if numel(obj.rho_grid) > 1
-                obj.nz = numel(obj.rho_grid);
-            else
-                obj.nz = 1;
-            end
-
             if obj.OneAsset == 1
                 obj.rhoL = obj.r_a + obj.perfectannuities*obj.deathrate - obj.deathrate;
                 obj.rhoL = obj.rhoL + 2.5e-3;
@@ -100,11 +93,7 @@ classdef ParamsTwoAsset < setup.Params
             end
 		end
 
-		function obj = reset_rho(obj,newrho)
-            obj.rho = newrho;
-            obj.rhos = newrho + obj.rho_grid;
-        end
-
+		
 		function print(obj)
         	fprintf('\n\nSelected parameterization %i:\n',num2str(obj.param_index)) 
             fprintf('%s\n\n',obj.name)
