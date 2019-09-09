@@ -71,6 +71,7 @@ classdef MPCSimulator < handle
 			obj.p = p;
 			obj.income = income;
 			obj.grids = grids;
+			obj.deathrateSubperiod = 1 - (1-obj.deathrate)^(1/p.T_mpcsim);
 
 			obj.mpc_delta = 1 / p.T_mpcsim;
 			obj.shocks = shocks;
@@ -203,7 +204,7 @@ classdef MPCSimulator < handle
                     % redraw random numbers for income in chunks of 100 periods
                     tmod100 = mod(subperiod,100);
                     if tmod100 == 1
-                        inc_rand_draws = rand(obj.p.n_mpcsim,100,'single');
+                        inc_rand_draws = rand(obj.p.n_mpcsim,100,2,'single');
                     elseif tmod100 == 0
                         tmod100 = 100;
                     end
@@ -212,7 +213,7 @@ classdef MPCSimulator < handle
             		obj.update_interpolants(actualTime);
 		    		obj.simulate_consumption_one_period();
 		    		obj.simulate_assets_one_period(current_csim);
-		    		obj.simulate_income_one_period(inc_rand_draws(:,tmod100));
+		    		obj.simulate_income_and_death_one_period(inc_rand_draws(:,tmod100,:));
                 end
                 
                 % finished with this period
@@ -235,16 +236,25 @@ classdef MPCSimulator < handle
 	    end
 
 		%% ---------------------------------------------------
-	    % SIMULATE INCOME PROCESS ONE PERIOD
+	    % SIMULATE INCOME AND DEATH FOR ONE PERIOD
 	    % ----------------------------------------------------
-	    function simulate_income_one_period(obj,draws)
+	    function simulate_income_and_death_one_period(obj,draws)
 			chunksize = 5e2;
 			finished = false;
 			i1 = 1;
 			i2 = min(chunksize,obj.p.n_mpcsim);
 			while ~finished
-		        [~,obj.yinds(i1:i2)] = max(draws(i1:i2)...
+		        [~,obj.yinds(i1:i2)] = max(draws(i1:i2,1)...
 		        	<=obj.cum_ytrans(obj.yinds(i1:i2),:),[],2);
+
+		        if obj.p.Bequests == 0
+		        	lived = draws(i1:i2,2) > obj.deathrateSubperiod;
+		        	obj.bsim(i1:i2) = lived * obj.bsim(i1:i2);
+
+		        	if strcmp(obj.dim2Identity,'a')
+		        		obj.asim(i1:i2) = lived * obj.asim(i1:i2);
+		        	end
+		        end
 		        
 		        i1 = i2 + 1;
 		        i2 = min(i1+chunksize,obj.p.n_mpcsim);

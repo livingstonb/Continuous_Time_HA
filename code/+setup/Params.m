@@ -93,7 +93,7 @@ classdef Params < handle
         wpercentiles = [10 25 50 90 99 99.9];
         mpc_shocks = [-1e-5 -0.01 -0.1 1e-5 0.01 0.1];
         
-        T_mpcsim = 1e3;
+        T_mpcsim = 500;
         n_mpcsim = 1e5;
 	end
 
