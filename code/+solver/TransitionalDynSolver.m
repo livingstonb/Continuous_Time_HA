@@ -73,7 +73,7 @@ classdef TransitionalDynSolver < handle
 				obj.getTerminalCondition(KFE,ishock);
 				obj.iterateBackwards(ishock);
 
-				if obj.p.ComputeMPCS == 1
+				if obj.p.ComputeMPCS_news == 1
 					obj.computeMPCs(pmf,ishock,cum_con_baseline);
 				end
             end

@@ -158,11 +158,11 @@ classdef MPCFinder < handle
                     end
                 elseif (obj.p.Bequests == 0) && (obj.ResetIncomeUponDeath == 0)
                 	if strcmp(obj.dim2Identity,'a')
-	                	deathin_cc_k = obj.p.deathrate * cumcon_t_z_k(1,:,k)';
+	                	deathin_cc_k = obj.p.deathrate * cumcon_t_z_k(obj.grids.loc0b0a,:,k)';
 	                    deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.dim2,1));
 	                elseif strcmp(obj.dim2Identity,'c')
-	                    deathin_cc_k = obj.p.deathrate * cumcon_t_cz_k(1,:,k);
-	                    deathin_cc_k = kron(deathin_cc_k,ones(obj.dim2,1));
+	                    deathin_cc_k = obj.p.deathrate * cumcon_t_cz_k(obj.grids.loc0b,:,k);
+	                    deathin_cc_k = kron(deathin_cc_k,ones(obj.nb_KFE,1));
 	                end
                 end
 
@@ -217,7 +217,7 @@ classdef MPCFinder < handle
 	            mpcinterp = griddedInterpolant(interp_grids,squeeze(con_period),'linear');
 
 	            if (obj.income.ny > 1) && (obj.p.nz > 1)
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.income.y.matrixKFE(:),obj.grids.z.matrix(:));
+	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.grids.z.matrix(:),obj.income.y.matrixKFE(:));
 	            elseif (obj.income.ny==1) && (obj.p.nz > 1)
 	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.grids.z.matrix(:));
 	            elseif obj.income.ny > 1

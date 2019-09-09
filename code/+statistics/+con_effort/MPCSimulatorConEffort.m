@@ -160,15 +160,15 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 	    				obj.interp_grids,squeeze(obj.hpolicy1{ishock}),'makima');
 	    		end
 	    	elseif timeUntilShock > obj.savedTimesUntilShock(obj.timeIndex2)
-	    		timePastTime1 = time - obj.savedTimesUntilShock(obj.timeIndex1);
-	    		timeDiff = obj.savedTimesUntilShock(obj.timeIndex2)...
-	    			- obj.savedTimesUntilShock(obj.timeIndex1);
-	    		proportion2 = timePastTime1 / timeDiff;
+	    		timeUntil2 = timeUntilShock - obj.savedTimesUntilShock(obj.timeIndex2);
+	    		timeDiff = obj.savedTimesUntilShock(obj.timeIndex1)...
+	    			- obj.savedTimesUntilShock(obj.timeIndex2);
+	    		proportion1 = timeUntil2 / timeDiff;
 
 	    		for ii = 1:numel(obj.shocks)
                     ishock = obj.shocks(ii);
-	    			h_approximate = (1-proportion2) * obj.hpolicy1{ishock}...
-	    				+ proportion2 * obj.hpolicy2{ishock};
+	    			h_approximate = proportion1 * obj.hpolicy1{ishock}...
+	    				+ (1-proportion1) * obj.hpolicy2{ishock};
 	    			obj.hinterp{ii+1} = griddedInterpolant(...
 	    				obj.interp_grids,squeeze(h_approximate),'makima');
 	    		end
@@ -194,12 +194,12 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
             
             	if (shock > 0) || ismember(obj.shockperiod,[0,1])
 	            	obj.sim_mpcs(ishock).avg_quarterly_pos(period) = mean(con_diff(con_diff(:,period)/shock>0,period) / shock);
-					obj.sim_mpcs(ishock).responders_quarterly(period) = mean(con_diff(:,period)>0);
+					obj.sim_mpcs(ishock).responders_quarterly(period) = mean(con_diff(:,period)/shock>0);
 	            end
 
 	            if (shock > 0) || (obj.shockperiod == 4)
                     obj.sim_mpcs(ishock).avg_annual_pos = mean(sum(con_diff(con_diff/shock>0),2) / shock);
-                    obj.sim_mpcs(ishock).responders_annual = mean(sum(con_diff,2)>0);
+                    obj.sim_mpcs(ishock).responders_annual = mean(sum(con_diff/shock,2)>0);
                 end
 		    end
 		end
