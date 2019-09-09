@@ -172,10 +172,13 @@ classdef MPCSimulator < handle
 			bgrid_flat = obj.grids.b.matrix(:);
 			obj.bsim = repmat(bgrid_flat(index),1,obj.nshocks+1);
 			obj.b0 = obj.bsim;
-		    for i = 2:obj.nshocks+1
-		        ishock = obj.shocks(i-1);
-		        obj.bsim(:,i) = obj.bsim(:,i) + obj.p.mpc_shocks(ishock);
-		    end
+            
+            if obj.shockperiod == 0
+                for i = 2:obj.nshocks+1
+                    ishock = obj.shocks(i-1);
+                    obj.bsim(:,i) = obj.bsim(:,i) + obj.p.mpc_shocks(ishock);
+                end
+            end
 
 		    % record households pushed below grid, and bring them
 		    % up to bottom of grid
