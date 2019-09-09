@@ -60,9 +60,9 @@ function g = solveKFE(p,income,grdKFE,gg,A,dim2Identity)
             elseif (p.Bequests == 0) && (ResetIncomeUponDeath == 0)
                 deathg = sparse(nb_KFE*dim2*nz,1);
                 if strcmp(dim2Identity,'a')
-                	deathg(1:nb_KFE*dim2:end) = p.deathrate * income.ydist(iy) * (1/nz);
+                	deathg(grdKFE.loc0b0a:nb_KFE*dim2:end) = p.deathrate * income.ydist(iy) * (1/nz);
                 elseif strcmp(dim2Identity,'c')
-                	deathg(1:nb_KFE:end) = p.deathrate * sum(gg_tilde_cz_k(:,:,iy),1);
+                	deathg(grdKFE.loc0b:nb_KFE:end) = p.deathrate * sum(gg_tilde_cz_k(:,:,iy),1);
                 end
             end
 
