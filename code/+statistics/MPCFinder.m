@@ -169,7 +169,7 @@ classdef MPCFinder < handle
                 ind1 = 1+obj.dim2*obj.p.nb_KFE*obj.p.nz*(k-1);
                 ind2 = obj.dim2*obj.p.nb_KFE*obj.p.nz*k;
                 RHS = reshape(KFE.c(:,:,:,k),[],1) + ytrans_cc_k + deathin_cc_k ...
-                            + cumcon_t(ind1:ind2)/obj.p.delta_mpc;
+                            + cumcon_t_k(:,k)/obj.p.delta_mpc;
                 obj.cumcon(ind1:ind2,period) = obj.FKmat{k}*RHS;
 			end
 		end
