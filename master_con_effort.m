@@ -46,7 +46,8 @@ runopts.params_file = 'get_params2';
 runopts.param_index = 1;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
+% runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
+runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE

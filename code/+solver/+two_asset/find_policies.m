@@ -56,7 +56,7 @@ function policies = find_policies(p,income,grd,Vn)
     VbB(2:nb,:,:,:) = max(VbB(2:nb,:,:,:),Vbmin); % ensure cF is well defined
 
     % consumption and savings from forward-differenced V
-    cF(1:nb-1,:,:,:) 	= VbF(1:nb-1,:,:,:).^(-1/p.riskaver);
+    cF(1:nb-1,:,:,:) 	= VbF(1:nb-1,:,:,:).^(-1/p.riskaver_fulldim);
     cF(nb,:,:,:) 		= zeros(1,na,nz,ny);
     sF(1:nb-1,:,:,:) 	= (1-p.directdeposit-p.wagetax) .* y_mat(1:nb-1,:,:,:)...
                         + grd.b.matrix(1:nb-1,:,:,:) .* (r_b_mat(1:nb-1,:,:,:) ...
@@ -67,7 +67,7 @@ function policies = find_policies(p,income,grd,Vn)
     validcF         	= cF > 0;
 
     % consumption and savings from backward-differenced V
-    cB(2:nb,:,:,:)	= VbB(2:nb,:,:,:).^(-1/p.riskaver);
+    cB(2:nb,:,:,:)	= VbB(2:nb,:,:,:).^(-1/p.riskaver_fulldim);
     cB(1,:,:,:) 	= ((1-p.directdeposit)-p.wagetax) .* y_mat(1,:,:,:) ...
                         + grd.b.matrix(1,:,:,:) .* (r_b_mat(1,:,:,:)+ p.deathrate*p.perfectannuities) + p.transfer;
     sB(2:nb,:,:,:) 	= ((1-p.directdeposit)-p.wagetax) .* y_mat(2:nb,:,:,:)...

@@ -11,6 +11,14 @@ classdef TransitionalDynSolverTwoAsset < solver.TransitionalDynSolver
 		function obj = TransitionalDynSolverTwoAsset(params,income,grids,shocks)
 			obj = obj@solver.TransitionalDynSolver(params,income,grids,shocks);
             obj.dim2 = params.na_KFE;
+
+            blockDim = params.nb_KFE*params.na_KFE*params.nz;
+			if numel(params.rhos) > 1
+		        rhocol = kron(params.rhos',ones(params.nb_KFE*params.na_KFE,1));
+		        obj.rho_diag = spdiags(rhocol,0,blockDim,blockDim);
+		    else
+		        obj.rho_diag = params.rho * speye(blockDim);
+			end
 		end
 
 		function update_policies(obj)

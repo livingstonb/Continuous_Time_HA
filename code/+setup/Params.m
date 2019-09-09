@@ -47,7 +47,8 @@ classdef Params < handle
 		perfectannuities = 0;
 
 		% ------------ preferences -------------------------
-		riskaver = 1; % risk aversion
+		riskaver = 1; % risk aversion, can be a row vector
+		riskaver_fulldim;
 		deathrate = 1 /200; % death rate (quarterly)
 		rho = 0.015; % discount factor (quarterly)
 		rhoL; % starting point to find rho lower bounds
@@ -123,10 +124,10 @@ classdef Params < handle
             end
 
             % check for other heterogeneity
-            if numel(obj.rho_grid) > 1
-                obj.nz = numel(obj.rho_grid);
+            if (numel(obj.rho_grid)>1) && (numel(obj.riskaver)>1)
+            	error('Cannot have both rho and riskaver heterogeneity')
             else
-                obj.nz = 1;
+                obj.nz = max(numel(obj.rho_grid),numel(obj.riskaver));
             end
             
             obj.param_index = runopts.param_index;
@@ -138,6 +139,7 @@ classdef Params < handle
             obj.tempdirec = runopts.temp;
 
             obj.rhos = obj.rho + obj.rho_grid;
+            obj.riskaver_fulldim = reshape(obj.riskaver,[1 1 numel(obj.riskaver) 1]);
         end
 
         function obj = reset_rho(obj,newrho)

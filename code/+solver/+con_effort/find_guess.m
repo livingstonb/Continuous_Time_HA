@@ -44,7 +44,7 @@ function [V,c] = find_guess(p,income,grd)
 	    VbB(2:nb,:,:) = max(VbB(2:nb,:,:),Vbmin);
 
 	    % consumption and savings from forward-differenced V
-	    cF(1:nb-1,:,:) 	= VbF(1:nb-1,:,:).^(-1/p.riskaver);
+	    cF(1:nb-1,:,:) 	= VbF(1:nb-1,:,:).^(-1/p.riskaver_fulldim);
 	    cF(nb,:,:) 		= 1e-8;
 	    sF(1:nb-1,:,:) 	= (1-p.wagetax) .* y_mat(1:nb-1,:,:)...
 	    					+ bgrid_mat(1:nb-1,:,:) .* (p.r_b + p.deathrate*p.perfectannuities)...
@@ -54,7 +54,7 @@ function [V,c] = find_guess(p,income,grd)
 	    HcF(nb,:,:) 	= -1e12 * ones(1,nz,ny);
 
 	    % consumption and savings from backward-differenced V
-	    cB(2:nb,:,:)	= VbB(2:nb,:,:).^(-1/p.riskaver);
+	    cB(2:nb,:,:)	= VbB(2:nb,:,:).^(-1/p.riskaver_fulldim);
         cB(1,:,:)     = 1e-8;
         
 	    sB(2:nb,:,:) 	= (1-p.wagetax) .* y_mat(2:nb,:,:)...

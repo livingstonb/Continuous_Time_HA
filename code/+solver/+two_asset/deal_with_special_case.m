@@ -2,13 +2,21 @@ function [H_special,c_special,d_special] = deal_with_special_case(p,income,grids
 	% this function computes the policy functions associated
 	% with the special case that b = bmin, a > 0 and households
 	% withdraw only enough to consume, so that a does not accumulate
+
+	if strcmp(grids.gtype,'HJB')
+		nb = p.nb;
+		na = p.na;
+	else
+		nb = p.nb_KFE;
+		na = p.na_KFE;
+	end
 	
-	lambda = zeros(p.nb,p.na,p.nz,income.ny);
+	lambda = zeros(nb,na,p.nz,income.ny);
 	rb = r_b_mat(1,1,1,1) * p.bmin;
 	for ia = 2:p.na
 	for iz = 1:p.nz
 	for k = 1:p.ny
-		l_fn = @(x) aux.lambda_function(x,VaB(1,ia,iz,k),rb,grids.a.vec(ia),income.y.vec(k),p);
+		l_fn = @(x) aux.lambda_function(x,VaB(1,ia,iz,k),rb,grids.a.vec(ia),income.y.vec(k),p,iz);
 
 		options = optimset('TolX',1e-8,'TolFun',1e-11);
         [lambda(1,ia,iz,k),fval] = fminbnd(@(x) l_fn(x)^2,0,1e9,options);
@@ -25,9 +33,14 @@ function [H_special,c_special,d_special] = deal_with_special_case(p,income,grids
     d_special(~isfinite(d_special)) = 0;
 
 
-    c_special = zeros(p.nb,p.na,p.nz,p.ny);
-    c_special(1,2:p.na,:,:) = lambda(1,2:p.na,:,:) .^(-1/p.riskaver);
+    c_special = zeros(nb,na,p.nz,p.ny);
+    if na == 2
+    	riskaver_mat = p.riskaver;
+    else
+    	riskaver_mat = reshape(p.riskaver,[1 numel(p.riskaver)]);
+    end
+    c_special(1,2:na,:,:) = lambda(1,2:na,:,:) .^(-1./riskaver_mat);
 
-    H_special = - 1e12 * ones(p.nb,p.na,p.nz,p.ny);
-    H_special(1,2:p.na,:,:) = VaB(1,2:p.na,:,:) .* d_special(1,2:p.na,:,:);
+    H_special = - 1e12 * ones(nb,na,p.nz,p.ny);
+    H_special(1,2:na,:,:) = VaB(1,2:na,:,:) .* d_special(1,2:na,:,:);
 end

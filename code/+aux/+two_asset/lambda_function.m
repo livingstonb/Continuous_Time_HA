@@ -1,8 +1,8 @@
-function fval = lambda_function(lambda,Va,rb,a_grid,income,p)
+function fval = lambda_function(lambda,Va,rb,a_grid,income,p,iz)
 
     term1 = - rb;
 
-	term2 = lambda .^(-1/p.riskaver);
+	term2 = lambda .^(-1/p.riskaver(iz));
 
 	chi1_inv_arg = Va ./ lambda - 1;
 	term3 = adj_cost_deriv_inverse(chi1_inv_arg,a_grid,p);

@@ -130,10 +130,10 @@ function [AYdiff,HJB,KFE,Au,grd,grdKFE] = solver(runopts,p,income,grd,grdKFE)
     Vn = V_0;
 
     if numel(p.rhos) > 1
-        rhocol = kron(p.rhos',ones(nb*na,1));
-        rho_diag = spdiags(rhocol,0,nb*na*nz,nb*na*nz);
+        rhocol = kron(p.rhos',ones(p.nb*p.nc,1));
+        rho_diag = spdiags(rhocol,0,p.nb*p.nc*p.nz,p.nb*p.nc*p.nz);
     else
-        rho_diag = p.rho * speye(nb*na*nz);
+        rho_diag = p.rho * speye(p.nb*p.nc*p.nz);
 	end
     
     fprintf('    --- Iterating over HJB ---\n')

@@ -54,15 +54,7 @@ classdef TransitionalDynSolver < handle
 				obj.mpcs(ishock).avg_1_quarterly = NaN;
 				obj.mpcs(ishock).avg_4_quarterly = NaN(4,1);
 				obj.mpcs(ishock).avg_4_annual = NaN;
-			end
-
-			blockDim = params.nb_KFE*params.na_KFE*params.nz;
-			if numel(params.rhos) > 1
-		        rhocol = kron(params.rhos',ones(params.nb_KFE*params.na_KFE,1));
-		        obj.rho_diag = spdiags(rhocol,0,blockDim,blockDim);
-		    else
-		        obj.rho_diag = params.rho * speye(blockDim);
-			end
+            end
 		end
 
 		function solve(obj,KFE,pmf,cum_con_baseline)
@@ -170,7 +162,7 @@ classdef TransitionalDynSolver < handle
 		    		V1_terminal_k(:,k) = obj.rho_diag + ((1/obj.p.delta_mpc + 1/(1e-4) + obj.p.deathrate - obj.income.ytrans(k,k))...
 		        				*speye(obj.p.nb_KFE*obj.dim2*obj.p.nz) - Ak)...
 		                 	\ (u_k(:,k) + Vk_stacked...
-		                 		+ Vg_terminal_k(:,k)/(1e-4) + V_terminal_k(:,k)/obj.p.delta_mpc);
+		                 		+ Vg_terminal_k(:,k)/obj.p.delta_mpc + V_terminal_k(:,k)/(1e-4));
 		    	end
 
     			dst = max(abs(V1_terminal_k(:)-V_terminal(:)));
