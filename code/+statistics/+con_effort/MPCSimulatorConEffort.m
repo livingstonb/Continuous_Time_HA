@@ -90,7 +90,11 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
                     policyIndex = ii;
                 end
                 
-	            if obj.income.ny > 1
+                if (obj.income.ny > 1) && (obj.p.nz > 1)
+                	obj.hinterp{policyIndex}(obj.bsim(:,ii),obj.csim(:,ii),obj.zinds,obj.ysim);
+                elseif obj.p.nz > 1
+                	obj.hinterp{policyIndex}(obj.bsim(:,ii),obj.csim(:,ii),obj.zinds);
+	            elseif obj.income.ny > 1
 	                hsim(:,ii) = ...
                         obj.hinterp{policyIndex}(obj.bsim(:,ii),obj.csim(:,ii),obj.ysim);
 	            else

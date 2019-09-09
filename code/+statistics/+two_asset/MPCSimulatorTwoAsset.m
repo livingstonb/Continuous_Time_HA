@@ -48,8 +48,19 @@ classdef MPCSimulatorTwoAsset < statistics.MPCSimulator
 	    	% delta
 
 	    	% interpolate to find decisions
-	    	s = obj.sinterp(obj.bsim(:),obj.asim(:),obj.yrep);
-	    	d = obj.dinterp(obj.bsim(:),obj.asim(:),obj.yrep);
+	    	if (obj.income.ny > 1) && (obj.p.nz > 1)
+	    		s = obj.sinterp(obj.bsim(:),obj.asim(:),obj.zindsrep,obj.yrep);
+		    	d = obj.dinterp(obj.bsim(:),obj.asim(:),obj.zindsrep,obj.yrep);
+		    elseif obj.p.nz > 1
+		    	s = obj.sinterp(obj.bsim(:),obj.asim(:),obj.zindsrep);
+		    	d = obj.dinterp(obj.bsim(:),obj.asim(:),obj.zindsrep);
+    		elseif obj.income.ny > 1
+		    	s = obj.sinterp(obj.bsim(:),obj.asim(:),obj.yrep);
+		    	d = obj.dinterp(obj.bsim(:),obj.asim(:),obj.yrep);
+		    else
+		    	s = obj.sinterp(obj.bsim(:),obj.asim(:));
+		    	d = obj.dinterp(obj.bsim(:),obj.asim(:));
+		    end
 
 	    	s = reshape(s,[],obj.nshocks+1);
 	    	d = reshape(d,[],obj.nshocks+1);
@@ -69,7 +80,15 @@ classdef MPCSimulatorTwoAsset < statistics.MPCSimulator
 	    end
 
 	    function simulate_consumption_one_period(obj)
-	    	c = obj.cinterp(obj.bsim(:),obj.asim(:),obj.yrep);
+	    	if (obj.income.ny > 1) && (obj.p.nz > 1)
+	    		c = obj.cinterp(obj.bsim(:),obj.asim(:),obj.zindsrep,obj.yrep);
+	    	elseif obj.p.nz > 1
+	    		c = obj.cinterp(obj.bsim(:),obj.asim(:),obj.zindsrep);
+	    	elseif obj.income.ny > 1
+	    		c = obj.cinterp(obj.bsim(:),obj.asim(:),obj.yrep);
+	    	else
+	    		c = obj.cinterp(obj.bsim(:),obj.asim(:));
+	    	end
 	    	c = reshape(c,[],obj.nshocks+1);
 
 	    	obj.cum_con = obj.cum_con + c * obj.mpc_delta;

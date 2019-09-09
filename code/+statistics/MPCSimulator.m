@@ -181,6 +181,13 @@ classdef MPCSimulator < handle
                 end
             end
 
+            % initial z-heterogeneity
+            if obj.p.nz > 1
+            	zgrid_flat = obj.grids.z.matrix(:);
+            	obj.zinds = zgrid_flat(index);
+            	obj.zindsrep = repmat(obj.zinds,obj.nshocks+1,1)
+            end
+
 		    % record households pushed below grid, and bring them
 		    % up to bottom of grid
 		    obj.below_bgrid = obj.bsim < obj.grids.b.vec(1);
