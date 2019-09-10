@@ -150,7 +150,7 @@ classdef TransitionalDynSolver < handle
 		    	u_k = reshape(KFE_terminal.u,[],obj.p.ny);
 
 		    	V1_terminal_k = zeros(obj.p.nb_KFE*obj.dim2*obj.p.nz,obj.p.ny);
-                deltaLarge = 1e3;
+                deltaLarge = 1e6;
 		    	for k = 1:obj.p.ny
 		    		ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
 			    	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;

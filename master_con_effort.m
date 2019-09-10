@@ -37,7 +37,7 @@ runopts.fast = 0; % use small grid for  debugging
 runopts.ComputeMPCS = 1;
 runopts.ComputeMPCS_news = 1;
 runopts.SimulateMPCS = 1;
-runopts.SimulateMPCS_news = 1;
+runopts.SimulateMPCS_news = 0;
 
 runopts.params_file = 'get_params2';
 
