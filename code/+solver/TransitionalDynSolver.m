@@ -72,7 +72,10 @@ classdef TransitionalDynSolver < handle
             % loop over shocks
 			for ishock = obj.shocks
                 fprintf('    --- Shock = %f ---\n',obj.p.mpc_shocks(ishock))
-				obj.getTerminalCondition(KFE,ishock);
+				success = obj.getTerminalCondition(KFE,ishock);
+				if ~success
+					return
+				end
 				obj.iterateBackwards(ishock);
 
 				if obj.p.ComputeMPCS_news == 1
@@ -82,11 +85,13 @@ classdef TransitionalDynSolver < handle
             fprintf('\n')
 		end
 
-		function getTerminalCondition(obj,KFE,ishock)
+		function success = getTerminalCondition(obj,KFE,ishock)
 			% this method finds the value function the instant before
 			% the shock is applied
 			
             shock = obj.p.mpc_shocks(ishock);
+
+            success = false;
 
 			% Get the guess of terminal value function
 			% V_{T+1}as V(b+shock,a,y)
@@ -176,6 +181,7 @@ classdef TransitionalDynSolver < handle
 		        
 		        if dst < 1e-10
 		        	fprintf('\tFound terminal value function after %i iterations\n',ii);
+		        	success = true;
 		            break
 		        end
 		    end
