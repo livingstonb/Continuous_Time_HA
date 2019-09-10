@@ -34,8 +34,8 @@ warning('off','MATLAB:nearlySingularMatrix')
 runopts.Server      = 1; % sets param_index=slurm env var
 runopts.IterateRho  = 1;
 runopts.fast = 0; % use small grid for  debugging
-runopts.ComputeMPCS = 1;
-runopts.ComputeMPCS_news = 1;
+runopts.ComputeMPCS = 0;
+runopts.ComputeMPCS_news = 0;
 runopts.SimulateMPCS = 1;
 runopts.SimulateMPCS_news = 0;
 
@@ -47,7 +47,7 @@ runopts.param_index = 1;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 % runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
+runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE

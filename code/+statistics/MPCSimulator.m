@@ -55,6 +55,7 @@ classdef MPCSimulator < handle
 		shockperiod;
 		dim2Identity; % 'a' or 'c'
 		dim2;
+        deathrateSubperiod;
 
 		sim_mpcs = struct();
 
@@ -71,7 +72,7 @@ classdef MPCSimulator < handle
 			obj.p = p;
 			obj.income = income;
 			obj.grids = grids;
-			obj.deathrateSubperiod = 1 - (1-obj.deathrate)^(1/p.T_mpcsim);
+			obj.deathrateSubperiod = 1 - (1-obj.p.deathrate)^(1/p.T_mpcsim);
 
 			obj.mpc_delta = 1 / p.T_mpcsim;
 			obj.shocks = shocks;

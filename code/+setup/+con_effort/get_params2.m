@@ -40,7 +40,7 @@ function outparams = get_params2(runopts)
         params(ii).penalty1 = 1e3;
         params(ii).penalty2 = 2; % penalty for a < 0
 
-        params(ii).nb = 300;
+        params(ii).nb = 200;
         params(ii).nb_pos = 170;
         params(ii).nb_KFE = 200;
         params(ii).nb_pos_KFE = 170;
