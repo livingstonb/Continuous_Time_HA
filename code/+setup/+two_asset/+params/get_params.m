@@ -67,7 +67,7 @@ function outparams = get_params(runopts)
     params(i).chi2 = 0.25;
     params(i).a_lb = 0.25;
     params(i).rhoL = 0.01;
-    params(i).rho = 0.008;
+    params(i).rho = 0.02;
     params(i).rho_grid = [-0.0005,0.0005]; % distance between them will be fixed
     params(i).r_a = 0.0190643216;
 
@@ -87,7 +87,7 @@ function outparams = get_params(runopts)
     params(i).a_lb = 0.25;
     params(i).rhoL = 0.01;
     params(i).rho = 0.008;
-    params(i).rho_grid = 0; % distance between them will be fixed
+    params(i).rho_grid = 0;
     params(i).r_a = 0.0190643216;
 
     params(i).nb = 45;

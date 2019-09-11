@@ -191,7 +191,7 @@ classdef Grid < handle
 
 		function add_zgrid(obj, z_vector, dim2)
 			obj.z.vec = (1:numel(z_vector))';
-			obj.z.wide = reshape(z_vector,[1 1 obj.nz 1]);
+			obj.z.wide = reshape(obj.z.vec,[1 1 obj.nz 1]);
 			obj.z.matrix = repmat(obj.z.wide,[obj.nb dim2 1 obj.ny]);
 		end
     end
