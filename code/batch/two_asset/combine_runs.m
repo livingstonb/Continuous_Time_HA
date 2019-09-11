@@ -17,8 +17,9 @@ codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/code/';
 
 % matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
 % codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-xlxpath1 = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/detailedResults.xlsx';
-xlxpath2 = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/decomposition.xlsx';
+xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
+xlxpath1 = [xlxpath 'detailedResults.xlsx'];
+xlxpath2 = [xlxpath 'decomposition.xlsx'];
 
 addpath(codedir);
 
