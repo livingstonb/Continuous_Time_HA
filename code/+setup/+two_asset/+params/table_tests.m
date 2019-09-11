@@ -148,7 +148,8 @@ function outparams = table_tests(runopts)
         elseif riskaver == 2
             params(ii).rhoL = 0.017;
         elseif riskaver == 4
-            params(ii).delta_KFE = 0.1;
+            params(ii).delta_KFE = 0.2;
+            params(ii).maxit_KFE = 25000;
             params(ii).rhoL = 0.024;
         elseif riskaver == 6
             params(ii).delta_KFE = 0.01;
