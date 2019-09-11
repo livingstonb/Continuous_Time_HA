@@ -140,27 +140,28 @@ classdef TransitionalDynSolver < handle
 			reshape_vec = [obj.p.nb_KFE,obj.dim2,obj.p.nz,obj.p.ny];
 		    V_terminal = Vg_terminal;
 		    V_terminal_k = reshape(V_terminal,[],obj.p.ny);
+            
 		    for ii = 1:5000
 		    	if strcmp(obj.dim2Identity,'a')
 			    	KFE_terminal = solver.two_asset.find_policies(obj.p,obj.income,obj.grids,V_terminal);
-			    	A_terminal = solver.two_asset.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal,'KFE');
+                    A_terminal = solver.two_asset.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal,'KFE');
 			    elseif strcmp(obj.dim2Identity,'c')
 			    	KFE_terminal.h = solver.con_effort.find_policies(obj.p,obj.income,obj.grids,V_terminal);
-	                KFE_terminal.u = aux.u_fn(obj.grids.c.matrix,obj.p.riskaver) - aux.con_effort.con_adj_cost(obj.p,KFE_terminal.h)...
-	                    - aux.con_effort.penalty(obj.grids.b.matrix,obj.p.penalty1,obj.p.penalty2);
 	                KFE_terminal.s = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities) * obj.grids.b.matrix...
 	                    + (1-obj.p.wagetax)* obj.income.y.matrixKFE - obj.grids.c.matrix;
-			    	A_terminal = solver.con_effort.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal);
+                    KFE_terminal.u = aux.u_fn(obj.grids.c.matrix,obj.p.riskaver) - aux.con_effort.con_adj_cost(obj.p,KFE_terminal.h)...
+	                    - aux.con_effort.penalty(obj.grids.b.matrix,obj.p.penalty1,obj.p.penalty2);
+                    A_terminal = solver.con_effort.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal);        
 			    end
 		    	u_k = reshape(KFE_terminal.u,[],obj.p.ny);
 
 		    	V1_terminal_k = zeros(obj.p.nb_KFE*obj.dim2*obj.p.nz,obj.p.ny);
-                deltaLarge = 1e6;
+                deltaLarge = 1e-3;
 		    	for k = 1:obj.p.ny
 		    		ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
 			    	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
 		    		Ak = A_terminal(ind1:ind2,ind1:ind2);
-
+   
 		    		indx_k = ~ismember(1:obj.p.ny,k);
 		    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.dim2*obj.p.nz,1) ...
                             .* V_terminal_k(:,indx_k),2);
@@ -179,7 +180,7 @@ classdef TransitionalDynSolver < handle
 		        V_terminal_k = V1_terminal_k;
                 V_terminal = reshape(V_terminal_k,reshape_vec);
 		        
-		        if dst < 1e-10
+		        if dst < 1e-7
 		        	fprintf('\tFound terminal value function after %i iterations\n',ii);
 		        	success = true;
 		            break
@@ -214,8 +215,8 @@ classdef TransitionalDynSolver < handle
                 V_k = reshape(obj.V,[],obj.p.ny);
                 V_k1 = zeros(size(V_k));
                 for k = 1:obj.p.ny
-                    ind1 = 1+obj.p.nb_KFE*obj.dim2*(k-1);
-			    	ind2 = obj.p.nb_KFE*obj.dim2*k;
+                    ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
+			    	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
                     Ak = obj.A(ind1:ind2,ind1:ind2);
                     
                     indx_k = ~ismember(1:obj.income.ny,k);
@@ -280,8 +281,8 @@ classdef TransitionalDynSolver < handle
 
                 deathin_cc_k = obj.get_death_inflows(cumcon_t_k,k);
 
-                ind1 = 1+obj.p.nb_KFE*obj.dim2*(k-1);
-                ind2 = obj.p.nb_KFE*obj.dim2*k;
+                ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
+                ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
                 RHS = reshape(obj.KFEint.c(:,:,:,k),[],1) + ytrans_cc_k + deathin_cc_k ...
                         + cumcon_t_k(:,k)/obj.p.delta_mpc;
                 obj.cumcon(ind1:ind2,period) = FKmat{k}*RHS;

@@ -28,14 +28,13 @@ function decomp = decomp_baseline(s0,s1)
 
     % get rid of z-dimension
     Em1 = stats1.mpcs(5).avg_1_t(1);
-    m1 = reshape(stats1.mpcs(5).mpcs(:,1),[p1.nb_KFE p1.na_KFE p1.nz income0.ny];
-   	m1_z = permute([1 2 4 3]);
+    m1 = reshape(stats1.mpcs(5).mpcs(:,1),[p1.nb_KFE p1.na_KFE p1.nz income0.ny]);
     pmf1_z = stats1.pmf;
-    pmf1_z = reshape(permute([1 2 4 3]);
     % find P(z|b,a,y)
-    Pz_bay = pmf1_z ./ sum(pmf1_z,4);
-    m1 = sum(Pz_bay .* m1_z,4); % integrate out z
-    m1(sum(pmf1_z,4)<1e-8) = 0; % avoid NaN
+    P_bay = reshape(sum(pmf1_z,3),[p1.nb_KFE p1.na_KFE p1.nz income0.ny]);
+    Pz_bay = pmf1_z ./ P_bay;
+    m1 = sum(Pz_bay .* m1_z,3); % integrate out z
+    m1(P_bay<1e-8) = 0; % avoid NaN
     m1 = m1(:);
 
     Em0 = stats0.mpcs(5).avg_0_t(1);

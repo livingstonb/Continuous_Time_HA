@@ -37,7 +37,7 @@ runopts.fast = 0; % use small grid for  debugging
 runopts.ComputeMPCS = 0;
 runopts.ComputeMPCS_news = 0;
 runopts.SimulateMPCS = 1;
-runopts.SimulateMPCS_news = 0;
+runopts.SimulateMPCS_news = 1;
 
 runopts.params_file = 'get_params2';
 
@@ -47,7 +47,7 @@ runopts.param_index = 1;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 % runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/';
+runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE

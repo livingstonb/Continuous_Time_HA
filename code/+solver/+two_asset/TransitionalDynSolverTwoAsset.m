@@ -34,7 +34,6 @@ classdef TransitionalDynSolverTwoAsset < solver.TransitionalDynSolver
 		function deathin_cc_k = get_death_inflows(obj,cumcon_t_k,k)
             reshape_vec = [obj.p.nb_KFE*obj.p.na_KFE obj.p.nz obj.p.ny];
 			cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
-            ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k(:,k),2);
 
             if (obj.p.Bequests == 1) && (obj.p.ResetIncomeUponDeath == 1)
                 deathin_cc_k = obj.p.deathrate * sum(obj.income.ydist' .* cumcon_t_k(:,k),2);
