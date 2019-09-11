@@ -257,10 +257,10 @@ classdef MPCSimulator < handle
 
 		        if obj.p.Bequests == 0
 		        	lived = draws(i1:i2,2) > obj.deathrateSubperiod;
-		        	obj.bsim(i1:i2) = lived * obj.bsim(i1:i2);
+		        	obj.bsim(i1:i2) = lived .* obj.bsim(i1:i2);
 
 		        	if strcmp(obj.dim2Identity,'a')
-		        		obj.asim(i1:i2) = lived * obj.asim(i1:i2);
+		        		obj.asim(i1:i2) = lived .* obj.asim(i1:i2);
 		        	end
 		        end
 		        
