@@ -27,17 +27,19 @@ function decomp = decomp_baseline(s0,s1)
     assets0 = grdKFE0.a.matrix(:) + grdKFE0.b.matrix(:);
 
     % get rid of z-dimension
-    Em1 = stats1.mpcs(5).avg_1_t(1);
+    Em1 = stats1.mpcs(5).avg_0_quarterly(1);
     m1 = reshape(stats1.mpcs(5).mpcs(:,1),[p1.nb_KFE p1.na_KFE p1.nz income0.ny]);
     pmf1_z = stats1.pmf;
     % find P(z|b,a,y)
     P_bay = reshape(sum(pmf1_z,3),[p1.nb_KFE p1.na_KFE p1.nz income0.ny]);
     Pz_bay = pmf1_z ./ P_bay;
-    m1 = sum(Pz_bay .* m1_z,3); % integrate out z
-    m1(P_bay<1e-8) = 0; % avoid NaN
+    m1 = sum(Pz_bay .* m1,3); % integrate out z
+    m1(squeeze(P_bay)<1e-8) = 0; % avoid NaN
     m1 = m1(:);
+    pmf1 = sum(pmf1_z,3);
+    pmf1 = pmf1(:);
 
-    Em0 = stats0.mpcs(5).avg_0_t(1);
+    Em0 = stats0.mpcs(5).avg_0_quarterly(1);
     m0 = stats0.mpcs(5).mpcs(:,1); % assume nz = 1 for baseline
     pmf0 = stats0.pmf(:);
 
@@ -46,7 +48,7 @@ function decomp = decomp_baseline(s0,s1)
     end
 
     % Main decomposition
-    decomp.Em1_less_Em0 = Em1 - Em2;
+    decomp.Em1_less_Em0 = Em1 - Em0;
     decomp.term1 = (m1 - m0)' * pmf0; 
     decomp.term2 = m0' * (pmf1 - pmf0);
     decomp.term3 = (m1 - m0)' * (pmf1 - pmf0);
@@ -75,7 +77,7 @@ function decomp = decomp_baseline(s0,s1)
 	        else
 	        	decomp.term2a(ia) = m0g1interp(abar) - m0g0interp(abar);
 	        	decomp.term2b(ia) = (m0(:)' * pmf1(:) - m0g1interp(abar)) ...
-	        		- (Em0 - m0g0interp(abar))
+	        		- (Em0 - m0g0interp(abar));
         	end
         else
             loc_zero = (grdKFE0.a.matrix(:)<=abar) & (grdKFE0.b.matrix(:)<=abar);

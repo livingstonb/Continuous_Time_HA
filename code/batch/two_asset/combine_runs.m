@@ -7,11 +7,13 @@ FROM_MATFILE = true;
 
 %% Select directories
 matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
+% matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/two_asset/';
 % matdir = '/media/hdd/Other/midway2_output/continuous_time';
 % matdir = '/Users/brianlivingston/Documents/midway2_output/';
 % matdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/output/two_asset/';
 
 codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/code/';
+% codedir = '/home/brian/Documents/GitHub/Continuous_Time_HA/code/';
 
 % matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
 % codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
@@ -171,8 +173,8 @@ detailedResults = [{'Name'}, aux.get_all_values(s,'p',1,'name')
             {'ANNUAL MPC, shock = 0.01 next year'}, aux.get_all_values(s,'stats',1,'mpcs',5,'avg_4_annual')
             {'ANNUAL MPC, shock = 0.1 next year'}, aux.get_all_values(s,'stats',1,'mpcs',6,'avg_4_annual')
             {'____SOME SIMULATED MEAN MPCs'}, nans
-            {'QUARTER 1 MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly')
-            {'QUARTER 1 MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly')
+            {'QUARTER 1 SIM MPC, shock = 0.01'}, aux.get_all_values(s,'stats',1,'sim_mpcs',5,'avg_0_quarterly',1)
+            {'QUARTER 1 SIM MPC, shock = 0.1'}, aux.get_all_values(s,'stats',1,'sim_mpcs',6,'avg_0_quarterly',1)
             {'___DECOMP OF EM1 AROUND 0'}, nans
             {'Decomp around 0, RA MPC'}, aux.get_all_values(s,'stats',1,'decomp_norisk',1,'term1',1)
             {'Decomp around 0, HtM Effect'}, aux.get_all_values(s,'stats',1,'decomp_norisk',1,'term2',1)
