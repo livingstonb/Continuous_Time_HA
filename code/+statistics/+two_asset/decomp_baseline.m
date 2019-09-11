@@ -31,7 +31,7 @@ function decomp = decomp_baseline(s0,s1)
     m1 = reshape(stats1.mpcs(5).mpcs(:,1),[p1.nb_KFE p1.na_KFE p1.nz income0.ny]);
     pmf1_z = stats1.pmf;
     % find P(z|b,a,y)
-    P_bay = reshape(sum(pmf1_z,3),[p1.nb_KFE p1.na_KFE p1.nz income0.ny]);
+    P_bay = reshape(sum(pmf1_z,3),[p1.nb_KFE p1.na_KFE 1 income0.ny]);
     Pz_bay = pmf1_z ./ P_bay;
     m1 = sum(Pz_bay .* m1,3); % integrate out z
     m1(squeeze(P_bay)<1e-8) = 0; % avoid NaN
