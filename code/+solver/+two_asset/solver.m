@@ -59,8 +59,8 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
     if p.OneAsset == 1
         gg0(:,grdKFE.a.vec>0,:,:) = 0;
     end
+    gg0 = gg0 / sum(gg0(:));
 	gg0 = gg0 ./ grdKFE.trapezoidal.matrix;
-	gg0 = gg0(:) / sum(gg0(:));
 	gg = gg0;
 
 	%% --------------------------------------------------------------------
