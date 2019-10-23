@@ -39,7 +39,12 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	c_0 = (1-p.directdeposit - p.wagetax) * income.y.matrix ...
             + (p.r_a + p.deathrate*p.perfectannuities) * grd.a.matrix...
             + (r_b_mat + p.deathrate*p.perfectannuities) .* grd.b.matrix + p.transfer;
-    V_0	= 1 ./ (rho_mat + p.deathrate) .* aux.u_fn(c_0,p.riskaver);
+
+    if p.SDU == 0
+    	V_0	= 1 ./ (rho_mat + p.deathrate) .* aux.u_fn(c_0,p.riskaver);
+    else
+    	V_0 = aux.u_fn(c_0, p.invies);
+    end
     
 %     % Attempt at more accurate guess (seems to fail)
 %     inc_trans = kron(income.ytrans,speye(p.nb*p.na));

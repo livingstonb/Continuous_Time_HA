@@ -31,8 +31,8 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server      = 1; % sets param_index=slurm env var
-runopts.IterateRho  = 1;
+runopts.Server      = 0; % sets param_index=slurm env var
+runopts.IterateRho  = 0;
 runopts.fast = 0; % use small grid for  debugging
 runopts.ComputeMPCS = 0;
 runopts.ComputeMPCS_news = 0;

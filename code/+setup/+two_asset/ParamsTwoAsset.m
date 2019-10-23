@@ -29,6 +29,9 @@ classdef ParamsTwoAsset < setup.Params
 		directdeposit = 0;
 
 		decomp_thresholds = [0 0.01 0.05];
+
+        % Stochastic differential utility
+        invies = 1;
 	end
 
 	methods

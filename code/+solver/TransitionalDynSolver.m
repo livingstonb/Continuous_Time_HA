@@ -104,6 +104,12 @@ classdef TransitionalDynSolver < handle
 				dim2mat = obj.grids.c.matrix;
 			end
 
+			if numel(p.rhos) > 1
+		        rho_mat = reshape(obj.p.rhos,[1 1 numel(obj.p.rhos)]);
+		    else
+		        rho_mat = obj.p.rho;
+		    end
+
 			if (obj.p.ny > 1) && (obj.p.nz > 1)
 				interp_grids = {obj.grids.b.vec,dim2vec,obj.grids.z.vec,obj.income.y.vec};
             elseif obj.p.ny > 1
@@ -149,8 +155,15 @@ classdef TransitionalDynSolver < handle
 			    	KFE_terminal.h = solver.con_effort.find_policies(obj.p,obj.income,obj.grids,V_terminal);
 	                KFE_terminal.s = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities) * obj.grids.b.matrix...
 	                    + (1-obj.p.wagetax)* obj.income.y.matrixKFE - obj.grids.c.matrix;
-                    KFE_terminal.u = aux.u_fn(obj.grids.c.matrix,obj.p.riskaver) - aux.con_effort.con_adj_cost(obj.p,KFE_terminal.h)...
+
+	                if p.SDU == 0
+                    	KFE_terminal.u = aux.u_fn(obj.grids.c.matrix, obj.p.riskaver);
+                    else
+                    	KFE_terminal.u = aux.u_fn(obj.grids.c.matrix, obj.p.invies, rho_mat);
+                    end
+                    KFE_terminal.u = KFE_terminal.u - aux.con_effort.con_adj_cost(obj.p,KFE_terminal.h)...
 	                    - aux.con_effort.penalty(obj.grids.b.matrix,obj.p.penalty1,obj.p.penalty2);
+
                     A_terminal = solver.con_effort.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal);        
 			    end
 		    	u_k = reshape(KFE_terminal.u,[],obj.p.ny);

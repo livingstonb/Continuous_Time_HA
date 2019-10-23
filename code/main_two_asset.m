@@ -18,6 +18,8 @@ function [stats,p] = main_two_asset(runopts)
         p = setup.two_asset.params.table_tests_bequests(runopts);
     elseif strcmp(runopts.mode,'get_params')
 		p = setup.two_asset.params.get_params(runopts);
+    elseif strcmp(runopts.mode, 'SDU_tests')
+        p = setup.two_asset.params.SDU_tests(runopts);
     end
     p.print();
 	

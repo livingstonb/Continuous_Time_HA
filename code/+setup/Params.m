@@ -47,6 +47,7 @@ classdef Params < handle
 		perfectannuities = 0;
 
 		% ------------ preferences -------------------------
+        SDU = 0;
 		riskaver = 1; % risk aversion, can be a row vector
 		riskaver_fulldim;
 		deathrate = 1 /200; % death rate (quarterly)

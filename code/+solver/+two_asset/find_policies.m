@@ -12,6 +12,15 @@ function policies = find_policies(p,income,grd,Vn)
     % Returns grid
     r_b_mat = p.r_b .* (grd.b.matrix>=0) +  p.r_b_borr .* (grd.b.matrix<0);
 
+    % If using stoch diff utility, multiply utility by rho
+    if p.SDU == 1
+        if numel(p.rhos) > 1
+            rho_mat = reshape(p.rhos,[1 1 numel(p.rhos)]);
+        else
+            rho_mat =  p.rho;
+        end
+    end
+
     %% --------------------------------------------------------------------
 	% INITIALIZATION
 	% ---------------------------------------------------------------------
@@ -56,31 +65,57 @@ function policies = find_policies(p,income,grd,Vn)
     VbB(2:nb,:,:,:) = max(VbB(2:nb,:,:,:),Vbmin); % ensure cF is well defined
 
     % consumption and savings from forward-differenced V
-    cF(1:nb-1,:,:,:) 	= VbF(1:nb-1,:,:,:).^(-1/p.riskaver_fulldim);
+    if p.SDU == 0
+        cF(1:nb-1,:,:,:) 	= VbF(1:nb-1,:,:,:).^(-1/p.riskaver_fulldim);
+    else
+        cF(1:nb-1,:,:,:) 	= (VbF(1:nb-1,:,:,:) ./ rho_mat).^(-1/p.invies);
+    end
     cF(nb,:,:,:) 		= zeros(1,na,nz,ny);
     sF(1:nb-1,:,:,:) 	= (1-p.directdeposit-p.wagetax) .* y_mat(1:nb-1,:,:,:)...
                         + grd.b.matrix(1:nb-1,:,:,:) .* (r_b_mat(1:nb-1,:,:,:) ...
                         + p.deathrate*p.perfectannuities) + p.transfer - cF(1:nb-1,:,:,:);
     sF(nb,:,:,:) 		= zeros(1,na,nz,ny); % impose a state constraint at the top to improve stability
-    HcF(1:nb-1,:,:,:)	= aux.u_fn(cF(1:nb-1,:,:,:),p.riskaver) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
+
+    if p.SDU == 0
+        HcF(1:nb-1,:,:,:) = aux.u_fn(cF(1:nb-1,:,:,:), p.riskaver) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
+    else
+        HcF(1:nb-1,:,:,:) = aux.u_fn(cF(1:nb-1,:,:,:), p.invies, rho_mat) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
+    end
+
     HcF(nb,:,:,:) 		= -1e12 * ones(1,na,nz,ny);
     validcF         	= cF > 0;
 
     % consumption and savings from backward-differenced V
-    cB(2:nb,:,:,:)	= VbB(2:nb,:,:,:).^(-1/p.riskaver_fulldim);
+    if p.SDU == 0
+        cB(2:nb,:,:,:)	= VbB(2:nb,:,:,:).^(-1/p.riskaver_fulldim);
+    else
+        cB(2:nb,:,:,:)	= (VbB(2:nb,:,:,:) ./ rho_mat).^(-1/p.invies);
+    end
     cB(1,:,:,:) 	= ((1-p.directdeposit)-p.wagetax) .* y_mat(1,:,:,:) ...
                         + grd.b.matrix(1,:,:,:) .* (r_b_mat(1,:,:,:)+ p.deathrate*p.perfectannuities) + p.transfer;
     sB(2:nb,:,:,:) 	= ((1-p.directdeposit)-p.wagetax) .* y_mat(2:nb,:,:,:)...
                         + grd.b.matrix(2:nb,:,:,:) .* (r_b_mat(2:nb,:,:,:) ...
                         + p.deathrate*p.perfectannuities) + p.transfer - cB(2:nb,:,:,:);
     sB(1,:,:,:) 	= zeros(1,na,nz,ny);
-    HcB 		    = aux.u_fn(cB,p.riskaver) + VbB .* sB;
-    validcB         = cB > 0;
+
+    if p.SDU == 0
+        HcB = aux.u_fn(cB, p.riskaver) + VbB .* sB;
+    else
+        HcB = aux.u_fn(cB, p.invies, rho_mat) + VbB .* sB;
+    end
+
+    validcB = cB > 0;
 
     % no drift
-    c0 				= (1-p.directdeposit-p.wagetax) .* y_mat + grd.b.matrix .* (r_b_mat+ p.deathrate*p.perfectannuities) + p.transfer;
-    s0 				= zeros(nb,na,nz,ny);
-    Hc0 			= aux.u_fn(c0,p.riskaver);
+    c0 = (1-p.directdeposit-p.wagetax) .* y_mat + grd.b.matrix .* (r_b_mat+ p.deathrate*p.perfectannuities) + p.transfer;
+    s0 = zeros(nb,na,nz,ny);
+
+    if p.SDU == 0
+        Hc0 = aux.u_fn(c0, p.riskaver);
+    else
+        Hc0 = aux.u_fn(c0, p.invies, rho_mat);
+    end
+
     validc0         = c0 > 0;
 
      % Upwinding direction: consumption
@@ -90,7 +125,12 @@ function policies = find_policies(p,income,grd,Vn)
     assert(isequal(IcF+IcB+Ic0,ones(nb,na,nz,ny,'logical')),'logicals do not sum to unity')
     c 				= IcF .* cF + IcB .* cB + Ic0 .* c0;
     s 				= IcF .* sF + IcB .* sB + Ic0 .* s0;
-    u				= aux.u_fn(c,p.riskaver);
+
+    if p.SDU == 0
+        u = aux.u_fn(c, p.riskaver);
+    else
+        u = aux.u_fn(c, p.invies, rho_mat); 
+    end
 
     %% --------------------------------------------------------------------
 	% UPWINDING FOR DEPOSITS
@@ -115,7 +155,11 @@ function policies = find_policies(p,income,grd,Vn)
     HdBF(nb,2:na,:,:) = -1.0e12 * ones(1,na-1,nz,ny);
     validBF = (dBF <= - aux.two_asset.adj_cost_fn(dBF,grd.a.matrix,p)) & (HdBF > 0);
 
-    VbB(1,2:na,:,:) = aux.u_fn(cB(1,2:na,:,:),p.riskaver);
+    if p.SDU == 0
+        VbB(1,2:na,:,:) = aux.u_fn(cB(1,2:na,:,:),p.riskaver);
+    else
+        VbB(1,2:na,:,:) = aux.u_fn(cB(1,2:na,:,:), p.invies, rho_mat);
+    end
     dBB(:,2:na,:,:) = aux.two_asset.opt_deposits(VaB(:,2:na,:,:),VbB(:,2:na,:,:),grd.a.matrix(:,2:na,:,:),p);
     dBB(:,1,:,:) = zeros(nb,1,nz,ny);
     HdBB(:,2:na,:,:) = VaB(:,2:na,:,:) .* dBB(:,2:na,:,:)...
