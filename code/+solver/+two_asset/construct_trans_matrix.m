@@ -16,6 +16,8 @@ function A = construct_trans_matrix(p,income,grids,model,modeltype)
 	ny = numel(income.y.vec);
     nz = p.nz;
 
+    dim = nb * na * nz * ny;
+
 	%% ----------------------------------------------
     % INITIALIZE
 	% -----------------------------------------------
@@ -64,13 +66,13 @@ function A = construct_trans_matrix(p,income,grids,model,modeltype)
     updiag = reshape(zetta,nb*na,nz,ny);
     updiag = circshift(updiag,nb);  
 
-    centdiag = reshape(centdiag,nb*na*ny*nz,1);
-    updiag   = reshape(updiag,nb*na*ny*nz,1);
-    lowdiag  = reshape(lowdiag,nb*na*ny*nz,1);
+    centdiag = reshape(centdiag,dim,1);
+    updiag   = reshape(updiag,dim,1);
+    lowdiag  = reshape(lowdiag,dim,1);
 
-    A = spdiags(centdiag,0,nb*na*ny*nz,nb*na*ny*nz) ...
-        + spdiags(updiag,nb,nb*na*ny*nz,nb*na*ny*nz)...
-        + spdiags(lowdiag,-nb,nb*na*ny*nz,nb*na*ny*nz);
+    A = spdiags(centdiag,0,dim,dim) ...
+        + spdiags(updiag,nb,dim,dim)...
+        + spdiags(lowdiag,-nb,dim,dim);
 
 	%% --------------------------------------------------------------------
     % LIQUID ASSET TRANSITIONS
@@ -90,11 +92,57 @@ function A = construct_trans_matrix(p,income,grids,model,modeltype)
     updiag = reshape(Z,nb*na,nz,ny);
     updiag = circshift(updiag,1);
 
-    centdiag = reshape(centdiag,nb*na*ny*nz,1);
-    updiag   = reshape(updiag,nb*na*ny*nz,1);
-    lowdiag  = reshape(lowdiag,nb*na*ny*nz,1);
+    centdiag = reshape(centdiag,dim,1);
+    updiag   = reshape(updiag,dim,1);
+    lowdiag  = reshape(lowdiag,dim,1);
 
-    A = A + spdiags(centdiag,0,nb*na*ny*nz,nb*na*ny*nz) ...
-        + spdiags(updiag,1,nb*na*ny*nz,nb*na*ny*nz)...
-        + spdiags(lowdiag,-1,nb*na*ny*nz,nb*na*ny*nz);
+    A = A + spdiags(centdiag,0,dim,dim) ...
+        + spdiags(updiag,1,dim,dim)...
+        + spdiags(lowdiag,-1,dim,dim);
+
+    %% --------------------------------------------------------------------
+    % RATE OF RETURN RISK: ONE ASSET
+    % ---------------------------------------------------------------------
+    if (p.sigma_r > 0) && (p.OneAsset == 1) && (strcmp(modeltype,'HJB') || (strcmp(modeltype,'KFE') && (p.retrisk_KFE==1)))
+        term1 = ((grids.b.matrix * p.sigma_r) .^2) ./ (grids.b.dB + grids.b.dF);
+        lowdiag = term1 ./ grids.b.dB;
+        centdiag = - term1 .* (1 ./ grids.b.dF + 1 ./ grids.b.dB);
+        updiag = term1 ./ grids.b.dF;
+
+        % top of the grid
+        term1 = (1/2) * (grids.b.matrix(nb,:,:,:) * p.sigma_r) .^ 2;
+        lowdiag(nb,:,:,:) = term1 ./ (grids.b.dB(nb,:)).^2;
+        centdiag(nb,:,:,:) = - term1 ./ (grids.b.dB(nb,:)).^2;
+        updiag(nb,:,:,:) = 0;
+        
+        lowdiag = lowdiag(:);
+        lowdiag = [lowdiag(2:end); 0];
+        centdiag = centdiag(:);
+        updiag = [0; updiag(:)];
+
+        A = A + spdiags(centdiag,0,dim,dim);
+        A = A + spdiags(updiag,1,dim,dim);
+        A = A + spdiags(lowdiag,-1,dim,dim);
+    elseif (p.sigma_r > 0) && (p.OneAsset == 0) && (strcmp(modeltype,'HJB') || (strcmp(modeltype,'KFE') && (p.retrisk_KFE==1)))
+        term1 = ((grids.a.matrix * p.sigma_r) .^2) ./ (grids.a.dB + grids.a.dF);
+        lowdiag = term1 ./ grids.a.dB;
+        centdiag = - term1 .* (1 ./ grids.a.dF + 1 ./ grids.a.dB);
+        updiag = term1 ./ grids.a.dF;
+        
+        % top of the grid
+        term1 = (1/2) * (grids.a.matrix(:,na,:,:) * p.sigma_r) .^ 2;
+        lowdiag(:,na,:,:) = term1 ./ (grids.a.dB(:,na)).^2;
+        centdiag(:,na,:,:) = - term1 ./ (grids.a.dB(:,na)).^2;
+        updiag(:,na,:,:) = 0;
+
+        lowdiag = lowdiag(:);
+        lowdiag = [lowdiag(nb+1:end); zeros(nb,1)];
+        centdiag = centdiag(:);
+        updiag = [zeros(nb,1); updiag(:)];
+
+        A = A + spdiags(centdiag,0,dim,dim);
+        A = A + spdiags(updiag,nb,dim,dim);
+        A = A + spdiags(lowdiag,-nb,dim,dim);
+    end
+
 end

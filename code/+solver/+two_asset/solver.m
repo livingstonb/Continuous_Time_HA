@@ -135,6 +135,10 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 		end
     end
     
+    if (nn >= p.maxit_HJB)
+        error("HJB didn't converge");
+    end
+    
     % Store value function and polices on both grids
     HJB.Vn = Vn;
     KFE_Vn = reshape(interp_decision*Vn(:),nb_KFE,na_KFE,nz,ny);

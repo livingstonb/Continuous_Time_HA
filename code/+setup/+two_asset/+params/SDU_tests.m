@@ -13,15 +13,41 @@ function outparams = SDU_tests(runopts)
     params(ii).rhoL = 0.005;
     params(ii).rho = 0.05;
     params(ii).r_a = 0.06/4;
-    params(ii).riskaver = 4;
+    params(ii).riskaver = 11;
     params(ii).invies = 1.2;
     params(ii).SDU = 1;
     params(ii).deathrate = 0;
-    params(ii).delta_HJB = 1e4;
+    params(ii).delta_HJB = 1e1;
     params(ii).nb = 75;
     params(ii).nb_KFE = 75;
     params(ii).na = 75;
     params(ii).na_KFE = 75;
+    params(ii).maxit_HJB = 1e6;
+    
+    % with returns risk
+    ii = 2;
+    params(ii).name = sprintf('SDU_test_with_r_risk'); 
+    params(ii).OneAsset = 1;
+    params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+    params(ii).chi0 = 0;
+    params(ii).chi1 = 0.15;
+    params(ii).chi2 = 0.25;
+    params(ii).a_lb = 0.25;
+    params(ii).rhoL = 0.005;
+    params(ii).rho = 0.05;
+    params(ii).r_a = 0.06/4;
+    params(ii).riskaver = 4;
+    params(ii).invies = 1.2;
+    params(ii).SDU = 1;
+    params(ii).deathrate = 0;
+    params(ii).delta_HJB = 1e2;
+    params(ii).nb = 75;
+    params(ii).nb_KFE = 75;
+    params(ii).na = 75;
+    params(ii).na_KFE = 75;
+    params(ii).maxit_HJB = 1e6;
+    params(ii).sigma_r = 0.1;
+    params(ii).retrisk_KFE = 0;
 
     %% DO NOT CHANGE BELOW
 

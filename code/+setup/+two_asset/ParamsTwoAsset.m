@@ -32,6 +32,10 @@ classdef ParamsTwoAsset < setup.Params
 
         % Stochastic differential utility
         invies = 1;
+
+        % Rate of return risk
+        sigma_r = 0; % turn off by default
+        retrisk_KFE = 1; % by default, include risk in KFE when sigma_r > 0
 	end
 
 	methods
