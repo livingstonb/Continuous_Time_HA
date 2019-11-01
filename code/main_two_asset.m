@@ -1,28 +1,11 @@
-function [stats,p] = main_two_asset(runopts)
+function [stats,p] = main_two_asset(runopts, p)
     % Main function file for this repository. If IterateRho = 1, this script
     % first tries to find valid lower and upper bounds for rho (this may fail
     % in some cases), and then iterates on rho once valid bounds are found.
 
     %% --------------------------------------------------------------------
-    % GET PARAMETERS AND CREATE GRID, INCOME OBJECTS
+    % CREATE GRID, INCOME OBJECTS
     % ---------------------------------------------------------------------
-    if strcmp(runopts.mode,'grid_test')
-    	p = setup.two_asset.params.grid_test_params(runopts);
-    elseif strcmp(runopts.mode,'chi0_tests')
-        p = setup.two_asset.params.chi0_tests(runopts);
-    elseif strcmp(runopts.mode,'chi1_chi2_tests')
-        p = setup.two_asset.params.chi1_chi2_tests(runopts);
-    elseif strcmp(runopts.mode,'table_tests')
-        p = setup.two_asset.params.table_tests(runopts);
-    elseif strcmp(runopts.mode,'table_tests_bequests')
-        p = setup.two_asset.params.table_tests_bequests(runopts);
-    elseif strcmp(runopts.mode,'get_params')
-		p = setup.two_asset.params.get_params(runopts);
-    elseif strcmp(runopts.mode, 'SDU_tests')
-        p = setup.two_asset.params.SDU_tests(runopts);
-    end
-    p.print();
-	
 	dimsHJB = [p.nb p.na p.nz];
 	dimsKFE = [p.nb_KFE p.na_KFE p.nz];
 	income = setup.Income(runopts,p,dimsHJB,dimsKFE,false);

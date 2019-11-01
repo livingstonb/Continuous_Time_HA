@@ -62,7 +62,6 @@ else
 	runopts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));
     
 	runopts.fast = 0;
-	runopts.IterateRho = 1;
 end
 
 % check that specified directories exist
@@ -89,9 +88,36 @@ addpath(runopts.savedir);
 
 cd(runopts.direc)
 
+%% --------------------------------------------------------------------
+% GET PARAMETERS
+% ---------------------------------------------------------------------
+if strcmp(runopts.mode,'grid_test')
+	p = setup.two_asset.params.grid_test_params(runopts);
+elseif strcmp(runopts.mode,'chi0_tests')
+    p = setup.two_asset.params.chi0_tests(runopts);
+elseif strcmp(runopts.mode,'chi1_chi2_tests')
+    p = setup.two_asset.params.chi1_chi2_tests(runopts);
+elseif strcmp(runopts.mode,'table_tests')
+    p = setup.two_asset.params.table_tests(runopts);
+elseif strcmp(runopts.mode,'table_tests_bequests')
+    p = setup.two_asset.params.table_tests_bequests(runopts);
+elseif strcmp(runopts.mode,'get_params')
+	p = setup.two_asset.params.get_params(runopts);
+elseif strcmp(runopts.mode, 'SDU_tests')
+    p = setup.two_asset.params.SDU_tests(runopts);
+end
+p.print();
+
 %% ------------------------------------------------------------------------
 % CALL MAIN FUNCTION FILE
 % -------------------------------------------------------------------------
-tic
-[stats,p] = main_two_asset(runopts);
-toc
+calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
+returns = fsolve(calibrator, [0.02/4, 0.06/4]);
+fprintf("Liquid return = %f", returns[1])
+fprintf("Illiquid return = %f", returns[2])
+
+p.reset_returns(returns[1], returns[2]);
+stats = main_two_asset(runopts, p);
+% tic
+% stats = main_two_asset(runopts, p);
+% toc

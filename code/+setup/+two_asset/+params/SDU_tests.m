@@ -26,38 +26,36 @@ function outparams = SDU_tests(runopts)
     %%--------------------------------------------------------------
     % WITH RETURNS RISK
     % --------------------------------------------------------------
-    illiquid_returns = linspace(0.03/4, 0.12/4, 10);
+    % illiquid_returns = linspace(0.03/4, 0.12/4, 10);
     risk_avers = [1, 2, 5, 10, 20];
     sdrs = [0, 0.01, 0.02, 0.05, 0.1, 0.15];
 
     ii = 2;
-    for ra = illiquid_returns
-        for risk_aver = risk_avers
-            for sd_r = sdrs
-                params(ii).name = sprintf('SDU_test_with_r_risk'); 
-                params(ii).OneAsset = 0;
-                params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
-                params(ii).chi0 = 0;
-                params(ii).chi1 = 0.15;
-                params(ii).chi2 = 0.25;
-                params(ii).a_lb = 0.25;
-                params(ii).rho = 0.015440584992491;
-                params(ii).riskaver = risk_aver;
-                params(ii).invies = 1;
-                params(ii).SDU = 1;
-                params(ii).r_a = ra;
-                params(ii).maxit_HJB = 1e6;
-                params(ii).sigma_r = sd_r;
-                params(ii).retrisk_KFE = 0;
+    for risk_aver = risk_avers
+        for sd_r = sdrs
+            params(ii).name = sprintf('SDU_test_with_r_risk'); 
+            params(ii).OneAsset = 0;
+            params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+            params(ii).chi0 = 0;
+            params(ii).chi1 = 0.15;
+            params(ii).chi2 = 0.25;
+            params(ii).a_lb = 0.25;
+            params(ii).rho = 0.015440584992491;
+            params(ii).riskaver = risk_aver;
+            params(ii).invies = 1;
+            params(ii).SDU = 1;
+            params(ii).r_a = ra;
+            params(ii).maxit_HJB = 1e6;
+            params(ii).sigma_r = sd_r;
+            params(ii).retrisk_KFE = 0;
 
-                if risk_aver == 10
-                    params(ii).delta_HJB = 1;
-                else if risk_aver == 20
-                    params(ii).delta_HJB = 0.5;
-                end
-
-                ii = ii + 1;
+            if risk_aver == 10
+                params(ii).delta_HJB = 1;
+            else if risk_aver == 20
+                params(ii).delta_HJB = 0.5;
             end
+
+            ii = ii + 1;
         end
     end
 
