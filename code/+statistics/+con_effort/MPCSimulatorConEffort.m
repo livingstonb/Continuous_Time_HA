@@ -63,7 +63,6 @@ classdef MPCSimulatorConEffort < statistics.MPCSimulator
 		end
 
 		function draw_from_stationary_dist(obj,pmf)
-
 			index = draw_from_stationary_dist@statistics.MPCSimulator(obj,pmf);
 
 			% initial consumption
