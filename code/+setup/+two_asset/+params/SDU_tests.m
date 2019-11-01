@@ -31,9 +31,9 @@ function outparams = SDU_tests(runopts)
     sdrs = [0, 0.01, 0.02, 0.05, 0.1, 0.15];
 
     ii = 2;
-    for ra in illiquid_returns
-        for risk_aver in risk_avers
-            for sd_r in sdrs
+    for ra = illiquid_returns
+        for risk_aver = risk_avers
+            for sd_r = sdrs
                 params(ii).name = sprintf('SDU_test_with_r_risk'); 
                 params(ii).OneAsset = 0;
                 params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
