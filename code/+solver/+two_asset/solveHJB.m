@@ -6,10 +6,17 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
     ny = numel(income.y.vec);
     nz = p.nz;
 
-    if p.SDU == 1
+    if (p.SDU == 1) && (p.invies ~= 1)
         ez_adj_0 = reshape(Vn, na*nb*nz, 1, ny) ./ reshape(Vn, na*nb*nz, ny, 1);
         ez_adj_1 = ((1-p.invies) ./ (1-p.riskaver))...
             .* ( (ez_adj_0 .^ ((1-p.riskaver)./(1-p.invies)) - 1) ./ (ez_adj_0 - 1) );
+        
+    elseif (p.SDU == 1) && (p.invies == 1)
+        ez_adj_0 = (1-p.riskaver) * (reshape(Vn, na*nb*nz, 1, ny) - reshape(Vn, na*nb*nz, ny, 1));
+        ez_adj_1 = (exp(ez_adj_0) - 1) ./ (ez_adj_0);
+    end
+    
+    if (p.SDU == 1)
         ez_adj = ez_adj_1 .* shiftdim(income.ytrans, -1);
 
         for kk = 1:ny
