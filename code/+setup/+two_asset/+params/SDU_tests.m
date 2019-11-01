@@ -28,7 +28,7 @@ function outparams = SDU_tests(runopts)
     % --------------------------------------------------------------
     % illiquid_returns = linspace(0.03/4, 0.12/4, 10);
     risk_avers = [1, 2, 5, 10, 20];
-    sdrs = [0, 0.01, 0.02, 0.05, 0.1, 0.15];
+    sdrs = [0.01, 0.02, 0.05, 0.1, 0.15];
 
     ii = 2;
     for risk_aver = risk_avers
@@ -44,10 +44,14 @@ function outparams = SDU_tests(runopts)
             params(ii).riskaver = risk_aver;
             params(ii).invies = 1;
             params(ii).SDU = 1;
-            params(ii).r_a = ra;
+            params(ii).r_a = 0.06 / 4;
             params(ii).maxit_HJB = 1e6;
             params(ii).sigma_r = sd_r;
             params(ii).retrisk_KFE = 0;
+            
+            if risk_aver == 1
+                params(ii).SDU = 0;
+            end
 
             if risk_aver == 10
                 params(ii).delta_HJB = 1;

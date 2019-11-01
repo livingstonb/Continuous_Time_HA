@@ -100,7 +100,7 @@ classdef ParamsTwoAsset < setup.Params
             end
 		end
 
-        function reset_returns(r_b, r_a)
+        function reset_returns(obj, r_b, r_a)
             obj.r_b = r_b;
             obj.r_a = r_a;
         end
