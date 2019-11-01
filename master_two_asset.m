@@ -112,7 +112,7 @@ p.print();
 % CALL MAIN FUNCTION FILE
 % -------------------------------------------------------------------------
 calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
-returns = fsolve(calibrator, [0.02/4, 0.06/4]);
+returns = fsolve(calibrator, log([0.02/4, 0.06/4]));
 fprintf("Liquid return = %f\n", returns(1))
 fprintf("Illiquid return = %f\n", returns(2))
 
