@@ -36,9 +36,11 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	end
 
 	% Initial guess
+	r_b_mat_adj = r_b_mat;
+	r_b_mat_adj(r_b_mat<=0.001) = 0.001; % mostly for r_b <= 0, enforce a reasonable guess
 	c_0 = (1-p.directdeposit - p.wagetax) * income.y.matrix ...
             + (p.r_a + p.deathrate*p.perfectannuities) * grd.a.matrix...
-            + (r_b_mat + p.deathrate*p.perfectannuities) .* grd.b.matrix + p.transfer;
+            + (r_b_mat_adj + p.deathrate*p.perfectannuities) .* grd.b.matrix + p.transfer;
 
     if p.SDU == 0
     	V_0	= 1 ./ (rho_mat + p.deathrate) .* aux.u_fn(c_0,p.riskaver);

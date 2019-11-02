@@ -15,10 +15,11 @@ function policies = find_policies(p,income,grd,Vn)
     % If using stoch diff utility, multiply utility by rho
     if p.SDU == 1
         if numel(p.rhos) > 1
-            rho_mat = reshape(p.rhos,[1 1 numel(p.rhos)]);
+            rho_mat_adj = reshape(p.rhos,[1 1 numel(p.rhos)]);
         else
-            rho_mat =  p.rho;
+            rho_mat_adj = p.rho;
         end
+        rho_mat_adj = rho_mat_adj + p.deathrate;
     end
 
     %% --------------------------------------------------------------------
@@ -68,7 +69,7 @@ function policies = find_policies(p,income,grd,Vn)
     if p.SDU == 0
         cF(1:nb-1,:,:,:) 	= VbF(1:nb-1,:,:,:).^(-1/p.riskaver_fulldim);
     else
-        cF(1:nb-1,:,:,:) 	= (VbF(1:nb-1,:,:,:) ./ rho_mat).^(-1/p.invies);
+        cF(1:nb-1,:,:,:) 	= (VbF(1:nb-1,:,:,:) ./ rho_mat_adj).^(-1/p.invies);
     end
     cF(nb,:,:,:) 		= zeros(1,na,nz,ny);
     sF(1:nb-1,:,:,:) 	= (1-p.directdeposit-p.wagetax) .* y_mat(1:nb-1,:,:,:)...
@@ -79,7 +80,7 @@ function policies = find_policies(p,income,grd,Vn)
     if p.SDU == 0
         HcF(1:nb-1,:,:,:) = aux.u_fn(cF(1:nb-1,:,:,:), p.riskaver) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
     else
-        HcF(1:nb-1,:,:,:) = aux.u_fn(cF(1:nb-1,:,:,:), p.invies, rho_mat) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
+        HcF(1:nb-1,:,:,:) = aux.u_fn(cF(1:nb-1,:,:,:), p.invies, rho_mat_adj) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
     end
 
     HcF(nb,:,:,:) 		= -1e12 * ones(1,na,nz,ny);
@@ -89,7 +90,7 @@ function policies = find_policies(p,income,grd,Vn)
     if p.SDU == 0
         cB(2:nb,:,:,:)	= VbB(2:nb,:,:,:).^(-1/p.riskaver_fulldim);
     else
-        cB(2:nb,:,:,:)	= (VbB(2:nb,:,:,:) ./ rho_mat).^(-1/p.invies);
+        cB(2:nb,:,:,:)	= (VbB(2:nb,:,:,:) ./ rho_mat_adj).^(-1/p.invies);
     end
     cB(1,:,:,:) 	= ((1-p.directdeposit)-p.wagetax) .* y_mat(1,:,:,:) ...
                         + grd.b.matrix(1,:,:,:) .* (r_b_mat(1,:,:,:)+ p.deathrate*p.perfectannuities) + p.transfer;
@@ -101,7 +102,7 @@ function policies = find_policies(p,income,grd,Vn)
     if p.SDU == 0
         HcB = aux.u_fn(cB, p.riskaver) + VbB .* sB;
     else
-        HcB = aux.u_fn(cB, p.invies, rho_mat) + VbB .* sB;
+        HcB = aux.u_fn(cB, p.invies, rho_mat_adj) + VbB .* sB;
     end
 
     validcB = cB > 0;
@@ -113,7 +114,7 @@ function policies = find_policies(p,income,grd,Vn)
     if p.SDU == 0
         Hc0 = aux.u_fn(c0, p.riskaver);
     else
-        Hc0 = aux.u_fn(c0, p.invies, rho_mat);
+        Hc0 = aux.u_fn(c0, p.invies, rho_mat_adj);
     end
 
     validc0         = c0 > 0;
@@ -129,7 +130,7 @@ function policies = find_policies(p,income,grd,Vn)
     if p.SDU == 0
         u = aux.u_fn(c, p.riskaver);
     else
-        u = aux.u_fn(c, p.invies, rho_mat); 
+        u = aux.u_fn(c, p.invies, rho_mat_adj); 
     end
 
     %% --------------------------------------------------------------------
@@ -158,7 +159,7 @@ function policies = find_policies(p,income,grd,Vn)
     if p.SDU == 0
         VbB(1,2:na,:,:) = aux.u_fn(cB(1,2:na,:,:),p.riskaver);
     else
-        VbB(1,2:na,:,:) = aux.u_fn(cB(1,2:na,:,:), p.invies, rho_mat);
+        VbB(1,2:na,:,:) = aux.u_fn(cB(1,2:na,:,:), p.invies, rho_mat_adj);
     end
     dBB(:,2:na,:,:) = aux.two_asset.opt_deposits(VaB(:,2:na,:,:),VbB(:,2:na,:,:),grd.a.matrix(:,2:na,:,:),p);
     dBB(:,1,:,:) = zeros(nb,1,nz,ny);

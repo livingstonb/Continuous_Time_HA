@@ -1,6 +1,6 @@
 function x = risk_premium_calibrator(returns, runopts, p)
 
-	p.reset_returns(exp(returns(1)), exp(returns(2)));
+	p.reset_returns(exp(returns(1))-0.01, exp(returns(2)));
 
 	fprintf("Trying r_b = %f\n", p.r_b);
 	fprintf("Trying r_a = %f\n", p.r_a);
