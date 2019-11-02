@@ -113,10 +113,10 @@ p.print();
 % -------------------------------------------------------------------------
 calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
 returns = fsolve(calibrator, log([0.02/4, 0.06/4]));
-fprintf("Liquid return = %f\n", returns(1))
-fprintf("Illiquid return = %f\n", returns(2))
+fprintf("Liquid return = %f\n", exp(returns(1)))
+fprintf("Illiquid return = %f\n", exp(returns(2)))
 
-p.reset_returns(returns(1), returns(2));
+p.reset_returns(exp(returns(1)), exp(returns(2)));
 stats = main_two_asset(runopts, p);
 % tic
 % stats = main_two_asset(runopts, p);

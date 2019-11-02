@@ -4,6 +4,7 @@ classdef ParamsTwoAsset < setup.Params
 		ModelType = 'NoEffortCost';
 		OneAsset = 1;
 		DealWithSpecialCase;
+        NoRisk = 1;
 
         % illiquid grid parameters
         na = 120;

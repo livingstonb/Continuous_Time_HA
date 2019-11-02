@@ -14,7 +14,7 @@ function decomp = decomp_wrt_norisk(p,grdKFE,stats,income)
     end
 
     % check if required MPCs are available
-    if (p.ComputeMPCS == 0) || (p.OneAsset == 0)
+    if (p.ComputeMPCS == 0) || (p.OneAsset == 0) || (p.NoRisk == 0)
         return
     end
     

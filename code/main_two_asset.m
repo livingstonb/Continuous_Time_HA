@@ -61,9 +61,12 @@ function [stats,p] = main_two_asset(runopts, p)
     p.reset_rho(rho_final);
     runopts.RunMode = 'Final';
 	[~,HJB,KFE,Au] = solver.two_asset.solver(runopts,p,income,grd,grdKFE);
-    runopts.RunMode = 'NoRisk';
-    [~,HJB_nr,KFE_nr,Au_nr] = solver.two_asset.solver(runopts,p,income_norisk,...
-                                        grd_norisk,grdKFE_norisk);
+
+    if p.NoRisk == 1
+        runopts.RunMode = 'NoRisk';
+        [~,HJB_nr,KFE_nr,Au_nr] = solver.two_asset.solver(runopts,p,income_norisk,...
+                                            grd_norisk,grdKFE_norisk);
+    end
 
     %% ----------------------------------------------------------------
     % COMPUTE STATISTICS
