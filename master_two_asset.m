@@ -115,7 +115,7 @@ calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
 
 % impose that r_b >= -0.01, r_a >= 0
 returns = fsolve(calibrator, log([0.02/4+0.05, 0.06/4]));
-fprintf("Liquid return = %f\n", exp(returns(1))-0.01)
+fprintf("Liquid return = %f\n", exp(returns(1))-0.05)
 fprintf("Illiquid return = %f\n", exp(returns(2)))
 
 p.reset_returns(exp(returns(1))-0.05, exp(returns(2)));
