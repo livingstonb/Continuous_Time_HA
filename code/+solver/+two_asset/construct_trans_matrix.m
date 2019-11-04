@@ -118,6 +118,7 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
         lowdiag = lowdiag(:);
         lowdiag = [lowdiag(2:end); 0];
         centdiag = centdiag(:);
+        updiag = updiag(:);
         updiag = [0; updiag(1:end-1)];
 
         if p.SDU == 1
@@ -160,6 +161,7 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
         lowdiag = lowdiag(:);
         lowdiag = [lowdiag(nb+1:end); zeros(nb,1)];
         centdiag = centdiag(:);
+        updiag = updiag(:);
         updiag = [zeros(nb,1); updiag(1:end-nb)];
 
         if p.SDU == 1

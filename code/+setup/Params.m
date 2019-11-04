@@ -69,7 +69,7 @@ classdef Params < handle
 		% ------------ approximation parameters -----------
 		% HJB loop
 		maxit_HJB 		= 600; % maximal allowable number of HJB iterations
-		crit_HJB 		= 1e-6; % critical value
+		crit_HJB 		= 1e-8; % critical value
 		delta_HJB 		= 1e6; % step size (large steps work even though method is partially explicit)
 
 		% Howard improvement step in HJB loop
@@ -79,7 +79,7 @@ classdef Params < handle
 
 		% KFE loop
 		maxit_KFE 		= 1e4; % maximal allowable number of KFE iterations
-		crit_KFE 		= 1e-7; % critical value
+		crit_KFE 		= 1e-8; % critical value
 		delta_KFE 		= 1e6; %1e6; % step size
 
 		% Outer assets-income ratio grid
