@@ -1,4 +1,4 @@
-function policies = find_policies(p,income,grd,Vn)
+function [policies, Vdiff_SDU] = find_policies(p,income,grd,Vn)
     % stores policy functions and utility in policies.c, policies.d, policies.s, and policies.u
     % to construct policy functions on HJB grid, pass grd and Vn
     % to construct policy functions on KFE grid, pass grdKFE and VnKFE
@@ -130,7 +130,7 @@ function policies = find_policies(p,income,grd,Vn)
     if p.SDU == 0
         u = aux.u_fn(c, p.riskaver);
     else
-        u = aux.u_fn(c, p.invies, rho_mat_adj); 
+        u = aux.u_fn(c, p.invies, rho_mat_adj);
     end
 
     %% --------------------------------------------------------------------
@@ -213,3 +213,16 @@ function policies = find_policies(p,income,grd,Vn)
     policies.adot = (p.r_a + p.deathrate*p.perfectannuities) * grd.a.matrix...
         + p.directdeposit .* y_mat + d;
 
+    %% --------------------------------------------------------------------
+    % FIRST DIFF OF VALUE FUNCTION FOR SDU WITH RETURNS RISK
+    % ---------------------------------------------------------------------
+    if (p.SDU == 1) && (p.sigma_r > 0) && (p.OneAsset == 1)
+        Vb0 = rho_mat_adj .* ( c .^ (-p.invies) ) % u'(c)
+        Vdiff_SDU = IcB .* VbB + IcF .* VbF + Ic0 .* Vb0;
+    else if (p.SDU == 1) && (p.sigma_r > 0) && (p.OneAsset == 0)
+        Va0 = (VaB + VaF) / 2;
+        Vdiff_SDU = (policies.adot < 0) .* VaB + (policies.adot > 0) .* VaF...
+            + (policies.adot == 0) .* Va0;
+    else
+        Vdiff_SDU = [];
+    end

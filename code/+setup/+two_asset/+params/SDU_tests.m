@@ -22,8 +22,8 @@ function outparams = SDU_tests(runopts)
     params(ii).delta_HJB = 1e4;
     params(ii).maxit_HJB = 1e6;
     params(ii).NoRisk = 0;
-    params(ii).nb = 120;
-    params(ii).nb_KFE = 120;
+    params(ii).nb = 60;
+    params(ii).nb_KFE = 60;
 
     %%--------------------------------------------------------------
     % WITH RETURNS RISK
@@ -52,8 +52,8 @@ function outparams = SDU_tests(runopts)
             params(ii).NoRisk = 0;
             params(ii).delta_HJB = 10;
             params(ii).delta_KFE = 10;
-            params(ii).nb = 120;
-            params(ii).nb_KFE = 120;
+            params(ii).nb = 60;
+            params(ii).nb_KFE = 60;
             
             if risk_aver == 1
                 params(ii).SDU = 0;

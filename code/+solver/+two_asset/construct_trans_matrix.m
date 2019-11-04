@@ -1,4 +1,4 @@
-function A = construct_trans_matrix(p,income,grids,model,modeltype)
+function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SDU, V)
     % Constructs transition matrix for the HJB when modeltype='HJB' and for
     % the KFE when modeltype='KFE'.
 	na = numel(grids.a.vec);
@@ -114,6 +114,28 @@ function A = construct_trans_matrix(p,income,grids,model,modeltype)
         lowdiag(nb,:,:,:) = term1 ./ (grids.b.dB(nb,:)).^2;
         centdiag(nb,:,:,:) = - term1 ./ (grids.b.dB(nb,:)).^2;
         updiag(nb,:,:,:) = 0;
+
+        if p.SDU == 1
+            % compute second difference, Vbb
+            Vdiff2 = zeros(nb, na, nz, ny);
+            grids_delta = grids.b.dF(:,1) + grids.b.dB(:,1);
+            V_i_plus_1_term = 2 * V(3:nb,:,:,:) ./ (grids.b.dF(3:nb,:) .* grids_delta(3:nb));
+            V_i_term = - 2 * V(2:nb-1,:,:,:) .* (1./grids.b.dF(2:nb-1,:) + 1./grids.b.dB(2:nb-1,:))...
+                ./ grids_delta(2:nb-1);
+            V_i_minus_1_term = 2 * V(1:nb-2,:,:,:) ./ (grids.b.dB(3:nb,:) .* grids_delta(1:nb-2));
+            Vdiff2(2:nb-1,:,:,:) = V_i_plus_1_term + V_i_term + V_i_minus_1_term;
+            Vdiff2(nb,:,:,:) = (V(nb-1,:,:,:) - V(nb,:,:,:)) ./ (grids.b.dB(nb,:) .^ 2);
+
+            % compute adjustment term
+            sdu_adj = 1 + ((p.invies-p.riskaver) / (1-p.invies)) * (Vdiff_SDU .^2)...
+                ./ (V .* Vdiff2);
+        else
+            sdu_adj = 1;
+        end
+
+        lowdiag = sdu_adj .* lowdiag;
+        centdiag = sdu_adj .* centdiag;
+        updiag = sdu_adj .* updiag;
         
         lowdiag = lowdiag(:);
         lowdiag = [lowdiag(2:end); 0];

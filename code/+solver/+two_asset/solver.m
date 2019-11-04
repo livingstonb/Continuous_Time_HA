@@ -109,10 +109,11 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
     fprintf('    --- Iterating over HJB ---\n')
     dst = 1e5;
 	for nn	= 1:p.maxit_HJB
-	  	HJB = solver.two_asset.find_policies(p,income,grd,Vn);
+	  	HJB, Vdiff_SDU = solver.two_asset.find_policies(p,income,grd,Vn);
 
 	    % CONSTRUCT TRANSITION MATRIX 
-        A = solver.two_asset.construct_trans_matrix(p,income,grd,HJB,'HJB');
+        A = solver.two_asset.construct_trans_matrix(...
+        	p, income, grd, HJB, 'HJB', Vdiff_SDU, Vn);
 
 	    % UPDATE VALUE FUNCTION
 	    Vn1 = solver.two_asset.solveHJB(p,A,income,Vn,HJB.u,nn);
