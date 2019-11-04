@@ -115,6 +115,11 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
         centdiag(nb,:,:,:) = - term1 ./ (grids.b.dB(nb,:)).^2;
         updiag(nb,:,:,:) = 0;
 
+        lowdiag = lowdiag(:);
+        lowdiag = [lowdiag(2:end); 0];
+        centdiag = centdiag(:);
+        updiag = [0; updiag(1:end-1)];
+
         if p.SDU == 1
             % compute second difference, Vbb
             Vdiff2 = zeros(nb, na, nz, ny);
@@ -129,18 +134,12 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
             % compute adjustment term
             sdu_adj = 1 + ((p.invies-p.riskaver) / (1-p.invies)) * (Vdiff_SDU .^2)...
                 ./ (V .* Vdiff2);
-        else
-            sdu_adj = 1;
-        end
-
-        lowdiag = sdu_adj .* lowdiag;
-        centdiag = sdu_adj .* centdiag;
-        updiag = sdu_adj .* updiag;
+            sdu_adj = sdu_adj(:);
         
-        lowdiag = lowdiag(:);
-        lowdiag = [lowdiag(2:end); 0];
-        centdiag = centdiag(:);
-        updiag = [0; updiag(:)];
+            lowdiag = sdu_adj .* lowdiag;
+            centdiag = sdu_adj .* centdiag;
+            updiag = sdu_adj .* updiag;
+        end
 
         A = A + spdiags(centdiag,0,dim,dim);
         A = A + spdiags(updiag,1,dim,dim);
@@ -160,7 +159,29 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
         lowdiag = lowdiag(:);
         lowdiag = [lowdiag(nb+1:end); zeros(nb,1)];
         centdiag = centdiag(:);
-        updiag = [zeros(nb,1); updiag(:)];
+        updiag = [zeros(nb,1); updiag(1:end-nb)];
+
+        if p.SDU == 1
+            % compute second difference, Vbb
+            Vdiff2 = zeros(nb, na, nz, ny);
+            grids_delta = grids.a.dF(:,1) + grids.a.dB(:,1);
+            V_i_plus_1_term = 2 * V(3:na,:,:,:) ./ (grids.a.dF(3:na,:) .* grids_delta(3:na));
+            V_i_term = - 2 * V(2:na-1,:,:,:) .* (1./grids.a.dF(2:na-1,:) + 1./grids.a.dB(2:na-1,:))...
+                ./ grids_delta(2:na-1);
+            V_i_minus_1_term = 2 * V(1:na-2,:,:,:) ./ (grids.a.dB(3:na,:) .* grids_delta(1:na-2));
+            Vdiff2(2:na-1,:,:,:) = V_i_plus_1_term + V_i_term + V_i_minus_1_term;
+            Vdiff2(na,:,:,:) = (V(na-1,:,:,:) - V(na,:,:,:)) ./ (grids.a.dB(na,:) .^ 2);
+
+            % compute adjustment term
+            sdu_adj = 1 + ((p.invies-p.riskaver) / (1-p.invies)) * (Vdiff_SDU .^2)...
+                ./ (V .* Vdiff2);
+
+            sdu_adj = sdu_adj(:);
+        
+            lowdiag = sdu_adj .* lowdiag;
+            centdiag = sdu_adj .* centdiag;
+            updiag = sdu_adj .* updiag;
+        end
 
         A = A + spdiags(centdiag,0,dim,dim);
         A = A + spdiags(updiag,nb,dim,dim);
