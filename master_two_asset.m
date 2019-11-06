@@ -30,7 +30,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.IterateRho = 0; % if set to zero, the parameter 'rho' is used
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'

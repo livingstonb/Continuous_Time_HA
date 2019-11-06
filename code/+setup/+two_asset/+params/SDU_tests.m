@@ -46,7 +46,7 @@ function outparams = SDU_tests(runopts)
             params(ii).chi2 = 0.25;
             params(ii).a_lb = 0.25;
             params(ii).riskaver = risk_aver;
-            params(ii).invies = 1;
+            params(ii).invies = 1.01;
             params(ii).SDU = 1;
             params(ii).maxit_HJB = 1e6;
             params(ii).maxit_KFE = 1e6;
@@ -64,6 +64,7 @@ function outparams = SDU_tests(runopts)
             
             if risk_aver == 1
                 params(ii).SDU = 0;
+                params(ii).invies = 1;
             end
 
             if risk_aver == 10
