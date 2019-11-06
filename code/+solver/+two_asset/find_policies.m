@@ -217,7 +217,7 @@ function [policies, Vdiff_SDU] = find_policies(p,income,grd,Vn)
     % FIRST DIFF OF VALUE FUNCTION FOR SDU WITH RETURNS RISK
     % ---------------------------------------------------------------------
     if (p.SDU == 1) && (p.sigma_r > 0) && (p.OneAsset == 1)
-        Vb0 = rho_mat_adj .* ( c .^ (-p.invies) ) % u'(c)
+        Vb0 = rho_mat_adj .* ( c .^ (-p.invies) ); % u'(c)
         Vdiff_SDU = IcB .* VbB + IcF .* VbF + Ic0 .* Vb0;
     elseif (p.SDU == 1) && (p.sigma_r > 0) && (p.OneAsset == 0)
         Va0 = (VaB + VaF) / 2;
