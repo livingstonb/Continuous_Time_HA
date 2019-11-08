@@ -16,7 +16,7 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
         ez_adj_1 = (exp(ez_adj_0) - 1) ./ (ez_adj_0);
     end
     
-    if (p.SDU == 1)
+    if p.SDU == 1
         ez_adj = ez_adj_1 .* shiftdim(income.ytrans, -1);
 
         for kk = 1:ny
@@ -24,18 +24,23 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
             ez_adj(:,kk,kk) = -sum(ez_adj(:, kk, idx_k), 3);
         end
     end
+
+    if p.SDU == 0
+        inctrans = kron(income.ytrans, speye(nb*na*nz));
+    else
+        ix = repmat((1:na*nb*nz*ny)', ny, 1);
+        iy = repmat((1:na*nb*nz)', ny*ny, 1);
+        iy = iy + kron((0:ny-1)', na*nb*nz*(ones(na*nb*nz*ny,1)));
+        inctrans = sparse(ix, iy, ez_adj(:));
+    end
+
     
-    if (numel(p.rhos) > 1) && (p.implicit == 0)
-        rhocol = kron(p.rhos',ones(nb*na,1));
-        rho_mat = spdiags(rhocol,0,nb*na*nz,nb*na*nz);
-    elseif p.implicit == 0
-        rho_mat = p.rho * speye(nb*na*nz);
-    elseif (numel(p.rhos) > 1) && (p.implicit == 1)
+   if (numel(p.rhos) > 1) && (p.implicit == 1)
         rhocol = repmat(kron(p.rhos', ones(nb*na,1)), ny, 1);
         rho_mat = spdiags(rhocol, 0, nb*na*nz*ny, nb*na*nz*ny);
     elseif p.implicit == 1
         rho_mat = p.rho * speye(nb*na*nz*ny);
-	end
+    end
 
     %% -----------------------------------------------------
     % FULLY IMPLICIT UPDATING
@@ -49,11 +54,13 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
             inctrans = kron(income.ytrans, speye(nb*na*nz));
         else
             ix = repmat((1:na*nb*nz*ny)', ny, 1);
-            iy = kron((1:ny)', repmat((1:na*nb*nz)', ny, 1));
+            iy = repmat((1:na*nb*nz)', ny*ny, 1);
+            iy = iy + kron((0:ny-1)', nb*na*nz*ones(nb*na*nz*ny,1));
             inctrans = sparse(ix, iy, ez_adj(:));
         end
 
         A = A + inctrans;
+        clear inctrans ix iy ez_adj;
         RHS = p.delta_HJB * u(:) + Vn(:);
         
         A = (rho_mat - A) * p.delta_HJB + speye(nb*na*nz*ny);

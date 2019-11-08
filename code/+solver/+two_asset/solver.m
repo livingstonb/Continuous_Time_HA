@@ -115,8 +115,9 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
         A = solver.two_asset.construct_trans_matrix(...
         	p, income, grd, HJB, 'HJB', Vdiff_SDU, Vn);
 
-	    % UPDATE VALUE FUNCTION
-	    Vn1 = solver.two_asset.solveHJB(p,A,income,Vn,HJB.u,nn);
+        
+		% UPDATE VALUE FUNCTION
+		Vn1 = solver.two_asset.solveHJB(p,A,income,Vn,HJB.u,nn);
 
 	    % Check for convergence
 	    Vdiff = Vn1 - Vn;

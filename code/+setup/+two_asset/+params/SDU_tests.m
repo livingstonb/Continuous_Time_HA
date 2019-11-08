@@ -17,17 +17,18 @@ function outparams = SDU_tests(runopts)
     params(ii).invies = 1;
     params(ii).SDU = 0;
     params(ii).r_a = 0.015495;
-    params(ii).delta_HJB = 1e4;
+    params(ii).delta_HJB = 1e3;
     params(ii).maxit_HJB = 1e6;
     params(ii).maxit_KFE = 1e6;
     params(ii).NoRisk = 0;
-    params(ii).nb = 75;
-    params(ii).nb_KFE = 75;
-    params(ii).na = 75;
-    params(ii).na_KFE = 75;
+    params(ii).nb = 50;
+    params(ii).nb_KFE = 50;
+    params(ii).na = 50;
+    params(ii).na_KFE = 50;
     params(ii).deathrate = 0;
     params(ii).rho = 0.021551;
     params(ii).lumpsum = 0.0081 * 2.0;
+    params(ii).implicit = 1;
 
     %%--------------------------------------------------------------
     % WITH RETURNS RISK
@@ -54,30 +55,30 @@ function outparams = SDU_tests(runopts)
             params(ii).sigma_r = sd_r;
             params(ii).retrisk_KFE = 0;
             params(ii).NoRisk = 0;
-            params(ii).delta_HJB = 1;
+            params(ii).delta_HJB = 1e6;
             params(ii).delta_KFE = 100;
-            params(ii).nb = 75;
-            params(ii).nb_KFE = 75;
-            params(ii).na = 75;
-            params(ii).na_KFE = 75;
-            params(ii).deathrate = 75;
+            params(ii).nb = 50;
+            params(ii).nb_KFE = 50;
+            params(ii).na = 50;
+            params(ii).na_KFE = 50;
+            params(ii).deathrate = 0;
             params(ii).rho = 0.021551;
             params(ii).crit_KFE = 1e-7;
-            params(ii).implicit = 0;
+            params(ii).implicit = 1;
             params(ii).lumpsum = 0.0081 * 2.0;
             
             if risk_aver == 1
-                params(ii).delta_HJB = 10;
+                params(ii).delta_HJB = 1e6;
                 params(ii).SDU = 0;
                 params(ii).invies = 1;
             end
 
             if risk_aver == 10
                 params(ii).delta_KFE = 10;
-                params(ii).delta_HJB = 1;
+                params(ii).delta_HJB = 1e6;
             elseif risk_aver == 20
-                params(ii).delta_KFE = 1e5;
-                params(ii).delta_HJB = 0.02;
+                params(ii).delta_KFE = 1;
+                params(ii).delta_HJB = 1e6;
             end
 
             ii = ii + 1;
