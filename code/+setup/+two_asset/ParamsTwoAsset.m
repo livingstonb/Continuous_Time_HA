@@ -6,12 +6,19 @@ classdef ParamsTwoAsset < setup.Params
 		DealWithSpecialCase;
         NoRisk = 1;
 
+
+        % implicit updating in HJB
+        implicit = 1;
+
         % illiquid grid parameters
         na = 120;
         amin = 0;
         amax = 200;
         a_gcurv = 0.2;
         na_KFE = 120;
+
+        % transfer
+        lumpsum = 0;
 
         % illiquid return
         r_a = 0.06/4;

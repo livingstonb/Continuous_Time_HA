@@ -8,7 +8,7 @@ function outparams = SDU_tests(runopts)
     ii = 1;
     params(ii).name = sprintf('baseline (log utility)'); 
     params(ii).OneAsset = 0;
-    params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+    params(ii).DirIncomeProcess = 'input/IncomeGrids/twopoint_3_5';
     params(ii).chi0 = 0;
     params(ii).chi1 = 0.15;
     params(ii).chi2 = 0.25;
@@ -21,12 +21,13 @@ function outparams = SDU_tests(runopts)
     params(ii).maxit_HJB = 1e6;
     params(ii).maxit_KFE = 1e6;
     params(ii).NoRisk = 0;
-    params(ii).nb = 50;
-    params(ii).nb_KFE = 50;
-    params(ii).na = 50;
-    params(ii).na_KFE = 50;
+    params(ii).nb = 75;
+    params(ii).nb_KFE = 75;
+    params(ii).na = 75;
+    params(ii).na_KFE = 75;
     params(ii).deathrate = 0;
     params(ii).rho = 0.021551;
+    params(ii).lumpsum = 0.0081 * 2.0;
 
     %%--------------------------------------------------------------
     % WITH RETURNS RISK
@@ -40,7 +41,7 @@ function outparams = SDU_tests(runopts)
         for sd_r = sdrs
             params(ii).name = sprintf('SDU with riskaver%f, sigma_r%f', risk_aver, sd_r); 
             params(ii).OneAsset = 0;
-            params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+            params(ii).DirIncomeProcess = 'input/IncomeGrids/twopoint_3_5';
             params(ii).chi0 = 0;
             params(ii).chi1 = 0.15;
             params(ii).chi2 = 0.25;
@@ -53,15 +54,17 @@ function outparams = SDU_tests(runopts)
             params(ii).sigma_r = sd_r;
             params(ii).retrisk_KFE = 0;
             params(ii).NoRisk = 0;
-            params(ii).delta_HJB = 2;
+            params(ii).delta_HJB = 1;
             params(ii).delta_KFE = 100;
-            params(ii).nb = 50;
-            params(ii).nb_KFE = 50;
-            params(ii).na = 50;
-            params(ii).na_KFE = 50;
-            params(ii).deathrate = 0;
+            params(ii).nb = 75;
+            params(ii).nb_KFE = 75;
+            params(ii).na = 75;
+            params(ii).na_KFE = 75;
+            params(ii).deathrate = 75;
             params(ii).rho = 0.021551;
             params(ii).crit_KFE = 1e-7;
+            params(ii).implicit = 0;
+            params(ii).lumpsum = 0.0081 * 2.0;
             
             if risk_aver == 1
                 params(ii).delta_HJB = 10;
@@ -73,7 +76,7 @@ function outparams = SDU_tests(runopts)
                 params(ii).delta_KFE = 10;
                 params(ii).delta_HJB = 1;
             elseif risk_aver == 20
-                params(ii).delta_KFE = 1;
+                params(ii).delta_KFE = 1e5;
                 params(ii).delta_HJB = 0.02;
             end
 

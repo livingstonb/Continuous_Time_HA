@@ -36,6 +36,7 @@ classdef Income
 	            
 				% normalize
 				obj.y.vec = y ./ (y' * obj.ydist * 4);
+				obj.y.vec = obj.y.vec + p.lumpsum;
 				
 				obj.logy.vec = log(obj.y.vec);
 	        end
