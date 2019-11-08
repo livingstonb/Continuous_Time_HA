@@ -119,7 +119,7 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 		% UPDATE VALUE FUNCTION
 		Vn1 = solver.two_asset.solveHJB(p,A,income,Vn,HJB.u,nn);
 
-	    % Check for convergence
+	    % CHECK FOR CONVERGENCE
 	    Vdiff = Vn1 - Vn;
 	    Vn = Vn1;
 	    dst = max(abs(Vdiff(:)));
@@ -143,7 +143,7 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
         error("HJB didn't converge");
     end
     
-    % Store value function and polices on both grids
+    % STORE VALUE FUNCTION AND POLICIES ON BOTH GRIDS
     HJB.Vn = Vn;
     KFE_Vn = reshape(interp_decision*Vn(:),nb_KFE,na_KFE,nz,ny);
     KFE = solver.two_asset.find_policies(p,income,grdKFE,KFE_Vn);

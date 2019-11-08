@@ -1,22 +1,26 @@
 function Vn1 = solveHJB(p,A,income,Vn,u,nn)
-    % Updates the value function
+    % This function updates the value function according to an
+    % implicit or implicit-explicit scheme
 
     na = p.na;
     nb = p.nb;
     ny = numel(income.y.vec);
     nz = p.nz;
 
-    if (p.SDU == 1) && (p.invies ~= 1)
-        ez_adj_0 = reshape(Vn, na*nb*nz, 1, ny) ./ reshape(Vn, na*nb*nz, ny, 1);
-        ez_adj_1 = ((1-p.invies) ./ (1-p.riskaver))...
-            .* ( (ez_adj_0 .^ ((1-p.riskaver)./(1-p.invies)) - 1) ./ (ez_adj_0 - 1) );
-        
-    elseif (p.SDU == 1) && (p.invies == 1)
-        ez_adj_0 = (1-p.riskaver) * (reshape(Vn, na*nb*nz, 1, ny) - reshape(Vn, na*nb*nz, ny, 1));
-        ez_adj_1 = (exp(ez_adj_0) - 1) ./ (ez_adj_0);
-    end
-    
+    %% -----------------------------------------------------
+    % RISK ADJUSTMENT FOR STOCHASTIC DIFFERENTIAL UTILITY
+    % ------------------------------------------------------
     if p.SDU == 1
+        if p.invies ~= 1
+            ez_adj_0 = reshape(Vn, na*nb*nz, 1, ny) ./ reshape(Vn, na*nb*nz, ny, 1);
+            ez_adj_1 = ((1-p.invies) ./ (1-p.riskaver))...
+                .* ( (ez_adj_0 .^ ((1-p.riskaver)./(1-p.invies)) - 1) ./ (ez_adj_0 - 1) );
+            
+        elseif (p.SDU == 1) && (p.invies == 1)
+            ez_adj_0 = (1-p.riskaver) * (reshape(Vn, na*nb*nz, 1, ny) - reshape(Vn, na*nb*nz, ny, 1));
+            ez_adj_1 = (exp(ez_adj_0) - 1) ./ (ez_adj_0);
+        end
+        
         ez_adj = ez_adj_1 .* shiftdim(income.ytrans, -1);
 
         for kk = 1:ny
@@ -25,27 +29,18 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
         end
     end
 
-    if p.SDU == 0
-        inctrans = kron(income.ytrans, speye(nb*na*nz));
-    else
-        ix = repmat((1:na*nb*nz*ny)', ny, 1);
-        iy = repmat((1:na*nb*nz)', ny*ny, 1);
-        iy = iy + kron((0:ny-1)', na*nb*nz*(ones(na*nb*nz*ny,1)));
-        inctrans = sparse(ix, iy, ez_adj(:));
-    end
-
-    
-   if (numel(p.rhos) > 1) && (p.implicit == 1)
-        rhocol = repmat(kron(p.rhos', ones(nb*na,1)), ny, 1);
-        rho_mat = spdiags(rhocol, 0, nb*na*nz*ny, nb*na*nz*ny);
-    elseif p.implicit == 1
-        rho_mat = p.rho * speye(nb*na*nz*ny);
-    end
-
     %% -----------------------------------------------------
     % FULLY IMPLICIT UPDATING
     % ------------------------------------------------------
     if p.implicit == 1
+
+        % discount factor values
+        if numel(p.rhos) > 1
+            rhocol = repmat(kron(p.rhos', ones(nb*na,1)), ny, 1);
+            rho_mat = spdiags(rhocol, 0, nb*na*nz*ny, nb*na*nz*ny);
+        else
+            rho_mat = p.rho * speye(nb*na*nz*ny);
+        end
 
         assert(p.deathrate == 0, "Fully implicit assumes no death.")
 
@@ -58,29 +53,25 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
             iy = iy + kron((0:ny-1)', nb*na*nz*ones(nb*na*nz*ny,1));
             inctrans = sparse(ix, iy, ez_adj(:));
         end
-
         A = A + inctrans;
+        
         clear inctrans ix iy ez_adj;
         RHS = p.delta_HJB * u(:) + Vn(:);
         
         A = (rho_mat - A) * p.delta_HJB + speye(nb*na*nz*ny);
-        % [L,U] = ilu(B,struct('type','ilutp','droptol',1e-4));
-        % Vn1 = ((repmat(rho_mat, ny, ny) - A) * p.delta_HJB + speye(nb*na*nz*ny)) \ RHS;
-        % Vn1 = bicgstab(B, RHS, 1e-7, 10000, [], [], Vn(:));
-        % Vn1 = gmres(B, RHS, 50, 1e-7, 300, [], [], Vn(:));
         Vn1 = A \ RHS;
-        Vn1 = reshape(Vn1, nb, na, nz, ny);
 
     %% -----------------------------------------------------
     % IMPLICIT-EXPLICIT UPDATING
     % ------------------------------------------------------
     else
-        % Update value function
         u_k = reshape(u,[],ny);
 
         Vn1_k = NaN(nb*na*nz,ny);
         Vn_k = reshape(Vn,[],ny);
         Bik_all = cell(ny,1);
+
+        % loop over income states
         for kk = 1:ny
             Ak = A(1+(kk-1)*(nb*na*nz):kk*(nb*na*nz),1+(kk-1)*(nb*na*nz):kk*(nb*na*nz));
 
@@ -123,8 +114,8 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
                     break
                 end
             end
-        end
-
-        Vn1 = reshape(Vn1_k,nb,na,nz,ny);
+        end   
     end
+
+    Vn1 = reshape(Vn1_k,nb,na,nz,ny);
 end
