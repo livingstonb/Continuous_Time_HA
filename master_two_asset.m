@@ -30,7 +30,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.IterateRho = 0; % if set to zero, the parameter 'rho' is used
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
@@ -113,21 +113,21 @@ p.print();
 % -------------------------------------------------------------------------
 
 
-% % to calibrate to (rb, ra) (turn off rho iteration)
-% calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
-% returns = fsolve(calibrator, log([0.02/4+0.05, 0.06/4]));
-% p.reset_returns(exp(returns(1))-0.05, exp(returns(2)));
-% fprintf("FINAL LIQUID RETURN = %f\n", p.r_b)
-% fprintf("FINAL ILLIQUID RETURN = %f\n", p.r_a)
+% to calibrate to (rb, ra) (turn off rho iteration)
+calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
+returns = fsolve(calibrator, log([0.02/4+0.05, 0.06/4]));
+p.reset_returns(exp(returns(1))-0.05, exp(returns(2)));
+fprintf("FINAL LIQUID RETURN = %f\n", p.r_b)
+fprintf("FINAL ILLIQUID RETURN = %f\n", p.r_a)
 
 
 
-% to calibrate to (rho, ra) (turn on rho iteration)
-calibrator = @(ra) solver.two_asset.ra_calibrator(ra, runopts, p);
-returns = fsolve(calibrator, log(0.06/4));
-p.reset_returns(p.r_b, exp(returns));
-fprintf("FINAL RHO = %f\n", p.rho);
-fprintf("FINAL ILLIQUID RETURN = %f\n", p.r_a);
+% % to calibrate to (rho, ra) (turn on rho iteration)
+% calibrator = @(ra) solver.two_asset.ra_calibrator(ra, runopts, p);
+% returns = fsolve(calibrator, log(0.06/4));
+% p.reset_returns(p.r_b, exp(returns));
+% fprintf("FINAL RHO = %f\n", p.rho);
+% fprintf("FINAL ILLIQUID RETURN = %f\n", p.r_a);
 
 % % final run
 % tic
