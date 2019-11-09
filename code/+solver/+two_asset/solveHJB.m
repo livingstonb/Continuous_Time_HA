@@ -16,7 +16,7 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
             ez_adj_1 = ((1-p.invies) ./ (1-p.riskaver))...
                 .* ( (ez_adj_0 .^ ((1-p.riskaver)./(1-p.invies)) - 1) ./ (ez_adj_0 - 1) );
             
-        elseif (p.SDU == 1) && (p.invies == 1)
+        else
             ez_adj_0 = (1-p.riskaver) * (reshape(Vn, na*nb*nz, 1, ny) - reshape(Vn, na*nb*nz, ny, 1));
             ez_adj_1 = (exp(ez_adj_0) - 1) ./ (ez_adj_0);
         end
@@ -85,8 +85,8 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
                 Bk = Bk - p.delta_HJB * income.ytrans(kk, kk) * speye(nb*na*nz);
             end
             
-            Bik_all{kk} 	= inverse(Bk);
-            indx_k 			= ~ismember(1:ny,kk);
+            Bik_all{kk} = inverse(Bk);
+            indx_k = ~ismember(1:ny,kk);
 
             if p.SDU == 1
                 Vkp_stacked = sum(squeeze(ez_adj(:, kk, indx_k)) .* Vn_k(:, indx_k), 2);
@@ -103,10 +103,15 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
             for jj = 1:p.maxit_HIS
                 Vn2_k = NaN(nb*na*nz,ny);
                 for kk = 1:ny
-                    indx_k 			= ~ismember(1:ny,kk);
-                    Vkp_stacked 	= sum(repmat(income.ytrans(kk,indx_k),nb*na*nz,1) .* Vn1_k(:,indx_k),2);
-                    qk 				= p.delta_HJB * u_k(:,kk) + Vn1_k(:,kk) + p.delta_HJB * Vkp_stacked;
-                    Vn2_k(:,kk) 	= Bik_all{kk} * qk;
+                    indx_k = ~ismember(1:ny,kk);
+                    
+                    if p.SDU == 1
+                        Vkp_stacked = sum(squeeze(ez_adj(:, kk, indx_k)) .* Vn1_k(:, indx_k), 2);
+                    else
+                        Vkp_stacked = sum(repmat(income.ytrans(kk,indx_k),nb*na*nz,1) .* Vn1_k(:,indx_k),2);
+                    end
+                    qk = p.delta_HJB * u_k(:,kk) + Vn1_k(:,kk) + p.delta_HJB * Vkp_stacked;
+                    Vn2_k(:,kk) = Bik_all{kk} * qk;
                 end
 
                 dst = max(abs(Vn2_k(:) - Vn1_k(:)));

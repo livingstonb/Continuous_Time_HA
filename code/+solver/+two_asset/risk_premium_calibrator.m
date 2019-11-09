@@ -4,6 +4,8 @@ function x = risk_premium_calibrator(returns, runopts, p)
 
 	% Set new values for returns
 	p.reset_returns(exp(returns(1))-0.05, exp(returns(2)));
+	fprintf("r_b has been reset to %f...\n", p.r_b);
+	fprintf("r_a has been reset to %f...\n", p.r_a);
 	
 	% Solve model
 	stats = main_two_asset(runopts, p);
