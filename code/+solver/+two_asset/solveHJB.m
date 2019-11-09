@@ -60,6 +60,7 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
         
         A = (rho_mat - A) * p.delta_HJB + speye(nb*na*nz*ny);
         Vn1 = A \ RHS;
+        Vn1 = reshape(Vn1,nb,na,nz,ny);
 
     %% -----------------------------------------------------
     % IMPLICIT-EXPLICIT UPDATING
@@ -114,8 +115,7 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
                     break
                 end
             end
-        end   
+        end
+        Vn1 = reshape(Vn1_k,nb,na,nz,ny);
     end
-
-    Vn1 = reshape(Vn1_k,nb,na,nz,ny);
 end
