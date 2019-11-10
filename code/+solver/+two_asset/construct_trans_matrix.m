@@ -124,9 +124,11 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
         if p.SDU == 1
             % compute second difference, Vbb
             Vdiff2 = zeros(nb, na, nz, ny);
-            grids_delta = grids.b.dF(:,1) + grids.b.dB(:,1);
-            V_i_plus_1_term = 2 * V(3:nb,:,:,:) ./ (grids.b.dF(3:nb,:) .* grids_delta(3:nb));
-            V_i_term = - 2 * V(2:nb-1,:,:,:) .* (1./grids.b.dF(2:nb-1,:) + 1./grids.b.dB(2:nb-1,:))...
+            dF_adj = grids.b.dF(:,1);
+            dF_adj(nb) = grids.b.dB(nb,1);
+            grids_delta = dF_adj + grids.b.dB(:,1);
+            V_i_plus_1_term = 2 * V(3:nb,:,:,:) ./ (dF_adj(3:nb) .* grids_delta(3:nb));
+            V_i_term = - 2 * V(2:nb-1,:,:,:) .* (1./dF_adj(2:nb-1) + 1./grids.b.dB(2:nb-1,:))...
                 ./ grids_delta(2:nb-1);
             V_i_minus_1_term = 2 * V(1:nb-2,:,:,:) ./ (grids.b.dB(1:nb-2,:) .* grids_delta(1:nb-2));
             Vdiff2(2:nb-1,:,:,:) = V_i_plus_1_term + V_i_term + V_i_minus_1_term;
@@ -164,11 +166,15 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
 
         
         if p.SDU == 1
-            % compute second difference, Vbb
+            % compute second difference, Vaa
             Vdiff2 = zeros(nb, na, nz, ny);
-            grids_delta = grids.a.dF + grids.a.dB;
-            V_i_plus_1_term = 2 * V(:,3:na,:,:) ./ (grids.a.dF(:,3:na) .* grids_delta(:,3:na));
-            V_i_term = - 2 * V(:,2:na-1,:,:) .* (1./grids.a.dF(:,2:na-1) + 1./grids.a.dB(:,2:na-1))...
+            
+            dF_adj = grids.a.dF;
+            dF_adj(:,na) = grids.a.dB(:,na);
+            grids_delta = dF_adj + grids.a.dB;
+            
+            V_i_plus_1_term = 2 * V(:,3:na,:,:) ./ (dF_adj(:,3:na) .* grids_delta(:,3:na));
+            V_i_term = - 2 * V(:,2:na-1,:,:) .* (1./dF_adj(:,2:na-1) + 1./grids.a.dB(:,2:na-1))...
                 ./ grids_delta(:,2:na-1);
             V_i_minus_1_term = 2 * V(:,1:na-2,:,:) ./ (grids.a.dB(:,1:na-2) .* grids_delta(:,1:na-2));
             Vdiff2(:,2:na-1,:,:) = V_i_plus_1_term + V_i_term + V_i_minus_1_term;

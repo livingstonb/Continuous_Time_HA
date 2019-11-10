@@ -55,7 +55,7 @@ function outparams = SDU_tests(runopts)
             params(ii).sigma_r = sd_r;
             params(ii).retrisk_KFE = 0;
             params(ii).NoRisk = 0;
-            params(ii).delta_HJB = 1e6;
+            params(ii).delta_HJB = 1;
             params(ii).delta_KFE = 100;
             params(ii).nb = 50;
             params(ii).nb_KFE = 50;
@@ -74,11 +74,11 @@ function outparams = SDU_tests(runopts)
             end
 
             if risk_aver == 10
-                params(ii).delta_KFE = 10;
-                params(ii).delta_HJB = 1e6;
+                params(ii).delta_KFE = 100;
+                params(ii).delta_HJB = 1;
             elseif risk_aver == 20
-                params(ii).delta_KFE = 1;
-                params(ii).delta_HJB = 1e6;
+                params(ii).delta_KFE = 100;
+                params(ii).delta_HJB = 0.1;
             end
 
             ii = ii + 1;

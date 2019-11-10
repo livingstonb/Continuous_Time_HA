@@ -30,7 +30,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.IterateRho = 0; % if set to zero, the parameter 'rho' is used
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
@@ -45,7 +45,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 12;
+runopts.param_index = 28;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -115,7 +115,7 @@ p.print();
 
 % to calibrate to (rb, ra) (turn off rho iteration)
 calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
-returns = fsolve(calibrator, log([0.02/4+0.05, 0.06/4]));
+returns = fsolve(calibrator, log([0.02/4+0.05, 0.04/4]));
 p.reset_returns(exp(returns(1))-0.05, exp(returns(2)));
 fprintf("FINAL LIQUID RETURN = %f\n", p.r_b)
 fprintf("FINAL ILLIQUID RETURN = %f\n", p.r_a)

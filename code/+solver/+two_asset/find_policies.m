@@ -29,7 +29,7 @@ function [policies, Vdiff_SDU] = find_policies(p,income,grd,Vn)
     VaB = zeros(nb,na,nz,ny);
     VbF = zeros(nb,na,nz,ny);
     VbB = zeros(nb,na,nz,ny);
-
+    
     cF = NaN(nb,na,nz,ny);
     sF = NaN(nb,na,nz,ny);
     HcF = NaN(nb,na,nz,ny,'single');
@@ -170,6 +170,10 @@ function [policies, Vdiff_SDU] = find_policies(p,income,grd,Vn)
     validBB = (dBB > - aux.two_asset.adj_cost_fn(dBB,grd.a.matrix,p)) & (dBB <= 0) & (HdBB > 0);
     
     if (p.OneAsset == 0) && (p.DealWithSpecialCase == 1)
+        if (p.SDU == 1)
+            error("Special case not coded for SDU")
+        end
+        
     	[H_special,c_special,d_special] = aux.deal_with_special_case(p,income,grd,r_b_mat,VaB);
 
         Ic_special	= (H_special > HdFB | ~validFB) & (H_special > HdBF | ~validBF) ...
@@ -216,10 +220,14 @@ function [policies, Vdiff_SDU] = find_policies(p,income,grd,Vn)
     %% --------------------------------------------------------------------
     % FIRST DIFF OF VALUE FUNCTION FOR SDU WITH RETURNS RISK
     % ---------------------------------------------------------------------
-    if (p.SDU == 1) && (p.sigma_r > 0) && (p.OneAsset == 1)
-        Vb0 = rho_mat_adj .* ( c .^ (-p.invies) ); % u'(c)
+    if (p.sigma_r > 0) && (p.OneAsset == 1)
+        if p.SDU == 1
+            Vb0 = rho_mat_adj .* ( c .^ (-p.invies) );
+        else
+            Vb0 = c .^ (-p.riskaver);
+        end
         Vdiff_SDU = IcB .* VbB + IcF .* VbF + Ic0 .* Vb0;
-    elseif (p.SDU == 1) && (p.sigma_r > 0) && (p.OneAsset == 0)
+    elseif (p.sigma_r > 0) && (p.OneAsset == 0)
         Va0 = (VaB + VaF) / 2;
         Vdiff_SDU = (policies.adot < 0) .* VaB + (policies.adot > 0) .* VaF...
             + (policies.adot == 0) .* Va0;

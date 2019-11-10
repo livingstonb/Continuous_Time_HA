@@ -99,7 +99,7 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
         end
 
         % Howard improvement step
-        if (nn >= p.start_HIS) && (p.SDU==0)
+        if nn >= p.start_HIS
             for jj = 1:p.maxit_HIS
                 Vn2_k = NaN(nb*na*nz,ny);
                 for kk = 1:ny
