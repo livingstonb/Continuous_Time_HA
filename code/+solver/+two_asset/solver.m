@@ -36,27 +36,23 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	end
 
 	% Initial guess
-	r_b_mat_adj = r_b_mat;
-	r_b_mat_adj(r_b_mat<=0.001) = 0.001; % mostly for r_b <= 0, enforce a reasonable guess
-	c_0 = (1-p.directdeposit - p.wagetax) * income.y.matrix ...
-            + (p.r_a + p.deathrate*p.perfectannuities) * grd.a.matrix...
-            + (r_b_mat_adj + p.deathrate*p.perfectannuities) .* grd.b.matrix + p.transfer;
+    if (p.SDU == 0 || p.sigma_r == 0)
+        r_b_mat_adj = r_b_mat;
+        r_b_mat_adj(r_b_mat<=0.001) = 0.001; % mostly for r_b <= 0, enforce a reasonable guess
+        c_0 = (1-p.directdeposit - p.wagetax) * income.y.matrix ...
+                + (p.r_a + p.deathrate*p.perfectannuities) * grd.a.matrix...
+                + (r_b_mat_adj + p.deathrate*p.perfectannuities) .* grd.b.matrix + p.transfer;
 
-    if p.SDU == 0
-    	V_0	= 1 ./ (rho_mat + p.deathrate) .* aux.u_fn(c_0,p.riskaver);
-    else
-    	V_0 = aux.u_fn(c_0, p.invies);
-    end
+        if p.SDU == 0
+            V_0	= 1 ./ (rho_mat + p.deathrate) .* aux.u_fn(c_0,p.riskaver);
+        else
+            V_0 = aux.u_fn(c_0, p.invies);
+        end
     
-%     % Attempt at more accurate guess (seems to fail)
-%     inc_trans = kron(income.ytrans,speye(p.nb*p.na));
-%     inc_trans = repmat(inc_trans,nz);
-%     u_0 = aux.u_fn(c_0(:),p.riskaver);
-%     if numel(p.rhos) == 1
-%         V_0 = (p.rho*speye(p.nb*p.na*ny*p.nz) - inc_trans) \ u_0;
-%     else
-%         V_0 = (kron(diag(p.rhos'),speye(p.nb*p.na*ny)) - inc_trans) \ u_0;
-%     end
+    else
+    % Attempt at more accurate guess
+        V_0 = solver.two_asset.value_guess_risky_returns(p, grd, income);
+    end
 
     V_0 = reshape(V_0,[nb na nz ny]);
 

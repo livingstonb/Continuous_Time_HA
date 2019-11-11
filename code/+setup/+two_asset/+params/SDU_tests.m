@@ -27,7 +27,7 @@ function outparams = SDU_tests(runopts)
     params(ii).na_KFE = 50;
     params(ii).deathrate = 0;
     params(ii).rho = 0.033940;
-    params(ii).lumpsum = 0.0081 * 2.0;
+    params(ii).transfer = 0.0081 * 2.0;
     params(ii).implicit = 1;
 
     %%--------------------------------------------------------------
@@ -48,14 +48,14 @@ function outparams = SDU_tests(runopts)
             params(ii).chi2 = 0.25;
             params(ii).a_lb = 0.25;
             params(ii).riskaver = risk_aver;
-            params(ii).invies = 1.01;
+            params(ii).invies = 1.5;
             params(ii).SDU = 1;
             params(ii).maxit_HJB = 1e6;
             params(ii).maxit_KFE = 1e6;
             params(ii).sigma_r = sd_r;
             params(ii).retrisk_KFE = 0;
             params(ii).NoRisk = 0;
-            params(ii).delta_HJB = 1;
+            params(ii).delta_HJB = 1e3;
             params(ii).delta_KFE = 100;
             params(ii).nb = 50;
             params(ii).nb_KFE = 50;
@@ -65,7 +65,7 @@ function outparams = SDU_tests(runopts)
             params(ii).rho = 0.033940;
             % params(ii).crit_KFE = 1e-7;
             params(ii).implicit = 1;
-            params(ii).lumpsum = 0.0081 * 2.0;
+            params(ii).transfer = 0.0081 * 2.0;
             
             if risk_aver == 1
                 params(ii).delta_HJB = 1;

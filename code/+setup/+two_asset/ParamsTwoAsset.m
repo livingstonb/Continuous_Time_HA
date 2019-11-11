@@ -17,9 +17,6 @@ classdef ParamsTwoAsset < setup.Params
         a_gcurv = 0.2;
         na_KFE = 120;
 
-        % transfer
-        lumpsum = 0;
-
         % illiquid return
         r_a = 0.06/4;
 
