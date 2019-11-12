@@ -28,6 +28,8 @@ function [A, stationary] = construct_trans_matrix(p, income, grids, model, model
     X = NaN(nb,na,nz,ny);
     Y = NaN(nb,na,nz,ny);
     Z = NaN(nb,na,nz,ny);
+
+    stationary = [];
 	
 	%% --------------------------------------------------------------------
     % COMPUTE ASSET DRIFTS
@@ -246,8 +248,6 @@ function [A, stationary] = construct_trans_matrix(p, income, grids, model, model
             A = A + spdiags(centdiag(:), 0, dim, dim);
             A = A + spdiags(updiag(:), nb, dim, dim);
             A = A + spdiags(lowdiag(:), -nb, dim, dim);
-        else
-            stationary = [];
         end
     end
 
