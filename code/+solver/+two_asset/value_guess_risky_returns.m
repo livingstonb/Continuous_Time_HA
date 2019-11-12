@@ -50,7 +50,7 @@ function V = value_guess_risky_returns(p, grids, income)
     end
 
     if p.sigma_r > 0
-        % Vaa coeffs
+        % Vaa term
         deltas = grids.a.dB + grids.a.dF;
         deltas(:, 1) = 2 * grids.a.dF(:, 1);
         deltas(:, na) = 2 * grids.a.dB(:, na);

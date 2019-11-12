@@ -214,8 +214,14 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
 
         if p.SDU == 1
             % now add zeta(a) * Va * (a sigma)^2 / 2 term
-            adj_term = (1/2) * (grids.a.matrix * p.sigma_r) .^ 2 ...
-                .* Vdiff_SDU ./ V * (p.invies - p.riskaver) / (1 - p.invies);
+            if p.invies == 1
+                adj_term = (1/2) * (grids.a.matrix * p.sigma_r) .^ 2 ...
+                .* Vdiff_SDU * (1 - p.riskaver);
+            else
+                adj_term = (1/2) * (grids.a.matrix * p.sigma_r) .^ 2 ...
+                    .* Vdiff_SDU ./ V * (p.invies - p.riskaver) / (1 - p.invies);
+            end
+
             updiag = zeros(nb, na, nz, ny);
             lowdiag = zeros(nb, na, nz, ny);
             centdiag = zeros(nb, na, nz, ny);
@@ -232,13 +238,9 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
             lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
             updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
 
-            lowdiag = lowdiag(:);
-            updiag = updiag(:);
-            centdiag = centdiag(:);
-
-            A = A + spdiags(centdiag,0,dim,dim);
-            A = A + spdiags(updiag,nb,dim,dim);
-            A = A + spdiags(lowdiag,-nb,dim,dim);
+            A = A + spdiags(centdiag(:), 0, dim, dim);
+            A = A + spdiags(updiag(:), nb, dim, dim);
+            A = A + spdiags(lowdiag(:), -nb, dim, dim);
         end
     end
 
