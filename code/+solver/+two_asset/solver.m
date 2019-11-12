@@ -36,7 +36,7 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	end
 
 	% Initial guess
-    if (p.SDU == 0 || p.sigma_r == 0)
+    if (p.sigma_r == 0) && (p.SDU == 0)
         r_b_mat_adj = r_b_mat;
         r_b_mat_adj(r_b_mat<=0.001) = 0.001; % mostly for r_b <= 0, enforce a reasonable guess
         c_0 = (1-p.directdeposit - p.wagetax) * income.y.matrix ...
@@ -50,7 +50,7 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
         end
     
     else
-    % Attempt at more accurate guess
+    	% Attempt at more accurate guess
         V_0 = solver.two_asset.value_guess_risky_returns(p, grd, income);
     end
 
