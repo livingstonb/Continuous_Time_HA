@@ -64,11 +64,10 @@ function outparams = SDU_tests(runopts)
             params(ii).deathrate = 0;
             params(ii).rho = 0.033940;
             % params(ii).crit_KFE = 1e-7;
-            params(ii).implicit = 1;
+            params(ii).implicit = 0;
             params(ii).transfer = 0.0081 * 2.0;
             
             if risk_aver == 1
-                params(ii).delta_HJB = 1;
                 params(ii).SDU = 0;
                 params(ii).invies = 1;
             end
@@ -77,8 +76,9 @@ function outparams = SDU_tests(runopts)
                 params(ii).delta_KFE = 100;
                 params(ii).delta_HJB = 1;
             elseif risk_aver == 20
+                params(ii).implicit = 1;
                 params(ii).delta_KFE = 100;
-                params(ii).delta_HJB = 0.1;
+                params(ii).delta_HJB = 0.05;
             end
 
             ii = ii + 1;

@@ -48,6 +48,11 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
         bdriftF = max(-d - aux.two_asset.adj_cost_fn(d,grids.a.matrix,p),0) + max(s,0);    
     end
 
+    adriftB = max(adriftB, -100);
+    adriftF = min(adriftF, 100);
+    bdriftB = max(bdriftB, -100);
+    bdriftF = min(bdriftF, 100);
+
 	%% --------------------------------------------------------------------
     % ILLIQUID ASSET TRANSITIONS
 	% ---------------------------------------------------------------------

@@ -45,7 +45,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 18;
+runopts.param_index = 31;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -119,7 +119,7 @@ calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
 returns = fsolve(calibrator, [0.4, 0.5]);
 
 new_rb = 0.025*(returns(1))/(1+abs(returns(1)));
-new_ra = new_rb + 0.03 * abs(returns(2)) / (1 + abs(returns(2)));
+new_ra = new_rb + 0.04 * abs(returns(2)) / (1 + abs(returns(2)));
 
 p.reset_returns(new_rb, new_ra);
 fprintf("FINAL LIQUID RETURN = %f\n", p.r_b)
