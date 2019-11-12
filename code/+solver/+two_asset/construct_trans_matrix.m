@@ -1,4 +1,4 @@
-function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SDU, V)
+function [A, stationary] = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SDU, V)
     % Constructs transition matrix for the HJB when modeltype='HJB' and for
     % the KFE when modeltype='KFE'.
 	na = numel(grids.a.vec);
@@ -120,11 +120,12 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
         centdiag(nb,:,:,:) = - term1 ./ (grids.b.dB(nb,:)).^2;
         updiag(nb,:,:,:) = 0;
 
+        lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
+        updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
+
         lowdiag = lowdiag(:);
-        lowdiag = [lowdiag(2:end); 0];
-        centdiag = centdiag(:);
         updiag = updiag(:);
-        updiag = [0; updiag(1:end-1)];
+        centdiag = centdiag(:);
 
         if p.SDU == 1
             % compute second difference, Vbb
@@ -158,19 +159,9 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
         A = A + spdiags(updiag,1,dim,dim);
         A = A + spdiags(lowdiag,-1,dim,dim);
     elseif (p.sigma_r > 0) && (p.OneAsset == 0) && (strcmp(modeltype,'HJB') || (strcmp(modeltype,'KFE') && (p.retrisk_KFE==1)))
-        % 2nd derivative term
-        term1 = ((grids.a.matrix * p.sigma_r) .^2) ./ (grids.a.dB + grids.a.dF);
-        lowdiag = term1 ./ grids.a.dB;
-        centdiag = - term1 .* (1 ./ grids.a.dF + 1 ./ grids.a.dB);
-        updiag = term1 ./ grids.a.dF;
+       
         
-        % top of the grid
-        term1 = (1/2) * (grids.a.matrix(:,na,:,:) * p.sigma_r) .^ 2;
-        lowdiag(:,na,:,:) = term1 ./ (grids.a.dB(:,na)).^2;
-        centdiag(:,na,:,:) = - term1 ./ (grids.a.dB(:,na)).^2;
-        updiag(:,na,:,:) = 0;
-
-        
+        %% THIS SECTION USING THE EXPRESSION WITH 1 / Vaa
         % if p.SDU == 1
         %     % compute second difference, Vaa
         %     Vdiff2 = zeros(nb, na, nz, ny);
@@ -199,26 +190,33 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
         %     centdiag = sdu_adj .* centdiag;
         %     updiag = sdu_adj .* updiag;
         % end
-        
-        % lowdiag = lowdiag(:);
-        % lowdiag = [lowdiag(nb+1:end); zeros(nb,1)];
-        % centdiag = centdiag(:);
-        % updiag = updiag(:);
-        % updiag = [zeros(nb,1); updiag(1:end-nb)];
+
+        %% THIS SECTION USING AN ALTERNATIVE EXPRESSION
+        % Need to add (1/2) (a*sigma)^2 * [Vaa + zeta * Va^2]
+        % where zeta = 0 if not using SDU
+
+        % 2nd derivative term, Vaa
+        deltas = grids.a.dB + grids.a.dF;
+        deltas(:, na) = 2 * grids.a.dB(:, na);
+
+        risk_term = (grids.a.matrix * p.sigma_r) .^2; % (1/2) cancels out
+        lowdiag = risk_term ./ (grids.a.dB .* deltas);
+
+        centdiag = - risk_term .* (1 ./ grids.a.dF + 1 ./ grids.a.dB) ./ deltas;
+        centdiag(:, na, :, :) = -risk_term(:, na, :, :) ./ ( grids.a.dB(:, na) .* deltas(:, na) );
+
+        updiag = risk_term ./ (grids.a.dF .* deltas);
+        updiag(:, na, :, :) = 0;
+
         lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
         updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
 
-        lowdiag = lowdiag(:);
-        updiag = updiag(:);
-        centdiag = centdiag(:);
-
-
-        A = A + spdiags(centdiag,0,dim,dim);
-        A = A + spdiags(updiag,nb,dim,dim);
-        A = A + spdiags(lowdiag,-nb,dim,dim);
+        A = A + spdiags(centdiag(:),0,dim,dim);
+        A = A + spdiags(updiag(:),nb,dim,dim);
+        A = A + spdiags(lowdiag(:),-nb,dim,dim);
 
         if p.SDU == 1
-            % now add zeta(a) * Va * (a sigma)^2 / 2 term
+            % now add zeta(a) * Va^2 term
             if p.invies == 1
                 adj_term = (1/2) * (grids.a.matrix * p.sigma_r) .^ 2 ...
                 .* Vdiff_SDU * (1 - p.riskaver);
@@ -240,12 +238,16 @@ function A = construct_trans_matrix(p, income, grids, model, modeltype, Vdiff_SD
             updiag(:,na,:,:) = 0;
             centdiag = - lowdiag - updiag;
 
+            stationary = (adriftB >= 0) & (adriftF <= 0);
+
             lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
             updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
 
             A = A + spdiags(centdiag(:), 0, dim, dim);
             A = A + spdiags(updiag(:), nb, dim, dim);
             A = A + spdiags(lowdiag(:), -nb, dim, dim);
+        else
+            stationary = [];
         end
     end
 

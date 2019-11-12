@@ -1,4 +1,4 @@
-function Vn1 = solveHJB(p,A,income,Vn,u,nn)
+function Vn1 = solveHJB(p,A,income,Vn,u,nn,risk_adj)
     % This function updates the value function according to an
     % implicit or implicit-explicit scheme
 
@@ -56,7 +56,12 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
         A = A + inctrans;
         
         clear inctrans ix iy ez_adj;
-        RHS = p.delta_HJB * u(:) + Vn(:);
+
+        if isempty(risk_adj)
+            RHS = p.delta_HJB * u(:) + Vn(:);
+        else
+            RHS = p.delta_HJB * u(:) + Vn(:) + risk_adj(:);
+        end
         
         A = (rho_mat - A) * p.delta_HJB + speye(nb*na*nz*ny);
         Vn1 = A \ RHS;

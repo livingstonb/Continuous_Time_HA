@@ -108,12 +108,25 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	  	[HJB, Vdiff_SDU] = solver.two_asset.find_policies(p,income,grd,Vn);
 
 	    % CONSTRUCT TRANSITION MATRIX 
-        A = solver.two_asset.construct_trans_matrix(...
+        [A, stationary] = solver.two_asset.construct_trans_matrix(...
         	p, income, grd, HJB, 'HJB', Vdiff_SDU, Vn);
 
+        if (p.SDU == 1) && (p.sigma_r > 0)
+        	% need to compute additional term for risk
+        	if p.invies == 1
+        		risk_adj = (1-p.riskaver) * Vdiff_SDU .^ 2;
+        	else
+        		risk_adj = Vdiff_SDU .^ 2 ./ Vn * (p.invies - p.riskaver) / (1-p.invies);
+    		end
+
+    		risk_adj = risk_adj .* (grd.a.matrix * p.sigma_r) .^ 2 / 2;
+    		risk_adj(~stationary) = 0;
+    	else
+    		risk_adj = [];
+    	end
         
 		% UPDATE VALUE FUNCTION
-		Vn1 = solver.two_asset.solveHJB(p,A,income,Vn,HJB.u,nn);
+		Vn1 = solver.two_asset.solveHJB(p, A, income, Vn, HJB.u, nn, risk_adj);
 
 	    % CHECK FOR CONVERGENCE
 	    Vdiff = Vn1 - Vn;
