@@ -78,7 +78,7 @@ function outparams = SDU_tests(runopts)
             elseif risk_aver == 20
                 params(ii).implicit = 1;
                 params(ii).delta_KFE = 100;
-                params(ii).delta_HJB = 0.05;
+                params(ii).delta_HJB = 0.001;
             end
 
             ii = ii + 1;

@@ -228,7 +228,11 @@ function [policies, Vdiff_SDU] = find_policies(p,income,grd,Vn)
         end
         Vdiff_SDU = IcB .* VbB + IcF .* VbF + Ic0 .* Vb0;
     elseif (p.sigma_r > 0) && (p.OneAsset == 0)
-        Va0 = rho_mat_adj .* c .^ (-p.invies) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
+        if p.SDU == 1
+            Va0 = rho_mat_adj .* c .^ (-p.invies) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
+        else
+            Va0 = c .^ (-p.invies) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
+        end
         Vdiff_SDU = (policies.adot < 0) .* VaB + (policies.adot > 0) .* VaF...
             + (policies.adot == 0) .* Va0;
         % Vdiff_SDU = IcFB .* VaF + (IcBF + IcBB) .* VaB + Ic00 .* Va0;
