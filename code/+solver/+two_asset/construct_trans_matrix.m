@@ -162,8 +162,27 @@ function [A, stationary] = construct_trans_matrix(p, income, grids, model, model
         A = A + spdiags(lowdiag,-1,dim,dim);
     elseif (p.sigma_r > 0) && (p.OneAsset == 0) && (strcmp(modeltype,'HJB') || (strcmp(modeltype,'KFE') && (p.retrisk_KFE==1)))
        
+        % % 2nd derivative term, Vaa
+        % deltas = grids.a.dB + grids.a.dF;
+        % deltas(:, na) = 2 * grids.a.dB(:, na);
+
+        % risk_term = (grids.a.matrix * p.sigma_r) .^2; % (1/2) cancels out
+        % lowdiag = risk_term ./ (grids.a.dB .* deltas);
+
+        % centdiag = - risk_term .* (1 ./ grids.a.dF + 1 ./ grids.a.dB) ./ deltas;
+        % centdiag(:, na, :, :) = -risk_term(:, na, :, :) ./ ( grids.a.dB(:, na) .* deltas(:, na) );
+
+        % updiag = risk_term ./ (grids.a.dF .* deltas);
+        % updiag(:, na, :, :) = 0;
+
+        % % lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
+        % % updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
+
+        % % A = A + spdiags(centdiag(:),0,dim,dim);
+        % % A = A + spdiags(updiag(:),nb,dim,dim);
+        % % A = A + spdiags(lowdiag(:),-nb,dim,dim);
         
-        %% THIS SECTION USING THE EXPRESSION WITH 1 / Vaa
+        % %% THIS SECTION USING THE EXPRESSION WITH 1 / Vaa
         % if p.SDU == 1
         %     % compute second difference, Vaa
         %     Vdiff2 = zeros(nb, na, nz, ny);
@@ -191,7 +210,16 @@ function [A, stationary] = construct_trans_matrix(p, income, grids, model, model
         %     lowdiag = sdu_adj .* lowdiag;
         %     centdiag = sdu_adj .* centdiag;
         %     updiag = sdu_adj .* updiag;
+
+
         % end
+
+        % lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
+        % updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
+
+        % A = A + spdiags(centdiag(:),0,dim,dim);
+        % A = A + spdiags(updiag(:),nb,dim,dim);
+        % A = A + spdiags(lowdiag(:),-nb,dim,dim);
 
         %% THIS SECTION USING AN ALTERNATIVE EXPRESSION
         % Need to add (1/2) (a*sigma)^2 * [Vaa + zeta * Va^2]

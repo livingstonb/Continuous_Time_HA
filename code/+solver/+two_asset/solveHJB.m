@@ -60,7 +60,7 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn,risk_adj)
         if isempty(risk_adj)
             RHS = p.delta_HJB * u(:) + Vn(:);
         else
-            RHS = p.delta_HJB * u(:) + Vn(:) + risk_adj(:);
+            RHS = p.delta_HJB * u(:) + Vn(:) + p.delta_HJB * risk_adj(:);
         end
         
         A = (rho_mat - A) * p.delta_HJB + speye(nb*na*nz*ny);

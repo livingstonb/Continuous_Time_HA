@@ -111,7 +111,7 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
         [A, stationary] = solver.two_asset.construct_trans_matrix(...
         	p, income, grd, HJB, 'HJB', Vdiff_SDU, Vn);
 
-        if (p.SDU == 1) && (p.sigma_r > 0)
+        if ~isempty(stationary)
         	% need to compute additional term for risk
         	if p.invies == 1
         		risk_adj = (1-p.riskaver) * Vdiff_SDU .^ 2;
