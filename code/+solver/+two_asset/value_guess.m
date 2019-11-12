@@ -1,4 +1,4 @@
-function V = value_guess_risky_returns(p, grids, income)
+function V = value_guess(p, grids, income)
 
 	nb = p.nb;
 	na = p.na;
@@ -19,7 +19,11 @@ function V = value_guess_risky_returns(p, grids, income)
             + (p.r_a + p.deathrate*p.perfectannuities) * grids.a.matrix...
             + (r_b_mat_adj + p.deathrate*p.perfectannuities) .* grids.b.matrix + p.transfer;
 
-    u = aux.u_fn(c_0, p.invies);
+    if p.SDU == 1
+        u = p.rho * aux.u_fn(c_0, p.invies);
+    else
+        u = aux.u_fn(c_0, p.riskaver);
+    end
 
     if p.SDU == 1
         % risk-adjusted income transitions
@@ -91,10 +95,6 @@ function V = value_guess_risky_returns(p, grids, income)
         Arisk = sparse(dim, dim);
     end
 
-    if p.SDU == 1
-        V = (rho_mat - inctrans - Arisk) \ reshape(p.rho .* u, [], 1);
-    else
-        V = (rho_mat - inctrans - Arisk) \ u(:);
-    end
+    V = (rho_mat - inctrans - Arisk) \ u(:);
 
 end

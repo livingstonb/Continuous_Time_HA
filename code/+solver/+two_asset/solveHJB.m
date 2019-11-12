@@ -71,6 +71,13 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn)
         Vn1_k = NaN(nb*na*nz,ny);
         Vn_k = reshape(Vn,[],ny);
         Bik_all = cell(ny,1);
+        
+        if numel(p.rhos) > 1
+            rhocol = kron(p.rhos', ones(nb*na,1));
+            rho_mat = spdiags(rhocol, nb*na*nz, nb*na*nz);
+        else
+            rho_mat = p.rho * speye(nb*na*nz);
+        end
 
         % loop over income states
         for kk = 1:ny

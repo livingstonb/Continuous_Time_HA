@@ -8,7 +8,7 @@ classdef ParamsTwoAsset < setup.Params
 
 
         % implicit updating in HJB
-        implicit = 1;
+        implicit = 0;
 
         % illiquid grid parameters
         na = 120;

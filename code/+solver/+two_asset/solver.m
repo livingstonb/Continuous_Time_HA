@@ -51,7 +51,7 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
     
     else
     	% Attempt at more accurate guess
-        V_0 = solver.two_asset.value_guess_risky_returns(p, grd, income);
+        V_0 = solver.two_asset.value_guess(p, grd, income);
     end
 
     V_0 = reshape(V_0,[nb na nz ny]);

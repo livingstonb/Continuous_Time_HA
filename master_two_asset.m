@@ -30,7 +30,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.IterateRho = 0; % if set to zero, the parameter 'rho' is used
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
@@ -118,8 +118,8 @@ calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
 % returns = fsolve(calibrator, log([0.02/4+0.05, 0.04/4]));
 returns = fsolve(calibrator, [0.4, 0.5]);
 
-new_rb = 0.02*(returns(1))/(1+abs(returns(1)));
-new_ra = new_rb + 0.025 * abs(returns(2)) / (1 + abs(returns(2)));
+new_rb = 0.025*(returns(1))/(1+abs(returns(1)));
+new_ra = new_rb + 0.03 * abs(returns(2)) / (1 + abs(returns(2)));
 
 p.reset_returns(new_rb, new_ra);
 fprintf("FINAL LIQUID RETURN = %f\n", p.r_b)

@@ -3,8 +3,8 @@ function x = risk_premium_calibrator(returns, runopts, p)
 	% liquid returns and illiquid returns
 
 	% Set new values for returns
-	new_rb = 0.02*(returns(1))/(1+abs(returns(1)));
-	new_ra = new_rb + 0.025 * abs(returns(2)) / (1 + abs(returns(2)));
+	new_rb = 0.025*(returns(1))/(1+abs(returns(1)));
+	new_ra = new_rb + 0.03 * abs(returns(2)) / (1 + abs(returns(2)));
 	p.reset_returns(new_rb, new_ra);
 	fprintf("r_b has been reset to %f...\n", p.r_b);
 	fprintf("r_a has been reset to %f...\n", p.r_a);
