@@ -89,14 +89,15 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 % 		gg = S.g(:);
 %     end
 
+    A_Constructor = solver.two_asset.A_Matrix_Constructor(p, income, grd, 'HJB');
+
     fprintf('    --- Iterating over HJB ---\n')
     dst = 1e5;
 	for nn	= 1:p.maxit_HJB
 	  	[HJB, V_deriv_risky_asset_nodrift] = solver.two_asset.find_policies(p,income,grd,Vn);
 
 	    % CONSTRUCT TRANSITION MATRIX 
-        [A, stationary] = solver.two_asset.construct_trans_matrix(...
-        	p, income, grd, HJB, 'HJB', Vn);
+        [A, stationary] = A_Constructor.construct(HJB, Vn);
 
         if ~isempty(stationary)
         	% this block will only be executed if SDU == 1 and sigma_r > 0
