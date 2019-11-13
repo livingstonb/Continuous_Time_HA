@@ -36,23 +36,10 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	end
 
 	% Initial guess
-    if (p.sigma_r == 0) && (p.SDU == 0)
-        r_b_mat_adj = r_b_mat;
-        r_b_mat_adj(r_b_mat<=0.001) = 0.001; % mostly for r_b <= 0, enforce a reasonable guess
-        c_0 = (1-p.directdeposit - p.wagetax) * income.y.matrix ...
-                + (p.r_a + p.deathrate*p.perfectannuities) * grd.a.matrix...
-                + (r_b_mat_adj + p.deathrate*p.perfectannuities) .* grd.b.matrix + p.transfer;
 
-        if p.SDU == 0
-            V_0	= 1 ./ (rho_mat + p.deathrate) .* aux.u_fn(c_0,p.riskaver);
-        else
-            V_0 = aux.u_fn(c_0, p.invies);
-        end
-    
-    else
     	% Attempt at more accurate guess
-        V_0 = solver.two_asset.value_guess(p, grd, income);
-    end
+    V_0 = solver.two_asset.value_guess(p, grd, income);
+        
 
     V_0 = reshape(V_0,[nb na nz ny]);
 
@@ -79,28 +66,28 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 
     % In some cases, replace value function guess and distribution with 
     % previous V and g`
-    if strcmp(runopts.RunMode,'NoRisk')
+%     if strcmp(runopts.RunMode,'NoRisk')
         Vn = V_0;
-    elseif ~ismember(runopts.RunMode,{'Iterate','Final'}) || (runopts.IterateRho==0)
-        % First iteration, or not iterating, so don't load V_0
-	    Vn	= V_0;	
-    elseif strcmp(runopts.RunMode,'Iterate') && (iterAY==1)
-        % Load results from rho lower bound outcome
-        S = load([runopts.temp,'/V_lb_run',runopts.suffix,'.mat']);
-        Vn = S.V_0;
-        gg = S.g(:);
-    elseif strcmp(runopts.RunMode,'Iterate') && (iterAY==2)
-    	% Load results from rho upper bound outcome
-        S = load([runopts.temp,'/V_ub_run',runopts.suffix,'.mat']);
-        Vn = S.V_0;
-        gg = S.g(:);
-    else
-		% Running in 'Final' mode after iterating or iterations are greater than 2
-		% Load results from last fzero iteration
-		S = load([runopts.temp,'/V0run',runopts.suffix,'.mat']);
-		Vn = S.V_0;
-		gg = S.g(:);
-    end
+%     elseif ~ismember(runopts.RunMode,{'Iterate','Final'}) || (runopts.IterateRho==0)
+%         % First iteration, or not iterating, so don't load V_0
+% 	    Vn	= V_0;	
+%     elseif strcmp(runopts.RunMode,'Iterate') && (iterAY==1)
+%         % Load results from rho lower bound outcome
+%         S = load([runopts.temp,'/V_lb_run',runopts.suffix,'.mat']);
+%         Vn = S.V_0;
+%         gg = S.g(:);
+%     elseif strcmp(runopts.RunMode,'Iterate') && (iterAY==2)
+%     	% Load results from rho upper bound outcome
+%         S = load([runopts.temp,'/V_ub_run',runopts.suffix,'.mat']);
+%         Vn = S.V_0;
+%         gg = S.g(:);
+%     else
+% 		% Running in 'Final' mode after iterating or iterations are greater than 2
+% 		% Load results from last fzero iteration
+% 		S = load([runopts.temp,'/V0run',runopts.suffix,'.mat']);
+% 		Vn = S.V_0;
+% 		gg = S.g(:);
+%     end
 
     fprintf('    --- Iterating over HJB ---\n')
     dst = 1e5;

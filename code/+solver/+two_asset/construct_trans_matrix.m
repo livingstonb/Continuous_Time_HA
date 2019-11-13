@@ -50,10 +50,10 @@ function [A, stationary] = construct_trans_matrix(p, income, grids, model, model
         bdriftF = max(-d - aux.two_asset.adj_cost_fn(d,grids.a.matrix,p),0) + max(s,0);    
     end
 
-    adriftB = max(adriftB, -100);
-    adriftF = min(adriftF, 100);
-    bdriftB = max(bdriftB, -100);
-    bdriftF = min(bdriftF, 100);
+%     adriftB = max(adriftB, -100);
+%     adriftF = min(adriftF, 100);
+%     bdriftB = max(bdriftB, -100);
+%     bdriftF = min(bdriftF, 100);
 
 	%% --------------------------------------------------------------------
     % ILLIQUID ASSET TRANSITIONS
@@ -246,6 +246,10 @@ function [A, stationary] = construct_trans_matrix(p, income, grids, model, model
         A = A + spdiags(lowdiag(:),-nb,dim,dim);
 
         if p.SDU == 1
+
+            VaB(:,2:na,:,:) = (V(:,2:na,:,:) - V(:,1:na-1,:,:)) ./ grids.a.dB(:,2:na);
+            VaF(:,1:na-1,:,:) = (V(:,2:na,:,:) - V(:,1:na-1,:,:)) ./ grids.a.dF(:,1:na-1);
+            Vdiff_SDU = (adriftB < 0) .* VaB + (adriftF > 0) .* VaF + ((adriftB>= 0) & (adriftF<=0)) .* Vdiff_SDU;
             % now add zeta(a) * Va^2 term
             if p.invies == 1
                 adj_term = (1/2) * (grids.a.matrix * p.sigma_r) .^ 2 ...

@@ -109,6 +109,13 @@ classdef ParamsTwoAsset < setup.Params
             obj.r_b = r_b;
             obj.r_a = r_a;
         end
+
+        % function copy_obj = copy(obj)
+        %     temp = CopyObj;
+        %     temp.Prop = obj;
+        %     copy_obj = copy(temp);
+        %     copy_obj.Prop = temp.Prop;
+        % end
 		
 		function print(obj)
         	fprintf('\n\nSelected parameterization %i:\n',num2str(obj.param_index)) 

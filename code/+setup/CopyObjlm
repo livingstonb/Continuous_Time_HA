@@ -1,0 +1,5 @@
+classdef CopyObj < matlab.mixin.Copyable
+    properties
+        Prop
+    end
+end

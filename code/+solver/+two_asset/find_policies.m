@@ -233,8 +233,9 @@ function [policies, Vdiff_SDU] = find_policies(p,income,grd,Vn)
         else
             Va0 = c .^ (-p.invies) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
         end
-        Vdiff_SDU = (policies.adot < 0) .* VaB + (policies.adot > 0) .* VaF...
-            + (policies.adot == 0) .* Va0;
+        % Vdiff_SDU = (policies.adot < 0) .* VaB + (policies.adot > 0) .* VaF...
+        %     + (policies.adot == 0) .* Va0;
+        Vdiff_SDU = Va0;
         % Vdiff_SDU = IcFB .* VaF + (IcBF + IcBB) .* VaB + Ic00 .* Va0;
     else
         Vdiff_SDU = [];

@@ -7,6 +7,10 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn,risk_adj)
     ny = numel(income.y.vec);
     nz = p.nz;
 
+    if ~isempty(risk_adj)
+        risk_adj_k = reshape(risk_adj,[],ny);
+    end
+
     %% -----------------------------------------------------
     % RISK ADJUSTMENT FOR STOCHASTIC DIFFERENTIAL UTILITY
     % ------------------------------------------------------
@@ -107,6 +111,10 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn,risk_adj)
             end
 
             qk = p.delta_HJB * u_k(:,kk) + Vn_k(:,kk) + p.delta_HJB*Vkp_stacked;
+            if ~isempty(risk_adj)
+                qk = qk + p.delta_HJB * risk_adj_k(:,kk);
+            end
+            
             Vn1_k(:,kk) = Bik_all{kk} * qk;
         end
 
