@@ -118,7 +118,7 @@ calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
 % returns = fsolve(calibrator, log([0.02/4+0.05, 0.04/4]));
 returns = fsolve(calibrator, [0.4, 0.5]);
 
-new_rb = 0.025*(returns(1))/(1+abs(returns(1)));
+new_rb = 0.035*(returns(1))/(1+abs(returns(1)));
 new_ra = new_rb + 0.04 * abs(returns(2)) / (1 + abs(returns(2)));
 
 p.reset_returns(new_rb, new_ra);
