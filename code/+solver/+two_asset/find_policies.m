@@ -1,4 +1,4 @@
-function [policies, Vdiff_SDU] = find_policies(p,income,grd,Vn)
+function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn)
     % stores policy functions and utility in policies.c, policies.d, policies.s, and policies.u
     % to construct policy functions on HJB grid, pass grd and Vn
     % to construct policy functions on KFE grid, pass grdKFE and VnKFE
@@ -222,21 +222,16 @@ function [policies, Vdiff_SDU] = find_policies(p,income,grd,Vn)
     % ---------------------------------------------------------------------
     if (p.sigma_r > 0) && (p.OneAsset == 1)
         if p.SDU == 1
-            Vb0 = rho_mat_adj .* ( c .^ (-p.invies) );
+            V_deriv_risky_asset_nodrift = rho_mat_adj .* ( c .^ (-p.invies) );
         else
-            Vb0 = c .^ (-p.riskaver);
+            V_deriv_risky_asset_nodrift = c .^ (-p.riskaver);
         end
-        Vdiff_SDU = IcB .* VbB + IcF .* VbF + Ic0 .* Vb0;
     elseif (p.sigma_r > 0) && (p.OneAsset == 0)
         if p.SDU == 1
-            Va0 = rho_mat_adj .* c .^ (-p.invies) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
+            V_deriv_risky_asset_nodrift = rho_mat_adj .* c .^ (-p.invies) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
         else
-            Va0 = c .^ (-p.invies) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
+            V_deriv_risky_asset_nodrift = c .^ (-p.invies) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
         end
-        % Vdiff_SDU = (policies.adot < 0) .* VaB + (policies.adot > 0) .* VaF...
-        %     + (policies.adot == 0) .* Va0;
-        Vdiff_SDU = Va0;
-        % Vdiff_SDU = IcFB .* VaF + (IcBF + IcBB) .* VaB + Ic00 .* Va0;
     else
-        Vdiff_SDU = [];
+        V_deriv_risky_asset_nodrift = [];
     end

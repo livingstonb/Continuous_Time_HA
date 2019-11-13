@@ -92,18 +92,21 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
     fprintf('    --- Iterating over HJB ---\n')
     dst = 1e5;
 	for nn	= 1:p.maxit_HJB
-	  	[HJB, Vdiff_SDU] = solver.two_asset.find_policies(p,income,grd,Vn);
+	  	[HJB, V_deriv_risky_asset_nodrift] = solver.two_asset.find_policies(p,income,grd,Vn);
 
 	    % CONSTRUCT TRANSITION MATRIX 
         [A, stationary] = solver.two_asset.construct_trans_matrix(...
-        	p, income, grd, HJB, 'HJB', Vdiff_SDU, Vn);
+        	p, income, grd, HJB, 'HJB', Vn);
 
         if ~isempty(stationary)
+        	% this block will only be executed if SDU == 1 and sigma_r > 0
+        	%
+        	% there are states with neither backward nor forward drift,
         	% need to compute additional term for risk
         	if p.invies == 1
-        		risk_adj = (1-p.riskaver) * Vdiff_SDU .^ 2;
+        		risk_adj = (1-p.riskaver) * V_deriv_risky_asset_nodrift .^ 2;
         	else
-        		risk_adj = Vdiff_SDU .^ 2 ./ Vn * (p.invies - p.riskaver) / (1-p.invies);
+        		risk_adj = V_deriv_risky_asset_nodrift .^ 2 ./ Vn * (p.invies - p.riskaver) / (1-p.invies);
     		end
 
     		risk_adj = risk_adj .* (grd.a.matrix * p.sigma_r) .^ 2 / 2;
