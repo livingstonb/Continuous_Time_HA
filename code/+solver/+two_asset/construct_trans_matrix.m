@@ -221,32 +221,13 @@ function [A, stationary] = construct_trans_matrix(p, income, grids, model, model
         % A = A + spdiags(updiag(:),nb,dim,dim);
         % A = A + spdiags(lowdiag(:),-nb,dim,dim);
 
-        %% THIS SECTION USING AN ALTERNATIVE EXPRESSION
-        % Need to add (1/2) (a*sigma)^2 * [Vaa + zeta * Va^2]
-        % where zeta = 0 if not using SDU
-
-        % 2nd derivative term, Vaa
-        deltas = grids.a.dB + grids.a.dF;
-        deltas(:, na) = 2 * grids.a.dB(:, na);
-
-        risk_term = (grids.a.matrix * p.sigma_r) .^2; % (1/2) cancels out
-        lowdiag = risk_term ./ (grids.a.dB .* deltas);
-
-        centdiag = - risk_term .* (1 ./ grids.a.dF + 1 ./ grids.a.dB) ./ deltas;
-        centdiag(:, na, :, :) = -risk_term(:, na, :, :) ./ ( grids.a.dB(:, na) .* deltas(:, na) );
-
-        updiag = risk_term ./ (grids.a.dF .* deltas);
-        updiag(:, na, :, :) = 0;
-
-        lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
-        updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
-
-        A = A + spdiags(centdiag(:),0,dim,dim);
-        A = A + spdiags(updiag(:),nb,dim,dim);
-        A = A + spdiags(lowdiag(:),-nb,dim,dim);
+        A = A + compute_V_aa_terms(p, grids, nb, na, nz, ny);
 
         if p.SDU == 1
 
+            VaB = zeros(nb, na, nz, ny);
+            VaF = zeros(nb, na, nz, ny);
+            
             VaB(:,2:na,:,:) = (V(:,2:na,:,:) - V(:,1:na-1,:,:)) ./ grids.a.dB(:,2:na);
             VaF(:,1:na-1,:,:) = (V(:,2:na,:,:) - V(:,1:na-1,:,:)) ./ grids.a.dF(:,1:na-1);
             Vdiff_SDU = (adriftB < 0) .* VaB + (adriftF > 0) .* VaF + ((adriftB>= 0) & (adriftF<=0)) .* Vdiff_SDU;
@@ -283,4 +264,58 @@ function [A, stationary] = construct_trans_matrix(p, income, grids, model, model
         end
     end
 
+end
+
+%% --------------------------------------------------------------------
+% FUNCTIONS
+% ---------------------------------------------------------------------
+function Arisk_Vaa = compute_V_aa_terms(p, grids, nb, na, nz, ny)
+    % This function computes the (1/2) * (a * sigma_r) ^2 * Vaa component
+    % of the A matrix.
+
+    top = false(nb, na);
+    if p.OneAsset == 1
+        asset_dB = repmat(grids.b.dB, [1 1 nz ny]);
+        asset_dF = repmat(grids.b.dF, [1 1 nz ny]);
+
+        top(nb, :, :, :) = true;
+
+        risk_term = (grids.b.matrix * p.sigma_r) .^ 2;
+
+        shift = 1;
+    else
+        asset_dB = repmat(grids.a.dB, [1 1 nz ny]);
+        asset_dF = repmat(grids.a.dF, [1 1 nz ny]);
+
+        top(:, na, :, :) = true;
+
+        risk_term = (grids.a.matrix * p.sigma_r) .^ 2;
+
+        shift = nb;
+    end
+
+    asset_dF(top) = asset_dB(top);
+    asset_dSum = asset_dB + asset_dF;
+
+    % (1/2) * (a * sigma_r) ^ 2 * V_{i+1} * (dF*(dB+dF)/2)
+    V_i_plus_1_term = risk_term ./ (asset_dF .* asset_dSum);
+
+    % - (1/2) * (a * sigma_r) ^ 2 * V_i * (1/dB + 1/dF) / ((dB+dF)/2)
+    V_i_term = - risk_term .* (1./asset_dB + 1./asset_dF) ./ asset_dSum;
+    
+    % (1/2) * (a * sigma_r) ^ 2 * V_{i-1} * (dB*(dB+dF)/2)
+    V_i_minus_1_term = risk_term ./ (asset_dB .* asset_dSum);
+
+    % impose V' = 0 at the top of the grid
+    V_i_term(top) = - risk_term(top) ./ (asset_dB(top) .* asset_dSum(top));
+    V_i_plus_1_term(top) = 0;
+
+    % shift entries to put on the A matrix diagonals in accordance with spdiags algorithm
+    V_i_plus_1_term = circshift(reshape(V_i_plus_1_term, nb*na, nz, ny), shift);
+    V_i_minus_1_term = circshift(reshape(V_i_minus_1_term, nb*na, nz, ny), -shift);
+    dim = nb * na * nz * ny;
+
+    Arisk_Vaa = spdiags(V_i_plus_1_term(:), shift, dim, dim)...
+            + spdiags(V_i_term(:), 0, dim, dim)...
+            + spdiags(V_i_minus_1_term(:), -shift, dim, dim);
 end
