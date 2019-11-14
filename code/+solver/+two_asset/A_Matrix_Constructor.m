@@ -140,19 +140,7 @@ classdef A_Matrix_Constructor < handle
             zetta(:,1:na-1,:,:) = adriftF(:,1:na-1,:,:)./obj.grids.a.dF(:,1:na-1); 
             zetta(:,na,:,:) = zeros(nb,1,nz,ny);
 
-            centdiag = reshape(yy,nb*na,nz,ny);
-            lowdiag = reshape(chi,nb*na,nz,ny);
-            lowdiag = circshift(lowdiag,-nb);
-            updiag = reshape(zetta,nb*na,nz,ny);
-            updiag = circshift(updiag,nb);  
-
-            centdiag = reshape(centdiag,dim,1);
-            updiag   = reshape(updiag,dim,1);
-            lowdiag  = reshape(lowdiag,dim,1);
-
-            A = spdiags(centdiag,0,dim,dim) ...
-                + spdiags(updiag,nb,dim,dim)...
-                + spdiags(lowdiag,-nb,dim,dim);
+            A = obj.put_on_diags(chi, yy, zetta, nb);
 
             %% --------------------------------------------------------------------
             % LIQUID ASSET TRANSITIONS
@@ -166,19 +154,7 @@ classdef A_Matrix_Constructor < handle
             Z(1:nb-1,:,:,:) = bdriftF(1:nb-1,:,:,:)./obj.grids.b.dF(1:nb-1,:); 
             Z(nb,:,:,:) = zeros(1,na,nz,ny);
 
-            centdiag = reshape(Y,nb*na,nz,ny);
-            lowdiag = reshape(X,nb*na,nz,ny);
-            lowdiag = circshift(lowdiag,-1);
-            updiag = reshape(Z,nb*na,nz,ny);
-            updiag = circshift(updiag,1);
-
-            centdiag = reshape(centdiag,dim,1);
-            updiag   = reshape(updiag,dim,1);
-            lowdiag  = reshape(lowdiag,dim,1);
-
-            A = A + spdiags(centdiag,0,dim,dim) ...
-                + spdiags(updiag,1,dim,dim)...
-                + spdiags(lowdiag,-1,dim,dim);
+            A = A + obj.put_on_diags(X, Y, Z, 1);
             
             %% --------------------------------------------------------------------
             % RATE OF RETURN RISK
@@ -225,13 +201,7 @@ classdef A_Matrix_Constructor < handle
             V_i_term(obj.top) = - obj.risk_term(obj.top) ./ (obj.asset_dB(obj.top) .* obj.asset_dSum(obj.top));
             V_i_plus_1_term(obj.top) = 0;
 
-            % shift entries to put on the A matrix diagonals in accordance with spdiags algorithm
-            V_i_plus_1_term = circshift(reshape(V_i_plus_1_term, nb*na, nz, ny), obj.shift);
-            V_i_minus_1_term = circshift(reshape(V_i_minus_1_term, nb*na, nz, ny), -obj.shift);
-
-            Arisk_Vaa = spdiags(V_i_plus_1_term(:), obj.shift, obj.dim, obj.dim)...
-                    + spdiags(V_i_term(:), 0, obj.dim, obj.dim)...
-                    + spdiags(V_i_minus_1_term(:), -obj.shift, obj.dim, obj.dim);
+            Arisk_Vaa = obj.put_on_diags(V_i_minus_1_term, V_i_term, V_i_plus_1_term, obj.shift);
         end
 
         function [Arisk_Va, stationary] = compute_V_a_terms(obj, nb, na,...
@@ -265,7 +235,6 @@ classdef A_Matrix_Constructor < handle
 
             updiag = zeros(nb, na, nz, ny);
             lowdiag = zeros(nb, na, nz, ny);
-            centdiag = zeros(nb, na, nz, ny);
 
             lowdiag(driftB < 0) = - adj_term(driftB < 0) ./ obj.asset_dB(driftB < 0);
             updiag(driftF > 0) = adj_term(driftF > 0) ./ obj.asset_dF(driftF > 0);
@@ -279,13 +248,16 @@ classdef A_Matrix_Constructor < handle
             end
             centdiag = - lowdiag - updiag;
 
-            
-            lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
-            updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
+            Arisk_Va = obj.put_on_diags(lowdiag, centdiag, updiag, obj.shift);
+        end
 
-            Arisk_Va = spdiags(centdiag(:), 0, obj.dim, obj.dim) ...
-                        + spdiags(updiag(:), obj.shift, obj.dim, obj.dim) ...
-                        + spdiags(lowdiag(:), -obj.shift, obj.dim, obj.dim);
+        function A = put_on_diags(obj, lower, middle, upper, shift)
+            upper = circshift(reshape(upper, obj.nb*obj.na, obj.nz, obj.ny), shift);
+            lower = circshift(reshape(lower, obj.nb*obj.na, obj.nz, obj.ny), -shift);
+            A = spdiags(upper(:), shift, obj.dim, obj.dim) ...
+                + spdiags(middle(:), 0, obj.dim, obj.dim) ...
+                + spdiags(lower(:), -shift, obj.dim, obj.dim);
         end
     end
 end
+
