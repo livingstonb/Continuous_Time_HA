@@ -1,4 +1,4 @@
-classdef Income
+classdef Income < handle
     % This class stores income grids and related variables
 
     % Income process is read from files in the directory p.DirIncomeProcess

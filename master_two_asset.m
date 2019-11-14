@@ -45,10 +45,10 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 15;
+runopts.param_index = 28;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/Users/brianlivingston/Documents/GitHub/Continuous_Time_HA/';
+runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 
 %% ------------------------------------------------------------------------

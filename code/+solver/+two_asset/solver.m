@@ -152,7 +152,9 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	%% --------------------------------------------------------------------
     % SOLVE KFE
 	% ---------------------------------------------------------------------
-    Au = solver.two_asset.construct_trans_matrix(p,income,grdKFE,KFE,'KFE');
+    A_Constructor_KFE = solver.two_asset.A_Matrix_Constructor(p, income, grd, 'KFE');
+    Au = A_Constructor_KFE.construct(KFE, KFE.Vn);
+    
 
     dim2Identity = 'a';
 	g = solver.solveKFE(p,income,grdKFE,gg,Au,dim2Identity);

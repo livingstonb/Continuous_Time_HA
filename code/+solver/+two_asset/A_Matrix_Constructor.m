@@ -1,4 +1,8 @@
-classdef A_Matrix_Constructor
+classdef A_Matrix_Constructor < handle
+    % This class constructs the A matrix for the HJB or KFE
+    % First, instantiate the class with the required arguments,
+    % then call the construct method with the policy functions
+    % and value function as arguments.
     properties (SetAccess = protected)
         nb;
         na;
@@ -11,6 +15,7 @@ classdef A_Matrix_Constructor
 
         asset_dB;
         asset_dF;
+        asset_dSum;
         top;
         risk_term;
         shift;
@@ -21,6 +26,9 @@ classdef A_Matrix_Constructor
     end
 
     methods
+        %% --------------------------------------------------------------------
+        % CLASS CONSTRUCTOR
+        % ---------------------------------------------------------------------
         function obj = A_Matrix_Constructor(p, income, grids, modeltype)
             obj.nb = numel(grids.b.vec);
             obj.na = numel(grids.a.vec);
@@ -40,30 +48,43 @@ classdef A_Matrix_Constructor
                 obj.y_mat = income.y.matrix;
             end
 
-            if (p.sigma_r > 0) && (p.OneAsset == 1)
-                obj.top = false(obj.nb, obj.na, obj.nz, obj.ny);
-                if p.OneAsset == 1
-                    obj.asset_dB = repmat(grids.b.dB, [1 1 obj.nz obj.ny]);
-                    obj.asset_dF = repmat(grids.b.dF, [1 1 obj.nz obj.ny]);
-
-                    obj.top(nb, :, :, :) = true;
-
-                    obj.risk_term = (grids.b.matrix * p.sigma_r) .^ 2;
-
-                    obj.shift = 1;
-                else
-                    obj.asset_dB = repmat(grids.a.dB, [1 1 obj.nz obj.ny]);
-                    obj.asset_dF = repmat(grids.a.dF, [1 1 obj.nz obj.ny]);
-
-                    obj.top(:, obj.na, :, :) = true;
-
-                    obj.risk_term = (grids.a.matrix * p.sigma_r) .^ 2;
-
-                    obj.shift = obj.nb;
-                end
+            if p.sigma_r > 0
+                obj.perform_returns_risk_computations();
             end
         end
+        
+        %% --------------------------------------------------------------------
+        % COMPUTATIONS FOR RETURNS RISK
+        % ---------------------------------------------------------------------
+        function perform_returns_risk_computations(obj)
+            obj.top = false(obj.nb, obj.na, obj.nz, obj.ny);
+            if obj.p.OneAsset == 1
+                obj.asset_dB = repmat(obj.grids.b.dB, [1 1 obj.nz obj.ny]);
+                obj.asset_dF = repmat(obj.grids.b.dF, [1 1 obj.nz obj.ny]);
 
+                obj.top(obj.nb, :, :, :) = true;
+
+                obj.risk_term = (obj.grids.b.matrix * obj.p.sigma_r) .^ 2;
+
+                obj.shift = 1;
+            else
+                obj.asset_dB = repmat(obj.grids.a.dB, [1 1 obj.nz obj.ny]);
+                obj.asset_dF = repmat(obj.grids.a.dF, [1 1 obj.nz obj.ny]);
+
+                obj.top(:, obj.na, :, :) = true;
+
+                obj.risk_term = (obj.grids.a.matrix * obj.p.sigma_r) .^ 2;
+
+                obj.shift = obj.nb;
+            end
+
+            obj.asset_dF(obj.top) = obj.asset_dB(obj.top);
+            obj.asset_dSum = obj.asset_dB + obj.asset_dF;
+        end
+
+        %% --------------------------------------------------------------------
+        % CONSTRUCT THE A MATRIX
+        % ---------------------------------------------------------------------
         function [A, stationary] = construct(obj, model, V)
             nb = obj.nb;
             na = obj.na;
@@ -75,7 +96,7 @@ classdef A_Matrix_Constructor
             s = model.s;
             d = model.d;
 
-            stationary = []
+            stationary = [];
 
             %% ----------------------------------------------
             % INITIALIZE
@@ -166,22 +187,23 @@ classdef A_Matrix_Constructor
                 || (strcmp(obj.modeltype,'KFE') && (obj.p.retrisk_KFE==1)))
 
                 % Second derivative component, Vaa
-                A = A + compute_V_aa_terms(nb, na, nz, ny);
+                A = A + obj.compute_V_aa_terms(nb, na, nz, ny);
 
                 if obj.p.SDU == 1
                     % First derivative component, Va
-                    A = A + compute_V_a_terms(nb, na, nz, ny, V, adriftB, adriftF);
+                    A = A + obj.compute_V_a_terms(nb, na, nz, ny, V, adriftB, adriftF);
                 end
 
             elseif (obj.p.sigma_r > 0) && (obj.p.OneAsset == 0) && (strcmp(obj.modeltype,'HJB')...
                 || (strcmp(obj.modeltype,'KFE') && (obj.p.retrisk_KFE==1)))
 
                 % Second derivative component, Vaa
-                A = A + compute_V_aa_terms(nb, na, nz, ny);
+                A = A + obj.compute_V_aa_terms(nb, na, nz, ny);
 
                 if obj.p.SDU == 1
                     % First derivative component, Va
-                    A = A + compute_V_a_terms(nb, na, nz, ny, V, adriftB, adriftF);
+                    [Arisk_Va, stationary] = obj.compute_V_a_terms(nb, na, nz, ny, V, adriftB, adriftF);
+                    A = A + Arisk_Va;
                 end     
             end
         end
@@ -190,51 +212,26 @@ classdef A_Matrix_Constructor
             % This function computes the (1/2) * (a * sigma_r) ^2 * Vaa component
             % of the A matrix.
 
-            top = false(nb, na);
-            if p.OneAsset == 1
-                asset_dB = repmat(obj.grids.b.dB, [1 1 nz ny]);
-                asset_dF = repmat(obj.grids.b.dF, [1 1 nz ny]);
-
-                top(nb, :, :, :) = true;
-
-                risk_term = (obj.grids.b.matrix * obj.p.sigma_r) .^ 2;
-
-                shift = 1;
-            else
-                asset_dB = repmat(obj.grids.a.dB, [1 1 nz ny]);
-                asset_dF = repmat(obj.grids.a.dF, [1 1 nz ny]);
-
-                top(:, na, :, :) = true;
-
-                risk_term = (obj.grids.a.matrix * obj.p.sigma_r) .^ 2;
-
-                shift = nb;
-            end
-
-            asset_dF(top) = asset_dB(top);
-            asset_dSum = asset_dB + asset_dF;
-
             % (1/2) * (a * sigma_r) ^ 2 * V_{i+1} * (dF*(dB+dF)/2)
-            V_i_plus_1_term = risk_term ./ (asset_dF .* asset_dSum);
+            V_i_plus_1_term = obj.risk_term ./ (obj.asset_dF .* obj.asset_dSum);
 
             % - (1/2) * (a * sigma_r) ^ 2 * V_i * (1/dB + 1/dF) / ((dB+dF)/2)
-            V_i_term = - risk_term .* (1./asset_dB + 1./asset_dF) ./ asset_dSum;
+            V_i_term = - obj.risk_term .* (1./obj.asset_dB + 1./obj.asset_dF) ./ obj.asset_dSum;
             
             % (1/2) * (a * sigma_r) ^ 2 * V_{i-1} * (dB*(dB+dF)/2)
-            V_i_minus_1_term = risk_term ./ (asset_dB .* asset_dSum);
+            V_i_minus_1_term = obj.risk_term ./ (obj.asset_dB .* obj.asset_dSum);
 
             % impose V' = 0 at the top of the grid
-            V_i_term(top) = - risk_term(top) ./ (asset_dB(top) .* asset_dSum(top));
-            V_i_plus_1_term(top) = 0;
+            V_i_term(obj.top) = - obj.risk_term(obj.top) ./ (obj.asset_dB(obj.top) .* obj.asset_dSum(obj.top));
+            V_i_plus_1_term(obj.top) = 0;
 
             % shift entries to put on the A matrix diagonals in accordance with spdiags algorithm
-            V_i_plus_1_term = circshift(reshape(V_i_plus_1_term, nb*na, nz, ny), shift);
-            V_i_minus_1_term = circshift(reshape(V_i_minus_1_term, nb*na, nz, ny), -shift);
-            dim = nb * na * nz * ny;
+            V_i_plus_1_term = circshift(reshape(V_i_plus_1_term, nb*na, nz, ny), obj.shift);
+            V_i_minus_1_term = circshift(reshape(V_i_minus_1_term, nb*na, nz, ny), -obj.shift);
 
-            Arisk_Vaa = spdiags(V_i_plus_1_term(:), shift, dim, dim)...
-                    + spdiags(V_i_term(:), 0, dim, dim)...
-                    + spdiags(V_i_minus_1_term(:), -shift, dim, dim);
+            Arisk_Vaa = spdiags(V_i_plus_1_term(:), obj.shift, obj.dim, obj.dim)...
+                    + spdiags(V_i_term(:), 0, obj.dim, obj.dim)...
+                    + spdiags(V_i_minus_1_term(:), -obj.shift, obj.dim, obj.dim);
         end
 
         function [Arisk_Va, stationary] = compute_V_a_terms(obj, nb, na,...
@@ -244,53 +241,36 @@ classdef A_Matrix_Constructor
 
             V1B = zeros(nb, na, nz, ny);
             V1F = zeros(nb, na, nz, ny);
-            dim = nb * na * nz * ny;
             
-            if p.OneAsset == 1
-                asset_dB = repmat(obj.grids.b.dB, [1 1 nz ny]);
-                asset_dF = repmat(obj.grids.b.dF, [1 1 nz ny]);
-                asset_dF(nb, :, :, :) = asset_dB(nb, :, :, :);
-
-                V1B(2:nb,:,:,:) = (V(2:nb,:,:,:) - V(1:nb-1,:,:,:)) ./ grids.b.dB(2:nb, :);
-                V1F(1:nb-1,:,:,:) = (V(2:nb,:,:,:) - V(1:nb-1,:,:,:)) ./ grids.b.dF(1:nb-1, :);
-
-                risk_term = (obj.grids.b.matrix * obj.p.sigma_r) .^ 2 / 2;
-
-                shift = 1;
+            if obj.p.OneAsset == 1
+                V1B(2:nb,:,:,:) = (V(2:nb,:,:,:) - V(1:nb-1,:,:,:)) ./ obj.grids.b.dB(2:nb, :);
+                V1F(1:nb-1,:,:,:) = (V(2:nb,:,:,:) - V(1:nb-1,:,:,:)) ./ obj.grids.b.dF(1:nb-1, :);
             else
-                asset_dB = repmat(obj.grids.a.dB, [1 1 nz ny]);
-                asset_dF = repmat(obj.grids.a.dF, [1 1 nz ny]);
-                asset_dF(:, na, :, :) = asset_dB(:, na, :, :);
-
-                VaB(:,2:na,:,:) = (V(:,2:na,:,:) - V(:,1:na-1,:,:)) ./ obj.grids.a.dB(:,2:na);
-                VaF(:,1:na-1,:,:) = (V(:,2:na,:,:) - V(:,1:na-1,:,:)) ./ obj.grids.a.dF(:,1:na-1);
-
-                risk_term = (obj.grids.a.matrix * obj.p.sigma_r) .^ 2 / 2;
-
-                shift = nb;
+                V1B(:,2:na,:,:) = (V(:,2:na,:,:) - V(:,1:na-1,:,:)) ./ obj.grids.a.dB(:,2:na);
+                V1F(:,1:na-1,:,:) = (V(:,2:na,:,:) - V(:,1:na-1,:,:)) ./ obj.grids.a.dF(:,1:na-1);
             end
 
             V1 = (driftB < 0) .* V1B + (driftF > 0) .* V1F;
 
             % some states may have no drift, will need to deal with them separately
-            % by adding the RHS of HJB
+            % by adding to the RHS of HJB
             stationary = (driftB >= 0) & (driftF <= 0);
 
             % now add zeta(a) * Va^2 term
             if obj.p.invies == 1
-                adj_term = risk_term .* V1 * (1 - obj.p.riskaver);
+                adj_term = obj.risk_term .* V1 * (1 - obj.p.riskaver);
             else
-                adj_term = risk_term .* V1 ./ V * (obj.p.invies - obj.p.riskaver) / (1 - obj.p.invies);
+                adj_term = obj.risk_term .* V1 ./ V * (obj.p.invies - obj.p.riskaver) / (1 - obj.p.invies);
             end
 
             updiag = zeros(nb, na, nz, ny);
             lowdiag = zeros(nb, na, nz, ny);
             centdiag = zeros(nb, na, nz, ny);
 
-            lowdiag(driftB < 0) = - adj_term(driftB < 0) ./ asset_dB(driftB < 0);
-            updiag(driftF > 0) = adj_term(driftF > 0) ./ asset_dF(driftF > 0);
+            lowdiag(driftB < 0) = - adj_term(driftB < 0) ./ obj.asset_dB(driftB < 0);
+            updiag(driftF > 0) = adj_term(driftF > 0) ./ obj.asset_dF(driftF > 0);
 
-            if p.OneAsset == 1
+            if obj.p.OneAsset == 1
                 lowdiag(1, :, :, :) = 0;
                 updiag(nb, :, :, :) = 0;
             else
@@ -303,9 +283,9 @@ classdef A_Matrix_Constructor
             lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
             updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
 
-            Arisk_Va = spdiags(centdiag(:), 0, dim, dim) ...
-                        + spdiags(updiag(:), shift, dim, dim) ...
-                        + spdiags(lowdiag(:), -shift, dim, dim);
+            Arisk_Va = spdiags(centdiag(:), 0, obj.dim, obj.dim) ...
+                        + spdiags(updiag(:), obj.shift, obj.dim, obj.dim) ...
+                        + spdiags(lowdiag(:), -obj.shift, obj.dim, obj.dim);
         end
     end
 end
