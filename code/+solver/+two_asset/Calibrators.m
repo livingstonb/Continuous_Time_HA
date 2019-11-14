@@ -42,11 +42,11 @@ function y = rb_ra(x, runopts, p)
 		rb_scale = 0.035;
 		ra_scale = 0.06;
 	elseif p.riskaver <= 10
-		rb_scale = 0.06;
-		ra_scale = 0.1;
+		rb_scale = 0.1;
+		ra_scale = 0.12;
 	else
-		rb_scale = 0.08;
-		ra_scale = 0.15;
+		rb_scale = 0.12;
+		ra_scale = 0.2;
 	end
 
 	% Set new values for returns
