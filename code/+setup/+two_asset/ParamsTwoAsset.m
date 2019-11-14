@@ -40,7 +40,7 @@ classdef ParamsTwoAsset < setup.Params
 
         % Rate of return risk
         sigma_r = 0; % turn off by default
-        retrisk_KFE = 1; % by default, include risk in KFE when sigma_r > 0
+        retrisk_KFE = 0; % by default, don't include risk in KFE when sigma_r > 0
 	end
 
 	methods

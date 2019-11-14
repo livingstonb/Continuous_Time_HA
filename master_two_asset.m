@@ -30,7 +30,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.IterateRho = 0; % if set to zero, the parameter 'rho' is used
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
@@ -45,7 +45,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 1;
+runopts.param_index = 12;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -113,18 +113,19 @@ p.print();
 % -------------------------------------------------------------------------
 
 
-% % to calibrate to (rb, ra) (turn off rho iteration)
-% calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
-% % returns = fsolve(calibrator, log([0.02/4+0.05, 0.04/4]));
-% returns = fsolve(calibrator, [0.4, 0.5]);
-% 
-% new_rb = 0.035*(returns(1))/(1+abs(returns(1)));
-% new_ra = new_rb + 0.04 * abs(returns(2)) / (1 + abs(returns(2)));
-% 
-% p.reset_returns(new_rb, new_ra);
-% fprintf("FINAL LIQUID RETURN = %f\n", p.r_b)
-% fprintf("FINAL ILLIQUID RETURN = %f\n", p.r_a)
-% 
+% to calibrate to (rb, ra) (turn off rho iteration)
+calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
+% returns = fsolve(calibrator, log([0.02/4+0.05, 0.04/4]));
+returns = fsolve(calibrator, [0.2, 0.5]);
+
+new_rb = 0.035*(returns(1))/(1+abs(returns(1)));
+new_ra = new_rb + 0.04 * abs(returns(2)) / (1 + abs(returns(2)));
+
+p.set("r_b", new_rb);
+p.set("r_a", new_ra);
+fprintf("FINAL LIQUID RETURN = %f\n", p.r_b)
+fprintf("FINAL ILLIQUID RETURN = %f\n", p.r_a)
+
 
 
 % % to calibrate to (rho, ra) (turn on rho iteration)
@@ -134,9 +135,9 @@ p.print();
 % fprintf("FINAL RHO = %f\n", p.rho);
 % fprintf("FINAL ILLIQUID RETURN = %f\n", p.r_a);
 
-calibrator = @(x) solver.two_asset.ra_rho_calibrator(x, runopts, p);
-result = fsolve(calibrator, [1; 0.5]);
-fprintf("DONE")
+% calibrator = @(x) solver.two_asset.ra_rho_calibrator(x, runopts, p);
+% result = fsolve(calibrator, [1; 0.5]);
+% fprintf("DONE")
 
 % % final run
 % tic
