@@ -45,7 +45,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 28;
+runopts.param_index = 1;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -127,12 +127,16 @@ p.print();
 % 
 
 
-% to calibrate to (rho, ra) (turn on rho iteration)
-calibrator = @(ra) solver.two_asset.ra_calibrator(ra, runopts, p);
-returns = fsolve(calibrator, log(0.06/4));
-p.reset_returns(p.r_b, exp(returns));
-fprintf("FINAL RHO = %f\n", p.rho);
-fprintf("FINAL ILLIQUID RETURN = %f\n", p.r_a);
+% % to calibrate to (rho, ra) (turn on rho iteration)
+% calibrator = @(ra) solver.two_asset.ra_calibrator(ra, runopts, p);
+% returns = fsolve(calibrator, log(0.06/4));
+% p.reset_returns(p.r_b, exp(returns));
+% fprintf("FINAL RHO = %f\n", p.rho);
+% fprintf("FINAL ILLIQUID RETURN = %f\n", p.r_a);
+
+calibrator = @(x) solver.two_asset.ra_rho_calibrator(x, runopts, p);
+result = fsolve(calibrator, [1; 0.5]);
+fprintf("DONE")
 
 % % final run
 % tic

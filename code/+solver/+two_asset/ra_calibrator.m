@@ -3,7 +3,7 @@ function x = ra_calibrator(r_a, runopts, p)
 	% value of illiquid returns
 
 	% Set new illiquid returns
-	p.reset_returns(p.r_b, exp(r_a));
+	p.reset("r_a", exp(r_a));
 
     % Solve model
 	stats = main_two_asset(runopts, p);

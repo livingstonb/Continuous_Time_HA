@@ -148,7 +148,7 @@ classdef Params < handle
             obj.rhos = newrho + obj.rho_grid;
         end
         
-        function obj = set_param(obj, name_str, new_val)
+        function obj = set(obj, name_str, new_val)
             obj.(name_str) = new_val;
         end
 

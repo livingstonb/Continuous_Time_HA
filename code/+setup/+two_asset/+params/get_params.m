@@ -16,7 +16,7 @@ function outparams = get_params(runopts)
     
     i = 1;
     
-    for target = [3.5]
+    for target = [0.25]
         params(i).name = 'baseline_cont_a'; 
         params(i).OneAsset = 1;
         params(i).DirIncomeProcess = 'input/IncomeGrids/continuous_a';
