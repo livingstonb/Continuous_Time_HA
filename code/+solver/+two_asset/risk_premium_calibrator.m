@@ -4,7 +4,7 @@ function x = risk_premium_calibrator(returns, runopts, p)
 
 	% Set new values for returns
 	new_rb = 0.035*(returns(1))/(1+abs(returns(1)));
-	new_ra = new_rb + 0.04 * abs(returns(2)) / (1 + abs(returns(2)));
+	new_ra = new_rb + 0.06 * abs(returns(2)) / (1 + abs(returns(2)));
 	p.set("r_b", new_rb);
     p.set("r_a", new_ra);
 	fprintf("r_b has been reset to %f...\n", p.r_b);

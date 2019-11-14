@@ -116,10 +116,10 @@ p.print();
 % to calibrate to (rb, ra) (turn off rho iteration)
 calibrator = @(r) solver.two_asset.risk_premium_calibrator(r, runopts, p);
 % returns = fsolve(calibrator, log([0.02/4+0.05, 0.04/4]));
-returns = fsolve(calibrator, [0.2, 0.5]);
+returns = fsolve(calibrator, [0.2, 0.4]);
 
 new_rb = 0.035*(returns(1))/(1+abs(returns(1)));
-new_ra = new_rb + 0.04 * abs(returns(2)) / (1 + abs(returns(2)));
+new_ra = new_rb + 0.06 * abs(returns(2)) / (1 + abs(returns(2)));
 
 p.set("r_b", new_rb);
 p.set("r_a", new_ra);
