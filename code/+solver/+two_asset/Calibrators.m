@@ -38,9 +38,20 @@ function y = rb_ra(x, runopts, p)
 	% This function solves the model for given values of
 	% liquid returns and illiquid returns
 
+	if p.riskaver <= 2
+		rb_scale = 0.035;
+		ra_scale = 0.06;
+	elseif p.riskaver <= 10
+		rb_scale = 0.06;
+		ra_scale = 0.1;
+	else
+		rb_scale = 0.08;
+		ra_scale = 0.15;
+	end
+
 	% Set new values for returns
-	new_rb = 0.035*(x(1))/(1+abs(x(1)));
-	new_ra = new_rb + 0.06 * abs(x(2)) / (1 + abs(x(2)));
+	new_rb = rb_scale*(x(1))/(1+abs(x(1)));
+	new_ra = new_rb + ra_scale * abs(x(2)) / (1 + abs(x(2)));
 	p.set("r_b", new_rb);
     p.set("r_a", new_ra);
 	fprintf("r_b has been reset to %f...\n", p.r_b);
