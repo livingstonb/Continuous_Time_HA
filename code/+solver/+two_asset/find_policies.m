@@ -22,6 +22,16 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
         rho_mat_adj = rho_mat_adj + p.deathrate;
     end
 
+    if p.SDU == 0
+        utility = @(x) aux.u_fn(x, p.riskaver);
+        utility1 = @(x) x .^ (-p.riskaver);
+        utility1inv = @(x) x .^ (-1./p.riskaver);
+    else
+        utility = @(x) rho_mat_adj .* aux.u_fn(x, p.invies);
+        utility1 = @(x) rho_mat_adj .* x .^ (-p.invies);
+        utility1inv = @(x) (x ./ rho_mat_adj) .^ (-1/p.invies);
+    end
+
     %% --------------------------------------------------------------------
 	% INITIALIZATION
 	% ---------------------------------------------------------------------
@@ -66,22 +76,14 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     VbB(2:nb,:,:,:) = max(VbB(2:nb,:,:,:),Vbmin); % ensure cF is well defined
 
     % consumption and savings from forward-differenced V
-    if p.SDU == 0
-        cF(1:nb-1,:,:,:) 	= VbF(1:nb-1,:,:,:).^(-1/p.riskaver_fulldim);
-    else
-        cF(1:nb-1,:,:,:) 	= (VbF(1:nb-1,:,:,:) ./ rho_mat_adj).^(-1/p.invies);
-    end
+    cF(1:nb-1,:,:,:) = utility1inv(VbF(1:nb-1,:,:,:));
     cF(nb,:,:,:) 		= zeros(1,na,nz,ny);
     sF(1:nb-1,:,:,:) 	= (1-p.directdeposit-p.wagetax) .* y_mat(1:nb-1,:,:,:)...
                         + grd.b.matrix(1:nb-1,:,:,:) .* (r_b_mat(1:nb-1,:,:,:) ...
                         + p.deathrate*p.perfectannuities) + p.transfer - cF(1:nb-1,:,:,:);
     sF(nb,:,:,:) 		= zeros(1,na,nz,ny); % impose a state constraint at the top to improve stability
 
-    if p.SDU == 0
-        HcF(1:nb-1,:,:,:) = aux.u_fn(cF(1:nb-1,:,:,:), p.riskaver) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
-    else
-        HcF(1:nb-1,:,:,:) = aux.u_fn(cF(1:nb-1,:,:,:), p.invies, rho_mat_adj) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
-    end
+    HcF(1:nb-1,:,:,:) = utility(cF(1:nb-1,:,:,:)) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
 
     HcF(nb,:,:,:) 		= -1e12 * ones(1,na,nz,ny);
     validcF         	= cF > 0;
@@ -99,11 +101,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
                         + p.deathrate*p.perfectannuities) + p.transfer - cB(2:nb,:,:,:);
     sB(1,:,:,:) 	= zeros(1,na,nz,ny);
 
-    if p.SDU == 0
-        HcB = aux.u_fn(cB, p.riskaver) + VbB .* sB;
-    else
-        HcB = aux.u_fn(cB, p.invies, rho_mat_adj) + VbB .* sB;
-    end
+    HcB = utility(cB) + VbB .* sB;
 
     validcB = cB > 0;
 
@@ -111,11 +109,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     c0 = (1-p.directdeposit-p.wagetax) .* y_mat + grd.b.matrix .* (r_b_mat+ p.deathrate*p.perfectannuities) + p.transfer;
     s0 = zeros(nb,na,nz,ny);
 
-    if p.SDU == 0
-        Hc0 = aux.u_fn(c0, p.riskaver);
-    else
-        Hc0 = aux.u_fn(c0, p.invies, rho_mat_adj);
-    end
+    Hc0 = utility(c0);
 
     validc0         = c0 > 0;
 
@@ -127,11 +121,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     c 				= IcF .* cF + IcB .* cB + Ic0 .* c0;
     s 				= IcF .* sF + IcB .* sB + Ic0 .* s0;
 
-    if p.SDU == 0
-        u = aux.u_fn(c, p.riskaver);
-    else
-        u = aux.u_fn(c, p.invies, rho_mat_adj);
-    end
+    u = utility(c);
 
     %% --------------------------------------------------------------------
 	% UPWINDING FOR DEPOSITS
@@ -156,11 +146,8 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     HdBF(nb,2:na,:,:) = -1.0e12 * ones(1,na-1,nz,ny);
     validBF = (dBF <= - aux.two_asset.adj_cost_fn(dBF,grd.a.matrix,p)) & (HdBF > 0);
 
-    if p.SDU == 0
-        VbB(1,2:na,:,:) = aux.u_fn(cB(1,2:na,:,:),p.riskaver);
-    else
-        VbB(1,2:na,:,:) = aux.u_fn(cB(1,2:na,:,:), p.invies, rho_mat_adj);
-    end
+    VbB(1,2:na,:,:) = utility(cB(1,2:na,:,:));
+
     dBB(:,2:na,:,:) = aux.two_asset.opt_deposits(VaB(:,2:na,:,:),VbB(:,2:na,:,:),grd.a.matrix(:,2:na,:,:),p);
     dBB(:,1,:,:) = zeros(nb,1,nz,ny);
     HdBB(:,2:na,:,:) = VaB(:,2:na,:,:) .* dBB(:,2:na,:,:)...
@@ -221,17 +208,9 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     % FIRST DIFF OF VALUE FUNCTION FOR SDU WITH RETURNS RISK
     % ---------------------------------------------------------------------
     if (p.sigma_r > 0) && (p.OneAsset == 1)
-        if p.SDU == 1
-            V_deriv_risky_asset_nodrift = rho_mat_adj .* ( c .^ (-p.invies) );
-        else
-            V_deriv_risky_asset_nodrift = c .^ (-p.riskaver);
-        end
+        V_deriv_risky_asset_nodrift = utility1(c);
     elseif (p.sigma_r > 0) && (p.OneAsset == 0)
-        if p.SDU == 1
-            V_deriv_risky_asset_nodrift = rho_mat_adj .* c .^ (-p.invies) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
-        else
-            V_deriv_risky_asset_nodrift = c .^ (-p.invies) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
-        end
+        V_deriv_risky_asset_nodrift = utility1(c) .* (1 + aux.two_asset.adj_cost_deriv(d, grd.a.matrix, p));
     else
         V_deriv_risky_asset_nodrift = [];
     end
