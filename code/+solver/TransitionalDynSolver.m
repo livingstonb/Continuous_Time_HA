@@ -149,8 +149,8 @@ classdef TransitionalDynSolver < handle
             
 		    for ii = 1:5000
 		    	if strcmp(obj.dim2Identity,'a')
-			    	KFE_terminal = solver.two_asset.find_policies(obj.p,obj.income,obj.grids,V_terminal);
-                    A_terminal = solver.two_asset.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal,'KFE');
+			    	KFE_terminal = solver.find_policies(obj.p,obj.income,obj.grids,V_terminal);
+                    A_terminal = solver.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal,'KFE');
 			    elseif strcmp(obj.dim2Identity,'c')
 			    	KFE_terminal.h = solver.con_effort.find_policies(obj.p,obj.income,obj.grids,V_terminal);
 	                KFE_terminal.s = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities) * obj.grids.b.matrix...

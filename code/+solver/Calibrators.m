@@ -1,5 +1,9 @@
 classdef Calibrators
 	methods(Static)
+        function f = rho_calibrator(runopts, p)
+            f = @(x) rho(x, runopts, p);
+        end
+        
 		function f = ra_rho_calibrator(runopts, p)
 			f = @(x) ra_rho(x, runopts, p);
 		end
@@ -8,6 +12,17 @@ classdef Calibrators
 			f = @(x) rb_ra(x, runopts, p);
 		end
 	end
+end
+
+function y = rho(x, runopts, p)
+    new_rho = 0.05 * abs(x) / (1 + abs(x));
+    p.set("rho", new_rho);
+    
+    stats = main(runopts, p);
+    y = stats.totw - p.targetAY;
+    
+    fprintf("For rho = %f:\n", p.rho);
+    fprintf("Total wealth = %f\n", stats.totw);
 end
 
 function y = ra_rho(x, runopts, p)
@@ -21,7 +36,7 @@ function y = ra_rho(x, runopts, p)
 	p.set("r_a", new_ra);
 
     % Solve model
-	stats = main_two_asset(runopts, p);
+	stats = main(runopts, p);
 
 	% Compute distance from target
     y = zeros(2, 1);
@@ -58,7 +73,7 @@ function y = rb_ra(x, runopts, p)
 	fprintf("r_a has been reset to %f...\n", p.r_a);
 	
 	% Solve model
-	stats = main_two_asset(runopts, p);
+	stats = main(runopts, p);
 
 	% Compute distance from target
 	y = (stats.liqw - 0.5) ^ 2;

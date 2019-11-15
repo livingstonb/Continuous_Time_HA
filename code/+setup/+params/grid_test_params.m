@@ -60,6 +60,6 @@ function outparams = grid_test_params(runopts)
     chosen_param = params(runopts.param_index);
 
     % Create Params object
-    outparams = setup.two_asset.ParamsTwoAsset(runopts,chosen_param);
+    outparams = setup.ParamsTwoAsset(runopts,chosen_param);
 
 end

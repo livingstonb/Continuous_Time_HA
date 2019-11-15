@@ -96,5 +96,5 @@ function V = value_guess(p, grids, income)
     end
 
     V = (rho_mat - inctrans - Arisk) \ u(:);
-
+    V = reshape(V, nb, na, nz, ny);
 end

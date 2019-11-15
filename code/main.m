@@ -1,4 +1,4 @@
-function [stats,p] = main_two_asset(runopts, p)
+function [stats,p] = main(runopts, p)
     % Main function file for this repository. If IterateRho = 1, this script
     % first tries to find valid lower and upper bounds for rho (this may fail
     % in some cases), and then iterates on rho once valid bounds are found.
@@ -13,10 +13,10 @@ function [stats,p] = main_two_asset(runopts, p)
 
     p.update_ny(income.ny);
 
-	grd = setup.two_asset.GridTwoAsset(p,income.ny,'HJB'); % grid for HJB
-    grd_norisk = setup.two_asset.GridTwoAsset(p,1,'HJB');
-	grdKFE = setup.two_asset.GridTwoAsset(p,income.ny,'KFE');% grid for KFE
-    grdKFE_norisk = setup.two_asset.GridTwoAsset(p,1,'KFE');
+	grd = setup.GridTwoAsset(p,income.ny,'HJB'); % grid for HJB
+    grd_norisk = setup.GridTwoAsset(p,1,'HJB');
+	grdKFE = setup.GridTwoAsset(p,income.ny,'KFE');% grid for KFE
+    grdKFE_norisk = setup.GridTwoAsset(p,1,'KFE');
 
     if numel(p.rhos) > 1
     	grd.add_zgrid(p.rhos',p.na);
@@ -31,40 +31,12 @@ function [stats,p] = main_two_asset(runopts, p)
     msg = sprintf('bmin < natural borrowing limit (%f)',NBL);
     assert(p.bmin > NBL,msg);
     
-	if p.IterateRho == 1
-        % Look for valid rho lower bound and rho upper bound prior to AY iteration
-
-        model_solver = @(x,y) solver.two_asset.solver(x,y,income,grd,grdKFE);
-        aux.searchForRhoBounds
-        
-        %% ----------------------------------------------------------------
-        % ITERATE OVER RHO TO MATCH MEAN ASSETS
-        % -----------------------------------------------------------------
-        runopts.RunMode = 'Iterate';
-        iterate_rho = @(x) solver.two_asset.solver(runopts,p.reset_rho(x),income,grd,grdKFE);
-
-        check_evals = @(x,y,z) aux.fzero_check(x,y,z,p);
-        options = optimset('TolX',p.crit_AY,'OutputFcn',check_evals);
-        [rho_final,~,exitflag] = fzero(iterate_rho,[rho_lb,rho_ub],options);
-
-        if exitflag ~= 1
-            error(['fzero failed, exitflag = ',num2str(exitflag)])
-        end
-
-        fprintf('\nIteration over rho completed.\n\n')
-	else
-        % Don't iterate
-        rho_final = p.rho;
-    end
-    
-    % Solve model one more time to get other output variables
-    p.reset_rho(rho_final);
     runopts.RunMode = 'Final';
-	[~,HJB,KFE,Au] = solver.two_asset.solver(runopts,p,income,grd,grdKFE);
+	[~,HJB,KFE,Au] = solver.solver(runopts,p,income,grd,grdKFE);
 
     if p.NoRisk == 1
         runopts.RunMode = 'NoRisk';
-        [~,HJB_nr,KFE_nr,Au_nr] = solver.two_asset.solver(runopts,p,income_norisk,...
+        [~,HJB_nr,KFE_nr,Au_nr] = solver.solver(runopts,p,income_norisk,...
                                             grd_norisk,grdKFE_norisk);
     end
 
@@ -72,8 +44,7 @@ function [stats,p] = main_two_asset(runopts, p)
     % COMPUTE STATISTICS
     % -----------------------------------------------------------------
     fprintf('\nComputing statistics\n')
-    stats = statistics.two_asset.compute_statistics(p,income,grd,grdKFE,KFE);
-    
+    stats = statistics.compute_statistics(p,income,grd,grdKFE,KFE);
 
     %% ----------------------------------------------------------------
     % COMPUTE MPCs
@@ -82,7 +53,7 @@ function [stats,p] = main_two_asset(runopts, p)
     dim2Identity = 'a';
     mpc_finder = statistics.MPCFinder(p,income,grdKFE,dim2Identity);
     shocks = [4,5,6];
-    trans_dyn_solver = solver.two_asset.TransitionalDynSolverTwoAsset(p,income,grdKFE,shocks);
+    trans_dyn_solver = solver.TransitionalDynSolverTwoAsset(p,income,grdKFE,shocks);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')
@@ -114,7 +85,7 @@ function [stats,p] = main_two_asset(runopts, p)
     stats.sim_mpcs = struct();
     shocks = [4,5,6];
     nperiods = 1;
-    mpc_simulator = statistics.two_asset.MPCSimulatorTwoAsset(...
+    mpc_simulator = statistics.MPCSimulatorTwoAsset(...
     	p,income,grdKFE,KFE,shocks,nperiods);
 
     if p.SimulateMPCS == 1
@@ -145,8 +116,8 @@ function [stats,p] = main_two_asset(runopts, p)
     % DECOMPOSITIONS
     % -----------------------------------------------------------------
     fprintf('\nPerforming decompositions (if applicable)...\n')
-    stats.decomp_norisk = statistics.two_asset.decomp_wrt_norisk(p,grdKFE,stats,income);
-    stats.decompRA = statistics.two_asset.decompRA(p,grdKFE,stats);
+    stats.decomp_norisk = statistics.decomp_wrt_norisk(p,grdKFE,stats,income);
+    stats.decompRA = statistics.decompRA(p,grdKFE,stats);
     
     %% ----------------------------------------------------------------
     % HOUSEKEEPING

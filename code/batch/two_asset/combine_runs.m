@@ -6,18 +6,18 @@ clearvars -except stats p
 FROM_MATFILE = true;
 
 %% Select directories
-matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
-% matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/two_asset/';
+matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/';
+% matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/';
 % matdir = '/media/hdd/Other/midway2_output/continuous_time';
 % matdir = '/Users/brianlivingston/Documents/midway2_output/';
-% matdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/output/two_asset/';
+% matdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/output/';
 
 codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/code/';
 % codedir = '/home/brian/Documents/GitHub/Continuous_Time_HA/code/';
 
-% matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
+% matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/';
 % codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/two_asset/';
+xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/';
 xlxpath1 = [xlxpath 'detailedResults.xlsx'];
 xlxpath2 = [xlxpath 'decomposition.xlsx'];
 
@@ -50,10 +50,10 @@ if FROM_MATFILE
             end
 
             % perform Empc1 - Empc0 decomposition
-            decomp_base(ind) = statistics.two_asset.decomp_baseline(s(1),s(ind));    
+            decomp_base(ind) = statistics.decomp_baseline(s(1),s(ind));    
 
             % perform decomp wrt one-asset model
-            decomp_oneasset(ind) = statistics.two_asset.decomp_twoasset_oneasset(oneasset,s(ind));
+            decomp_oneasset(ind) = statistics.decomp_twoasset_oneasset(oneasset,s(ind));
         else
             continue
         end
@@ -63,8 +63,8 @@ else
     s.stats = stats;
     
     skip = true;
-    decomp_base = statistics.two_asset.decomp_baseline(s(1),s(1));
-    decomp_oneasset = statistics.two_asset.decomp_twoasset_oneasset(oneasset,s(1));
+    decomp_base = statistics.decomp_baseline(s(1),s(1));
+    decomp_oneasset = statistics.decomp_twoasset_oneasset(oneasset,s(1));
 end
 
 n = numel(s);

@@ -5,7 +5,6 @@ classdef Params < handle
     
     properties (SetAccess=protected)
         % Run options
-        IterateRho;
         ComputeMPCS;
         SimulateMPCS;
         ComputeMPCS_news;
@@ -132,7 +131,6 @@ classdef Params < handle
             end
             
             obj.param_index = runopts.param_index;
-            obj.IterateRho = runopts.IterateRho;
             obj.ComputeMPCS = runopts.ComputeMPCS;
             obj.SimulateMPCS = runopts.SimulateMPCS;
             obj.ComputeMPCS_news = runopts.ComputeMPCS_news;

@@ -22,12 +22,12 @@ classdef TransitionalDynSolverTwoAsset < solver.TransitionalDynSolver
 		end
 
 		function update_policies(obj)
-			obj.KFEint = solver.two_asset.find_policies(...
+			obj.KFEint = solver.find_policies(...
 				obj.p,obj.income,obj.grids,obj.V);
 		end
 
 		function update_A_matrix(obj)
-		    obj.A = solver.two_asset.construct_trans_matrix(...
+		    obj.A = solver.construct_trans_matrix(...
 		    	obj.p,obj.income,obj.grids,obj.KFEint,'KFE');
 		end
 

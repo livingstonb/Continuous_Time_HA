@@ -118,14 +118,14 @@ classdef A_Matrix_Constructor < handle
                 adriftF = max(d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
                                                          + obj.p.directdeposit * obj.y_mat,0);
 
-                bdriftB = min(s - d - aux.two_asset.adj_cost_fn(d,obj.grids.a.matrix,obj.p),0);
-                bdriftF = max(s - d - aux.two_asset.adj_cost_fn(d,obj.grids.a.matrix,obj.p),0);
+                bdriftB = min(s - d - aux.adj_cost_fn(d,obj.grids.a.matrix,obj.p),0);
+                bdriftF = max(s - d - aux.adj_cost_fn(d,obj.grids.a.matrix,obj.p),0);
             elseif strcmp(obj.modeltype,'HJB')
                 adriftB = min(d,0) + min(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities) + obj.p.directdeposit * obj.y_mat,0);
                 adriftF = max(d,0) + max(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities) + obj.p.directdeposit * obj.y_mat,0);
 
-                bdriftB = min(-d - aux.two_asset.adj_cost_fn(d,obj.grids.a.matrix,obj.p),0) + min(s,0);
-                bdriftF = max(-d - aux.two_asset.adj_cost_fn(d,obj.grids.a.matrix,obj.p),0) + max(s,0);    
+                bdriftB = min(-d - aux.adj_cost_fn(d,obj.grids.a.matrix,obj.p),0) + min(s,0);
+                bdriftF = max(-d - aux.adj_cost_fn(d,obj.grids.a.matrix,obj.p),0) + max(s,0);    
             end
 
             %% --------------------------------------------------------------------

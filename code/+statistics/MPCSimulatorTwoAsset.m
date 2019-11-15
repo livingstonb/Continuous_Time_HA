@@ -67,7 +67,7 @@ classdef MPCSimulatorTwoAsset < statistics.MPCSimulator
 
 	    	% update liquid assets
 	    	obj.bsim = obj.bsim + obj.mpc_delta ...
-				* (s - d - aux.two_asset.adj_cost_fn(d,obj.asim,obj.p));
+				* (s - d - aux.adj_cost_fn(d,obj.asim,obj.p));
 			obj.bsim = max(obj.bsim,obj.grids.b.vec(1));
 			obj.bsim = min(obj.bsim,obj.grids.b.vec(end));
 

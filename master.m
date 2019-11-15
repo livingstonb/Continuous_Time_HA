@@ -31,9 +31,8 @@ warning('off','MATLAB:nearlySingularMatrix')
 % -------------------------------------------------------------------------
 
 runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
-runopts.IterateRho = 0; % if set to zero, the parameter 'rho' is used
 runopts.fast = 0; % use small grid for debugging
-runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
+runopts.mode = 'get_params'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = 0;
 runopts.SimulateMPCS = 0; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = 0; % MPCs out of news, requires ComputeMPCS = 1
@@ -73,10 +72,10 @@ end
 runopts.suffix = num2str(runopts.param_index);
 
 % directory to save output, and temp directory
-runopts.savedir = [runopts.direc 'output/two_asset/'];
+runopts.savedir = [runopts.direc 'output/'];
 
 % temp directory
-runopts.temp = [runopts.direc 'temp/two_asset/'];
+runopts.temp = [runopts.direc 'temp/'];
 
 addpath([runopts.direc,'code']);
 addpath([runopts.direc,'code/factorization_lib']);
@@ -92,19 +91,19 @@ cd(runopts.direc)
 % GET PARAMETERS
 % ---------------------------------------------------------------------
 if strcmp(runopts.mode,'grid_test')
-	p = setup.two_asset.params.grid_test_params(runopts);
+	p = setup.params.grid_test_params(runopts);
 elseif strcmp(runopts.mode,'chi0_tests')
-    p = setup.two_asset.params.chi0_tests(runopts);
+    p = setup.params.chi0_tests(runopts);
 elseif strcmp(runopts.mode,'chi1_chi2_tests')
-    p = setup.two_asset.params.chi1_chi2_tests(runopts);
+    p = setup.params.chi1_chi2_tests(runopts);
 elseif strcmp(runopts.mode,'table_tests')
-    p = setup.two_asset.params.table_tests(runopts);
+    p = setup.params.table_tests(runopts);
 elseif strcmp(runopts.mode,'table_tests_bequests')
-    p = setup.two_asset.params.table_tests_bequests(runopts);
+    p = setup.params.table_tests_bequests(runopts);
 elseif strcmp(runopts.mode,'get_params')
-	p = setup.two_asset.params.get_params(runopts);
+	p = setup.params.get_params(runopts);
 elseif strcmp(runopts.mode, 'SDU_tests')
-    p = setup.two_asset.params.SDU_tests(runopts);
+    p = setup.params.SDU_tests(runopts);
 end
 p.print();
 
@@ -113,20 +112,23 @@ p.print();
 % -------------------------------------------------------------------------
 
 
-% to calibrate to (rb, ra)
-calibrator = solver.two_asset.Calibrators.rb_ra_calibrator(runopts, p);
-if p.riskaver <= 2
-	fsolve(calibrator, [0.2, 0.4]);
-elseif p.riskaver <= 5
-	fsolve(calibrator, [-0.1, 0.4]);
-else
-	fsolve(calibrator, [-0.2, 0.5]);
-end
+% % to calibrate to (rb, ra)
+% calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
+% if p.riskaver <= 2
+% 	fsolve(calibrator, [0.2, 0.4]);
+% elseif p.riskaver <= 5
+% 	fsolve(calibrator, [-0.1, 0.4]);
+% else
+% 	fsolve(calibrator, [-0.2, 0.5]);
+% end
 
-% calibrator = solver.two_asset.Calibrators.ra_rho_calibrator(runopts, p);
+% calibrator = solver.Calibrators.ra_rho_calibrator(runopts, p);
 % fsolve(calibrator, [1, 0.5]);
+
+calibrator = solver.Calibrators.rho_calibrator(runopts, p);
+fsolve(calibrator, [0.8]);
 
 % % final run
 % tic
-% stats = main_two_asset(runopts, p);
+% stats = main(runopts, p);
 % toc

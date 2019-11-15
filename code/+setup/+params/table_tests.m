@@ -1,14 +1,13 @@
-function outparams = table_tests_bequests(runopts)
+function outparams = table_tests(runopts)
     % Create structure array 'params', and output a Params instance
     % of the structure in the 'index' entry, i.e. 1,2,3,.
     
     
     %% adjusing (A/Y,B/Y), fixed adj costs
-    raBASELINE = 0.015132;
+    raBASELINE = 0.0190643216;
     
-    % ras = [raBASELINE,0.0129226573755814,0.0304148974027774];
-    ras = raBASELINE;
-        
+    ras = [raBASELINE,0.0129226573755814,0.0304148974027774];
+    
     % calibrate r_a to match B/Y in each case
     ii = 1;
     for ra = ras
@@ -19,11 +18,9 @@ function outparams = table_tests_bequests(runopts)
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.02;
+        params(ii).rhoL = 0.005;
         params(ii).rho = 0.015440584992491;
-        params(ii).Bequests = 1;
-        params(ii).maxit_KFE = 2e4;
-        params(ii).delta_KFE = 1e3;
+        params(ii).rho = 0.005;
         params(ii).r_a = ra;
         
         ii = ii + 1;
@@ -39,25 +36,21 @@ function outparams = table_tests_bequests(runopts)
         params(ii).chi1 = chi1;
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.02;
-        params(ii).maxit_KFE = 2e4;
-        params(ii).delta_KFE = 1e3;
+        params(ii).rhoL = 0.005;
         params(ii).r_a = raBASELINE;
         
         ii = ii + 1;
     end
     
     for chi2 = [0.1,0.15,0.5,1]
-        params(ii).name = sprintf('chi1=%f',chi1);
+        params(ii).name = sprintf('chi2=%f',chi2);
         params(ii).OneAsset = 0;
         params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
         params(ii).chi0 = 0;
         params(ii).chi1 = 0.15;
         params(ii).chi2 = chi2;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.02;
-        params(ii).maxit_KFE = 2e4;
-        params(ii).delta_KFE = 1e3;
+        params(ii).rhoL = 0.005;
         params(ii).r_a = raBASELINE;
         
         ii = ii + 1;
@@ -79,9 +72,7 @@ function outparams = table_tests_bequests(runopts)
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.02;
-        params(ii).maxit_KFE = 2e4;
-        params(ii).delta_KFE = 1e3;
+        params(ii).rhoL = 0.005;
         params(ii).r_a = ra;
         
         ii = ii + 1;
@@ -100,11 +91,9 @@ function outparams = table_tests_bequests(runopts)
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.02;
+        params(ii).rhoL = 0.005;
         params(ii).r_b = rb;
         params(ii).r_a = 0.0190643216;
-        params(ii).maxit_KFE = 2e4;
-        params(ii).delta_KFE = 1e3;
         
         ii = ii + 1;
     end
@@ -122,8 +111,6 @@ function outparams = table_tests_bequests(runopts)
         params(ii).a_lb = 0.25;
         params(ii).rhoL = 0.008;
         params(ii).r_a = ra;
-        params(ii).maxit_KFE = 2e4;
-        params(ii).delta_KFE = 1e3;
         
         ii = ii + 1;
     end
@@ -137,11 +124,9 @@ function outparams = table_tests_bequests(runopts)
     params(ii).chi1 = 0.15;
     params(ii).chi2 = 0.25;
     params(ii).a_lb = 0.25;
-    params(ii).rhoL = 0.02;
+    params(ii).rhoL = 0.008;
     params(ii).r_a = 0.01906432159025;
     params(ii).rho = 0.015440584980253;
-    params(ii).maxit_KFE = 2e4;
-    params(ii).delta_KFE = 1e3;
 
     %% risk aversion coeff tests
     ii = 501;
@@ -154,21 +139,20 @@ function outparams = table_tests_bequests(runopts)
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
-        params(ii).rho = 0.02;
+        params(ii).rho = 0.005;
         params(ii).r_a = raBASELINE;
         params(ii).riskaver = riskaver;
-        params(ii).maxit_KFE = 2e4;
-        params(ii).delta_KFE = 1e3;
         
         if riskaver == 0.5
             params(ii).rhoL = 0.01;
         elseif riskaver == 2
             params(ii).rhoL = 0.017;
         elseif riskaver == 4
-            params(ii).delta_KFE = 1e3;
+            params(ii).delta_KFE = 0.2;
+            params(ii).maxit_KFE = 25000;
             params(ii).rhoL = 0.024;
         elseif riskaver == 6
-            params(ii).delta_KFE = 1e1;
+            params(ii).delta_KFE = 0.01;
             params(ii).rhoL = 0.04;
         end
         ii = ii + 1;
@@ -186,11 +170,9 @@ function outparams = table_tests_bequests(runopts)
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
         params(ii).rho = 0.005;
-        params(ii).rhoL = 0.02;
+        params(ii).rhoL = 0.008;
         params(ii).r_a = raBASELINE;
         params(ii).rho_grid = [-w,0,w];
-        params(ii).maxit_KFE = 2e4;
-        params(ii).delta_KFE = 1e3;
         ii = ii + 1;
     end
 
@@ -200,6 +182,6 @@ function outparams = table_tests_bequests(runopts)
     chosen_param = params(runopts.param_index);
 
     % Create Params object
-    outparams = setup.two_asset.ParamsTwoAsset(runopts,chosen_param);
+    outparams = setup.ParamsTwoAsset(runopts,chosen_param);
 
 end
