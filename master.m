@@ -30,9 +30,9 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
-runopts.mode = 'get_params'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
+runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = 0;
 runopts.SimulateMPCS = 0; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = 0; % MPCs out of news, requires ComputeMPCS = 1
@@ -112,21 +112,21 @@ p.print();
 % -------------------------------------------------------------------------
 
 
-% % to calibrate to (rb, ra)
-% calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
-% if p.riskaver <= 2
-% 	fsolve(calibrator, [0.2, 0.4]);
-% elseif p.riskaver <= 5
-% 	fsolve(calibrator, [-0.1, 0.4]);
-% else
-% 	fsolve(calibrator, [-0.2, 0.5]);
-% end
+% to calibrate to (rb, ra)
+calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
+if p.riskaver <= 2
+	fsolve(calibrator, [0.2, 0.4]);
+elseif p.riskaver <= 5
+	fsolve(calibrator, [-0.1, 0.4]);
+else
+	fsolve(calibrator, [-0.2, 0.5]);
+end
 
 % calibrator = solver.Calibrators.ra_rho_calibrator(runopts, p);
 % fsolve(calibrator, [1, 0.5]);
 
-calibrator = solver.Calibrators.rho_calibrator(runopts, p);
-fsolve(calibrator, [0.8]);
+% calibrator = solver.Calibrators.rho_calibrator(runopts, p);
+% fsolve(calibrator, [0.8]);
 
 % % final run
 % tic

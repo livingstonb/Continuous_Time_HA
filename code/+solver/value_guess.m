@@ -84,13 +84,9 @@ function V = value_guess(p, grids, income)
         updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
         lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
 
-        updiag = updiag(:);
-        centdiag = centdiag(:);
-        lowdiag = lowdiag(:);
-
-        Arisk = spdiags(updiag, nb, dim, dim)...
-        	+ spdiags(centdiag, 0, dim, dim)...
-        	+ spdiags(lowdiag, -nb, dim, dim);
+        Arisk = spdiags(updiag(:), nb, dim, dim)...
+        	+ spdiags(centdiag(:), 0, dim, dim)...
+        	+ spdiags(lowdiag(:), -nb, dim, dim);
     else
         Arisk = sparse(dim, dim);
     end
