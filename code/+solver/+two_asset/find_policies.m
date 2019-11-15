@@ -23,9 +23,9 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     end
 
     if p.SDU == 0
-        utility = @(x) aux.u_fn(x, p.riskaver);
-        utility1 = @(x) x .^ (-p.riskaver);
-        utility1inv = @(x) x .^ (-1./p.riskaver);
+        utility = @(x) aux.u_fn(x, p.riskaver_fulldim);
+        utility1 = @(x) x .^ (-p.riskaver_fulldim);
+        utility1inv = @(x) x .^ (-1./p.riskaver_fulldim);
     else
         utility = @(x) rho_mat_adj .* aux.u_fn(x, p.invies);
         utility1 = @(x) rho_mat_adj .* x .^ (-p.invies);
@@ -60,6 +60,9 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     Vamin = 0;
     Vbmin = 1e-8;
 
+    bdrift_without_c = (1-p.directdeposit-p.wagetax) .* y_mat...
+        + grd.b.matrix .* (r_b_mat + p.deathrate*p.perfectannuities) + p.transfer;
+
     %% --------------------------------------------------------------------
 	% UPWINDING FOR CONSUMPTION
 	% ---------------------------------------------------------------------
@@ -78,9 +81,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     % consumption and savings from forward-differenced V
     cF(1:nb-1,:,:,:) = utility1inv(VbF(1:nb-1,:,:,:));
     cF(nb,:,:,:) 		= zeros(1,na,nz,ny);
-    sF(1:nb-1,:,:,:) 	= (1-p.directdeposit-p.wagetax) .* y_mat(1:nb-1,:,:,:)...
-                        + grd.b.matrix(1:nb-1,:,:,:) .* (r_b_mat(1:nb-1,:,:,:) ...
-                        + p.deathrate*p.perfectannuities) + p.transfer - cF(1:nb-1,:,:,:);
+    sF(1:nb-1,:,:,:) 	= bdrift_without_c(1:nb-1,:,:,:) - cF(1:nb-1,:,:,:);
     sF(nb,:,:,:) 		= zeros(1,na,nz,ny); % impose a state constraint at the top to improve stability
 
     HcF(1:nb-1,:,:,:) = utility(cF(1:nb-1,:,:,:)) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
@@ -89,24 +90,18 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     validcF         	= cF > 0;
 
     % consumption and savings from backward-differenced V
-    if p.SDU == 0
-        cB(2:nb,:,:,:)	= VbB(2:nb,:,:,:).^(-1/p.riskaver_fulldim);
-    else
-        cB(2:nb,:,:,:)	= (VbB(2:nb,:,:,:) ./ rho_mat_adj).^(-1/p.invies);
-    end
-    cB(1,:,:,:) 	= ((1-p.directdeposit)-p.wagetax) .* y_mat(1,:,:,:) ...
-                        + grd.b.matrix(1,:,:,:) .* (r_b_mat(1,:,:,:)+ p.deathrate*p.perfectannuities) + p.transfer;
-    sB(2:nb,:,:,:) 	= ((1-p.directdeposit)-p.wagetax) .* y_mat(2:nb,:,:,:)...
-                        + grd.b.matrix(2:nb,:,:,:) .* (r_b_mat(2:nb,:,:,:) ...
-                        + p.deathrate*p.perfectannuities) + p.transfer - cB(2:nb,:,:,:);
-    sB(1,:,:,:) 	= zeros(1,na,nz,ny);
+    cB(2:nb,:,:,:)	= utility1inv(VbB(2:nb,:,:,:));
+
+    cB(1,:,:,:) = bdrift_without_c(1,:,:,:);
+    sB(2:nb,:,:,:) = bdrift_without_c(2:nb,:,:,:) - cB(2:nb,:,:,:);
+    sB(1,:,:,:) = zeros(1,na,nz,ny);
 
     HcB = utility(cB) + VbB .* sB;
 
     validcB = cB > 0;
 
     % no drift
-    c0 = (1-p.directdeposit-p.wagetax) .* y_mat + grd.b.matrix .* (r_b_mat+ p.deathrate*p.perfectannuities) + p.transfer;
+    c0 = bdrift_without_c;
     s0 = zeros(nb,na,nz,ny);
 
     Hc0 = utility(c0);
@@ -168,9 +163,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
             & (grd.b.matrix == p.bmin) & (grd.a.matrix > 0);
 
         % replace c and s
-        s_special = ((1-p.directdeposit)-p.wagetax) .* y_mat...
-            + grd.b.matrix .* (r_b_mat + p.deathrate*p.perfectannuities)...
-            + p.transfer - c_special;
+        s_special = bdrift_without_c - c_special;
         c(Ic_special) = c_special(Ic_special);
         s(Ic_special) = s_special(Ic_special);
         u = aux.u_fn(c,p.riskaver);
