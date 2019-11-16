@@ -44,7 +44,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 1;
+runopts.param_index = 30;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -112,18 +112,28 @@ p.print();
 % -------------------------------------------------------------------------
 
 
+% % to calibrate to (rb, ra)
+% calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
+% if p.riskaver <= 2
+% 	fsolve(calibrator, [0.2, 0.4]);
+% elseif p.riskaver <= 5
+% 	fsolve(calibrator, [-0.1, 0.4]);
+% else
+% 	fsolve(calibrator, [-0.3, 0.2]);
+% end
+
 % to calibrate to (rb, ra)
 calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
 if p.riskaver <= 2
-	fsolve(calibrator, [0.2, 0.4]);
+	fsolve(calibrator, [1, 2]);
 elseif p.riskaver <= 5
-	fsolve(calibrator, [-0.1, 0.4]);
+	fsolve(calibrator, [0, 0.4]);
 else
-	fsolve(calibrator, [-0.2, 0.5]);
+	fsolve(calibrator, [-0.1, 0.5]);
 end
 
 % calibrator = solver.Calibrators.ra_rho_calibrator(runopts, p);
-% fsolve(calibrator, [1, 0.5]);
+% fsolve(calibrator, [0.4, 0.5]);
 
 % calibrator = solver.Calibrators.rho_calibrator(runopts, p);
 % fsolve(calibrator, [0.8]);

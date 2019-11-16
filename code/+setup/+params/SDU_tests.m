@@ -2,6 +2,11 @@ function outparams = SDU_tests(runopts)
     % Create structure array 'params', and output a Params instance
     % of the structure in the 'index' entry, i.e. 1,2,3,.
 
+    % rho for calibration based on baseline: 0.033940
+    % rho for calibration based on riskaver = 5, sigma_r = 0.1: 0.114248
+
+    rho = 0.114248
+
     %%--------------------------------------------------------------
     % BASELINE
     % --------------------------------------------------------------
@@ -27,7 +32,7 @@ function outparams = SDU_tests(runopts)
     params(ii).na = 50;
     params(ii).na_KFE = 50;
     params(ii).deathrate = 0;
-    params(ii).rho = 0.033940;
+    params(ii).rho = rho;
     params(ii).rhoL = 0.022;
     params(ii).transfer = 0.0081 * 2.0;
     params(ii).implicit = 0;
@@ -64,7 +69,7 @@ function outparams = SDU_tests(runopts)
             params(ii).na = 50;
             params(ii).na_KFE = 50;
             params(ii).deathrate = 0;
-            params(ii).rho = 0.033940;
+            params(ii).rho = rho;
             % params(ii).crit_KFE = 1e-7;
             params(ii).implicit = 0;
             params(ii).transfer = 0.0081 * 2.0;

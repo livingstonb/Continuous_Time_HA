@@ -15,8 +15,9 @@ function V = value_guess(p, grids, income)
 	% consumption guess
 	r_b_mat_adj = r_b_mat;
 	r_b_mat_adj(r_b_mat<=0.001) = 0.001; % mostly for r_b <= 0, enforce a reasonable guess
+    r_a_adj = (p.r_a <= 0.001) * 0.001 + (p.r_a > 0.001) * p.r_a;
 	c_0 = (1-p.directdeposit - p.wagetax) * income.y.matrix ...
-            + (p.r_a + p.deathrate*p.perfectannuities) * grids.a.matrix...
+            + (r_a_adj + p.deathrate*p.perfectannuities) * grids.a.matrix...
             + (r_b_mat_adj + p.deathrate*p.perfectannuities) .* grids.b.matrix + p.transfer;
 
     if p.SDU == 1

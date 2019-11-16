@@ -26,8 +26,8 @@ function y = rho(x, runopts, p)
 end
 
 function y = ra_rho(x, runopts, p)
-	new_rho = 0.05 * abs(x(1)) / (1 + abs(x(1)));
-    new_ra = p.r_b + 0.04 * abs(x(2)) / (1 + abs(x(2)));
+	new_rho = 0.15 * abs(x(1)) / (1 + abs(x(1)));
+    new_ra = p.r_b + 0.1 * abs(x(2)) / (1 + abs(x(2)));
     
     % Set new discount rate
     p.set("rho", new_rho);
@@ -69,8 +69,6 @@ function y = rb_ra(x, runopts, p)
 	new_ra = new_rb + ra_scale * abs(x(2)) / (1 + abs(x(2)));
 	p.set("r_b", new_rb);
     p.set("r_a", new_ra);
-	fprintf("r_b has been reset to %f...\n", p.r_b);
-	fprintf("r_a has been reset to %f...\n", p.r_a);
 	
 	% Solve model
 	stats = main(runopts, p);

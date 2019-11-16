@@ -148,6 +148,7 @@ classdef Params < handle
         
         function obj = set(obj, name_str, new_val)
             obj.(name_str) = new_val;
+            disp(strcat(name_str, sprintf(" has been reset to %.9f", new_val)));
         end
 
         function update_ny(obj,ny)
