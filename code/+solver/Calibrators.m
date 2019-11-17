@@ -59,7 +59,7 @@ function x0 = rb_ra_initial(p, initial)
 		ra_scale = 0.1;
 	elseif p.riskaver <= 10
 		rb_scale = 0.1;
-		ra_scale = 0.15;
+		ra_scale = 0.17;
 	else
 		rb_scale = 0.15;
 		ra_scale = 0.25;
@@ -85,7 +85,7 @@ function [y, x0] = rb_ra(x, runopts, p)
 		ra_scale = 0.1;
 	elseif p.riskaver <= 10
 		rb_scale = 0.1;
-		ra_scale = 0.15;
+		ra_scale = 0.17;
 	else
 		rb_scale = 0.15;
 		ra_scale = 0.25;

@@ -26,10 +26,10 @@ function [stats,p] = main(runopts, p)
     end
     
     % check that borrowing limit does not violate NBL
-    NBL = - min((1-p.wagetax-p.directdeposit)*income.y.vec+p.transfer) ...
-        / (p.r_b_borr + p.deathrate*p.perfectannuities);
-    msg = sprintf('bmin < natural borrowing limit (%f)',NBL);
-    assert(p.bmin > NBL,msg);
+%     NBL = - min((1-p.wagetax-p.directdeposit)*income.y.vec+p.transfer) ...
+%         / (p.r_b_borr + p.deathrate*p.perfectannuities);
+%     msg = sprintf('bmin < natural borrowing limit (%f)',NBL);
+%     assert(p.bmin > NBL,msg);
     
     runopts.RunMode = 'Final';
 	[~,HJB,KFE,Au] = solver.solver(runopts,p,income,grd,grdKFE);

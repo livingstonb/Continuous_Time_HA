@@ -5,7 +5,7 @@ function outparams = SDU_tests(runopts)
     % rho for calibration based on baseline: 0.033940
     % rho for calibration based on riskaver = 5, sigma_r = 0.1: 0.114248
 
-    rho = 0.114248
+    rho = 0.114248;
 
     %%--------------------------------------------------------------
     % BASELINE
