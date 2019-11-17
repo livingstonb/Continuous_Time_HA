@@ -124,16 +124,18 @@ p.print();
 
 % to calibrate to (rb, ra)
 calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
-if p.riskaver <= 2
-	fsolve(calibrator, [1, 2]);
-elseif p.riskaver <= 5
-	fsolve(calibrator, [0, 0.4]);
+if p.riskaver == 1
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [0.03, 0.05]);
+elseif p.riskaver == 2
+	x0 = solver.Calibrators.rb_ra_get_initial(p, [0.035, 0.05]);
+elseif p.riskaver == 5
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [0.01, 0.05]);
+elseif p.riskaver == 10
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.03, 0.07]);
 else
-	fsolve(calibrator, [-0.1, 0.5]);
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.04, 0.08]);
 end
-
-% calibrator = solver.Calibrators.ra_rho_calibrator(runopts, p);
-% fsolve(calibrator, [0.4, 0.5]);
+fsolve(calibrator, x0);
 
 % calibrator = solver.Calibrators.rho_calibrator(runopts, p);
 % fsolve(calibrator, [0.8]);

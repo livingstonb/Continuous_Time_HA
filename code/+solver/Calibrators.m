@@ -10,7 +10,11 @@ classdef Calibrators
 
 		function f = rb_ra_calibrator(runopts, p)
 			f = @(x) rb_ra(x, runopts, p);
-		end
+        end
+        
+        function x0 = rb_ra_get_initial(p, initial)
+            x0 = rb_ra_initial(p, initial);
+        end
 	end
 end
 
@@ -49,19 +53,42 @@ function y = ra_rho(x, runopts, p)
     fprintf("Total wealth = %f\n", stats.totw);
 end
 
-function y = rb_ra(x, runopts, p)
+function x0 = rb_ra_initial(p, initial)
+    if p.riskaver <= 2
+		rb_scale = 0.05;
+		ra_scale = 0.1;
+	elseif p.riskaver <= 10
+		rb_scale = 0.1;
+		ra_scale = 0.15;
+	else
+		rb_scale = 0.15;
+		ra_scale = 0.25;
+	end
+    
+     % return initial conditions
+    x0 = zeros(2, 1);
+    if initial(1) > 0
+        x0(1) = (initial(1) / rb_scale) / (1 - initial(1)/rb_scale);
+    else
+        x0(1) = (initial(1) / rb_scale) / (1 + initial(1)/rb_scale);
+    end
+    
+    x0(2) = ((initial(2)-initial(1)) / ra_scale) / (1 - (initial(2)-initial(1)) / ra_scale);
+end
+
+function [y, x0] = rb_ra(x, runopts, p)
 	% This function solves the model for given values of
 	% liquid returns and illiquid returns
 
 	if p.riskaver <= 2
-		rb_scale = 0.035;
-		ra_scale = 0.06;
+		rb_scale = 0.05;
+		ra_scale = 0.1;
 	elseif p.riskaver <= 10
 		rb_scale = 0.1;
-		ra_scale = 0.12;
+		ra_scale = 0.15;
 	else
-		rb_scale = 0.12;
-		ra_scale = 0.2;
+		rb_scale = 0.15;
+		ra_scale = 0.25;
 	end
 
 	% Set new values for returns

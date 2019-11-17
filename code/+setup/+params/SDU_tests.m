@@ -73,6 +73,7 @@ function outparams = SDU_tests(runopts)
             % params(ii).crit_KFE = 1e-7;
             params(ii).implicit = 0;
             params(ii).transfer = 0.0081 * 2.0;
+            params(ii).r_b = 0.02 / 4;
             
             if risk_aver == 1
                 params(ii).SDU = 0;
