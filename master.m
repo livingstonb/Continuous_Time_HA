@@ -125,15 +125,15 @@ p.print();
 % to calibrate to (rb, ra)
 calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
 if p.riskaver == 1
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [0.045, 0.08]);
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [0.047, 0.065]);
 elseif p.riskaver == 2
-	x0 = solver.Calibrators.rb_ra_get_initial(p, [0.04, 0.06]);
+	x0 = solver.Calibrators.rb_ra_get_initial(p, [0.043, 0.06]);
 elseif p.riskaver == 5
     x0 = solver.Calibrators.rb_ra_get_initial(p, [0.01, 0.05]);
 elseif p.riskaver == 10
     x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.03, 0.03]);
 else
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.05, 0.02]);
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.04, 0.025]);
 end
 fsolve(calibrator, x0);
 
