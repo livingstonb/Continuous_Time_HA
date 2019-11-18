@@ -148,7 +148,7 @@ elseif p.riskaver == 5
 elseif p.riskaver == 10
     x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.094, 0.006]);
 else
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.012, 0.001]);
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.013, 0.004]);
 end
 fsolve(calibrator, x0);
 
