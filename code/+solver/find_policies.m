@@ -32,6 +32,12 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
         utility1inv = @(x) (x ./ rho_mat_adj) .^ (-1/p.invies);
     end
 
+    if p.endogenousLabor == 1
+        labordisutil = @(h) p.labor_disutility * (h .^ (1 + 1/p.frisch)) ./ (1 + 1/p.frisch);
+        labordisutil1 = @(h) p.labor_disutility * (h .^ (1./p.frisch));
+        labordisutil1inv = @(v) (v./p.labor_disutility) .^ p.frisch;
+    end
+
     %% --------------------------------------------------------------------
 	% INITIALIZATION
 	% ---------------------------------------------------------------------
@@ -60,8 +66,13 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     Vamin = 0;
     Vbmin = 1e-8;
 
-    bdrift_without_c = (1-p.directdeposit-p.wagetax) .* y_mat...
-        + grd.b.matrix .* (r_b_mat + p.deathrate*p.perfectannuities) + p.transfer;
+    if p.endogenousLabor == 0
+        bdrift_without_c = (1-p.directdeposit-p.wagetax) .* y_mat...
+            + grd.b.matrix .* (r_b_mat + p.deathrate*p.perfectannuities) + p.transfer;
+    else
+        bdrift_without_c = @(h) (1-p.directdeposit-p.wagetax) .* h .* y_mat...
+            + grd.b.matrix .* (r_b_mat + p.deathrate*p.perfectannuities) + p.transfer;
+    end
 
     %% --------------------------------------------------------------------
 	% UPWINDING FOR CONSUMPTION
@@ -81,22 +92,51 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn
     % consumption and savings from forward-differenced V
     cF(1:nb-1,:,:,:) = utility1inv(VbF(1:nb-1,:,:,:));
     cF(nb,:,:,:) 		= zeros(1,na,nz,ny);
-    sF(1:nb-1,:,:,:) 	= bdrift_without_c(1:nb-1,:,:,:) - cF(1:nb-1,:,:,:);
-    sF(nb,:,:,:) 		= zeros(1,na,nz,ny); % impose a state constraint at the top to improve stability
+
+    % hours worked from forward-difference
+    if p.endogenousLabor == 0
+        partial_drift = bdrift_without_c;
+    else
+        hoursF = labordisutil1inv(y_mat .* VbF);
+        hoursF = min(hoursF, 1);
+
+        partial_drift = bdrift_without_c(hoursF);
+    end
+
+    sF(1:nb-1,:,:,:)    = partial_drift(1:nb-1,:,:,:) - cF(1:nb-1,:,:,:);
+    sF(nb,:,:,:)        = zeros(1,na,nz,ny); % impose a state constraint at the top to improve stability
 
     HcF(1:nb-1,:,:,:) = utility(cF(1:nb-1,:,:,:)) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
-
     HcF(nb,:,:,:) 		= -1e12 * ones(1,na,nz,ny);
+
+    if p.endogenousLabor == 1
+        HcF = HcF - labordisutil(hoursF);
+    end
+
     validcF         	= cF > 0;
 
     % consumption and savings from backward-differenced V
-    cB(2:nb,:,:,:)	= utility1inv(VbB(2:nb,:,:,:));
+    
 
-    cB(1,:,:,:) = bdrift_without_c(1,:,:,:);
-    sB(2:nb,:,:,:) = bdrift_without_c(2:nb,:,:,:) - cB(2:nb,:,:,:);
+    if p.endogenousLabor == 0
+        partial_drift = bdrift_without_c;
+    else
+        partial_drift = bdrift_without_c(hoursB);
+        hoursB = labordisutil1inv(y_mat .* VbB);
+        hoursB = min(hoursB, 1);
+    end
+
+    cB(2:nb,:,:,:)  = utility1inv(VbB(2:nb,:,:,:));
+    cB(1,:,:,:) = partial_drift(1,:,:,:);
+    
+    sB(2:nb,:,:,:) = partial_drift(2:nb,:,:,:) - cB(2:nb,:,:,:);
     sB(1,:,:,:) = zeros(1,na,nz,ny);
 
     HcB = utility(cB) + VbB .* sB;
+
+    if p.endogenousLabor == 1
+        HcB = HcB - labordisutil(hoursB);
+    end
 
     validcB = cB > 0;
 

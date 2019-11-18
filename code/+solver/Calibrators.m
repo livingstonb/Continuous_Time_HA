@@ -55,7 +55,7 @@ end
 
 function x0 = rb_ra_initial(p, initial)
     if p.riskaver <= 2
-		rb_scale = 0.05;
+		rb_scale = 0.06;
 		ra_scale = 0.1;
 	elseif p.riskaver <= 10
 		rb_scale = 0.1;

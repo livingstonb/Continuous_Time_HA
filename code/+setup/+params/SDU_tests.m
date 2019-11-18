@@ -5,7 +5,8 @@ function outparams = SDU_tests(runopts)
     % rho for calibration based on baseline: 0.033940
     % rho for calibration based on riskaver = 5, sigma_r = 0.1: 0.114248
 
-    rho = 0.114248;
+%     rho = 0.114248;
+    rho = 0.0339400;
 
     %%--------------------------------------------------------------
     % BASELINE
@@ -59,6 +60,7 @@ function outparams = SDU_tests(runopts)
             params(ii).SDU = 1;
             params(ii).maxit_HJB = 1e6;
             params(ii).maxit_KFE = 1e6;
+            params(ii).crit_HJB = 1e-9;
             params(ii).sigma_r = sd_r;
             params(ii).retrisk_KFE = 0;
             params(ii).NoRisk = 0;
@@ -74,6 +76,7 @@ function outparams = SDU_tests(runopts)
             params(ii).implicit = 0;
             params(ii).transfer = 0.0081 * 2.0;
             params(ii).r_b = 0.02 / 4;
+            params(ii).iterateKFE = 1;
             
             if risk_aver == 1
                 params(ii).SDU = 0;

@@ -36,7 +36,7 @@ classdef Income < handle
 	            
 				% normalize
 				obj.y.vec = y ./ (y' * obj.ydist * 4);
-				obj.y.vec = obj.y.vec;
+				obj.y.vec = p.MPL * obj.y.vec;
 				
 				obj.logy.vec = log(obj.y.vec);
 	        end

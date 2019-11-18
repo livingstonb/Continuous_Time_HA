@@ -34,7 +34,7 @@ function outparams = get_params(runopts)
         params(i).n_mpcsim = 1e5;
         i = i + 1;
     end
-    
+
     % two asset
     i = 101;
     params(i).name = 'two_asset';

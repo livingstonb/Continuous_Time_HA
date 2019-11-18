@@ -80,6 +80,7 @@ classdef Params < handle
 		maxit_KFE 		= 1e4; % maximal allowable number of KFE iterations
 		crit_KFE 		= 1e-8; % critical value
 		delta_KFE 		= 1e6; %1e6; % step size
+        iterateKFE      = 1;
 
 		% Outer assets-income ratio grid
 		maxit_AY 		= 100; % maximal allowable number of loops over capital-labor ratio
@@ -87,6 +88,13 @@ classdef Params < handle
 
         % Step-size for Feynman-Kac formula
         delta_mpc = 0.025;
+
+        % marginal product of labor/capital
+        endogenousLabor = 0;
+        labor_disutility = 1;
+        frisch = 0.5;
+        MPL = 1;
+        MPK = 1;
         
         % ----------- statistics variables -------------------------------
         epsilon_HtM = [0 0.005 0.01 0.02 0.05 0.1 0.15]; % for looking at fraction HtM

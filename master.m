@@ -44,7 +44,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 21;
+runopts.param_index = 29;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -122,23 +122,39 @@ p.print();
 % 	fsolve(calibrator, [-0.3, 0.2]);
 % end
 
+% % to calibrate to (rb, ra)
+% calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
+% if p.riskaver == 1
+%     x0 = solver.Calibrators.rb_ra_get_initial(p, [0.032, 0.06]);
+% elseif p.riskaver == 2
+% 	x0 = solver.Calibrators.rb_ra_get_initial(p, [0.032, 0.058]);
+% elseif p.riskaver == 5
+%     x0 = solver.Calibrators.rb_ra_get_initial(p, [0.01, 0.05]);
+% elseif p.riskaver == 10
+%     x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.03, 0.03]);
+% else
+%     x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.04, 0.025]);
+% end
+% fsolve(calibrator, x0);
+
 % to calibrate to (rb, ra)
 calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
 if p.riskaver == 1
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [0.047, 0.065]);
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [0.005, 0.022]);
 elseif p.riskaver == 2
-	x0 = solver.Calibrators.rb_ra_get_initial(p, [0.043, 0.06]);
+	x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.01, 0.02]);
 elseif p.riskaver == 5
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [0.01, 0.05]);
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.06, 0.01]);
 elseif p.riskaver == 10
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.03, 0.03]);
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.094, 0.006]);
 else
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.04, 0.025]);
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.012, 0.001]);
 end
 fsolve(calibrator, x0);
 
-calibrator = solver.Calibrators.rho_calibrator(runopts, p);
-fsolve(calibrator, [0.8]);
+
+% calibrator = solver.Calibrators.rho_calibrator(runopts, p);
+% fsolve(calibrator, [0.8]);
 
 % final run
 % tic
