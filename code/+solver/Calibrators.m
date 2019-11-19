@@ -84,7 +84,7 @@ function [y, x0] = rb_ra(x, runopts, p)
 		rb_scale = 0.06;
 		ra_scale = 0.1;
 	elseif p.riskaver <= 10
-		rb_scale = 0.1;
+		rb_scale = 0.13;
 		ra_scale = 0.17;
 	else
 		rb_scale = 0.15;

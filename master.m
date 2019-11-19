@@ -30,7 +30,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = 0;
@@ -148,7 +148,7 @@ elseif p.riskaver == 5
 elseif p.riskaver == 10
     x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.094, 0.006]);
 else
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.13, 0.008]);
+    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.12, 0.006]);
 end
 fsolve(calibrator, x0);
 
@@ -157,6 +157,9 @@ fsolve(calibrator, x0);
 % fsolve(calibrator, [0.8]);
 
 % final run
-% tic
-% stats = main(runopts, p);
-% toc
+p.set("NoRisk", 1);
+p.set("ComputeMPCS", 1);
+p.set("ComputeMPCS_news", 1);
+tic
+stats = main(runopts, p);
+toc
