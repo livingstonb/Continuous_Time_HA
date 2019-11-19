@@ -42,57 +42,60 @@ function outparams = SDU_tests(runopts)
     % WITH RETURNS RISK
     % --------------------------------------------------------------
     % illiquid_returns = linspace(0.03/4, 0.12/4, 10);
+    ies_vals = [1, 1.5]
     risk_avers = [1, 2, 5, 10, 20];
     sdrs = [0, 0.01, 0.02, 0.05, 0.1, 0.15];
 
     ii = 2;
-    for risk_aver = risk_avers
-        for sd_r = sdrs
-            params(ii).name = sprintf('SDU with riskaver%f, sigma_r%f', risk_aver, sd_r); 
-            params(ii).OneAsset = 0;
-            params(ii).DirIncomeProcess = 'input/IncomeGrids/twopoint_3_5';
-            params(ii).chi0 = 0;
-            params(ii).chi1 = 0.15;
-            params(ii).chi2 = 0.25;
-            params(ii).a_lb = 0.25;
-            params(ii).riskaver = risk_aver;
-            params(ii).invies = 1;
-            params(ii).SDU = 1;
-            params(ii).maxit_HJB = 1e6;
-            params(ii).maxit_KFE = 1e6;
-            params(ii).crit_HJB = 1e-9;
-            params(ii).sigma_r = sd_r;
-            params(ii).retrisk_KFE = 0;
-            params(ii).NoRisk = 0;
-            params(ii).delta_HJB = 10;
-            params(ii).delta_KFE = 1e6;
-            params(ii).nb = 50;
-            params(ii).nb_KFE = 50;
-            params(ii).na = 50;
-            params(ii).na_KFE = 50;
-            params(ii).deathrate = 0;
-            params(ii).rho = rho;
-            % params(ii).crit_KFE = 1e-7;
-            params(ii).implicit = 0;
-            params(ii).transfer = 0.0081 * 2.0;
-            params(ii).r_b = 0.02 / 4;
-            params(ii).iterateKFE = 1;
-            
-            if risk_aver == 1
-                params(ii).SDU = 0;
-            end
+    for ies = ies_vals;
+        for risk_aver = risk_avers
+            for sd_r = sdrs
+                params(ii).name = sprintf('SDU with riskaver%f, sigma_r%f, ies%f', risk_aver, sd_r, ies); 
+                params(ii).OneAsset = 0;
+                params(ii).DirIncomeProcess = 'input/IncomeGrids/twopoint_3_5';
+                params(ii).chi0 = 0;
+                params(ii).chi1 = 0.15;
+                params(ii).chi2 = 0.25;
+                params(ii).a_lb = 0.25;
+                params(ii).riskaver = risk_aver;
+                params(ii).invies = 1 / ies;
+                params(ii).SDU = 1;
+                params(ii).maxit_HJB = 1e6;
+                params(ii).maxit_KFE = 1e6;
+                params(ii).crit_HJB = 1e-9;
+                params(ii).sigma_r = sd_r;
+                params(ii).retrisk_KFE = 0;
+                params(ii).NoRisk = 0;
+                params(ii).delta_HJB = 10;
+                params(ii).delta_KFE = 1e6;
+                params(ii).nb = 50;
+                params(ii).nb_KFE = 50;
+                params(ii).na = 50;
+                params(ii).na_KFE = 50;
+                params(ii).deathrate = 0;
+                params(ii).rho = rho;
+                % params(ii).crit_KFE = 1e-7;
+                params(ii).implicit = 0;
+                params(ii).transfer = 0.0081 * 2.0;
+                params(ii).r_b = 0.02 / 4;
+                params(ii).iterateKFE = 1;
+                
+                if (risk_aver == 1) && (ies == 1)
+                    params(ii).SDU = 0;
+                end
 
-            if risk_aver == 10
-                params(ii).delta_HJB = 1;
-            elseif (risk_aver == 20) && (sd_r <= 0.05)
-                params(ii).delta_HJB = 0.1;
-            elseif (risk_aver == 20) && (sd_r < 0.15)
-                params(ii).delta_HJB = 0.02;
-            elseif (risk_aver == 20)
-                params(ii).delta_HJB = 0.005;
-            end
+                if risk_aver == 10
+                    params(ii).delta_HJB = 1;
+                elseif (risk_aver == 20) && (sd_r <= 0.05)
+                    params(ii).delta_HJB = 0.1;
+                elseif (risk_aver == 20) && (sd_r < 0.15)
+                    params(ii).delta_HJB = 0.02;
+                elseif (risk_aver == 20)
+                    params(ii).delta_HJB = 0.005;
+                end
 
-            ii = ii + 1;
+                ii = ii + 1;
+            end
         end
     end
 

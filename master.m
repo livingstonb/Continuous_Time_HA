@@ -44,7 +44,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 29;
+runopts.param_index = 59;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -139,16 +139,32 @@ p.print();
 
 % to calibrate to (rb, ra)
 calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
-if p.riskaver == 1
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [0.005, 0.022]);
-elseif p.riskaver == 2
-	x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.01, 0.02]);
-elseif p.riskaver == 5
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.06, 0.01]);
-elseif p.riskaver == 10
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.094, 0.006]);
+if p.invies == 1
+    switch p.riskaver
+        case 1
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [0.005, 0.022]);
+        case 2
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.01, 0.02]);
+        case 5
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.06, 0.01]);
+        case 10
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.094, 0.006]);
+        case 20
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.12, 0.006]);
+    end
 else
-    x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.12, 0.006]);
+    switch p.riskaver
+        case 1
+            return; % doesn't work yet
+        case 2
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.0085, 0.028]);
+        case 5
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.025, 0.035]);
+        case 10
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.09, 0.038]);
+        case 20
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.11, 0.038]);
+    end
 end
 fsolve(calibrator, x0);
 
