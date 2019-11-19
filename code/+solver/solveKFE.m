@@ -1,4 +1,4 @@
-function g = solveKFE(p,income,grdKFE,gg,A,na_KFEIdentity)
+function g = solveKFE(p,income,grdKFE,gg,A,V)
 	% solveKFE() iterates over the Kolmogorov Forward
 	% Equation to find the equilibrium distribution over states
 
@@ -7,12 +7,27 @@ function g = solveKFE(p,income,grdKFE,gg,A,na_KFEIdentity)
 	na_KFE = p.na_KFE;
 	ny = numel(income.y.vec);
 
+	if (p.SDU == 1) && (ny > 1)
+        ez_adj = solver.SDU_income_risk_adjustment(p, V, income);
+        ez_adj_no_diag = ez_adj;
+        for k = 1:ny
+        	ez_adj_no_diag(:,k,k) = 0;
+        end
+    end
+
 	if p.iterateKFE == 0
         gg = ones(nb_KFE*na_KFE*nz, 1) .* income.ydist(:)' / (nb_KFE*na_KFE*nz);
         gg = gg(:);
         
-		inctrans = kron(sparse(income.ytrans), speye(nb_KFE*na_KFE*nz));
-% 		Ap_extended = sparse([(A+inctrans)'; grdKFE.trapezoidal.matrix(:)']);
+        if (p.SDU == 0) || (ny == 1)
+			inctrans = kron(sparse(income.ytrans), speye(nb_KFE*na_KFE*nz));
+		else
+			ix = repmat((1:na*nb*nz*ny)', ny, 1);
+            iy = repmat((1:na*nb*nz)', ny*ny, 1);
+            iy = iy + kron((0:ny-1)', nb*na*nz*ones(nb*na*nz*ny,1));
+            inctrans = sparse(ix, iy, ez_adj(:));
+        end
+
         Ap_extended = sparse([(A+inctrans)'; ones(1, nb_KFE*na_KFE*nz*ny)]);
 		RHS = sparse([zeros(nb_KFE*na_KFE*nz*ny, 1); 1]);
 
@@ -43,15 +58,16 @@ function g = solveKFE(p,income,grdKFE,gg,A,na_KFEIdentity)
 
 		    gg_tilde = grdKFE.trapezoidal.diagm * gg;
 
-		    if strcmp(na_KFEIdentity,'c')
-		   		gg_tilde_cz_k = reshape(gg_tilde,[nb_KFE na_KFE*nz ny]);
-		    end
 		    gg1 = NaN(nb_KFE*na_KFE*nz,ny);
 
 		    for iy = 1:ny    
-	            gk_sum = sum(repmat(ytrans0p(iy,:),nb_KFE*na_KFE*nz,1) ...
-	            	.* reshape(gg_tilde,nb_KFE*na_KFE*nz,ny),2);
-
+		    	if (p.SDU == 0) || (ny == 1)
+		            gk_sum = sum(repmat(ytrans0p(iy,:),nb_KFE*na_KFE*nz,1) ...
+		            	.* reshape(gg_tilde,nb_KFE*na_KFE*nz,ny),2);
+		        else
+		        	gk_sum = sum(ez_adj_no_diag(:,:,k) .* reshape(gg_tilde,nb_KFE*na_KFE*nz,ny),2);
+		        end
+		        	
 	            if (p.Bequests == 1) && (p.ResetIncomeUponDeath == 1)
 	                deathg = p.deathrate * income.ydist(iy) * sum(reshape(gg_tilde,[],ny),2);
 	            elseif (p.Bequests == 1) && (p.ResetIncomeUponDeath == 0)
@@ -61,12 +77,8 @@ function g = solveKFE(p,income,grdKFE,gg,A,na_KFEIdentity)
 	                deathg(1:nb_KFE*na_KFE:end) = p.deathrate * income.ydist(iy) * (1/nz);
 	            elseif (p.Bequests == 0) && (p.ResetIncomeUponDeath == 0)
 	                deathg = sparse(nb_KFE*na_KFE*nz,1);
-	                if strcmp(na_KFEIdentity,'a')
-	                	deathg(grdKFE.loc0b0a:nb_KFE*na_KFE:end) = p.deathrate * income.ydist(iy) * (1/nz);
-	                elseif strcmp(na_KFEIdentity,'c')
-	                	deathg(grdKFE.loc0b:nb_KFE:end) = p.deathrate * sum(gg_tilde_cz_k(:,:,iy),1);
-	                end
-	            end
+	                deathg(grdKFE.loc0b0a:nb_KFE*na_KFE:end) = p.deathrate * income.ydist(iy) * (1/nz);
+  	            end
 
 	            gg1(:,iy) = gg1_denom{iy}*(gg_tilde(1+(iy-1)*(nb_KFE*na_KFE*nz):iy*(nb_KFE*na_KFE*nz))...
 	                                     + p.delta_KFE*gk_sum + p.delta_KFE*deathg);

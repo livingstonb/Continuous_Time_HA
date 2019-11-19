@@ -19,7 +19,10 @@ classdef TransitionalDynSolver < handle
 
 		% intermediate values of V, A, policy fns, cumcon
 		V;
-		A;
+		A_constructor_HJB;
+		A_constructor_FK;
+		A_HJB;
+		A_FK;
 		KFEint;
         
         shocks;
@@ -40,7 +43,7 @@ classdef TransitionalDynSolver < handle
 	end
 
 	methods
-		function obj = TransitionalDynSolver(params,income,grids,shocks)
+		function obj = TransitionalDynSolver(params, income, grids, shocks)
 
 			obj.p = params;
 			obj.income = income;
@@ -55,9 +58,16 @@ classdef TransitionalDynSolver < handle
 				obj.mpcs(ishock).avg_4_quarterly = NaN(4,1);
 				obj.mpcs(ishock).avg_4_annual = NaN;
             end
+
+            returns_risk = (obj.p.sigma_r > 0);
+		    obj.A_constructor_HJB = solver.A_Matrix_Constructor(obj.p, obj.income, obj.grids, 'KFE', returns_risk);
+
+		    if returns_risk && (obj.p.retrisk_KFE == 0)
+		    	obj.A_constructor_FK = solver.A_Matrix_Constructor(obj.p, obj.income, obj.grids, 'KFE', false);
+		    end
 		end
 
-		function solve(obj,KFE,pmf,cum_con_baseline)
+		function solve(obj, KFE, pmf, cum_con_baseline)
             if obj.p.nz > 1
                 warning('Transitional dynamics not coded for nz > 1')
                 return
@@ -85,7 +95,7 @@ classdef TransitionalDynSolver < handle
             fprintf('\n')
 		end
 
-		function success = getTerminalCondition(obj,KFE,ishock)
+		function success = getTerminalCondition(obj, KFE, ishock)
 			% this method finds the value function the instant before
 			% the shock is applied
 			
@@ -140,7 +150,7 @@ classdef TransitionalDynSolver < handle
             
 		    for ii = 1:5000
 		    	KFE_terminal = solver.find_policies(obj.p,obj.income,obj.grids,V_terminal);
-                A_terminal = solver.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal,'KFE');
+		    	A_terminal = obj.A_constructor_HJB.construct(KFE_terminal, V_terminal);
 
 		    	u_k = reshape(KFE_terminal.u,[],obj.p.ny);
 
@@ -149,16 +159,33 @@ classdef TransitionalDynSolver < handle
 		    	for k = 1:obj.p.ny
 		    		ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
 			    	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
-		    		Ak = A_terminal(ind1:ind2,ind1:ind2);
+		    		Ak = A_terminal(ind1:ind2, ind1:ind2);
+                    
+                    if obj.p.SDU == 1
+                        ez_adj = solver.SDU_income_risk_adjustment(obj.p, V_terminal, obj.income);
+                    end
    
 		    		indx_k = ~ismember(1:obj.p.ny,k);
-		    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.dim2*obj.p.nz,1) ...
-                            .* V_terminal_k(:,indx_k),2);
+		    		if obj.p.SDU == 0
+			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.dim2*obj.p.nz,1) ...
+	                            .* V_terminal_k(:,indx_k),2);
+			    	else
+			    		Vk_stacked = sum(squeeze(ez_adj(:,k,indx_k)) .* V_terminal_k(:,indx_k),2);
+			    	end
 
-                    V1_terminal_k(:,k) = (deltaLarge* obj.rho_diag + (deltaLarge/obj.p.delta_mpc + 1 + deltaLarge*(obj.p.deathrate - obj.income.ytrans(k,k)))...
-		        				*speye(obj.p.nb_KFE*obj.dim2*obj.p.nz) - deltaLarge* Ak)...
-		                 	\ (deltaLarge* (u_k(:,k) + Vk_stacked)...
-		                 		+ deltaLarge*Vg_terminal_k(:,k)/obj.p.delta_mpc + V_terminal_k(:,k));
+			    	if obj.p.SDU == 0
+	                    V1_terminal_k(:,k) = (deltaLarge* obj.rho_diag + (deltaLarge/obj.p.delta_mpc + 1 + deltaLarge*(obj.p.deathrate - obj.income.ytrans(k,k)))...
+			        				*speye(obj.p.nb_KFE*obj.dim2*obj.p.nz) - deltaLarge* Ak)...
+			                 	\ (deltaLarge* (u_k(:,k) + Vk_stacked)...
+			                 		+ deltaLarge*Vg_terminal_k(:,k)/obj.p.delta_mpc + V_terminal_k(:,k));
+			        else
+			        	V1_terminal_k(:,k) = ...
+			        		(deltaLarge* obj.rho_diag + (deltaLarge/obj.p.delta_mpc + 1 + ...
+			        			deltaLarge*obj.p.deathrate.*speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)) - deltaLarge* Ak...
+			        			- deltaLarge * spdiags(ez_adj(:,k,k), 0, obj.p.nb_KFE*obj.dim2*obj.p.nz, obj.p.nb_KFE*obj.dim2*obj.p.nz))...
+			                 	\ (deltaLarge* (u_k(:,k) + Vk_stacked)...
+			                 		+ deltaLarge*Vg_terminal_k(:,k)/obj.p.delta_mpc + V_terminal_k(:,k));
+		        	end
 		    	end
 
     			dst = max(abs(V1_terminal_k(:)-V_terminal(:)));
@@ -195,6 +222,10 @@ classdef TransitionalDynSolver < handle
 				if mod(it,0.5) == 0
 		            fprintf('\tUpdating cumulative consumption given news, quarter=%0.2f\n',it)
                 end
+
+                if obj.p.SDU == 1
+			    	ez_adj = solver.SDU_income_risk_adjustment(obj.p, obj.V, obj.income);
+			    end
                 
                 u_k = reshape(obj.KFEint.u,[],obj.p.ny);
                 V_k = reshape(obj.V,[],obj.p.ny);
@@ -202,15 +233,25 @@ classdef TransitionalDynSolver < handle
                 for k = 1:obj.p.ny
                     ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
 			    	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
-                    Ak = obj.A(ind1:ind2,ind1:ind2);
+                    Ak = obj.A_HJB(ind1:ind2,ind1:ind2);
                     
                     indx_k = ~ismember(1:obj.income.ny,k);
-		    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.dim2*obj.p.nz,1) ...
-                            .* V_k(:,indx_k),2);
-                        
-                    V_k1(:,k) = (obj.rho_diag + (1/obj.p.delta_mpc + obj.p.deathrate - obj.income.ytrans(k,k))...
+
+                    if obj.p.SDU == 0
+			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.dim2*obj.p.nz,1) ...
+	                            .* V_k(:,indx_k),2);
+			    		V_k1(:,k) = (obj.rho_diag + (1/obj.p.delta_mpc + obj.p.deathrate - obj.income.ytrans(k,k))...
 		        				* speye(obj.p.nb_KFE*obj.dim2*obj.p.nz) - Ak)...
 		                 	\ (u_k(:,k) + Vk_stacked + V_k(:,k)/obj.p.delta_mpc);
+			    	else
+			    		Vk_stacked 	= sum(squeeze(ez_adj(:, k, indx_k)) .* V_k(:,indx_k),2);
+			    		V_k1(:,k) = (obj.rho_diag + (1/obj.p.delta_mpc + obj.p.deathrate)...
+		        				* speye(obj.p.nb_KFE*obj.dim2*obj.p.nz) - Ak - ...
+		        				spdiags(ez_adj(:, k, k), 0, obj.p.nb_KFE*obj.dim2*obj.p.nz, obj.p.nb_KFE*obj.dim2*obj.p.nz))...
+		                 	\ (u_k(:,k) + Vk_stacked + V_k(:,k)/obj.p.delta_mpc);
+			    	end
+                        
+                    
                 end
                 obj.V = reshape(V_k1,[obj.p.nb_KFE,obj.dim2,obj.income.ny,obj.p.nz]);
 
@@ -226,9 +267,22 @@ classdef TransitionalDynSolver < handle
 			        for k = 1:obj.income.ny
 			        	ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
 			        	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
-			            FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(...
-			            					1/obj.p.delta_mpc + obj.p.deathrate - obj.income.ytrans(k,k))...
-			                    	- obj.A(ind1:ind2,ind1:ind2);
+
+			        	if (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 0)
+			        		Ak = obj.A_FK(ind1:ind2, ind1:ind2);
+			        	else
+			        		Ak = obj.A_HJB(ind1:ind2, ind1:ind2);
+			        	end
+
+			        	if obj.p.SDU == 0
+				            FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(...
+				            					1/obj.p.delta_mpc + obj.p.deathrate - obj.income.ytrans(k,k)) - Ak;
+				        else
+				        	FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(...
+		            					1/obj.p.delta_mpc + obj.p.deathrate) ...
+		        						- spdiags(ez_adj(:, k, k), 0, obj.p.nb_KFE*obj.dim2*obj.p.nz, obj.p.nb_KFE*obj.dim2*obj.p.nz)
+		                    			- Ak;
+			        	end
 			            FKmat{k} = inverse(FKmat{k});
 			        end
 
@@ -261,8 +315,21 @@ classdef TransitionalDynSolver < handle
 
 		function update_cum_con(obj,period,FKmat)
             cumcon_t_k = reshape(obj.cumcon(:,period),[],obj.p.ny);
+
+            if obj.p.SDU == 1
+            	ez_adj = solver.SDU_income_risk_adjustment(obj.p, obj.V, obj.income);
+
+            	for k = 1:obj.income.ny
+            		ez_adj(:, k, k) = 0;
+            	end
+            end
+
 			for k = 1:obj.income.ny
-                ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
+				if obj.p.SDU == 0
+                	ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
+                else
+                	ytrans_cc_k = sum(squeeze(ez_adj(:, k, :)), cumcon_t_k,2);
+                end
 
                 deathin_cc_k = obj.get_death_inflows(cumcon_t_k,k);
 

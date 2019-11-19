@@ -61,7 +61,8 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	    throw(iterException)
     end
 
-    A_Constructor = solver.A_Matrix_Constructor(p, income, grd, 'HJB');
+    returns_risk = (p.sigma_r > 0);
+    A_Constructor = solver.A_Matrix_Constructor(p, income, grd, 'HJB', returns_risk);
 
     fprintf('    --- Iterating over HJB ---\n')
     dst = 1e5;
@@ -124,12 +125,11 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	%% --------------------------------------------------------------------
     % SOLVE KFE
 	% ---------------------------------------------------------------------
-    A_Constructor_KFE = solver.A_Matrix_Constructor(p, income, grdKFE, 'KFE');
+	returns_risk = (p.sigma_r > 0) && (p.retrisk_KFE == 1);
+    A_Constructor_KFE = solver.A_Matrix_Constructor(p, income, grdKFE, 'KFE', returns_risk);
     Au = A_Constructor_KFE.construct(KFE, KFE.Vn);
     
-
-    dim2Identity = 'a';
-	g = solver.solveKFE(p,income,grdKFE,gg,Au,dim2Identity);
+	g = solver.solveKFE(p,income,grdKFE,gg,Au,Vn);
 
 	%% --------------------------------------------------------------------
 	% COMPUTE WEALTH

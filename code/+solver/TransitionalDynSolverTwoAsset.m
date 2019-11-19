@@ -1,4 +1,4 @@
-classdef TransitionalDynSolverTwoAsset < TransitionalDynSolver
+classdef TransitionalDynSolverTwoAsset < solver.TransitionalDynSolver
 	% This class is used for solving for the policy functions
 	% when a future shock is known, and optionally for computing
 	% the MPCs out of news using Feynman-Kac.
@@ -27,8 +27,11 @@ classdef TransitionalDynSolverTwoAsset < TransitionalDynSolver
 		end
 
 		function update_A_matrix(obj)
-		    obj.A = solver.construct_trans_matrix(...
-		    	obj.p,obj.income,obj.grids,obj.KFEint,'KFE');
+			obj.A_HJB = obj.A_constructor_HJB.construct(obj.KFEint, obj.V);
+
+			if (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 0)
+				obj.A_FK = obj.A_constructor_FK.construct(obj.KFEint);
+			end
 		end
 
 		function deathin_cc_k = get_death_inflows(obj,cumcon_t_k,k)

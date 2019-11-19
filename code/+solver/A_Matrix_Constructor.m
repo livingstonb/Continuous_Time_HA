@@ -13,6 +13,8 @@ classdef A_Matrix_Constructor < handle
         grids;
         p;
 
+        returns_risk;
+
         asset_dB;
         asset_dF;
         asset_dSum;
@@ -29,7 +31,7 @@ classdef A_Matrix_Constructor < handle
         %% --------------------------------------------------------------------
         % CLASS CONSTRUCTOR
         % ---------------------------------------------------------------------
-        function obj = A_Matrix_Constructor(p, income, grids, modeltype)
+        function obj = A_Matrix_Constructor(p, income, grids, modeltype, returns_risk)
             obj.nb = numel(grids.b.vec);
             obj.na = numel(grids.a.vec);
             obj.nz = p.nz;
@@ -41,6 +43,8 @@ classdef A_Matrix_Constructor < handle
             obj.p = p;
 
             obj.modeltype = modeltype;
+
+            obj.returns_risk = returns_risk;
 
             if strcmp(modeltype,'KFE')
                 obj.y_mat = income.y.matrixKFE;
@@ -159,8 +163,7 @@ classdef A_Matrix_Constructor < handle
             %% --------------------------------------------------------------------
             % RATE OF RETURN RISK
             % ---------------------------------------------------------------------
-            if (obj.p.sigma_r > 0) && (obj.p.OneAsset == 1) && (strcmp(obj.modeltype,'HJB')...
-                || (strcmp(obj.modeltype,'KFE') && (obj.p.retrisk_KFE==1)))
+            if (obj.p.OneAsset == 1) && (obj.returns_risk == 1)
 
                 % Second derivative component, Vaa
                 A = A + obj.compute_V_aa_terms(nb, na, nz, ny);
@@ -170,8 +173,7 @@ classdef A_Matrix_Constructor < handle
                     A = A + obj.compute_V_a_terms(nb, na, nz, ny, V, adriftB, adriftF);
                 end
 
-            elseif (obj.p.sigma_r > 0) && (obj.p.OneAsset == 0) && (strcmp(obj.modeltype,'HJB')...
-                || (strcmp(obj.modeltype,'KFE') && (obj.p.retrisk_KFE==1)))
+            elseif (obj.p.OneAsset == 0) && (obj.returns_risk == 1)
 
                 % Second derivative component, Vaa
                 A = A + obj.compute_V_aa_terms(nb, na, nz, ny);

@@ -51,13 +51,20 @@ function [stats,p] = main(runopts, p)
     % -----------------------------------------------------------------
     stats.mpcs = struct();
     dim2Identity = 'a';
-    mpc_finder = statistics.MPCFinder(p,income,grdKFE,dim2Identity);
+
+    if p.SDU == 1
+        ez_adj = solver.SDU_income_risk_adjustment(p, KFE.Vn, income);
+        mpc_finder = statistics.MPCFinder(p,income,grdKFE,dim2Identity,ez_adj);
+    else
+        mpc_finder = statistics.MPCFinder(p,income,grdKFE,dim2Identity);
+    end
+
     shocks = [4,5,6];
     trans_dyn_solver = solver.TransitionalDynSolverTwoAsset(p,income,grdKFE,shocks);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')
-    	mpc_finder.solve(KFE,stats.pmf,Au);
+        mpc_finder.solve(KFE,stats.pmf,Au);
     end
     for ishock = 1:6
         stats.mpcs(ishock).avg_0_quarterly = mpc_finder.mpcs(ishock).quarterly;

@@ -28,6 +28,7 @@ classdef MPCFinder < handle
 
 		% income transitions w/o diagonal
 		ytrans_offdiag;
+		ez_adj;
 
 		% results structure
 		mpcs = struct();
@@ -36,7 +37,7 @@ classdef MPCFinder < handle
 	end
 
 	methods
-		function obj = MPCFinder(p,income,grids,dim2Identity)
+		function obj = MPCFinder(p,income,grids,dim2Identity,ez_adj)
 			obj.p = p;
 			obj.income = income;
 			obj.grids = grids;
@@ -51,7 +52,15 @@ classdef MPCFinder < handle
 				obj.ResetIncomeUponDeath = 0;
 			end
 
-			obj.ytrans_offdiag = income.ytrans - diag(diag(income.ytrans));
+			if (p.SDU == 0) || (income.ny == 1)
+				obj.ytrans_offdiag = income.ytrans - diag(diag(income.ytrans));
+			else
+				obj.ytrans_offdiag = ez_adj;
+				for k = 1:income.ny
+					obj.ytrans_offdiag(:,k,k) = 0;
+				end
+				obj.ez_adj = ez_adj;
+			end
 
 			for ii = 1:6
 				obj.mpcs(ii).mpcs = NaN;
@@ -87,9 +96,16 @@ classdef MPCFinder < handle
 		    for k = 1:obj.income.ny
 		    	ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
 		    	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
-		        obj.FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(1/obj.p.delta_mpc ...
-		        					+ obj.p.deathrate - obj.income.ytrans(k,k))...
-		                		- A(ind1:ind2,ind1:ind2);
+
+		    	if (obj.p.SDU == 0) || (obj.income.ny == 1)
+			        obj.FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(1/obj.p.delta_mpc ...
+			        					+ obj.p.deathrate - obj.income.ytrans(k,k))...
+			                		- A(ind1:ind2,ind1:ind2);
+			    else
+			    	obj.FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(1/obj.p.delta_mpc ...
+			        					+ obj.p.deathrate) - spdiags(obj.ez_adj(:,k,k), 0, obj.p.nb_KFE*obj.dim2*obj.p.nz,obj.p.nb_KFE*obj.dim2*obj.p.nz);
+			                		- A(ind1:ind2,ind1:ind2);
+            	end
 		        obj.FKmat{k} = inverse(obj.FKmat{k});
 		    end
 		end
@@ -142,7 +158,11 @@ classdef MPCFinder < handle
 			end
 
 			for k = 1:obj.income.ny
-                ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
+				if (obj.p.SDU == 0) || (obj.income.ny == 1)
+                	ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
+                else
+                	ytrans_cc_k = sum(squeeze(obj.ytrans_offdiag(:,k,:)) .* cumcon_t_k, 2);
+                end
 
                 if (obj.p.Bequests == 1) && (obj.ResetIncomeUponDeath == 1)
                 	deathin_cc_k = obj.p.deathrate * sum(obj.income.ydist' .* cumcon_t_k,2);

@@ -15,7 +15,7 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn,risk_adj)
     % RISK ADJUSTMENT FOR STOCHASTIC DIFFERENTIAL UTILITY
     % ------------------------------------------------------
     if p.SDU == 1
-        ez_adj = SDU_risk_adjustment(p, Vn, income);
+        ez_adj = solver.SDU_income_risk_adjustment(p, Vn, income);
     end
 
     %% -----------------------------------------------------
@@ -127,33 +127,5 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn,risk_adj)
             end
         end
         Vn1 = reshape(Vn1_k,nb,na,nz,ny);
-    end
-end
-
-%% -----------------------------------------------------
-% FUNCTIONS
-% ------------------------------------------------------
-function ez_adj = SDU_risk_adjustment(p, Vn, income)
-    % computes the risk adjustment in income transition rates
-    % when households have stochastic differential utility
-
-    assert(p.SDU == 1, "This function should not be called with SDU off.");
-
-    if p.invies ~= 1
-        ez_adj_0 = reshape(Vn, p.na*p.nb*p.nz, 1, income.ny) ./ reshape(Vn, p.na*p.nb*p.nz, income.ny, 1);
-        ez_adj_1 = ((1-p.invies) ./ (1-p.riskaver))...
-            .* ( (ez_adj_0 .^ ((1-p.riskaver)./(1-p.invies)) - 1) ./ (ez_adj_0 - 1) );
-        
-    else
-        ez_adj_0 = (1-p.riskaver) * (reshape(Vn, p.na*p.nb*p.nz, 1, income.ny) ...
-            - reshape(Vn, p.na*p.nb*p.nz, income.ny, 1));
-        ez_adj_1 = (exp(ez_adj_0) - 1) ./ (ez_adj_0);
-    end
-    
-    ez_adj = ez_adj_1 .* shiftdim(income.ytrans, -1);
-
-    for kk = 1:income.ny
-        idx_k = ~ismember(1:income.ny, kk);
-        ez_adj(:,kk,kk) = -sum(ez_adj(:, kk, idx_k), 3);
     end
 end
