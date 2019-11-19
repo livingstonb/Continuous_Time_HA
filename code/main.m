@@ -141,7 +141,9 @@ function [stats,p] = main(runopts, p)
 	    stats.mpcs(6).mpcs_0_t = [];
 	end
     
-    save([runopts.savedir 'output_' runopts.suffix '.mat'],'stats','grd','grdKFE','p','KFE','income')
+    if p.SaveResults == 1
+        save([runopts.savedir 'output_' runopts.suffix '.mat'],'stats','grd','grdKFE','p','KFE','income')
+    end
     clear solver.two_asset.solver
     fprintf('\nCode finished for the parameterization: \n\t%s\n\n',p.name)
 end

@@ -37,6 +37,7 @@ function outparams = SDU_tests(runopts)
     params(ii).rhoL = 0.022;
     params(ii).transfer = 0.0081 * 2.0;
     params(ii).implicit = 0;
+    params(ii).SaveResults = 0;
 
     %%--------------------------------------------------------------
     % WITH RETURNS RISK
@@ -79,6 +80,7 @@ function outparams = SDU_tests(runopts)
                 params(ii).transfer = 0.0081 * 2.0;
                 params(ii).r_b = 0.02 / 4;
                 params(ii).iterateKFE = 1;
+                params(ii).SaveResults = 0;
                 
                 if (risk_aver == 1) && (ies == 1)
                     params(ii).SDU = 0;

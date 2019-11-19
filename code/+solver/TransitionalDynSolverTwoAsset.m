@@ -1,4 +1,4 @@
-classdef TransitionalDynSolverTwoAsset < solver.TransitionalDynSolver
+classdef TransitionalDynSolverTwoAsset < TransitionalDynSolver
 	% This class is used for solving for the policy functions
 	% when a future shock is known, and optionally for computing
 	% the MPCs out of news using Feynman-Kac.

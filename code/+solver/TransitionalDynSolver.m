@@ -96,15 +96,10 @@ classdef TransitionalDynSolver < handle
 			% Get the guess of terminal value function
 			% V_{T+1}as V(b+shock,a,y)
 
-			if strcmp(obj.dim2Identity,'a')
-				dim2vec = obj.grids.a.vec;
-				dim2mat = obj.grids.a.matrix;
-			elseif strcmp(obj.dim2Identity,'c')
-				dim2vec = obj.grids.c.vec;
-				dim2mat = obj.grids.c.matrix;
-			end
+			dim2vec = obj.grids.a.vec;
+			dim2mat = obj.grids.a.matrix;
 
-			if numel(p.rhos) > 1
+			if numel(obj.p.rhos) > 1
 		        rho_mat = reshape(obj.p.rhos,[1 1 numel(obj.p.rhos)]);
 		    else
 		        rho_mat = obj.p.rho;
@@ -138,34 +133,15 @@ classdef TransitionalDynSolver < handle
 			Vg_terminal = reshape(Vg_terminal,reshape_vec);
 			Vg_terminal_k = reshape(Vg_terminal,[],obj.p.ny);
 
-			if strcmp(obj.dim2Identity,'c')
-				KFE_terminal.c = obj.grids.c.matrix;
-			end
-
 			% iterate with implicit-explicit scheme to get V_terminal
 			reshape_vec = [obj.p.nb_KFE,obj.dim2,obj.p.nz,obj.p.ny];
 		    V_terminal = Vg_terminal;
 		    V_terminal_k = reshape(V_terminal,[],obj.p.ny);
             
 		    for ii = 1:5000
-		    	if strcmp(obj.dim2Identity,'a')
-			    	KFE_terminal = solver.find_policies(obj.p,obj.income,obj.grids,V_terminal);
-                    A_terminal = solver.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal,'KFE');
-			    elseif strcmp(obj.dim2Identity,'c')
-			    	KFE_terminal.h = solver.con_effort.find_policies(obj.p,obj.income,obj.grids,V_terminal);
-	                KFE_terminal.s = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities) * obj.grids.b.matrix...
-	                    + (1-obj.p.wagetax)* obj.income.y.matrixKFE - obj.grids.c.matrix;
+		    	KFE_terminal = solver.find_policies(obj.p,obj.income,obj.grids,V_terminal);
+                A_terminal = solver.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal,'KFE');
 
-	                if p.SDU == 0
-                    	KFE_terminal.u = aux.u_fn(obj.grids.c.matrix, obj.p.riskaver);
-                    else
-                    	KFE_terminal.u = aux.u_fn(obj.grids.c.matrix, obj.p.invies, rho_mat);
-                    end
-                    KFE_terminal.u = KFE_terminal.u - aux.con_effort.con_adj_cost(obj.p,KFE_terminal.h)...
-	                    - aux.con_effort.penalty(obj.grids.b.matrix,obj.p.penalty1,obj.p.penalty2);
-
-                    A_terminal = solver.con_effort.construct_trans_matrix(obj.p,obj.income,obj.grids,KFE_terminal);        
-			    end
 		    	u_k = reshape(KFE_terminal.u,[],obj.p.ny);
 
 		    	V1_terminal_k = zeros(obj.p.nb_KFE*obj.dim2*obj.p.nz,obj.p.ny);
@@ -212,10 +188,6 @@ classdef TransitionalDynSolver < handle
 			obj.cumcon = zeros(obj.p.nb_KFE*obj.dim2*obj.income.ny*obj.p.nz,4);
 
 			dim = obj.p.nb_KFE*obj.dim2*obj.income.ny*obj.p.nz;
-
-			if strcmp(obj.dim2Identity,'c')
-            	obj.KFEint.c = obj.grids.c.matrix;
-            end
 
 			for it = 4:-obj.p.delta_mpc:obj.p.delta_mpc
 				timeUntilShock = obj.p.delta_mpc + 4 - it;

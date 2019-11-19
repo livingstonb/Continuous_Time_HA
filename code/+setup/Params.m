@@ -11,6 +11,7 @@ classdef Params < handle
         SimulateMPCS_news;
         Bequests = 0;
         ResetIncomeUponDeath = 0; % WARNING: keep = 0, may not be up to date
+        SaveResults = 1;
         
         % Identifier
         name = 'unnamed';

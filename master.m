@@ -44,7 +44,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 59;
+runopts.param_index = 26;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -148,22 +148,23 @@ if p.invies == 1
         case 5
             x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.06, 0.01]);
         case 10
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.094, 0.006]);
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.1, 0.01]);
         case 20
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.12, 0.006]);
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.125, 0.005]);
     end
 else
     switch p.riskaver
         case 1
-            return; % doesn't work yet
+            p.set("riskaver", 1.01);
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [0.01, 0.03]);
         case 2
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.0085, 0.028]);
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.001, 0.021]);
         case 5
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.025, 0.035]);
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.04, 0.015]);
         case 10
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.09, 0.038]);
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.08, 0.01]);
         case 20
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.11, 0.038]);
+            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.11, 0.02]);
     end
 end
 fsolve(calibrator, x0);
@@ -176,6 +177,7 @@ fsolve(calibrator, x0);
 p.set("NoRisk", 1);
 p.set("ComputeMPCS", 1);
 p.set("ComputeMPCS_news", 1);
+p.set("SaveResults", 1);
 tic
 stats = main(runopts, p);
 toc
