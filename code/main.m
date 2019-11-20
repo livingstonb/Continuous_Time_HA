@@ -60,7 +60,7 @@ function [stats,p] = main(runopts, p)
     end
 
     shocks = [4,5,6];
-    trans_dyn_solver = solver.TransitionalDynSolverTwoAsset(p,income,grdKFE,shocks);
+    trans_dyn_solver = solver.TransitionalDynSolver(p,income,grdKFE,shocks);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')

@@ -2,8 +2,10 @@ function ez_adj = SDU_income_risk_adjustment(p, Vn, income)
     % computes the risk adjustment in income transition rates
     % when households have stochastic differential utility
 
-    assert(p.SDU == 1, "This function should not be called with SDU off.");
-
+    if p.SDU ~= 1
+        ez_adj = [];
+        return;
+    end
     
     shape = size(Vn);
     nb = shape(1);

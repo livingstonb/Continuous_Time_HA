@@ -29,15 +29,8 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	%% --------------------------------------------------------------------
 	% INITIALIZATION FOR HJB
 	% ---------------------------------------------------------------------
-	if numel(p.rhos) > 1
-		rho_mat = reshape(p.rhos,[1 1 numel(p.rhos)]);
-	else
-		rho_mat =  p.rho;
-	end
 
 	% Initial guess
-
-    	% Attempt at more accurate guess
     Vn = solver.value_guess(p, grd, income);
 
 	% Initial distribution

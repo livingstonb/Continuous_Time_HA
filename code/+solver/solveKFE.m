@@ -18,16 +18,8 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
 	if p.iterateKFE == 0
         gg = ones(nb_KFE*na_KFE*nz, 1) .* income.ydist(:)' / (nb_KFE*na_KFE*nz);
         gg = gg(:);
-        
-        if (p.SDU == 0) || (ny == 1)
-			inctrans = kron(sparse(income.ytrans), speye(nb_KFE*na_KFE*nz));
-		else
-			ix = repmat((1:na*nb*nz*ny)', ny, 1);
-            iy = repmat((1:na*nb*nz)', ny*ny, 1);
-            iy = iy + kron((0:ny-1)', nb*na*nz*ones(nb*na*nz*ny,1));
-            inctrans = sparse(ix, iy, ez_adj(:));
-        end
-
+   
+        A = A + solver.get_income_transitions(p, income, ez_adj);
         Ap_extended = sparse([(A+inctrans)'; ones(1, nb_KFE*na_KFE*nz*ny)]);
 		RHS = sparse([zeros(nb_KFE*na_KFE*nz*ny, 1); 1]);
 
