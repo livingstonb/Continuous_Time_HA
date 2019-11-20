@@ -12,6 +12,10 @@ classdef Calibrators
 			f = @(x) rb_ra(x, runopts, p);
         end
         
+        function x0 = ra_rho_get_initial(p, initial)
+            x0 = ra_rho_initial(p, initial);
+        end
+        
         function x0 = rb_ra_get_initial(p, initial)
             x0 = rb_ra_initial(p, initial);
         end
@@ -28,6 +32,20 @@ function y = rho(x, runopts, p)
     fprintf("For rho = %f:\n", p.rho);
     fprintf("Total wealth = %f\n", stats.totw);
 end
+
+function x0 = ra_rho_initial(p, initial)
+
+     % return initial conditions
+    x0 = zeros(2, 1);
+    if initial(1) > 0
+        x0(1) = (initial(1) / 0.15) / (1 - initial(1)/0.15);
+    else
+        x0(1) = (initial(1) / 0.15) / (1 + initial(1)/0.15);
+    end
+    
+    x0(2) = ((initial(2)-p.r_b) / 0.1) / (1 - (initial(2)-p.r_b) / 0.1);
+end
+
 
 function y = ra_rho(x, runopts, p)
 	new_rho = 0.15 * abs(x(1)) / (1 + abs(x(1)));
