@@ -42,15 +42,8 @@ classdef MPCFinder < handle
 			obj.income = income;
 			obj.grids = grids;
 
-			obj.dim2Identity = dim2Identity;
-
-			if strcmp(dim2Identity,'a')
-				obj.dim2 = p.na_KFE;
-				obj.ResetIncomeUponDeath = p.ResetIncomeUponDeath;
-			elseif strcmp(dim2Identity,'c')
-				obj.dim2 = p.nc_KFE;
-				obj.ResetIncomeUponDeath = 0;
-			end
+			obj.dim2 = p.na_KFE;
+			obj.ResetIncomeUponDeath = p.ResetIncomeUponDeath;
 
 			if (p.SDU == 0) || (income.ny == 1)
 				obj.ytrans_offdiag = income.ytrans - diag(diag(income.ytrans));
@@ -149,14 +142,9 @@ classdef MPCFinder < handle
 			cumcon_t = obj.cumcon(:,period);
 			cumcon_t_k = reshape(cumcon_t,[],obj.income.ny);
 
-			if strcmp(obj.dim2Identity,'a')
-				reshape_vec = [obj.p.nb_KFE*obj.dim2 obj.p.nz obj.income.ny];
-				cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
-			elseif strcmp(obj.dim2Identity,'c')
-				reshape_vec = [obj.p.nb_KFE obj.dim2*obj.p.nz obj.income.ny];
-				cumcon_t_cz_k = reshape(cumcon_t_k,reshape_vec);
-			end
-
+            reshape_vec = [obj.p.nb_KFE*obj.dim2 obj.p.nz obj.income.ny];
+            cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
+                
 			for k = 1:obj.income.ny
 				if (obj.p.SDU == 0) || (obj.income.ny == 1)
                 	ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
@@ -177,13 +165,8 @@ classdef MPCFinder < handle
                         error('not correctly coded for nz > 1')
                     end
                 elseif (obj.p.Bequests == 0) && (obj.ResetIncomeUponDeath == 0)
-                	if strcmp(obj.dim2Identity,'a')
-	                	deathin_cc_k = obj.p.deathrate * cumcon_t_z_k(obj.grids.loc0b0a,:,k)';
-	                    deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.dim2,1));
-	                elseif strcmp(obj.dim2Identity,'c')
-	                    deathin_cc_k = obj.p.deathrate * cumcon_t_cz_k(obj.grids.loc0b,:,k);
-	                    deathin_cc_k = kron(deathin_cc_k,ones(obj.nb_KFE,1));
-	                end
+                    deathin_cc_k = obj.p.deathrate * cumcon_t_z_k(obj.grids.loc0b0a,:,k)';
+                    deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.dim2,1));
                 end
 
                 ind1 = 1+obj.dim2*obj.p.nb_KFE*obj.p.nz*(k-1);
@@ -210,11 +193,8 @@ classdef MPCFinder < handle
 
 	        % grids for interpolation
 	        interp_grids = {obj.grids.b.vec};
-	        if strcmp(obj.dim2Identity,'a')
-	        	interp_grids{end+1} = obj.grids.a.vec;
-	        elseif strcmp(obj.dim2Identity,'c')
-	        	interp_grids{end+1} = obj.grids.c.vec;
-	        end
+            interp_grids{end+1} = obj.grids.a.vec;
+
 
 	        if obj.p.nz > 1
 	        	interp_grids{end+1} = obj.grids.z.vec;
@@ -224,11 +204,7 @@ classdef MPCFinder < handle
 	        	interp_grids{end+1} = obj.income.y.vec;
 	        end
 
-	        if strcmp(obj.dim2Identity,'a')
-	        	dim2_mat = obj.grids.a.matrix(:);
-			else
-				dim2_mat = obj.grids.c.matrix(:);
-			end
+	        dim2_mat = obj.grids.a.matrix(:);
 
 			reshape_vec = [obj.p.nb_KFE,obj.dim2,obj.p.nz,obj.income.ny];
 			for period = 1:4

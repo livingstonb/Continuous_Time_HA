@@ -41,8 +41,14 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
 	    gg1_denom = cell(1,ny);
 	    for iy = 1:ny
 	        Ak = A(1+(iy-1)*(nb_KFE*na_KFE*nz):iy*(nb_KFE*na_KFE*nz),1+(iy-1)*(nb_KFE*na_KFE*nz):iy*(nb_KFE*na_KFE*nz));
-	        gg1_denom{iy} = (speye(nb_KFE*na_KFE*nz) - p.delta_KFE * Ak'...
-		   		- p.delta_KFE * (income.ytrans(iy,iy) - p.deathrate) * speye(nb_KFE*na_KFE*nz));
+
+	        if (p.SDU == 0) || (ny == 1)
+		        gg1_denom{iy} = (speye(nb_KFE*na_KFE*nz) - p.delta_KFE * Ak'...
+			   		- p.delta_KFE * (income.ytrans(iy,iy) - p.deathrate) * speye(nb_KFE*na_KFE*nz));
+		    else
+		    	gg1_denom{iy} = (1+p.delta_KFE*p.deathrate)*speye(nb_KFE*na_KFE*nz) - p.delta_KFE * Ak'...
+			   		- p.delta_KFE * spdiags(ez_adj(:,k,k),0,nb_KFE*na_KFE*nz,nb_KFE*na_KFE*nz);
+	    	end
 	        gg1_denom{iy} = inverse(gg1_denom{iy});
 	    end
 

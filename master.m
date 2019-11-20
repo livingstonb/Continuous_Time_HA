@@ -30,9 +30,9 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
-runopts.fast = 0; % use small grid for debugging
-runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
+runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.fast = 1; % use small grid for debugging
+runopts.mode = 'get_params'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = 0;
 runopts.SimulateMPCS = 0; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = 0; % MPCs out of news, requires ComputeMPCS = 1
@@ -44,7 +44,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 50;
+runopts.param_index = 2;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -113,43 +113,43 @@ p.print();
 
 
 % % to calibrate to (rb, ra)
-calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
-if p.invies == 1
-    switch p.riskaver
-        case 1
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [0.005, 0.022]);
-        case 2
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.04, 0.0001]);
-        case 5
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.06, -0.001]);
-        case 10
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.1, -0.002]);
-        case 20
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.12, -0.005]);
-    end
-else
-    switch p.riskaver
-        case 1
-            p.set("riskaver", 1.01);
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [0.004, 0.012]);
-        case 2
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.035, 0.0015]);
-        case 5
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.085, -0.0003]);
-        case 10
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.125, -0.001]);
-        case 20
-            x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.15, -0.01]);
-    end
-end
-fsolve(calibrator, x0);
+% calibrator = solver.Calibrators.rb_ra_calibrator(runopts, p);
+% if p.invies == 1
+%     switch p.riskaver
+%         case 1
+%             x0 = solver.Calibrators.rb_ra_get_initial(p, [0.005, 0.022]);
+%         case 2
+%             x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.04, 0.0001]);
+%         case 5
+%             x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.06, -0.001]);
+%         case 10
+%             x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.1, -0.002]);
+%         case 20
+%             x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.12, -0.005]);
+%     end
+% else
+%     switch p.riskaver
+%         case 1
+%             p.set("riskaver", 1.01);
+%             x0 = solver.Calibrators.rb_ra_get_initial(p, [0.004, 0.012]);
+%         case 2
+%             x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.035, 0.0015]);
+%         case 5
+%             x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.085, -0.0003]);
+%         case 10
+%             x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.125, -0.001]);
+%         case 20
+%             x0 = solver.Calibrators.rb_ra_get_initial(p, [-0.15, -0.01]);
+%     end
+% end
+% fsolve(calibrator, x0);
 
 % calibrator = solver.Calibrators.ra_rho_calibrator(runopts, p);
 % x0 = solver.Calibrators.ra_rho_get_initial(p, [0.033944, 0.022869]);
 % fsolve(calibrator, x0);
 
-% calibrator = solver.Calibrators.rho_calibrator(runopts, p);
-% fsolve(calibrator, [0.8]);
+calibrator = solver.Calibrators.rho_calibrator(runopts, p);
+fsolve(calibrator, [0.8]);
 
 % final run
 p.set("NoRisk", 1);

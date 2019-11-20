@@ -16,6 +16,8 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn,risk_adj)
     % ------------------------------------------------------
     if p.SDU == 1
         ez_adj = solver.SDU_income_risk_adjustment(p, Vn, income);
+    else
+        ez_adj = [];
     end
 
     %% -----------------------------------------------------
@@ -65,26 +67,10 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn,risk_adj)
         Vn1_k = NaN(nb*na*nz,ny);
         Vn_k = reshape(Vn,[],ny);
         Bik_all = cell(ny,1);
-        
-        if numel(p.rhos) > 1
-            rhocol = kron(p.rhos', ones(nb*na,1));
-            rho_mat = spdiags(rhocol, nb*na*nz, nb*na*nz);
-        else
-            rho_mat = p.rho * speye(nb*na*nz);
-        end
 
         % loop over income states
         for kk = 1:ny
-            Ak = A(1+(kk-1)*(nb*na*nz):kk*(nb*na*nz),1+(kk-1)*(nb*na*nz):kk*(nb*na*nz));
-
-            Bk = p.delta_HJB * rho_mat + ...
-                    (1 + p.delta_HJB * p.deathrate) * speye(nb*na*nz)...
-                    - p.delta_HJB*Ak;
-            if p.SDU == 1
-                Bk = Bk - p.delta_HJB * spdiags(ez_adj(:, kk, kk), 0, nb*na*nz, nb*na*nz);
-            else
-                Bk = Bk - p.delta_HJB * income.ytrans(kk, kk) * speye(nb*na*nz);
-            end
+            Bk = construct_Bk(p, income, kk, A, ez_adj);
             
             Bik_all{kk} = inverse(Bk);
             indx_k = ~ismember(1:ny,kk);
@@ -128,4 +114,33 @@ function Vn1 = solveHJB(p,A,income,Vn,u,nn,risk_adj)
         end
         Vn1 = reshape(Vn1_k,nb,na,nz,ny);
     end
+end
+
+function Bk = construct_Bk(p, income, k, A, ez_adj)
+    nb = p.nb;
+    na = p.na;
+
+    ny = income.ny;
+    nz = p.nz;
+
+    if numel(p.rhos) > 1
+        rhocol = kron(p.rhos', ones(nb*na,1));
+        rho_mat = spdiags(rhocol, nb*na*nz, nb*na*nz);
+    else
+        rho_mat = p.rho * speye(nb*na*nz);
+    end
+
+    indx_k = ~ismember(1:ny,k);
+
+    Ak = A(1+(k-1)*(nb*na*nz):k*(nb*na*nz),1+(k-1)*(nb*na*nz):k*(nb*na*nz));
+
+    Bk = p.delta_HJB * rho_mat + (1 + p.delta_HJB * p.deathrate) * speye(nb*na*nz)...
+        - p.delta_HJB * Ak;
+
+    if p.SDU == 1
+        Bk = Bk - p.delta_HJB * spdiags(ez_adj(:, k, k), 0, nb*na*nz, nb*na*nz);
+    else
+        Bk = Bk - p.delta_HJB * income.ytrans(k, k) * speye(nb*na*nz);
+    end
+
 end
