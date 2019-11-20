@@ -57,7 +57,7 @@ function Vn1 = solveHJB(p, A, income, Vn, u, nn, risk_adj)
         assert(p.deathrate == 0, "Fully implicit assumes no death.")
 
         % add income transitions
-        A = A + income.sparse_income_transitions(p, ez_adj);
+        A = A + income.sparse_income_transitions(p, ez_adj, 'HJB');
 
         if isempty(risk_adj)
             RHS = p.delta_HJB * u(:) + Vn(:);
@@ -111,6 +111,24 @@ end
 function Bk = construct_Bk(p, income, k, A, ez_adj)
     % constructs the matrix Bk = (rho + deathrate - A)*delta + I
     % which serves as the divisor in the implicit-explicit update scheme
+
+    % Parameters
+    % ----------
+    % p : a Params object
+    %
+    % income : an Income object
+    %
+    % k : index of the current income block within the A matrix
+    %
+    % A : the sparse transition matrix, of shape (nb*na*nz*ny, nb*na*nz*ny)
+    %
+    % ez_adj : the risk-adjusted income transitions, if utility is SDU, of
+    %   shape (nb*na*nz, ny, ny)
+    %
+    % Returns
+    % -------
+    % Bk : the sparse matrix divisor in the implicit-explicit update scheme
+    %   for income block k
 
     nb = p.nb;
     na = p.na;

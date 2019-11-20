@@ -29,20 +29,9 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
 	%% --------------------------------------------------------------------
 	% INITIALIZATION FOR HJB
 	% ---------------------------------------------------------------------
-
-	% Initial guess
-    Vn = solver.value_guess(p, grd, income);
-
-	% Initial distribution
-    gg0 = ones(nb_KFE,na_KFE,nz,ny);
-    gg0 = gg0 .* permute(repmat(income.ydist,[1 nb_KFE na_KFE nz]),[2 3 4 1]);
-    if p.OneAsset == 1
-        gg0(:,grdKFE.a.vec>0,:,:) = 0;
-    end
-    gg0 = gg0 / sum(gg0(:));
-	gg0 = gg0 ./ grdKFE.trapezoidal.matrix;
-	gg = gg0;
-
+	% Initial guess for value function and distribution
+    [Vn, gg] = solver.make_initial_guess(p, grd, grdKFE, income);
+    
 	%% --------------------------------------------------------------------
     % SOLVE HJB
 	% ---------------------------------------------------------------------
@@ -122,7 +111,7 @@ function [AYdiff,HJB,KFE,Au] = solver(runopts,p,income,grd,grdKFE)
     A_Constructor_KFE = solver.A_Matrix_Constructor(p, income, grdKFE, 'KFE', returns_risk);
     Au = A_Constructor_KFE.construct(KFE, KFE.Vn);
     
-	g = solver.solveKFE(p,income,grdKFE,gg,Au,Vn);
+	g = solver.solveKFE(p,income,grdKFE,gg,Au,KFE.Vn);
 
 	%% --------------------------------------------------------------------
 	% COMPUTE WEALTH

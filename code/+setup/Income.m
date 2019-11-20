@@ -65,7 +65,7 @@ classdef Income < handle
             obj.y.matrixKFE = repmat(obj.y.wide,[dimsKFE 1]);
         end
 
-        function inctrans = sparse_income_transitions(obj, p, ez_adj)
+        function inctrans = sparse_income_transitions(obj, p, ez_adj, modeltype)
 		    % generate a sparse matrix of income transitions for solve 
 		    % the HJB or KFE
 
@@ -76,21 +76,36 @@ classdef Income < handle
 		    % ez_adj : an array of shape (nb*na*nz, ny, ny) which contains the
 		    %	income transitions adjusted for stochastic diff utility
 		    %
+		    % modeltype : grid type indicator, 'HJB' or 'KFE'
+		    %
 		    % Returns
 		    % -------
 		    % inctrans : a sparse matrix of income transition rates, risk adjusted
 		    %	if utility is SDU, and of shape (nb*na*nz*ny, nb*na*nz*ny)
 
-		    if p.SDU == 0
-		        % return exogenous income transition rates
-		        inctrans = kron(obj.ytrans, speye(p.nb*p.na*p.nz));
-		    else
-		        % adjust according to SDU transformation
-		        ix = repmat((1:p.na*p.nb*p.nz*obj.ny)', obj.ny, 1);
-		        iy = repmat((1:p.na*p.nb*p.nz)', obj.ny*obj.ny, 1);
-		        iy = iy + kron((0:obj.ny-1)', p.nb*p.na*p.nz*ones(p.nb*p.na*p.nz*obj.ny,1));
-		        inctrans = sparse(ix, iy, ez_adj(:));
-		    end
+		    if strcmp(modeltype, 'HJB')
+			    if p.SDU == 0
+			        % return exogenous income transition rates
+			        inctrans = kron(obj.ytrans, speye(p.nb*p.na*p.nz));
+			    else
+			        % adjust according to SDU transformation
+			        ix = repmat((1:p.na*p.nb*p.nz*obj.ny)', obj.ny, 1);
+			        iy = repmat((1:p.na*p.nb*p.nz)', obj.ny*obj.ny, 1);
+			        iy = iy + kron((0:obj.ny-1)', p.nb*p.na*p.nz*ones(p.nb*p.na*p.nz*obj.ny,1));
+			        inctrans = sparse(ix, iy, ez_adj(:));
+			    end
+			elseif strcmp(modeltype, 'KFE')
+				if p.SDU == 0
+			        % return exogenous income transition rates
+			        inctrans = kron(obj.ytrans, speye(p.nb_KFE*p.na_KFE*p.nz));
+			    else
+			        % adjust according to SDU transformation
+			        ix = repmat((1:p.na_KFE*p.nb_KFE*p.nz*obj.ny)', obj.ny, 1);
+			        iy = repmat((1:p.na_KFE*p.nb_KFE*p.nz)', obj.ny*obj.ny, 1);
+			        iy = iy + kron((0:obj.ny-1)', p.nb_KFE*p.na_KFE*p.nz*ones(p.nb_KFE*p.na_KFE*p.nz*obj.ny,1));
+			        inctrans = sparse(ix, iy, ez_adj(:));
+			    end
+			end
 		end
 
 		function ez_adj = SDU_income_risk_adjustment(obj, p, Vn)

@@ -1,7 +1,5 @@
-function [policies, V_deriv_risky_asset_nodrift] = find_policies(p,income,grd,Vn)
-    % stores policy functions and utility in policies.c, policies.d, policies.s, and policies.u
-    % to construct policy functions on HJB grid, pass grd and Vn
-    % to construct policy functions on KFE grid, pass grdKFE and VnKFE
+function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd, Vn)
+    % computes policy functions on either the HJB or KFE grid
 
     na = numel(grd.a.vec);
     nb = numel(grd.b.vec);

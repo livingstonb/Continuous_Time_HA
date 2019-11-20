@@ -19,7 +19,7 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
         gg = ones(nb_KFE*na_KFE*nz, 1) .* income.ydist(:)' / (nb_KFE*na_KFE*nz);
         gg = gg(:);
    
-        A = A + income.sparse_income_transitions(p, ez_adj);
+        A = A + income.sparse_income_transitions(p, ez_adj, 'KFE');
         Ap_extended = sparse([(A+inctrans)'; ones(1, nb_KFE*na_KFE*nz*ny)]);
 		RHS = sparse([zeros(nb_KFE*na_KFE*nz*ny, 1); 1]);
 

@@ -1,4 +1,21 @@
-function V = value_guess(p, grids, income)
+function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
+    % makes initial guesses for the value function and distribution
+
+    % Parameters
+    % ----------
+    % p : a Params object
+    %
+    % grids : a Grid object which holds the HJB grids
+    %
+    % gridsKFE : a Grid object which holds the KFE grids
+    %
+    % income : an Income object
+    %
+    % Returns
+    % -------
+    % V : value function guess, of shape (nb, na, nz, ny)
+    %
+    % gg : distribution guess, of shape (nb_KFE, na_KFE, nz, ny)
 
 	nb = p.nb;
 	na = p.na;
@@ -7,6 +24,9 @@ function V = value_guess(p, grids, income)
 
 	dim = nb * na * nz * ny;
 
+    %% --------------------------------------------------------------------
+    % GUESS FOR VALUE FUNCTION
+    % ---------------------------------------------------------------------
 	rho_mat = p.rho * speye(dim);
 
 	% liquid returns grid
@@ -27,32 +47,12 @@ function V = value_guess(p, grids, income)
     end
 
     if p.SDU == 1
-        % risk-adjusted income transitions
-        if p.invies ~= 1
-            ez_adj_0 = reshape(u, na*nb*nz, 1, ny) ./ reshape(u, na*nb*nz, ny, 1);
-            ez_adj_1 = ((1-p.invies) ./ (1-p.riskaver))...
-                .* ( (ez_adj_0 .^ ((1-p.riskaver)./(1-p.invies)) - 1) ./ (ez_adj_0 - 1) );
-            
-        else
-            ez_adj_0 = (1-p.riskaver) * (reshape(u, na*nb*nz, 1, ny) - reshape(u, na*nb*nz, ny, 1));
-            ez_adj_1 = (exp(ez_adj_0) - 1) ./ (ez_adj_0);
-        end
-        
-        ez_adj = ez_adj_1 .* shiftdim(income.ytrans, -1);
-
-        for kk = 1:ny
-            idx_k = ~ismember(1:ny, kk);
-            ez_adj(:,kk,kk) = -sum(ez_adj(:, kk, idx_k), 3);
-        end
-        
-
-        ix = repmat((1:na*nb*nz*ny)', ny, 1);
-        iy = repmat((1:na*nb*nz)', ny*ny, 1);
-        iy = iy + kron((0:ny-1)', nb*na*nz*ones(nb*na*nz*ny,1));
-        inctrans = sparse(ix, iy, ez_adj(:));
+        % risk-adjust income transitions
+        ez_adj = income.SDU_income_risk_adjustment(p, u);
     else
-        inctrans = kron(income.ytrans, speye(nb * na * nz));
+        ez_adj = [];
     end
+    inctrans = income.sparse_income_transitions(p, ez_adj, 'HJB');
 
     if p.sigma_r > 0
         % Vaa term
@@ -94,4 +94,17 @@ function V = value_guess(p, grids, income)
 
     V = (rho_mat - inctrans - Arisk) \ u(:);
     V = reshape(V, nb, na, nz, ny);
+
+    %% --------------------------------------------------------------------
+    % GUESS FOR EQUILIBRIUM DISTRIBUTION
+    % ---------------------------------------------------------------------
+    gg0 = ones(p.nb_KFE,p.na_KFE,p.nz,income.ny);
+    gg0 = gg0 .* permute(repmat(income.ydist,[1 p.nb_KFE p.na_KFE p.nz]),[2 3 4 1]);
+    if p.OneAsset == 1
+        gg0(:,gridsKFE.a.vec>0,:,:) = 0;
+    end
+    gg0 = gg0 / sum(gg0(:));
+    gg0 = gg0 ./ gridsKFE.trapezoidal.matrix;
+    gg = gg0;
+
 end
