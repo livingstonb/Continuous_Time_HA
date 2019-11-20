@@ -6,6 +6,8 @@ function Vn1 = solveHJB(p, A, income, Vn, u, nn, risk_adj)
     % ----------
     % p : a Params object which contains the parameters of the model
     %
+    % income : an Income object which contains income variables
+    %
     % A : the state transition matrix, sparse and of shape
     %   (nb*na*nz*ny, na*nb*nz*ny)
     %
@@ -55,7 +57,7 @@ function Vn1 = solveHJB(p, A, income, Vn, u, nn, risk_adj)
         assert(p.deathrate == 0, "Fully implicit assumes no death.")
 
         % add income transitions
-        A = A + solver.get_income_transitions(p, income, ez_adj);
+        A = A + income.sparse_income_transitions(p, ez_adj);
 
         if isempty(risk_adj)
             RHS = p.delta_HJB * u(:) + Vn(:);

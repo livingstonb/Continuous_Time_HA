@@ -46,5 +46,26 @@ classdef Income < handle
 		    obj.y.matrix = repmat(obj.y.wide,[dimsHJB 1]);
             obj.y.matrixKFE = repmat(obj.y.wide,[dimsKFE 1]);
         end
+
+        function inctrans = sparse_income_transitions(obj, p, ez_adj)
+		    % generate a sparse matrix of income transitions for solve 
+		    % the HJB or KFE
+
+		    % Parameters
+		    % ----------
+		    % p : a Params object which contains the parameters of the model
+		    %
+
+		    if p.SDU == 0
+		        % return exogenous income transition rates
+		        inctrans = kron(obj.ytrans, speye(p.nb*p.na*p.nz));
+		    else
+		        % adjust according to SDU transformation
+		        ix = repmat((1:p.na*p.nb*p.nz*obj.ny)', obj.ny, 1);
+		        iy = repmat((1:p.na*p.nb*p.nz)', obj.ny*obj.ny, 1);
+		        iy = iy + kron((0:obj.ny-1)', p.nb*p.na*p.nz*ones(p.nb*p.na*p.nz*obj.ny,1));
+		        inctrans = sparse(ix, iy, ez_adj(:));
+		    end
+		end
 	end
 end
