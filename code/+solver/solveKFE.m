@@ -1,5 +1,5 @@
 function g = solveKFE(p,income,grdKFE,gg,A,V)
-	% solveKFE() iterates over the Kolmogorov Forward
+	% iterates over the Kolmogorov Forward
 	% Equation to find the equilibrium distribution over states
 
 	nz = p.nz;
@@ -13,6 +13,8 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
         for k = 1:ny
         	ez_adj_no_diag(:,k,k) = 0;
         end
+    else
+    	ez_adj = [];
     end
 
 	if p.iterateKFE == 0
@@ -29,20 +31,7 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
         gg = full(gg);
 	else
 		gg = gg(:);
-
-	    gg1_denom = cell(1,ny);
-	    for iy = 1:ny
-	        Ak = A(1+(iy-1)*(nb_KFE*na_KFE*nz):iy*(nb_KFE*na_KFE*nz),1+(iy-1)*(nb_KFE*na_KFE*nz):iy*(nb_KFE*na_KFE*nz));
-
-	        if (p.SDU == 0) || (ny == 1)
-		        gg1_denom{iy} = (speye(nb_KFE*na_KFE*nz) - p.delta_KFE * Ak'...
-			   		- p.delta_KFE * (income.ytrans(iy,iy) - p.deathrate) * speye(nb_KFE*na_KFE*nz));
-		    else
-		    	gg1_denom{iy} = (1+p.delta_KFE*p.deathrate)*speye(nb_KFE*na_KFE*nz) - p.delta_KFE * Ak'...
-			   		- p.delta_KFE * spdiags(ez_adj(:,k,k),0,nb_KFE*na_KFE*nz,nb_KFE*na_KFE*nz);
-	    	end
-	        gg1_denom{iy} = inverse(gg1_denom{iy});
-	    end
+		gg1_denom = KFE_matrix_divisor(p, income, A, ez_adj);
 
 	    % transition matrix with diagonal killed
 		ytrans0  = income.ytrans - diag(diag(income.ytrans)); 
@@ -87,13 +76,7 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
 		    gg1 = grdKFE.trapezoidal.diagm \ gg1;
 
 	        dst = max(abs(gg1(:) - gg(:)));
-
-	        if (dst>10000) && (iter>2000)
-	        	msgID = 'KFE:NotConverging';
-			    msg = 'KFE:NotConverging';
-			    KFEException = MException(msgID,msg);
-			    throw(KFEException)
-	        end
+	        check_if_not_converging(dst, iter);
 	        
 		    if (iter==1) || (mod(iter,100) == 0)
 		        fprintf('\tKFE iteration  = %i, distance = %e\n',iter,dst);
@@ -110,4 +93,32 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
 	end
 
 	g = reshape(gg,nb_KFE,na_KFE,nz,ny);
+end
+
+function LHS = KFE_matrix_divisor(p, income, A, ez_adj)
+	LHS = cell(1, income.ny);
+	for k = 1:income.ny
+		i1 = 1 + (k-1) * (p.nb_KFE*p.na_KFE*p.nz);
+		i2 = k * (p.nb_KFE*p.na_KFE*p.nz);
+		Ak = A(i1:i2, i1:i2);
+
+		if (p.SDU == 0) || (income.ny == 1)
+			LHS{k} = (speye(p.nb_KFE*p.na_KFE*p.nz) - p.delta_KFE * Ak'...
+	   			- p.delta_KFE * (income.ytrans(k,k) - p.deathrate) * speye(p.nb_KFE*p.na_KFE*p.nz));
+		else
+			LHS{k} = (1+p.delta_KFE*p.deathrate)*speye(p.nb_KFE*p.na_KFE*p.nz) - p.delta_KFE * Ak'...
+	   			- p.delta_KFE * spdiags(ez_adj(:,k,k), 0, p.nb_KFE*p.na_KFE*p.nz, p.nb_KFE*p.na_KFE*p.nz);
+		end
+
+		LHS{k} = inverse(LHS{k});
+	end
+end
+
+function check_if_not_converging(dst, iter)
+	if (dst>10000) && (iter>2000)
+    	msgID = 'KFE:NotConverging';
+	    msg = 'KFE:NotConverging';
+	    KFEException = MException(msgID,msg);
+	    throw(KFEException)
+    end
 end

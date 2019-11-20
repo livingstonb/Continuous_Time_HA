@@ -13,10 +13,10 @@ function [stats,p] = main(runopts, p)
 
     p.set("ny", income.ny);
 
-	grd = setup.GridTwoAsset(p,income.ny,'HJB'); % grid for HJB
-    grd_norisk = setup.GridTwoAsset(p,1,'HJB');
-	grdKFE = setup.GridTwoAsset(p,income.ny,'KFE');% grid for KFE
-    grdKFE_norisk = setup.GridTwoAsset(p,1,'KFE');
+	grd = setup.Grid(p,income.ny,'HJB'); % grid for HJB
+    grd_norisk = setup.Grid(p,1,'HJB');
+	grdKFE = setup.Grid(p,income.ny,'KFE');% grid for KFE
+    grdKFE_norisk = setup.Grid(p,1,'KFE');
 
     if numel(p.rhos) > 1
     	grd.add_zgrid(p.rhos',p.na);
@@ -32,11 +32,11 @@ function [stats,p] = main(runopts, p)
 %     assert(p.bmin > NBL,msg);
     
     runopts.RunMode = 'Final';
-	[~,HJB,KFE,Au] = solver.solver(runopts,p,income,grd,grdKFE);
+	[HJB, KFE, Au] = solver.solver(runopts,p,income,grd,grdKFE);
 
     if p.NoRisk == 1
         runopts.RunMode = 'NoRisk';
-        [~,HJB_nr,KFE_nr,Au_nr] = solver.solver(runopts,p,income_norisk,...
+        [HJB_nr, KFE_nr, Au_nr] = solver.solver(runopts,p,income_norisk,...
                                             grd_norisk,grdKFE_norisk);
     end
 

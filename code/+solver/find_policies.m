@@ -1,6 +1,25 @@
 function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd, Vn)
     % computes policy functions on either the HJB or KFE grid
 
+    % Parameters
+    % ----------
+    % p : a Params object
+    %
+    % income : an Income object
+    %
+    % grd : a Grid object
+    %
+    % Vn : the value function, shape (nb, na, nz, ny)
+    %
+    % Returns
+    % -------
+    % policies : a structure containing the consumption,
+    %	saving, and deposits policy function
+    %
+    % V_deriv_risky_asset_nodrift : approximation of the
+    %	first derivative of V for the case with no drift
+    %	in the risky asset
+
     na = numel(grd.a.vec);
     nb = numel(grd.b.vec);
     nz = p.nz;

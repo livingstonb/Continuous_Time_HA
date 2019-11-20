@@ -1,19 +1,29 @@
 classdef Grid < handle
-    % This class stores the asset and optionally the consumption grids
+    % This class creates and stores the asset grid
     
 	properties (SetAccess=protected)
 		b = struct(); % liquid asset grid
 		a = struct(); % illiquid asset grid
-		c = struct(); % consumption grid
 		z = struct(); % dimension for preference/other heterogeneity
 
-        trapezoidal = struct(); % from trapezoidal rule
+		% number of points on the illiquid grid
+		na;
+
+		% indices of 0 assets
+        loc0a;
+        loc0b0a;
+	    loc0b;
+
+        % grid deltas for trapezoidal integration
+        trapezoidal = struct();
 
         gtype; % HJB or KFE
 
+        % grid sizes along last two dimensions
         ny;
         nz;
 
+        % liquid grid
         nb;
         nb_pos;
         nb_neg;
@@ -21,12 +31,27 @@ classdef Grid < handle
         % with pref heterog, rho values are rho + rho_grid
         rho_grid = 0; % e.g. [-0.001,0,0.001]
         rhos; % equals rho + rho_grid
-
-        loc0b;
 	end
 
 	methods
-	    function obj = Grid(params,ny,gtype)
+	    function obj = Grid(params, ny, gtype)
+	    	% instantiates the Grid object
+
+	    	% Parameters
+	    	% ----------
+	    	% params : a Params object, containing model parameters
+	    	%
+	    	% ny : number of points on the income grid
+	    	%
+	    	% gtype : grid type, either 'HJB' or 'KFE'
+	    	%
+	    	% Returns
+	    	% -------
+	    	% a Grid object, which grids for the liquid and
+	    	% illiquid assets
+
+
+
 	    	% pass gtype = 'HJB' or 'KFE'
 	    	obj.gtype = gtype;
 	    	obj.ny = ny;
@@ -37,23 +62,62 @@ classdef Grid < handle
                 obj.nb = params.nb_KFE;
                 obj.nb_neg = params.nb_neg_KFE;
                 obj.nb_pos = params.nb_pos_KFE;
+                obj.na = params.na_KFE;
 	    	elseif strcmp(gtype,'HJB')
                 obj.nb = params.nb;
                 obj.nb_neg = params.nb_neg;
                 obj.nb_pos = params.nb_pos;
+                obj.na = params.na;
             else
 	    		error('invalid input')
 	    	end
+
+	    	% -------------- call methods/create grids----------------
+            ny = obj.ny;
+            nz = obj.nz;
+            
+		    % create grids
+		    [obj.a.vec, obj.a.wide, obj.a.matrix] = obj.create_agrid(params);
+		    [obj.b.vec, obj.b.matrix] = obj.create_bgrid(params);
+		   
+            % differenced grids
+		    [obj.a.dF, obj.a.dB, da_tilde] = obj.finite_diff('a', obj.nb);
+		    [obj.b.dF, obj.b.dB, db_tilde] = obj.finite_diff('b', obj.na);
+
+		    % use trapezoidal rule
+		    obj.trapezoidal.vec = kron(da_tilde,db_tilde);
+		    obj.trapezoidal.matrix = reshape(repmat(obj.trapezoidal.vec,ny*nz,1),obj.nb,obj.na,nz,ny);
+			obj.trapezoidal.diagm = spdiags(repmat(obj.trapezoidal.vec,ny*nz,1),0,obj.nb*obj.na*ny*nz,obj.nb*obj.na*ny*nz);
+
+			obj.loc0b = find(obj.b.vec==0);
+			obj.loc0a = find(obj.a.vec==0);
+
+			% location of b = 0 and a = 0 in (b,a)-space
+			bLong = repmat(obj.b.vec,obj.na,1);
+			aLong = kron(obj.a.vec,ones(obj.nb,1));
+			obj.loc0b0a = find((bLong==0) & (aLong==0));
 	    end
 
-	    function [grid_vec,grid_wide,grid_mat] = create_generic_grid(...
-	    	obj,params,dim,curv,gmin,gmax)
+	    function [grid_vec, grid_wide, grid_mat] = create_agrid(obj, params)
+	    	% creates the illiquid asset grids
 
-			grid_vec = linspace(0,1,dim)';
-			grid_vec = grid_vec.^(1/curv);
-			grid_vec = gmin + (gmax - gmin) * grid_vec;
+	    	% Parameters
+	    	% ----------
+	    	% params : a Params object
+	    	%
+	    	% Returns
+	    	% -------
+	    	% grid_vec : a column vector grid
+	    	%
+	    	% grid_wide : an array grid of shape (1, na, 1, 1)
+	    	%
+	    	% grid_mat : an array the full size of the model, (nb, na, nz, ny)
+
+			grid_vec = linspace(0, 1, obj.na)';
+			grid_vec = grid_vec .^ (1/params.a_gcurv);
+			grid_vec = params.amin + (params.amax - params.amin) * grid_vec;
 			
-			for ia = 1:dim-1
+			for ia = 1:obj.na-1
 		        if grid_vec(ia+1) - grid_vec(ia) < params.min_grid_spacing
 		            grid_vec(ia+1) = grid_vec(ia) + params.min_grid_spacing;
 		        else
@@ -61,15 +125,23 @@ classdef Grid < handle
 		        end
             end
 
-            grid_wide = reshape(grid_vec,[1 dim 1 1]);
-			grid_mat = repmat(grid_wide,[obj.nb,1,obj.nz,obj.ny]);
+            grid_wide = reshape(grid_vec, [1 obj.na 1 1]);
+			grid_mat = repmat(grid_wide, [obj.nb, 1, obj.nz, obj.ny]);
 	    end
 
-	    function [bgrid_vec,bgrid_mat] = create_bgrid(obj,params,dim2)
-	    	% creates the liquid asset grid
-	    	%
-	    	% dim2 is the second dimension
+	    function [bgrid_vec, bgrid_mat] = create_bgrid(obj, params)
+	    	% creates the liquid asset grids
 
+	    	% Parameters
+	    	% ----------
+	    	% params : a Params object
+	    	%
+	    	% Returns
+	    	% -------
+	    	% bgrid_vec : a column vector for the liquid asset grid
+	    	%
+	    	% bgrid_mat : an array of the liquid asset grid, shape (nb, na, nz, ny)
+	    
 	    	% positive part
 			bgridpos = linspace(0,1,obj.nb_pos)';
 			bgridpos = bgridpos.^(1/params.b_gcurv_pos);
@@ -90,7 +162,7 @@ classdef Grid < handle
 				mid_neg = (params.b_soft_constraint + params.bmin) / 2;
 
 				% part of grid close to borrowing limit
-				bgridneg1 = linspace(0,1,nb_neg1)';
+				bgridneg1 = linspace(0, 1, nb_neg1)';
 				bgridneg1 = bgridneg1.^(1/params.b_gcurv_neg);
 				bgridneg1 = params.bmin + ...
 					(mid_neg - params.bmin) * bgridneg1;
@@ -113,11 +185,11 @@ classdef Grid < handle
 		        end
 
 				% part of grid close to soft constraint
-				bgridneg2 = linspace(1,0,nb_neg2)';
-				bgridneg2 = bgridneg2.^(1/params.b_gcurv_neg);
+				bgridneg2 = linspace(1, 0, nb_neg2)';
+				bgridneg2 = bgridneg2 .^ (1/params.b_gcurv_neg);
 		        bgridneg2 = 1-bgridneg2;
 		        bgridneg2 = mid_neg + ...
-			    	(params.b_soft_constraint-mid_neg) * bgridneg2;
+			    	(params.b_soft_constraint - mid_neg) * bgridneg2;
 			   	bgridneg2(1) = []; % remove midpoint
 			    bgridneg2(end) = []; % remove 0
 
@@ -136,29 +208,39 @@ classdef Grid < handle
 		            end
 		        end
 		        
-		        bgridneg = [bgridneg1;bgridneg2];
+		        bgridneg = [bgridneg1; bgridneg2];
 
-			    bgrid_vec = [bgridneg;bgridpos];
+			    bgrid_vec = [bgridneg; bgridpos];
 			else
 			    bgrid_vec = bgridpos;
 			end
-			bgrid_mat = repmat(bgrid_vec,[1,dim2,obj.nz,obj.ny]);
+			bgrid_mat = repmat(bgrid_vec, [1 obj.na obj.nz obj.ny]);
 		    
 		    assert(all(diff(bgrid_vec)>0),'bgrid not strictly increasing')
 	    end
 
-	    function [dF,dB,d_tilde] = finite_diff(obj,variable,otherdim)
+	    function [dF, dB, d_tilde] = finite_diff(obj, variable, otherdim)
 			% This function finds forward and backward differences, with 
-			% variable = 'a','b', or 'c'
+			
+			% Parameters
+			% ----------
+			% variable : either the liquid asset, 'b', or illiquid, 'a'
+			%
+			% otherdim : size of the other one of the first two dimensions
+			%
+			% Returns
+			% -------
+			% dF : the forward first difference of the selected grid
+			%
+			% dB : the backward first difference of the selected grid
+			%
+			% d_tilde : the mean of dF and dB, adjusted at the boundaries
 
 			if strcmp(variable,'a')
 				input_grid = obj.a.vec;
 				repvec = [1 otherdim];
 			elseif strcmp(variable,'b')
 				input_grid = obj.b.vec;
-				repvec = [1 otherdim];
-			elseif strcmp(variable,'c')
-				input_grid = obj.c.vec;
 				repvec = [1 otherdim];
 			else
 				error('invalid variable choice')
@@ -189,10 +271,12 @@ classdef Grid < handle
 		    end
 		end
 
-		function add_zgrid(obj, z_vector, dim2)
+		function add_zgrid(obj, z_vector)
+			% creates an integer index grid for the z-dimension
+
 			obj.z.vec = (1:numel(z_vector))';
 			obj.z.wide = reshape(obj.z.vec,[1 1 obj.nz 1]);
-			obj.z.matrix = repmat(obj.z.wide,[obj.nb dim2 1 obj.ny]);
+			obj.z.matrix = repmat(obj.z.wide,[obj.nb obj.na 1 obj.ny]);
 		end
     end
 end

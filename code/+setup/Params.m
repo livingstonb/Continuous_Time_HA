@@ -89,7 +89,7 @@ classdef Params < handle
 
 		% ------------ approximation parameters -----------
 		% HJB loop
-		maxit_HJB 		= 600; % maximal allowable number of HJB iterations
+		maxit_HJB 		= 2000; % maximal allowable number of HJB iterations
 		crit_HJB 		= 1e-8; % critical value
 		delta_HJB 		= 1e6; % step size (large steps work even though method is partially explicit)
         implicit = 0;
