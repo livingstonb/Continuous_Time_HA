@@ -1,6 +1,26 @@
-function g = solveKFE(p,income,grdKFE,gg,A,V)
+function g = solveKFE(p, income, grdKFE, gg, A, V)
 	% iterates over the Kolmogorov Forward
 	% Equation to find the equilibrium distribution over states
+
+	% Parameters
+	% ----------
+	% p : a Params object
+	%
+	% income : an Income object
+	%
+	% grdKFE : the asset grids for the KFE
+	%
+	% gg : the initial equilibrium distribution of states
+	%
+	% A : KFE transition matrix, of shape
+	%	(nb_KFE*na_KFE*nz*ny, nb_KFE*na_KFE*nz*ny)
+	%
+	% V : value function, shape (nb_KFE, na_KFE, nz, ny)
+	%
+	% Returns
+	% -------
+	% g : the equilibrium distribution, of shape
+	%	(nb_KFE, na_KFE, nz, ny)
 
 	nz = p.nz;
 	nb_KFE = p.nb_KFE;
@@ -31,7 +51,9 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
         gg = full(gg);
 	else
 		gg = gg(:);
-		gg1_denom = KFE_matrix_divisor(p, income, A, ez_adj);
+
+		% compute the LHS of the KFE
+		KFE_LHS = KFE_matrix_divisor(p, income, A, ez_adj);
 
 	    % transition matrix with diagonal killed
 		ytrans0  = income.ytrans - diag(diag(income.ytrans)); 
@@ -67,7 +89,7 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
 	                deathg(grdKFE.loc0b0a:nb_KFE*na_KFE:end) = p.deathrate * income.ydist(iy) * (1/nz);
   	            end
 
-	            gg1(:,iy) = gg1_denom{iy}*(gg_tilde(1+(iy-1)*(nb_KFE*na_KFE*nz):iy*(nb_KFE*na_KFE*nz))...
+	            gg1(:,iy) = KFE_LHS{iy}*(gg_tilde(1+(iy-1)*(nb_KFE*na_KFE*nz):iy*(nb_KFE*na_KFE*nz))...
 	                                     + p.delta_KFE*gk_sum + p.delta_KFE*deathg);
 	        end
 
@@ -96,6 +118,24 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
 end
 
 function LHS = KFE_matrix_divisor(p, income, A, ez_adj)
+	% computes the left-hand-side of the KFE
+
+	% Parameters
+	% ----------
+	% p : a Params object
+	%
+	% income : an Income object
+	%
+	% A : the KFE transition matrix
+	%
+	% ez_adj : the risk-adjusted income transitions
+	%
+	% Returns
+	% -------
+	% LHS : a cell array of operators B_k s.t. B_k * RHS_k
+	%	returns the k-th income section of the equilibrium distribution,
+	%	which is LHS_k \ RHS_k
+
 	LHS = cell(1, income.ny);
 	for k = 1:income.ny
 		i1 = 1 + (k-1) * (p.nb_KFE*p.na_KFE*p.nz);
@@ -109,7 +149,6 @@ function LHS = KFE_matrix_divisor(p, income, A, ez_adj)
 			LHS{k} = (1+p.delta_KFE*p.deathrate)*speye(p.nb_KFE*p.na_KFE*p.nz) - p.delta_KFE * Ak'...
 	   			- p.delta_KFE * spdiags(ez_adj(:,k,k), 0, p.nb_KFE*p.na_KFE*p.nz, p.nb_KFE*p.na_KFE*p.nz);
 		end
-
 		LHS{k} = inverse(LHS{k});
 	end
 end
