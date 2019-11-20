@@ -161,9 +161,7 @@ classdef TransitionalDynSolver < handle
 			    	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
 		    		Ak = A_terminal(ind1:ind2, ind1:ind2);
                     
-                    if obj.p.SDU == 1
-                        ez_adj = solver.SDU_income_risk_adjustment(obj.p, V_terminal, obj.income);
-                    end
+                    ez_adj = obj.income.SDU_income_risk_adjustment(obj.p, V_terminal);
    
 		    		indx_k = ~ismember(1:obj.p.ny,k);
 		    		if obj.p.SDU == 0

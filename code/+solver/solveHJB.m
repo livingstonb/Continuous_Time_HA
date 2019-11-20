@@ -40,7 +40,7 @@ function Vn1 = solveHJB(p, A, income, Vn, u, nn, risk_adj)
     % RISK ADJUSTMENT FOR STOCHASTIC DIFFERENTIAL UTILITY
     % ------------------------------------------------------
     % the statement below returns [] for SDU = 0
-    ez_adj = solver.SDU_income_risk_adjustment(p, Vn, income);
+    ez_adj = income.SDU_income_risk_adjustment(p, Vn);
 
     if p.implicit == 1
         %% -----------------------------------------------------

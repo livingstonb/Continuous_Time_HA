@@ -8,10 +8,10 @@ function [stats,p] = main(runopts, p)
     % ---------------------------------------------------------------------
 	dimsHJB = [p.nb p.na p.nz];
 	dimsKFE = [p.nb_KFE p.na_KFE p.nz];
-	income = setup.Income(runopts,p,dimsHJB,dimsKFE,false);
-    income_norisk = setup.Income(runopts,p,dimsHJB,dimsKFE,true);
+	income = setup.Income(runopts.direc,p,dimsHJB,dimsKFE,false);
+    income_norisk = setup.Income(runopts.direc,p,dimsHJB,dimsKFE,true);
 
-    p.update_ny(income.ny);
+    p.set("ny", income.ny);
 
 	grd = setup.GridTwoAsset(p,income.ny,'HJB'); % grid for HJB
     grd_norisk = setup.GridTwoAsset(p,1,'HJB');
@@ -53,7 +53,7 @@ function [stats,p] = main(runopts, p)
     dim2Identity = 'a';
 
     if p.SDU == 1
-        ez_adj = solver.SDU_income_risk_adjustment(p, KFE.Vn, income);
+        ez_adj = income.SDU_income_risk_adjustment(p, KFE.Vn);
         mpc_finder = statistics.MPCFinder(p,income,grdKFE,dim2Identity,ez_adj);
     else
         mpc_finder = statistics.MPCFinder(p,income,grdKFE,dim2Identity);

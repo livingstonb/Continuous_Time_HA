@@ -4,26 +4,38 @@ classdef A_Matrix_Constructor < handle
     % then call the construct method with the policy functions
     % and value function as arguments.
     properties (SetAccess = protected)
+        % grid sizes
         nb;
         na;
         nz;
         ny;
         dim;
        
+        % grids and parameters
         grids;
         p;
 
+        % returns risk is on or off
         returns_risk;
 
+        % grid deltas
         asset_dB;
         asset_dF;
-        asset_dSum;
+        asset_dSum; % (deltaB + deltaF)
+
+        % boolean mask for top of the b (1-asset) or a (2-asset) grid
         top;
+
+        % pre-computed term when returns are risky
         risk_term;
+
+        % offset of terms on lower/upper diagonals for risky asset
         shift;
 
+        % income values
         y_mat;
 
+        % 'HJB' or 'KFE' grid
         modeltype;
     end
 
@@ -32,6 +44,26 @@ classdef A_Matrix_Constructor < handle
         % CLASS CONSTRUCTOR
         % ---------------------------------------------------------------------
         function obj = A_Matrix_Constructor(p, income, grids, modeltype, returns_risk)
+            % instantiate the constructor
+
+            % Parameters
+            % ----------
+            % p : a Params object which contains the parameters of the model
+            %
+            % income : an Income object
+            %
+            % grids : a Grid object which contains the grids
+            %
+            % modeltype : a string ('HJB' or 'KFE') indicating which grids are
+            %   to be used
+            %
+            % returns_risk : a flag that determines whether returns risk is to
+            %   be included in the A matrix
+            %
+            % Returns
+            % -------
+            % an A_Matrix_Constructor object
+
             obj.nb = numel(grids.b.vec);
             obj.na = numel(grids.a.vec);
             obj.nz = p.nz;
@@ -61,6 +93,22 @@ classdef A_Matrix_Constructor < handle
         % COMPUTATIONS FOR RETURNS RISK
         % ---------------------------------------------------------------------
         function perform_returns_risk_computations(obj)
+            % pre-computes terms needed for risky returns
+
+            % Modified
+            % --------
+            % obj.asset_dB : deltaBackward for the grid of the risky asset
+            %
+            % obj.asset_dF : deltaForward for the grid of the risky asset
+            %
+            % obj.top : indicator for top of risky asset grid
+            %
+            % obj.risk_term : (asset * sigma_r) ^ 2
+            %
+            % obj.shift : offset of the risky asset on lower and upper diags
+            %
+            % obj.asset_dSum : deltaBackward + deltaForward
+
             obj.top = false(obj.nb, obj.na, obj.nz, obj.ny);
             if obj.p.OneAsset == 1
                 obj.asset_dB = repmat(obj.grids.b.dB, [1 1 obj.nz obj.ny]);
@@ -90,6 +138,23 @@ classdef A_Matrix_Constructor < handle
         % CONSTRUCT THE A MATRIX
         % ---------------------------------------------------------------------
         function [A, stationary] = construct(obj, model, V)
+            % constructs the transition matrix
+
+            % Parameters
+            % ----------
+            % model : a structure containing the policy functions. saving (s)
+            %   and deposits (d) are used here
+            % V : the value function, shape (nb, na, nz, ny)
+            %
+            % Returns
+            % -------
+            % A : the sparse transition matrix of shape (nb*na*nz*ny, nb*na*nz*ny)
+            %
+            % stationary : a boolean mask indicating states where drift in the
+            %   risky asset was neither backward nor forward. risk computations
+            %   for these states will be included outside the A matrix
+
+            % grids
             nb = obj.nb;
             na = obj.na;
             nz = obj.nz;
@@ -100,6 +165,7 @@ classdef A_Matrix_Constructor < handle
             s = model.s;
             d = model.d;
 
+            % states where drift in risky asset is neither forward nor backward
             stationary = [];
 
             %% ----------------------------------------------
@@ -190,6 +256,16 @@ classdef A_Matrix_Constructor < handle
             % This function computes the (1/2) * (a * sigma_r) ^2 * Vaa component
             % of the A matrix.
 
+            % Parameters
+            % ----------
+            % nb, na, nz, ny : grid lengths
+            %
+            % Returns
+            % -------
+            % Arisk_Vaa : the component of the A matrix s.t. Arisk_Vaa * V produces
+            %   a second-order finite difference of V, after multiplying by the
+            %   (1/2) * (a * sigma_r) ^ 2
+
             % (1/2) * (a * sigma_r) ^ 2 * V_{i+1} * (dF*(dB+dF)/2)
             V_i_plus_1_term = obj.risk_term ./ (obj.asset_dF .* obj.asset_dSum);
 
@@ -208,6 +284,26 @@ classdef A_Matrix_Constructor < handle
 
         function [Arisk_Va, stationary] = compute_V_a_terms(obj, nb, na,...
             nz, ny, V, driftB, driftF)
+            % computes the (1/2) * (a * sigma_r) ^ 2 * Va ^2 ... term when returns are risky
+
+            % Parameters
+            % ----------
+            % nb, na, nz, ny : grid lengths
+            %
+            % V : the value function, of shape (nb, nz, nz, ny)
+            %
+            % driftB : the backward drift of the risky asset, where negative
+            %
+            % driftF : the forward drift of the risky asset, where positive
+            %
+            % Returns
+            % -------
+            % Arisk_Va : after multiplying by V, this is the component of the A matrix that
+            %   produces the Va ^ 2 term
+            %
+            % stationary : a boolean mask indicating states where drift in the
+            %   risky asset was neither backward nor forward. risk computations
+            %   for these states will be included outside the A matrix
 
             assert(obj.p.SDU == 1, "This term only applies to SDU.")
 
@@ -254,6 +350,22 @@ classdef A_Matrix_Constructor < handle
         end
 
         function A = put_on_diags(obj, lower, middle, upper, shift)
+            % constructs a sparse matrix by putting column vectors on the diagonals
+
+            % Parameters
+            % ----------
+            % lower : the vector to go on the lower diagonal
+            %
+            % middle : the vector to go on the middle diagonal
+            %
+            % upper : the vector to go on the upper diagonal
+            %
+            % shift : the offset of the lower and upper diagonals from the middle diagonal
+            %
+            % Returns
+            % -------
+            % A : a sparse matrix with lower, middle, and upper on the requested diagonals
+
             upper = circshift(reshape(upper, obj.nb*obj.na, obj.nz, obj.ny), shift);
             lower = circshift(reshape(lower, obj.nb*obj.na, obj.nz, obj.ny), -shift);
             A = spdiags(upper(:), shift, obj.dim, obj.dim) ...

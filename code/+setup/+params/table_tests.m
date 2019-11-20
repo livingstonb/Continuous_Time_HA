@@ -182,6 +182,6 @@ function outparams = table_tests(runopts)
     chosen_param = params(runopts.param_index);
 
     % Create Params object
-    outparams = setup.ParamsTwoAsset(runopts,chosen_param);
+    outparams = setup.Params(runopts,chosen_param);
 
 end

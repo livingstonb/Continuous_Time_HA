@@ -8,7 +8,7 @@ function g = solveKFE(p,income,grdKFE,gg,A,V)
 	ny = numel(income.y.vec);
 
 	if (p.SDU == 1) && (ny > 1)
-        ez_adj = solver.SDU_income_risk_adjustment(p, V, income);
+        ez_adj = income.SDU_income_risk_adjustment(p, V);
         ez_adj_no_diag = ez_adj;
         for k = 1:ny
         	ez_adj_no_diag(:,k,k) = 0;
