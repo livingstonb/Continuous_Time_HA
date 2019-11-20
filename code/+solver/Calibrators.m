@@ -73,14 +73,14 @@ end
 
 function x0 = rb_ra_initial(p, initial)
     if p.riskaver <= 2
-		rb_scale = 0.06;
+		rb_scale = 0.1;
 		ra_scale = 0.1;
 	elseif p.riskaver <= 10
-		rb_scale = 0.13;
-		ra_scale = 0.17;
+		rb_scale = 0.2;
+		ra_scale = 0.2;
 	else
-		rb_scale = 0.15;
-		ra_scale = 0.25;
+		rb_scale = 0.25;
+		ra_scale = 0.3;
 	end
     
      % return initial conditions
@@ -99,14 +99,14 @@ function [y, x0] = rb_ra(x, runopts, p)
 	% liquid returns and illiquid returns
 
 	if p.riskaver <= 2
-		rb_scale = 0.06;
+		rb_scale = 0.1;
 		ra_scale = 0.1;
 	elseif p.riskaver <= 10
-		rb_scale = 0.13;
-		ra_scale = 0.17;
+		rb_scale = 0.2;
+		ra_scale = 0.2;
 	else
-		rb_scale = 0.15;
-		ra_scale = 0.25;
+		rb_scale = 0.25;
+		ra_scale = 0.3;
 	end
 
 	% Set new values for returns
