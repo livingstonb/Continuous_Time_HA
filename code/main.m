@@ -1,7 +1,18 @@
 function [stats,p] = main(runopts, p)
-    % Main function file for this repository. If IterateRho = 1, this script
-    % first tries to find valid lower and upper bounds for rho (this may fail
-    % in some cases), and then iterates on rho once valid bounds are found.
+    % instantiates necessary classes and calls functions to solve the
+    % model and compute statistics
+
+    % Parameters
+    % ----------
+    % runopts : a structure containing run options
+    %
+    % p : a Params object containing model parameters
+    %
+    % Returns
+    % -------
+    % stats : a structure containing statistics from the solved model
+    %
+    % p : the Params object used to solve the model
 
     %% --------------------------------------------------------------------
     % CREATE GRID, INCOME OBJECTS
@@ -25,11 +36,13 @@ function [stats,p] = main(runopts, p)
     	grdKFE_norisk.add_zgrid(p.rhos',p.na_KFE);
     end
     
-    % check that borrowing limit does not violate NBL
-%     NBL = - min((1-p.wagetax-p.directdeposit)*income.y.vec+p.transfer) ...
-%         / (p.r_b_borr + p.deathrate*p.perfectannuities);
-%     msg = sprintf('bmin < natural borrowing limit (%f)',NBL);
-%     assert(p.bmin > NBL,msg);
+    if p.bmin < 0
+        % check that borrowing limit does not violate NBL
+        NBL = - min((1-p.wagetax-p.directdeposit)*income.y.vec+p.transfer) ...
+            / (p.r_b_borr + p.deathrate*p.perfectannuities);
+        msg = sprintf('bmin < natural borrowing limit (%f)',NBL);
+        assert(p.bmin > NBL,msg);
+    end
     
     runopts.RunMode = 'Final';
 	[HJB, KFE, Au] = solver.solver(runopts,p,income,grd,grdKFE);

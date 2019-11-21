@@ -1,5 +1,5 @@
 classdef TransitionalDynSolver < handle
-	% This superclass provides properties and methods 
+	% this class provides properties and methods 
 	% for solving for policy functions given a future shock
 	% by iterating backward on the dynamic HJB.
 	%
@@ -7,10 +7,12 @@ classdef TransitionalDynSolver < handle
 	% by iterating over the Feynman-Kac equation while
 	% iterating over the dynamic HJB.
 	%
-	% This class allows for saving the policy functions
-	% so they can be used to simulate MPCs out of news.
+	% this class allows for saving the policy functions
+	% so they can be used to simulate MPCs out of news as well
 
 	properties (SetAccess = protected)
+
+		% parameters, grids of the model
 		p;
 		income;
 		grids;
@@ -44,7 +46,24 @@ classdef TransitionalDynSolver < handle
 
 	methods
 		function obj = TransitionalDynSolver(params, income, grids, shocks)
+			% class constructor
 
+			% Parameters
+			% ----------
+			% params : a Params object
+			%
+			% income : an Income object
+			%
+			% grids : a Grid object
+			%
+			% shocks : a vector of shock indices, in reference to the mpc shocks
+			%	in 'params'
+			%
+			% Returns
+			% -------
+			% obj : a TransitionalDynSolver object
+
+			% store references to important model objects
 			obj.p = params;
 			obj.income = income;
 			obj.grids = grids;
@@ -52,6 +71,7 @@ classdef TransitionalDynSolver < handle
 
 			obj.ytrans_offdiag = income.ytrans - diag(diag(income.ytrans));
 
+			% initialize the results
 			obj.mpcs = struct();
 			for ishock = 1:6
 				obj.mpcs(ishock).avg_1_quarterly = NaN;
@@ -59,17 +79,49 @@ classdef TransitionalDynSolver < handle
 				obj.mpcs(ishock).avg_4_annual = NaN;
             end
 
+            % initialize constructors of the A matrix
             returns_risk = (obj.p.sigma_r > 0);
 		    obj.A_constructor_HJB = solver.A_Matrix_Constructor(obj.p, obj.income, obj.grids, 'KFE', returns_risk);
 
+		    % if returns are risky and returns risk is used in the KFE,
+		    % this A constructor will be used instead:
 		    if returns_risk && (obj.p.retrisk_KFE == 0)
 		    	obj.A_constructor_FK = solver.A_Matrix_Constructor(obj.p, obj.income, obj.grids, 'KFE', false);
 		    end
 		end
 
 		function solve(obj, KFE, pmf, cum_con_baseline)
+			% calls various class methods to solve the model backward
+			% and compute MPCs
+
+			% Parameters
+			% ----------
+			% KFE : a structure containing baseline policy functions and
+			%	the value function on the KFE grid
+			%
+			% pmf : the equilibrium distribution over the KFE grid, of
+			%	shape (nb_KFE, na_KFE, nz, ny)
+			%
+			% cum_con_baseline : cumulative consumption for each period
+			%	in the baseline, used to compute MPCs
+			%
+			% Directly Modifies
+			% -----------------
+			% obj.savedTimesUntilShock : a vector indicating the time until
+			%	the shock at a given iteration, used to find the appropriate
+			%	policy function given the current subperiod; only modified/used
+			%	if SimulateMPCS_news is turned on
+			%
+			% Note
+			% ----
+			% This method calls various other class methods and so indirectly
+			% modifies other class properties.
+
             if obj.p.nz > 1
                 warning('Transitional dynamics not coded for nz > 1')
+                return
+            elseif (obj.p.SDU == 1) || (obj.p.sigma_r > 0)
+            	warning('Transitional dynamics not coded for SDU or returns risk')
                 return
             end
             
@@ -98,6 +150,36 @@ classdef TransitionalDynSolver < handle
 		function success = getTerminalCondition(obj, KFE, ishock)
 			% this method finds the value function the instant before
 			% the shock is applied
+
+			% Parameters
+			% ----------
+			% KFE : structure containing the policy functions and the value
+			%	function on the KFE grid
+			%
+			% ishock : the index of the shock, in reference to the vector
+			%	of shock sizes in the Params object used to instantiate this
+			%	class
+			%
+			% Returns
+			% -------
+			% success : a flag taking the value of true if the terminal
+			%	condition was found, false otherwise
+			%
+			% Modifies
+			% --------
+			% obj.V : the value function given a future shock; this method
+			%	initializes the value function with the terminal value
+			%	function, of shape (nb_KFE, na_KFE, nz, ny)
+			%
+			% obj.KFEint : a structure containing the policy functions on
+			%	the KFE grids; this method initializes these policy functions
+			%	with the terminal policy functions
+			%
+			% obj.A : the transition matrix over the KFE grids; this method
+			%	initializes A with the terminal transition matrix
+
+		    obj.KFEint = KFE_terminal;
+            obj.A = A_terminal;
 			
             shock = obj.p.mpc_shocks(ishock);
 
@@ -206,8 +288,31 @@ classdef TransitionalDynSolver < handle
             obj.A = A_terminal;
 		end
 
-		function iterateBackwards(obj,ishock)
-			% iterate over the dynamic HJB
+		function iterateBackwards(obj, ishock)
+			% iterate over the dynamic HJB, solver for policy functions, etc...
+
+			% Parameters
+			% ----------
+			% ishock : the shock index, in reference to the shock sizes in the
+			%	Params object used to instantiate this class
+			%
+			% Directly Modifies
+			% -----------------
+			% obj.cumcon : the array of cumulative consumption, which is indexed
+			%	by states and periods, of shape (nb_KFE*na_KFE*nz*ny, num_periods)
+			%
+			% obj.cum_con_q1 : a cell array indexed by shock, where each entry
+			%	contains the cumulative consumption over states given a shock in
+			%	period 1 (where initial period is taken to be 0)
+			%
+			% obj.cum_con_q4 : a cell array indexed by shock, where each entry
+			%	contains the cumulative consumption over states given a shock in
+			%	period 4 (where initial period is taken to be 0)
+			%
+			% Note
+			% ----
+			% This method calls various other class methods and so indirectly
+			% modifies other class properties.
 			
             shock = obj.p.mpc_shocks(ishock);
 			obj.cumcon = zeros(obj.p.nb_KFE*obj.dim2*obj.income.ny*obj.p.nz,4);
@@ -312,11 +417,27 @@ classdef TransitionalDynSolver < handle
 		end
 
 		function update_policies(obj)
+			% updates the policy functions during backward iteration
+
+			% Modifies
+			% --------
+			% obj.KFEint : the intermediate policy functions over the
+			%	KFE grids
+
 			obj.KFEint = solver.find_policies(...
-				obj.p,obj.income,obj.grids,obj.V);
+				obj.p, obj.income, obj.grids, obj.V);
 		end
 
 		function update_A_matrix(obj)
+			% updates the transition matrix during backward iteration
+
+			% Modifies
+			% --------
+			% obj.A_HJB : the transition matrix used for the policy functions,
+			%	and when returns risk is ommitted from the KFE, is also used to
+			%	solve the Feynman-Kac equations
+			%
+			% obj.A_FK : 
 			obj.A_HJB = obj.A_constructor_HJB.construct(obj.KFEint, obj.V);
 
 			if (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 0)
@@ -324,7 +445,7 @@ classdef TransitionalDynSolver < handle
 			end
 		end
 
-		function update_cum_con(obj,period,FKmat)
+		function update_cum_con(obj, period, FKmat)
             cumcon_t_k = reshape(obj.cumcon(:,period),[],obj.p.ny);
 
             if obj.p.SDU == 1
