@@ -14,9 +14,6 @@ classdef MPCFinder < handle
 		income;
 		grids;
         
-		dim2;
-		dim2Identity;
-        
         ResetIncomeUponDeath;
 
 		FKmat; % Feynman-Kac divisor matrix
@@ -37,12 +34,30 @@ classdef MPCFinder < handle
 	end
 
 	methods
-		function obj = MPCFinder(p,income,grids,dim2Identity,ez_adj)
+		function obj = MPCFinder(p, income, grids, ez_adj)
+			% class constructor
+
+			% Parameters
+			% ----------
+			% p : a Params object
+			% 
+			% income : an Income object
+			%
+			% grids : a Grid object, providing the asset grids
+			%	for the KFE
+			%
+			% ez_adj : an array containing the risk adjusted
+			%	income transitions for the SDU case, if applicable,
+			%	of shape (nb_KFE*na_KFE*nz, ny, ny)
+			%
+			% Returns
+			% -------
+			% obj : an MPCFinder object
+
 			obj.p = p;
 			obj.income = income;
 			obj.grids = grids;
 
-			obj.dim2 = p.na_KFE;
 			obj.ResetIncomeUponDeath = p.ResetIncomeUponDeath;
 
 			if (p.SDU == 0) || (income.ny == 1)
@@ -62,11 +77,28 @@ classdef MPCFinder < handle
 			end
 		end
 
-		function solve(obj,KFE,pmf,A)
-			% This is the function to call after instantiating the class,
-			% to solve for the MPCs. The variable 'pmf' is the pmf over
-			% the (b,a,y,z)-space on the KFE grids and Au is the transition
-			% matrix on the KFE grids.
+		function solve(obj, KFE, pmf, A)
+			% computes the MPCs using Feynman-Kac by calling
+			% a sequence of class methods
+
+			% Parameters
+			% ----------
+			% KFE : a structure containing the policy functions
+			%	on the KFE grids
+			%
+			% pmf : the equilibrium probability mass function,
+			%	of shape (nb_KFE, na_KFE, nz, ny)
+			%
+			% A : the transition matrix for the KFE
+			%
+			% Directly Modifies
+			% -----------------
+			% obj.mpcs : the computed MPC statistics
+			%
+			% Note
+			% ----
+			% This method also modifies other class properties
+			% via other methods.
 
 			if obj.solved
 				error('Already solved, create another instance')
@@ -83,34 +115,60 @@ classdef MPCFinder < handle
 			obj.solved = true;
 		end
 
-		function create_FK_matrices(obj,A)
-			% finds the matrix divisor in the Feynman-Kac formula
+		function create_FK_matrices(obj, A)
+			% finds the matrix divisor for the Feynman-Kac formula
+
+			% Parameters
+			% ----------
+			% A : the KFE transition matrix
+			%
+			% Modifies
+			% --------
+			% obj.FKmat: a cell array containing the FK matrix divisors
+			%	for each income block, shape (1, ny)
+
 			obj.FKmat = cell(1,obj.income.ny);
 		    for k = 1:obj.income.ny
-		    	ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
-		    	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
+		    	ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
+		    	ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
 
 		    	if (obj.p.SDU == 0) || (obj.income.ny == 1)
-			        obj.FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(1/obj.p.delta_mpc ...
+			        obj.FKmat{k} = speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz)*(1/obj.p.delta_mpc ...
 			        					+ obj.p.deathrate - obj.income.ytrans(k,k))...
 			                		- A(ind1:ind2,ind1:ind2);
 			    else
-			    	obj.FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(1/obj.p.delta_mpc ...
-			        					+ obj.p.deathrate) - spdiags(obj.ez_adj(:,k,k), 0, obj.p.nb_KFE*obj.dim2*obj.p.nz,obj.p.nb_KFE*obj.dim2*obj.p.nz);
+			    	obj.FKmat{k} = speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz)*(1/obj.p.delta_mpc ...
+			        					+ obj.p.deathrate) - spdiags(obj.ez_adj(:,k,k), 0, obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz,obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz);
 			                		- A(ind1:ind2,ind1:ind2);
             	end
 		        obj.FKmat{k} = inverse(obj.FKmat{k});
 		    end
 		end
 
-		function iterate_backward(obj,KFE)
+		function iterate_backward(obj, KFE)
 			% iterates backward four quarters on the Feynman-Kac equation
 			% to compute cum_con_baseline
 			%
 			% each quarter is split into 1/delta_mpc subperiods, which
 			% are then iterated over
 
-			dim = obj.p.nb_KFE*obj.dim2*obj.p.nz*obj.income.ny;
+			% Parameters
+			% ----------
+			% KFE : a structure containing the policy functions and the
+			%	value function, on the KFE grid
+			%
+			% Directly Modifies
+			% -----------------
+			% obj.cum_con_baseline : cumulative consumption at a given
+			%	quarter for the baseline case, where the second dimension
+			%	is the quarter; of shape (nb_KFE*na_KFE*nz*ny, num_quarters)
+			%
+			% Note
+			% ----
+			% This method also modifies other class properties
+			% via other methods.
+
+			dim = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*obj.income.ny;
 			obj.cumcon = zeros(dim,4);
 			for it = 4:-obj.p.delta_mpc:obj.p.delta_mpc
 				if mod(it*4,1) == 0
@@ -131,18 +189,30 @@ classdef MPCFinder < handle
 					- obj.cumcon(:,period-1);
 			end
 
-			reshape_vec = [obj.p.nb_KFE,obj.dim2,obj.p.nz,obj.income.ny,4];
+			reshape_vec = [obj.p.nb_KFE,obj.p.na_KFE,obj.p.nz,obj.income.ny,4];
 		    obj.cum_con_baseline = reshape(obj.cum_con_baseline,[],4);
 		end
 
-		function update_cumcon(obj,KFE,period)
-			% update cumulative consumption using the Feynman-Kac
-			% iterative procedure
+		function update_cumcon(obj, KFE, period)
+			% update cumulative consumption in the baseline case by
+			% iterating on the Feynman-Kac equation
+
+			% Parameters
+			% ----------
+			% KFE : a structure containing the policy functions and the
+			%	value function, on the KFE grid
+			%
+			% period : the current period, integer
+			%
+			% Modifies
+			% --------
+			% obj.cumcon : cumulative consumption, modified for the given
+			%	period, and has shape (nb_KFE*na_KFE*nz*ny, num_periods)
 
 			cumcon_t = obj.cumcon(:,period);
 			cumcon_t_k = reshape(cumcon_t,[],obj.income.ny);
 
-            reshape_vec = [obj.p.nb_KFE*obj.dim2 obj.p.nz obj.income.ny];
+            reshape_vec = [obj.p.nb_KFE*obj.p.na_KFE obj.p.nz obj.income.ny];
             cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
                 
 			for k = 1:obj.income.ny
@@ -166,20 +236,34 @@ classdef MPCFinder < handle
                     end
                 elseif (obj.p.Bequests == 0) && (obj.ResetIncomeUponDeath == 0)
                     deathin_cc_k = obj.p.deathrate * cumcon_t_z_k(obj.grids.loc0b0a,:,k)';
-                    deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.dim2,1));
+                    deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.p.na_KFE,1));
                 end
 
-                ind1 = 1+obj.dim2*obj.p.nb_KFE*obj.p.nz*(k-1);
-                ind2 = obj.dim2*obj.p.nb_KFE*obj.p.nz*k;
+                ind1 = 1+obj.p.na_KFE*obj.p.nb_KFE*obj.p.nz*(k-1);
+                ind2 = obj.p.na_KFE*obj.p.nb_KFE*obj.p.nz*k;
                 RHS = reshape(KFE.c(:,:,:,k),[],1) + ytrans_cc_k + deathin_cc_k ...
                             + cumcon_t_k(:,k)/obj.p.delta_mpc;
                 obj.cumcon(ind1:ind2,period) = obj.FKmat{k}*RHS;
 			end
 		end
 
-		function cumulative_consumption_with_shock(obj,ishock)
-			% interpolate cumulative consumption with a shock to
-			% assets
+		function cumulative_consumption_with_shock(obj, ishock)
+			% use baseline cumulative consumption to approximate
+			% cumulative consumption for households presented with
+			% an income shock in the first period
+
+			% Parameters
+			% ----------
+			% ishock : the index of the shock, in reference to the
+			%	shocks vector contained in the Params object used to
+			%	instantiate this class
+			%
+			% Modifies
+			% --------
+			% obj.cum_con_shock : a cell array, indexed by shock, containing
+			%	cumulative consumption over states for a given period; each
+			%	cell contains an array of shape (nb_KFE*na_KFE*nz*ny, num_periods)
+
 			shock = obj.p.mpc_shocks(ishock);
 			bgrid_mpc_vec = obj.grids.b.vec + shock;
 
@@ -188,7 +272,7 @@ classdef MPCFinder < handle
 	            bgrid_mpc_vec(below_bgrid) = obj.grids.b.vec(1);
 	        end
 
-	        dim = obj.dim2*obj.income.ny*obj.p.nz;
+	        dim = obj.p.na_KFE*obj.income.ny*obj.p.nz;
 	        bgrid_mpc = repmat(bgrid_mpc_vec,dim,1);
 
 	        % grids for interpolation
@@ -204,22 +288,20 @@ classdef MPCFinder < handle
 	        	interp_grids{end+1} = obj.income.y.vec;
 	        end
 
-	        dim2_mat = obj.grids.a.matrix(:);
-
-			reshape_vec = [obj.p.nb_KFE,obj.dim2,obj.p.nz,obj.income.ny];
+			reshape_vec = [obj.p.nb_KFE obj.p.na_KFE obj.p.nz obj.income.ny];
 			for period = 1:4
 				% cumulative consumption in 'period'
 	            con_period = reshape(obj.cum_con_baseline(:,period),reshape_vec);
 	            mpcinterp = griddedInterpolant(interp_grids,squeeze(con_period),'linear');
 
 	            if (obj.income.ny > 1) && (obj.p.nz > 1)
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.grids.z.matrix(:),obj.income.y.matrixKFE(:));
+	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:),obj.grids.z.matrix(:),obj.income.y.matrixKFE(:));
 	            elseif (obj.income.ny==1) && (obj.p.nz > 1)
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.grids.z.matrix(:));
+	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:),obj.grids.z.matrix(:));
 	            elseif obj.income.ny > 1
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat,obj.income.y.matrixKFE(:));
+	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:),obj.income.y.matrixKFE(:));
 	            else
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,dim2_mat);
+	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:));
 	            end
 
 	            if (shock < 0) && (sum(below_bgrid)>0) && (period==1)
@@ -230,8 +312,23 @@ classdef MPCFinder < handle
 	        end
 		end
 
-		function computeMPCs(obj,pmf,ishock)
-			% compute MPCs from cumulative consumption
+		function computeMPCs(obj, pmf, ishock)
+			% compute MPCs using the cumulative consumption arrays
+			% found previously
+
+			% Parameters
+			% ----------
+			% pmf : the equilibrium probability mass function of the
+			%	baseline, of shape (nb_KFE, na_KFE, nz, ny)
+			%
+			% ishock : the shock index, in reference to the shock vector
+			%	in the Params object used to instantiate this class
+			%
+			% Modifies
+			% --------
+			% obj.mps : the final MPC statistics computed from this class,
+			%	a structure array of size nshocks
+			
 			shock = obj.p.mpc_shocks(ishock);
 
 			% MPCs out of a shock at beginning of quarter 0

@@ -50,13 +50,12 @@ function [stats,p] = main(runopts, p)
     % COMPUTE MPCs
     % -----------------------------------------------------------------
     stats.mpcs = struct();
-    dim2Identity = 'a';
 
     if p.SDU == 1
         ez_adj = income.SDU_income_risk_adjustment(p, KFE.Vn);
-        mpc_finder = statistics.MPCFinder(p,income,grdKFE,dim2Identity,ez_adj);
+        mpc_finder = statistics.MPCFinder(p,income,grdKFE,ez_adj);
     else
-        mpc_finder = statistics.MPCFinder(p,income,grdKFE,dim2Identity);
+        mpc_finder = statistics.MPCFinder(p,income,grdKFE);
     end
 
     shocks = [4,5,6];
@@ -109,9 +108,8 @@ function [stats,p] = main(runopts, p)
     %% ----------------------------------------------------------------
     % MPCs WITHOUT INCOME RISK
     % -----------------------------------------------------------------
-    dim2Identity = 'a';
     mpc_finder_norisk = statistics.MPCFinder(...
-    	p,income_norisk,grdKFE_norisk,dim2Identity);
+    	p,income_norisk,grdKFE_norisk);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs for model without income risk...\n')

@@ -73,7 +73,7 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
         [A, stationary] = A_Constructor.construct(HJB, Vn);
 
     	risk_adj = compute_risk_adjustment_for_nodrift_case(...
-    		p, grd, V_deriv_risky_asset_nodrift, stationary);
+    		p, grd, V_deriv_risky_asset_nodrift, stationary, Vn);
         
 		% update value function
 		Vn1 = solver.solveHJB(p, A, income, Vn, HJB.u, nn, risk_adj);
@@ -146,7 +146,7 @@ function check_if_not_converging(dst, nn)
 end
 
 function risk_adj = compute_risk_adjustment_for_nodrift_case(...
-	p, grd, V_deriv_risky_asset_nodrift, stationary)
+	p, grd, V_deriv_risky_asset_nodrift, stationary, Vn)
 	% computes the adjustment term when returns are risky
 	% and there is no drift in the risky assets for some
 	% asset > 0 cases
@@ -163,6 +163,8 @@ function risk_adj = compute_risk_adjustment_for_nodrift_case(...
     %
     % stationary : boolean mask to indicate states where
     %	there is no drift in risky asset
+    %
+    % Vn : the value function over states
     %
     % Returns
     % -------

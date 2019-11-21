@@ -6,7 +6,8 @@ function outparams = SDU_tests(runopts)
     % rho for calibration based on riskaver = 5, sigma_r = 0.1: 0.114248
 
 %     rho = 0.114248;
-    rho = 0.0339400;
+    rho_ies1 = 0.0339400;
+    rho_ies1_5 = 0.039426;
 
     %%--------------------------------------------------------------
     % BASELINE
@@ -33,7 +34,7 @@ function outparams = SDU_tests(runopts)
     params(ii).na = 50;
     params(ii).na_KFE = 50;
     params(ii).deathrate = 0;
-    params(ii).rho = rho;
+    params(ii).rho = rho_ies1;
     params(ii).rhoL = 0.022;
     params(ii).transfer = 0.0081 * 2.0;
     params(ii).implicit = 0;
@@ -74,26 +75,52 @@ function outparams = SDU_tests(runopts)
                 params(ii).na = 50;
                 params(ii).na_KFE = 50;
                 params(ii).deathrate = 0;
-                params(ii).rho = rho;
-                % params(ii).crit_KFE = 1e-7;
                 params(ii).implicit = 0;
                 params(ii).transfer = 0.0081 * 2.0;
                 params(ii).r_b = 0.02 / 4;
                 params(ii).iterateKFE = 1;
                 params(ii).SaveResults = 0;
+
+                % discount factor
+                if ies == 1
+                    params(ii).rho = rho_ies1;
+                else
+                    params(ii).rho = rho_ies1_5;
+                end
+
+                % risk_aver = 1 special case not coded for ies ~= 1
+                if (ies == 1.5) && (risk_aver == 1)
+                    params(ii).riskaver = 1.01;
+                end
                 
+                % log utility case
                 if (risk_aver == 1) && (ies == 1)
                     params(ii).SDU = 0;
                 end
 
-                if risk_aver == 10
-                    params(ii).delta_HJB = 1;
-                elseif (risk_aver == 20) && (sd_r <= 0.05)
-                    params(ii).delta_HJB = 0.1;
-                elseif (risk_aver == 20) && (sd_r < 0.15)
-                    params(ii).delta_HJB = 0.02;
-                elseif (risk_aver == 20)
-                    params(ii).delta_HJB = 0.005;
+                % set delta_HJB to depend on parameters
+                if ies == 1
+                    if risk_aver == 10
+                        params(ii).delta_HJB = 1;
+                    elseif (risk_aver == 20) && (sd_r <= 0.05)
+                        params(ii).delta_HJB = 0.1;
+                    elseif (risk_aver == 20) && (sd_r < 0.15)
+                        params(ii).delta_HJB = 0.02;
+                    elseif (risk_aver == 20)
+                        params(ii).delta_HJB = 0.005;
+                    end
+                elseif ies == 1.5
+                    if risk_aver < 10
+                        params(ii).delta_HJB = 2;
+                    elseif risk_aver == 10
+                        params(ii).delta_HJB = 0.5;
+                    elseif (risk_aver == 20) && (sd_r <= 0.05)
+                        params(ii).delta_HJB = 0.05;
+                    elseif (risk_aver == 20) && (sd_r < 0.15)
+                        params(ii).delta_HJB = 0.01;
+                    elseif (risk_aver == 20)
+                        params(ii).delta_HJB = 0.005;
+                    end
                 end
 
                 ii = ii + 1;
