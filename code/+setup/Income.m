@@ -95,16 +95,8 @@ classdef Income < handle
 			        inctrans = sparse(ix, iy, ez_adj(:));
 			    end
 			elseif strcmp(modeltype, 'KFE')
-				if p.SDU == 0
-			        % return exogenous income transition rates
-			        inctrans = kron(obj.ytrans, speye(p.nb_KFE*p.na_KFE*p.nz));
-			    else
-			        % adjust according to SDU transformation
-			        ix = repmat((1:p.na_KFE*p.nb_KFE*p.nz*obj.ny)', obj.ny, 1);
-			        iy = repmat((1:p.na_KFE*p.nb_KFE*p.nz)', obj.ny*obj.ny, 1);
-			        iy = iy + kron((0:obj.ny-1)', p.nb_KFE*p.na_KFE*p.nz*ones(p.nb_KFE*p.na_KFE*p.nz*obj.ny,1));
-			        inctrans = sparse(ix, iy, ez_adj(:));
-			    end
+				% return exogenous income transition rates
+			    inctrans = kron(obj.ytrans, speye(p.nb_KFE*p.na_KFE*p.nz));
 			end
 		end
 

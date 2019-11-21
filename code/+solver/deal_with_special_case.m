@@ -29,7 +29,7 @@ function [H_special,c_special,d_special] = deal_with_special_case(p,income,grids
 	end
 
 	chi1inv_arg = VaB ./ lambda - 1;
-    d_special = aux.adj_cost_deriv_inverse(chi1inv_arg,grids.a.matrix,p);
+    d_special = aux.AdjustmentCost.derivative_inverse(chi1inv_arg,grids.a.matrix,p);
     d_special(~isfinite(d_special)) = 0;
 
 

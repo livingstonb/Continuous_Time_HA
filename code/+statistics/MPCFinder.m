@@ -326,7 +326,7 @@ classdef MPCFinder < handle
 			%
 			% Modifies
 			% --------
-			% obj.mps : the final MPC statistics computed from this class,
+			% obj.mpcs : the final MPC statistics computed from this class,
 			%	a structure array of size nshocks
 			
 			shock = obj.p.mpc_shocks(ishock);

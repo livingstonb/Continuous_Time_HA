@@ -119,7 +119,7 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
         stats.adjcosts.median_d_div_a = aux.compute_pct(d_div_a,stats.pmf,0.5);
 
         % mean chi/abs(d) for |d| > 0
-        chii = aux.adj_cost_fn(KFE.d(:),grdKFE.a.matrix(:),p);
+        chii = aux.AdjustmentCost.cost(KFE.d(:),grdKFE.a.matrix(:),p);
         chii_div_d = chii ./ abs(KFE.d(:));
         pmf_valid = stats.pmf(:);
         pmf_valid = pmf_valid(abs(KFE.d(:))>0) ./ sum(pmf_valid(abs(KFE.d(:))>0));

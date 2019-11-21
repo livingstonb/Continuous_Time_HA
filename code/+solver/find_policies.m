@@ -184,7 +184,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     dFB(1,1:na-1,:,:) = zeros(1,na-1,nz,ny);
     HdFB(2:nb,1:na-1,:,:) = VaF(2:nb,1:na-1,:,:) .* dFB(2:nb,1:na-1,:,:) ...
                             - VbB(2:nb,1:na-1,:,:) ...
-                            .* (dFB(2:nb,1:na-1,:,:) + aux.adj_cost_fn(dFB(2:nb,1:na-1,:,:),grd.a.matrix(2:nb,1:na-1,:,:),p));
+                            .* (dFB(2:nb,1:na-1,:,:) + aux.AdjustmentCost.cost(dFB(2:nb,1:na-1,:,:),grd.a.matrix(2:nb,1:na-1,:,:),p));
     HdFB(:,na,:,:) = -1.0e12 * ones(nb,1,nz,ny);
     HdFB(1,1:na-1,:,:) = -1.0e12 * ones(1,na-1,nz,ny);
     validFB = (dFB > 0) & (HdFB > 0);
@@ -193,10 +193,10 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     dBF(:,1,:,:) = zeros(nb,1,nz,ny);
     dBF(nb,2:na,:,:) = zeros(1,na-1,nz,ny);
     HdBF(1:nb-1,2:na,:,:) = VaB(1:nb-1,2:na,:,:) .* dBF(1:nb-1,2:na,:,:) - VbF(1:nb-1,2:na,:,:)...
-                                 .* (dBF(1:nb-1,2:na,:,:) + aux.adj_cost_fn(dBF(1:nb-1,2:na,:,:),grd.a.matrix(1:nb-1,2:na,:,:),p));
+                                 .* (dBF(1:nb-1,2:na,:,:) + aux.AdjustmentCost.cost(dBF(1:nb-1,2:na,:,:),grd.a.matrix(1:nb-1,2:na,:,:),p));
     HdBF(:,1,:,:) = -1.0e12 * ones(nb,1,nz,ny);
     HdBF(nb,2:na,:,:) = -1.0e12 * ones(1,na-1,nz,ny);
-    validBF = (dBF <= - aux.adj_cost_fn(dBF,grd.a.matrix,p)) & (HdBF > 0);
+    validBF = (dBF <= - aux.AdjustmentCost.cost(dBF,grd.a.matrix,p)) & (HdBF > 0);
 
     VbB(1,2:na,:,:) = utility(cB(1,2:na,:,:));
 
@@ -204,9 +204,9 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     dBB(:,1,:,:) = zeros(nb,1,nz,ny);
     HdBB(:,2:na,:,:) = VaB(:,2:na,:,:) .* dBB(:,2:na,:,:)...
                         - VbB(:,2:na,:,:) .* (dBB(:,2:na,:,:)...
-                        + aux.adj_cost_fn(dBB(:,2:na,:,:),grd.a.matrix(:,2:na,:,:),p));
+                        + aux.AdjustmentCost.cost(dBB(:,2:na,:,:),grd.a.matrix(:,2:na,:,:),p));
     HdBB(:,1,:,:) = -1.0e12 * ones(nb,1,nz,ny);
-    validBB = (dBB > - aux.adj_cost_fn(dBB,grd.a.matrix,p)) & (dBB <= 0) & (HdBB > 0);
+    validBB = (dBB > - aux.AdjustmentCost.cost(dBB,grd.a.matrix,p)) & (dBB <= 0) & (HdBB > 0);
     
     if (p.OneAsset == 0) && (p.DealWithSpecialCase == 1)
         if (p.SDU == 1)
@@ -250,7 +250,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     policies.d = d;
     policies.u = u;
     policies.bmin_consume_withdrawals = Ic_special;
-    policies.bdot = s - aux.adj_cost_fn(d,grd.a.matrix,p);
+    policies.bdot = s - aux.AdjustmentCost.cost(d,grd.a.matrix,p);
     policies.adot = (p.r_a + p.deathrate*p.perfectannuities) * grd.a.matrix...
         + p.directdeposit .* y_mat + d;
 
@@ -260,7 +260,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     if (p.sigma_r > 0) && (p.OneAsset == 1)
         V_deriv_risky_asset_nodrift = utility1(c);
     elseif (p.sigma_r > 0) && (p.OneAsset == 0)
-        V_deriv_risky_asset_nodrift = utility1(c) .* (1 + aux.adj_cost_deriv(d, grd.a.matrix, p));
+        V_deriv_risky_asset_nodrift = utility1(c) .* (1 + aux.AdjustmentCost.derivative(d, grd.a.matrix, p));
     else
         V_deriv_risky_asset_nodrift = [];
     end

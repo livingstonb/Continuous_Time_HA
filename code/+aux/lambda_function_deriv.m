@@ -7,7 +7,7 @@ function deriv = lambda_function_deriv(lambda,Va,a_grid,p)
         .* (-p.chi0 - abs(chi1inv_arg)) .^(1/p.chi2-1);
     term2 = - Va .* lambda .^(-2) .* term2a;
     
-    d_temp = adj_cost_deriv_inverse(chi1inv_arg,a_grid,p);
+    d_temp = AdjustmentCost.derivative_inverse(chi1inv_arg,a_grid,p);
     chi1_chi1inv_neg = - p.chi0 - (-d_temp./(a_grid*p.chi1)).^(p.chi2);
     chi1_chi1inv_pos = p.chi0 + (d_temp./(a_grid*p.chi1)).^(p.chi2);
     chi1_chi1inv = (d_temp<0) .* chi1_chi1inv_neg + (d_temp>0) .* chi1_chi1inv_pos;
