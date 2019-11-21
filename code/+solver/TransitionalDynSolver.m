@@ -298,9 +298,6 @@ classdef TransitionalDynSolver < handle
 			%
 			% Directly Modifies
 			% -----------------
-			% obj.cumcon : the array of cumulative consumption, which is indexed
-			%	by states and periods, of shape (nb_KFE*na_KFE*nz*ny, num_periods)
-			%
 			% obj.cum_con_q1 : a cell array indexed by shock, where each entry
 			%	contains the cumulative consumption over states given a shock in
 			%	period 1 (where initial period is taken to be 0)
@@ -446,6 +443,19 @@ classdef TransitionalDynSolver < handle
 		end
 
 		function update_cum_con(obj, period, FKmat)
+			% updates cumulative consumption for a subperiod during backward iteration
+
+			% Parameters
+			% ----------
+			% period : the current quarter, integer
+			%
+			% FKmat : the matrix divisor for the Feynman-Kac equation
+			%
+			% Modifies
+			% --------
+			% obj.cumcon : the array of cumulative consumption, which is indexed
+			%	by states and periods, of shape (nb_KFE*na_KFE*nz*ny, num_periods)
+
             cumcon_t_k = reshape(obj.cumcon(:,period),[],obj.p.ny);
 
             if obj.p.SDU == 1
@@ -463,7 +473,7 @@ classdef TransitionalDynSolver < handle
                 	ytrans_cc_k = sum(squeeze(ez_adj(:, k, :)), cumcon_t_k,2);
                 end
 
-                deathin_cc_k = obj.get_death_inflows(cumcon_t_k,k);
+                deathin_cc_k = obj.get_death_inflows(cumcon_t_k, k);
 
                 ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
                 ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
@@ -473,7 +483,18 @@ classdef TransitionalDynSolver < handle
             end
 		end
 
-		function deathin_cc_k = get_death_inflows(obj,cumcon_t_k,k)
+		function deathin_cc_k = get_death_inflows(obj, cumcon_t_k, k)
+			% computes inflows for death
+
+			% Parameters
+			% ----------
+			% cumcon_t_k : cumulative consumption for period t,
+			%	of shape (nb_KFE*na_KFE*nz, ny)
+			%
+			% Returns
+			% -------
+			% deathin_cc_k : death inflows multiplied by cumulative consumption
+
             reshape_vec = [obj.p.nb_KFE*obj.p.na_KFE obj.p.nz obj.p.ny];
 			cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
 
@@ -497,7 +518,9 @@ classdef TransitionalDynSolver < handle
             end
         end
 
-		function computeMPCs(obj,pmf,ishock,cum_con_baseline)
+		function computeMPCs(obj, pmf, ishock, cum_con_baseline)
+			% performs MPC computations
+
             shock = obj.p.mpc_shocks(ishock);
             
             mpcs_1_quarterly = (obj.cum_con_q1{ishock} - cum_con_baseline(:,1)) / shock;
@@ -509,6 +532,8 @@ classdef TransitionalDynSolver < handle
 		end
 
 		function savePolicies(obj,index,ishock)
+			% saves the policy functions for MPC simulation
+			
         	c = obj.KFEint.c;
         	s = obj.KFEint.s;
         	d = obj.KFEint.d;
