@@ -197,12 +197,8 @@ classdef MPCFinder < handle
             cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
                 
 			for k = 1:obj.income.ny
-				if (obj.p.SDU == 0) || (obj.income.ny == 1)
-                	ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
-                else
-                	ytrans_cc_k = sum(squeeze(obj.ytrans_offdiag(:,k,:)) .* cumcon_t_k, 2);
-                end
-
+				ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
+  
                 if (obj.p.Bequests == 1) && (obj.ResetIncomeUponDeath == 1)
                 	deathin_cc_k = obj.p.deathrate * sum(obj.income.ydist' .* cumcon_t_k,2);
                     if nz > 1
