@@ -5,12 +5,12 @@ function outparams = SDU_tests(runopts)
     % rho for calibration based on baseline: 0.033940
     % rho for calibration based on riskaver = 5, sigma_r = 0.1: 0.114248
 
-%     rho_ies1 = 0.0339400;
-%     rho_ies1_5 = 0.039426;
+    rho_ies1 = 0.0339400;
+    rho_ies1_5 = 0.039426;
 
-    rho_ies1 = 0.1;
+    % rho_ies1 = 0.1;
 %     rho_ies1 = 0.274541;
-    rho_ies1_5 = 0.223813;
+    % rho_ies1_5 = 0.223813;
 
     %%--------------------------------------------------------------
     % BASELINE
@@ -50,9 +50,10 @@ function outparams = SDU_tests(runopts)
     ies_vals = [1, 1.5];
     risk_avers = [1, 2, 5, 10, 20];
     sdrs = [0, 0.01, 0.02, 0.05, 0.1, 0.15];
-    chi1s = [0.15, 0.4096];
+    % chi1s = [0.15, 0.4096];
+    chi1s = [0.15];
     
-    RA5calibration = 1;
+    RA5calibration = 0;
 
     ii = 2;
     for chi1 = chi1s
@@ -111,9 +112,9 @@ function outparams = SDU_tests(runopts)
                             if (risk_aver == 5) && (sd_r > 0.01)
                                 params(ii).delta_HJB = 0.2;
                             elseif (risk_aver == 10) && (sd_r <= 0.01)
-                                params(ii).delta_HJB = 1;
-                            elseif risk_aver == 10
                                 params(ii).delta_HJB = 0.2;
+                            elseif risk_aver == 10
+                                params(ii).delta_HJB = 0.05;
                             elseif (risk_aver == 20) && (sd_r <= 0.01)
                                 params(ii).delta_HJB = 0.1;
                             elseif (risk_aver == 20) && (sd_r <= 0.1)

@@ -30,7 +30,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = 0;
@@ -44,7 +44,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 2;
+runopts.param_index = 57;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -113,11 +113,44 @@ p.print();
 
 
 %% r_b, r_a calibration for rho calibrated to RA = 1
+calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
+if p.invies == 1
+    switch p.riskaver
+        case 1
+            x0 = calibrator.create_initial_condition([0.005, 0.0225]);
+        case 2
+            x0 = calibrator.create_initial_condition([-0.04, 0.025]);
+        case 5
+            x0 = calibrator.create_initial_condition([-0.06, 0.01]);
+        case 10
+            x0 = calibrator.create_initial_condition([-0.1, 0.005]);
+        case 20
+            x0 = calibrator.create_initial_condition([-0.13, -0.005]);
+    end
+else
+    switch p.riskaver
+        case 1.01
+            x0 = calibrator.create_initial_condition([0.009, 0.027]);
+        case 2
+            x0 = calibrator.create_initial_condition([0.002, 0.025]);
+        case 5
+            x0 = calibrator.create_initial_condition([-0.01, 0.015]);
+        case 10
+            x0 = calibrator.create_initial_condition([-0.038, 0.012]);
+        case 20
+            x0 = calibrator.create_initial_condition([-0.1, 0.012]);
+    end
+end
+
+opts = optimoptions('fsolve', 'MaxFunctionEvaluations', 400, 'MaxIterations', 600);
+fsolve(calibrator.objective, x0, opts);
+
+%% r_b, r_a calibration for rho calibrated to RA = 5
 % calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
 % if p.invies == 1
 %     switch p.riskaver
 %         case 1
-%             x0 = calibrator.create_initial_condition([0.005, 0.022]);
+%             x0 = calibrator.create_initial_condition([0.025, 0.06]);
 %         case 2
 %             x0 = calibrator.create_initial_condition([-0.04, 0.0001]);
 %         case 5
@@ -143,40 +176,9 @@ p.print();
 % end
 % fsolve(calibrator.objective, x0);
 
-%% r_b, r_a calibration for rho calibrated to RA = 5
-calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
-if p.invies == 1
-    switch p.riskaver
-        case 1
-            x0 = calibrator.create_initial_condition([0.043, 0.065]);
-        case 2
-            x0 = calibrator.create_initial_condition([-0.04, 0.0001]);
-        case 5
-            x0 = calibrator.create_initial_condition([-0.06, -0.001]);
-        case 10
-            x0 = calibrator.create_initial_condition([-0.1, -0.002]);
-        case 20
-            x0 = calibrator.create_initial_condition([-0.12, -0.005]);
-    end
-else
-    switch p.riskaver
-        case 1.01
-            x0 = calibrator.create_initial_condition([0.005, 0.014]);
-        case 2
-            x0 = calibrator.create_initial_condition([-0.035, 0.005]);
-        case 5
-            x0 = calibrator.create_initial_condition([-0.09, -0.0005]);
-        case 10
-            x0 = calibrator.create_initial_condition([-0.125, -0.006]);
-        case 20
-            x0 = calibrator.create_initial_condition([-0.15, -0.01]);
-    end
-end
-fsolve(calibrator.objective, x0);
-
 %% r_a, rho calibration
 % calibrator = solver.Calibrator(runopts, p, "r_a, rho");
-% x0 = calibrator.create_initial_condition([0.160944, 0.052269]);
+% x0 = calibrator.create_initial_condition([0.021444, 0.01469]);
 % fsolve(calibrator.objective, x0);
 
 %% rho calibration

@@ -102,7 +102,7 @@ function Vn1 = solveHJB(p, A, income, Vn, u, nn, risk_adj)
 
         % Howard improvement step
         if (nn >= p.start_HIS) && (p.SDU == 0)
-            Vn2_k = howard_improvement_step(p, income, ez_adj, Vn1_k, u_k, Bik_all);
+            Vn1_k = howard_improvement_step(p, income, ez_adj, Vn1_k, u_k, Bik_all);
         end
         Vn1 = reshape(Vn1_k,nb,na,nz,ny);
     end

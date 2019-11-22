@@ -124,9 +124,8 @@ function LHS = KFE_matrix_divisor(p, income, A)
 	for k = 1:income.ny
 		i1 = 1 + (k-1) * (p.nb_KFE*p.na_KFE*p.nz);
 		i2 = k * (p.nb_KFE*p.na_KFE*p.nz);
-		Ak = A(i1:i2, i1:i2);
 
-		LHS{k} = (speye(p.nb_KFE*p.na_KFE*p.nz) - p.delta_KFE * Ak'...
+		LHS{k} = (speye(p.nb_KFE*p.na_KFE*p.nz) - p.delta_KFE * A(i1:i2, i1:i2)'...
 	   		- p.delta_KFE * (income.ytrans(k,k) - p.deathrate) * speye(p.nb_KFE*p.na_KFE*p.nz));
 		LHS{k} = inverse(LHS{k});
 	end

@@ -25,7 +25,6 @@ classdef MPCFinder < handle
 
 		% income transitions w/o diagonal
 		ytrans_offdiag;
-		ez_adj;
 
 		% results structure
 		mpcs = struct();
@@ -34,7 +33,7 @@ classdef MPCFinder < handle
 	end
 
 	methods
-		function obj = MPCFinder(p, income, grids, ez_adj)
+		function obj = MPCFinder(p, income, grids)
 			% class constructor
 
 			% Parameters
@@ -46,10 +45,6 @@ classdef MPCFinder < handle
 			% grids : a Grid object, providing the asset grids
 			%	for the KFE
 			%
-			% ez_adj : an array containing the risk adjusted
-			%	income transitions for the SDU case, if applicable,
-			%	of shape (nb_KFE*na_KFE*nz, ny, ny)
-			%
 			% Returns
 			% -------
 			% obj : an MPCFinder object
@@ -60,15 +55,7 @@ classdef MPCFinder < handle
 
 			obj.ResetIncomeUponDeath = p.ResetIncomeUponDeath;
 
-			if (p.SDU == 0) || (income.ny == 1)
-				obj.ytrans_offdiag = income.ytrans - diag(diag(income.ytrans));
-			else
-				obj.ytrans_offdiag = ez_adj;
-				for k = 1:income.ny
-					obj.ytrans_offdiag(:,k,k) = 0;
-				end
-				obj.ez_adj = ez_adj;
-			end
+			obj.ytrans_offdiag = income.ytrans - diag(diag(income.ytrans));
 
 			for ii = 1:6
 				obj.mpcs(ii).mpcs = NaN;
@@ -132,15 +119,9 @@ classdef MPCFinder < handle
 		    	ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
 		    	ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
 
-		    	if (obj.p.SDU == 0) || (obj.income.ny == 1)
-			        obj.FKmat{k} = speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz)*(1/obj.p.delta_mpc ...
-			        					+ obj.p.deathrate - obj.income.ytrans(k,k))...
-			                		- A(ind1:ind2,ind1:ind2);
-			    else
-			    	obj.FKmat{k} = speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz)*(1/obj.p.delta_mpc ...
-			        					+ obj.p.deathrate) - spdiags(obj.ez_adj(:,k,k), 0, obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz,obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz);
-			                		- A(ind1:ind2,ind1:ind2);
-            	end
+		        obj.FKmat{k} = speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz)*(1/obj.p.delta_mpc ...
+		        					+ obj.p.deathrate - obj.income.ytrans(k,k))...
+		                		- A(ind1:ind2,ind1:ind2);
 		        obj.FKmat{k} = inverse(obj.FKmat{k});
 		    end
 		end

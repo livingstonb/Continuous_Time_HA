@@ -374,15 +374,8 @@ classdef TransitionalDynSolver < handle
 			        		Ak = obj.A_HJB(ind1:ind2, ind1:ind2);
 			        	end
 
-			        	if obj.p.SDU == 0
-				            FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(...
-				            					1/obj.p.delta_mpc + obj.p.deathrate - obj.income.ytrans(k,k)) - Ak;
-				        else
-				        	FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(...
-		            					1/obj.p.delta_mpc + obj.p.deathrate) ...
-		        						- spdiags(ez_adj(:, k, k), 0, obj.p.nb_KFE*obj.dim2*obj.p.nz, obj.p.nb_KFE*obj.dim2*obj.p.nz)
-		                    			- Ak;
-			        	end
+			        	FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(...
+				            	1/obj.p.delta_mpc + obj.p.deathrate - obj.income.ytrans(k,k)) - Ak;
 			            FKmat{k} = inverse(FKmat{k});
 			        end
 
@@ -458,20 +451,8 @@ classdef TransitionalDynSolver < handle
 
             cumcon_t_k = reshape(obj.cumcon(:,period),[],obj.p.ny);
 
-            if obj.p.SDU == 1
-            	ez_adj = solver.SDU_income_risk_adjustment(obj.p, obj.V, obj.income);
-
-            	for k = 1:obj.income.ny
-            		ez_adj(:, k, k) = 0;
-            	end
-            end
-
 			for k = 1:obj.income.ny
-				if obj.p.SDU == 0
-                	ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
-                else
-                	ytrans_cc_k = sum(squeeze(ez_adj(:, k, :)), cumcon_t_k,2);
-                end
+                ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
 
                 deathin_cc_k = obj.get_death_inflows(cumcon_t_k, k);
 

@@ -26,6 +26,7 @@ classdef Calibrator
 			
 			if strcmp(method, "rho")
 				obj.objective = @(x) rho_calibrator(x, runopts, p);
+				obj.create_initial_condition = @(initial_cond) rho_initial(p, initial_cond);
 			elseif strcmp(method, "r_a, rho");
 				obj.objective = @(x) ra_rho_calibrator(x, runopts, p);
 				obj.create_initial_condition = @(initial_cond) ra_rho_initial(p, initial_cond);
@@ -38,6 +39,27 @@ classdef Calibrator
 		end
 	end
 end
+
+function x0 = rho_initial(p, initial)
+	% a function used to create initial conditions for
+	% fsolve, out of a desired initial rho
+
+	% Parameters
+	% ----------
+	% p : a Params object
+	%
+	% initial : a vector containing the desired initial
+	%	value for rho
+	%
+	% Returns
+	% ------
+	% x0 : a scalar containing the required input value
+	%	for the calibrator to set rho to its
+	%	desired value, passed in 'initial'
+
+	x0 = (initial / 0.05) / (1 - initial / 0.05);
+end
+
 
 function y = rho_calibrator(x, runopts, p)
 	% objective function for calibration of rho to
@@ -130,8 +152,8 @@ function y = ra_rho_calibrator(x, runopts, p)
 
 	% Compute distance from target
     y = zeros(2, 1);
-	y(1) = (stats.liqw - 0.5) ^ 2;
-    y(2) = (stats.totw - p.targetAY) ^ 2;
+	y(1) = stats.liqw - 0.5;
+    y(2) = stats.totw - p.targetAY;
 
     fprintf("For rho=%f:\n", p.rho);
     fprintf("For r_a = %f:\n", p.r_a);
@@ -219,8 +241,8 @@ function [y, x0] = rb_ra_calibrator(x, runopts, p)
 	stats = main(runopts, p);
 
 	% Compute distance from target
-	y = (stats.liqw - 0.5) ^ 2;
-	y(2) = (stats.totw - p.targetAY) ^ 2;
+	y = stats.liqw - 0.5;
+	y(2) = stats.totw - p.targetAY;
 
     fprintf("For r_b = %f", p.r_b);
 	fprintf(" and r_a = %f:\n", p.r_a);
