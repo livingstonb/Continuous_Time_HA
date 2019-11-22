@@ -5,12 +5,18 @@ function outparams = SDU_tests(runopts)
     % rho for calibration based on baseline: 0.033940
     % rho for calibration based on riskaver = 5, sigma_r = 0.1: 0.114248
 
-    rho_ies1 = 0.0339400;
-    rho_ies1_5 = 0.039426;
+    %% calibrated rho's
+    % adj cost original, calibrated to RA = 1
+    rho_ies1 = 0.03394;
+    rho_ies1_5 = 0.039426; % not correct
+%   
 
-    % rho_ies1 = 0.1;
+    % new adj cost, calibrated to IES = 1
+    rho_ies1 = 0.031219; % (r_a = 0.22612)
+
+    % adj cost original, calibrated to RA = 5, sigma_r = 0.1
 %     rho_ies1 = 0.274541;
-    % rho_ies1_5 = 0.223813;
+%     rho_ies1_5 = 0.223813;
 
     %%--------------------------------------------------------------
     % BASELINE
@@ -50,17 +56,16 @@ function outparams = SDU_tests(runopts)
     ies_vals = [1, 1.5];
     risk_avers = [1, 2, 5, 10, 20];
     sdrs = [0, 0.01, 0.02, 0.05, 0.1, 0.15];
-    % chi1s = [0.15, 0.4096];
-    chi1s = [0.15];
+    chi1s = [0.15, 0.4096];
     
-    RA5calibration = 0;
+    RA5calibration = 1;
 
     ii = 2;
     for chi1 = chi1s
         for ies = ies_vals
             for risk_aver = risk_avers
                 for sd_r = sdrs
-                    params(ii).name = sprintf('SDU with riskaver%f, sigma_r%f, ies%f', risk_aver, sd_r, ies); 
+                    params(ii).name = sprintf('SDU with riskaver%f, sigma_r%f, ies%f, chi1_%f', risk_aver, sd_r, ies, chi1); 
                     params(ii).OneAsset = 0;
                     params(ii).DirIncomeProcess = 'input/IncomeGrids/twopoint_3_5';
                     params(ii).chi0 = 0;

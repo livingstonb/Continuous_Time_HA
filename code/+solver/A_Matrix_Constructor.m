@@ -368,14 +368,18 @@ classdef A_Matrix_Constructor < handle
             % A : a sparse matrix with lower, middle, and upper on the requested diagonals
 
             if shift_dim == 1
-                upper = circshift(reshape(upper, obj.nb, obj.na*obj.nz*obj.ny), 1);
-                lower = circshift(reshape(lower, obj.nb, obj.na*obj.nz*obj.ny), -1);
+                upper = upper(:);
+                upper = [0; upper(1:end-1)];
+                lower = lower(:);
+                lower = [lower(2:end); 0];
                 A = spdiags(upper(:), 1, obj.dim, obj.dim) ...
                     + spdiags(middle(:), 0, obj.dim, obj.dim) ...
                     + spdiags(lower(:), -1, obj.dim, obj.dim);
             elseif shift_dim == 2
-                upper = circshift(reshape(upper, obj.nb*obj.na, obj.nz, obj.ny), obj.nb);
-                lower = circshift(reshape(lower, obj.nb*obj.na, obj.nz, obj.ny), -obj.nb);
+                upper = upper(:);
+                upper = [zeros(obj.nb, 1); upper(1:end-obj.nb)];
+                lower = lower(:);
+                lower = [lower(obj.nb+1:end); zeros(obj.nb, 1)];
                 A = spdiags(upper(:), obj.nb, obj.dim, obj.dim) ...
                     + spdiags(middle(:), 0, obj.dim, obj.dim) ...
                     + spdiags(lower(:), -obj.nb, obj.dim, obj.dim);                
