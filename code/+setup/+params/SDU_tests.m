@@ -7,12 +7,13 @@ function outparams = SDU_tests(runopts)
 
     %% calibrated rho's
     % adj cost original, calibrated to RA = 1
-    rho_ies1 = 0.03394;
-    rho_ies1_5 = 0.039426; % not correct
+    rho_ies1_chi1_015 = 0.03394;
+    rho_ies1_5_chi1_015 = 0.039426; % not correct
 %   
 
     % new adj cost, calibrated to IES = 1
-    rho_ies1 = 0.031219; % (r_a = 0.22612)
+    rho_ies1_chi1_high = 0.031219; % (r_a = 0.22612)
+    rho_ies1_5_chi1_high = 0.025568;
 
     % adj cost original, calibrated to RA = 5, sigma_r = 0.1
 %     rho_ies1 = 0.274541;
@@ -43,7 +44,7 @@ function outparams = SDU_tests(runopts)
     params(ii).na = 50;
     params(ii).na_KFE = 50;
     params(ii).deathrate = 0;
-    params(ii).rho = rho_ies1;
+    params(ii).rho = rho_ies1_chi1_015;
     params(ii).rhoL = 0.022;
     params(ii).transfer = 0.0081 * 2.0;
     params(ii).implicit = 0;
@@ -95,10 +96,14 @@ function outparams = SDU_tests(runopts)
                     params(ii).SaveResults = 0;
 
                     % discount factor
-                    if ies == 1
-                        params(ii).rho = rho_ies1;
+                    if ies == 1 && (chi1 == 0.15)
+                        params(ii).rho = rho_ies1_chi1_015;
+                    elseif ies == 5 && (chi1 == 0.15)
+                        params(ii).rho = rho_ies1_5_chi1_015;
+                    elseif ies == 1
+                        params(ii).rho = rho_ies1_chi1_high;
                     else
-                        params(ii).rho = rho_ies1_5;
+                        params(ii).rho = rho_ies1_5_chi1_high;
                     end
 
                     % risk_aver = 1 special case not coded for ies ~= 1

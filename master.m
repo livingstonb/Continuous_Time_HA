@@ -30,7 +30,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = 0;
@@ -44,7 +44,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 62;
+runopts.param_index = 1;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -112,230 +112,465 @@ p.print();
 % -------------------------------------------------------------------------
 
 
-%% r_b, r_a calibration for rho calibrated to RA = 1
-% calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
-% if p.invies == 1
-%     switch p.riskaver
-%         case 1
-%             switch p.sigma_r
-%                 case 0
-%                     r_b_0 = 0.006;
-%                     r_a_0 = 0.022866;
-%                 case 0.01
-%                     r_b_0 = 0.005006;
-%                     r_a_0 = 0.022877;
-%                 case 0.02
-%                     r_b_0 = 0.005026;
-%                     r_a_0 = 0.022909;
-%                 case 0.05
-%                     r_b_0 = 0.005154;
-%                     r_a_0 = 0.02313;
-%                 case 0.1
-%                     r_b_0 = 0.005539;
-%                     r_a_0 = 0.023891;
-%                 case 0.15
-%                     r_b_0 = 0.006049;
-%                     r_a_0 = 0.025091;
-%             end
-%         case 2
-%             switch p.sigma_r
-%                 case 0
-%                     r_b_0 = -0.009868;
-%                     r_a_0 = 0.01987;
-%                 case 0.01
-%                     r_b_0 = -0.009856;
-%                     r_a_0 = 0.022877;
-%                 case 0.02
-%                     r_b_0 = -0.00982;
-%                     r_a_0 = 0.020134;
-%                 case 0.05
-%                     r_b_0 = -0.00975;
-%                     r_a_0 = 0.021134;
-%                 case 0.1
-%                     r_b_0 = -0.009709;
-%                     r_a_0 = 0.024941;
-%                 case 0.15
-%                     r_b_0 = -0.00961;
-%                     r_a_0 = 0.028941;
-%             end
-%         case 5
-%             switch p.sigma_r
-%                 case 0
-%                     r_b_0 = -0.051442;
-%                     r_a_0 = 0.009666;
-%                 case 0.01
-%                     r_b_0 = -0.051958;
-%                     r_a_0 = 0.009898;
-%                 case 0.02
-%                     r_b_0 = -0.05323;
-%                     r_a_0 = 0.010561;
-%                 case 0.05
-%                     r_b_0 = -0.057679;
-%                     r_a_0 = 0.014174;
-%                 case 0.1
-%                     r_b_0 = -0.065535;
-%                     r_a_0 = 0.022612;
-%                 case 0.15
-%                     r_b_0 = -0.07403;
-%                     r_a_0 = 0.03228;
-%             end
-%         case 10
-%             switch p.sigma_r
-%                 case 0
-%                     r_b_0 = -0.092879;
-%                     r_a_0 = 0.00526;
-%                 case 0.01
-%                     r_b_0 = -0.094133;
-%                     r_a_0 = 0.005732;
-%                 case 0.02
-%                     r_b_0 = -0.096433;
-%                     r_a_0 = 0.006332;
-%                 case 0.05
-%                     r_b_0 = -0.099433;
-%                     r_a_0 = 0.006832;
-%                 case 0.1
-%                     r_b_0 = -0.105433;
-%                     r_a_0 = 0.007332;
-%                 case 0.15
-%                     r_b_0 = -0.111433;
-%                     r_a_0 = 0.008032;
-%             end
-%         case 20
-%             switch p.sigma_r
-%                 case 0
-%                     r_b_0 = -0.124384;
-%                     r_a_0 = 0.004371;
-%                 case 0.01
-%                     r_b_0 = -0.128384;
-%                     r_a_0 = 0.006371;
-%                 case 0.02
-%                     r_b_0 = -0.133384;
-%                     r_a_0 = 0.007371;
-%                 case 0.05
-%                     r_b_0 = -0.144384;
-%                     r_a_0 = 0.008371;
-%                 case 0.1
-%                     r_b_0 = -0.152;
-%                     r_a_0 = 0.009471;
-%                 case 0.15
-%                     r_b_0 = -0.1689;
-%                     r_a_0 = 0.012;
-%             end
-%     end
-% else
-%     switch p.riskaver
-%         case 1.01
-%             switch p.sigma_r
-%                 case 0
-%                     r_b_0 = 0.016998;
-%                     r_a_0 = 0.027251;
-%                 case 0.01
-%                     r_b_0 = 0.017017;
-%                     r_a_0 = 0.027289;
-%                 case 0.02
-%                     r_b_0 = 0.017073;
-%                     r_a_0 = 0.027399;
-%                 case 0.05
-%                     r_b_0 = 0.017508;
-%                     r_a_0 = 0.028097;
-%                 case 0.1
-%                     r_b_0 = 0.018308;
-%                     r_a_0 = 0.029097;
-%                 case 0.15
-%                     r_b_0 = 0.019308;
-%                     r_a_0 = 0.030597;
-%             end
-%         case 2
-%             switch p.sigma_r
-%                 case 0
-%                     r_b_0 = 0.00373;
-%                     r_a_0 = 0.024604;
-%                 case 0.01
-%                     r_b_0 = 0.003824;
-%                     r_a_0 = 0.024692;
-%                 case 0.02
-%                     r_b_0 = 0.004089;
-%                     r_a_0 = 0.024949;
-%                 case 0.05
-%                     r_b_0 = 0.005161;
-%                     r_a_0 = 0.026571;
-%                 case 0.1
-%                     r_b_0 = 0.006461;
-%                     r_a_0 = 0.0281971;
-%                 case 0.15
-%                     r_b_0 = 0.007861;
-%                     r_a_0 = 0.0321971;
-%             end
-%         case 5
-%             switch p.sigma_r
-%                 case 0
-%                     r_b_0 = -0.036748;
-%                     r_a_0 = 0.014726;
-%                 case 0.01
-%                     r_b_0 = -0.036771;
-%                     r_a_0 = 0.014992;
-%                 case 0.02
-%                     r_b_0 = -0.036853;
-%                     r_a_0 = 0.015755;
-%                 case 0.05
-%                     r_b_0 = -0.038872;
-%                     r_a_0 = 0.020275;
-%                 case 0.1
-%                     r_b_0 = -0.047149;
-%                     r_a_0 = 0.031595;
-%                 case 0.15
-%                     r_b_0 = -0.059149;
-%                     r_a_0 = 0.043595;
-%             end
-%         case 10
-%             switch p.sigma_r
-%                 case 0
-%                     r_b_0 = -0.077692;
-%                     r_a_0 = 0.010993;
-%                 case 0.01
-%                     r_b_0 = -0.077745;
-%                     r_a_0 = 0.011551;
-%                 case 0.02
-%                     r_b_0 = -0.07771;
-%                     r_a_0 = 0.013081;
-%                 case 0.05
-%                     r_b_0 = -0.082419;
-%                     r_a_0 = 0.02136;
-%                 case 0.1
-%                     r_b_0 = -0.092419;
-%                     r_a_0 = 0.031595;
-%                 case 0.15
-%                     r_b_0 = -0.109149;
-%                     r_a_0 = 0.043595;
-%             end
-%         case 20
-%             switch p.sigma_r
-%                 case 0
-%                     r_b_0 = -0.1018;
-%                     r_a_0 = 0.010889;
-%                 case 0.01
-%                     r_b_0 = -0.104769;
-%                     r_a_0 = 0.012029;
-%                 case 0.02
-%                     r_b_0 = -0.108461;
-%                     r_a_0 = 0.014972;
-%                 case 0.05
-%                     r_b_0 = -0.110461;
-%                     r_a_0 = 0.016272;
-%                 case 0.1
-%                     r_b_0 = -0.114661;
-%                     r_a_0 = 0.019372;
-%                 case 0.15
-%                     r_b_0 = -0.127261;
-%                     r_a_0 = 0.023572;
-%             end
-%     end
-% end
+%% r_b, r_a calibration for rho calibrated to RA = 1, original adj costs
 
-% x0 = calibrator.create_initial_condition([r_b_0, r_a_0]);
-% 
-% opts = optimoptions('fsolve', 'MaxFunctionEvaluations', 400, 'MaxIterations', 600);
-% fsolve(calibrator.objective, x0, opts);
+if p.chi1 == 0.15
+    
+if p.invies == 1
+    switch p.riskaver
+        case 1
+            switch p.sigma_r
+                case 0
+                    r_b_0 = 0.006;
+                    r_a_0 = 0.022866;
+                case 0.01
+                    r_b_0 = 0.005006;
+                    r_a_0 = 0.022877;
+                case 0.02
+                    r_b_0 = 0.005026;
+                    r_a_0 = 0.022909;
+                case 0.05
+                    r_b_0 = 0.005154;
+                    r_a_0 = 0.02313;
+                case 0.1
+                    r_b_0 = 0.005539;
+                    r_a_0 = 0.023891;
+                case 0.15
+                    r_b_0 = 0.006049;
+                    r_a_0 = 0.025091;
+            end
+        case 2
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.009868;
+                    r_a_0 = 0.01987;
+                case 0.01
+                    r_b_0 = -0.009856;
+                    r_a_0 = 0.022877;
+                case 0.02
+                    r_b_0 = -0.00982;
+                    r_a_0 = 0.020134;
+                case 0.05
+                    r_b_0 = -0.00975;
+                    r_a_0 = 0.021134;
+                case 0.1
+                    r_b_0 = -0.009709;
+                    r_a_0 = 0.024941;
+                case 0.15
+                    r_b_0 = -0.00961;
+                    r_a_0 = 0.028941;
+            end
+        case 5
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.051442;
+                    r_a_0 = 0.009666;
+                case 0.01
+                    r_b_0 = -0.051958;
+                    r_a_0 = 0.009898;
+                case 0.02
+                    r_b_0 = -0.05323;
+                    r_a_0 = 0.010561;
+                case 0.05
+                    r_b_0 = -0.057679;
+                    r_a_0 = 0.014174;
+                case 0.1
+                    r_b_0 = -0.065535;
+                    r_a_0 = 0.022612;
+                case 0.15
+                    r_b_0 = -0.07403;
+                    r_a_0 = 0.03228;
+            end
+        case 10
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.092879;
+                    r_a_0 = 0.00526;
+                case 0.01
+                    r_b_0 = -0.094133;
+                    r_a_0 = 0.005732;
+                case 0.02
+                    r_b_0 = -0.096433;
+                    r_a_0 = 0.006332;
+                case 0.05
+                    r_b_0 = -0.099433;
+                    r_a_0 = 0.006832;
+                case 0.1
+                    r_b_0 = -0.105433;
+                    r_a_0 = 0.007332;
+                case 0.15
+                    r_b_0 = -0.111433;
+                    r_a_0 = 0.008032;
+            end
+        case 20
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.124384;
+                    r_a_0 = 0.004371;
+                case 0.01
+                    r_b_0 = -0.128384;
+                    r_a_0 = 0.006371;
+                case 0.02
+                    r_b_0 = -0.133384;
+                    r_a_0 = 0.007371;
+                case 0.05
+                    r_b_0 = -0.144384;
+                    r_a_0 = 0.008371;
+                case 0.1
+                    r_b_0 = -0.152;
+                    r_a_0 = 0.009471;
+                case 0.15
+                    r_b_0 = -0.1689;
+                    r_a_0 = 0.012;
+            end
+    end
+else
+    switch p.riskaver
+        case 1.01
+            switch p.sigma_r
+                case 0
+                    r_b_0 = 0.016998;
+                    r_a_0 = 0.027251;
+                case 0.01
+                    r_b_0 = 0.017017;
+                    r_a_0 = 0.027289;
+                case 0.02
+                    r_b_0 = 0.017073;
+                    r_a_0 = 0.027399;
+                case 0.05
+                    r_b_0 = 0.017508;
+                    r_a_0 = 0.028097;
+                case 0.1
+                    r_b_0 = 0.018308;
+                    r_a_0 = 0.029097;
+                case 0.15
+                    r_b_0 = 0.019308;
+                    r_a_0 = 0.030597;
+            end
+        case 2
+            switch p.sigma_r
+                case 0
+                    r_b_0 = 0.00373;
+                    r_a_0 = 0.024604;
+                case 0.01
+                    r_b_0 = 0.003824;
+                    r_a_0 = 0.024692;
+                case 0.02
+                    r_b_0 = 0.004089;
+                    r_a_0 = 0.024949;
+                case 0.05
+                    r_b_0 = 0.005161;
+                    r_a_0 = 0.026571;
+                case 0.1
+                    r_b_0 = 0.006461;
+                    r_a_0 = 0.0281971;
+                case 0.15
+                    r_b_0 = 0.007861;
+                    r_a_0 = 0.0321971;
+            end
+        case 5
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.036748;
+                    r_a_0 = 0.014726;
+                case 0.01
+                    r_b_0 = -0.036771;
+                    r_a_0 = 0.014992;
+                case 0.02
+                    r_b_0 = -0.036853;
+                    r_a_0 = 0.015755;
+                case 0.05
+                    r_b_0 = -0.038872;
+                    r_a_0 = 0.020275;
+                case 0.1
+                    r_b_0 = -0.047149;
+                    r_a_0 = 0.031595;
+                case 0.15
+                    r_b_0 = -0.059149;
+                    r_a_0 = 0.043595;
+            end
+        case 10
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.077692;
+                    r_a_0 = 0.010993;
+                case 0.01
+                    r_b_0 = -0.077745;
+                    r_a_0 = 0.011551;
+                case 0.02
+                    r_b_0 = -0.07771;
+                    r_a_0 = 0.013081;
+                case 0.05
+                    r_b_0 = -0.082419;
+                    r_a_0 = 0.02136;
+                case 0.1
+                    r_b_0 = -0.092419;
+                    r_a_0 = 0.031595;
+                case 0.15
+                    r_b_0 = -0.109149;
+                    r_a_0 = 0.043595;
+            end
+        case 20
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.1018;
+                    r_a_0 = 0.010889;
+                case 0.01
+                    r_b_0 = -0.104769;
+                    r_a_0 = 0.012029;
+                case 0.02
+                    r_b_0 = -0.108461;
+                    r_a_0 = 0.014972;
+                case 0.05
+                    r_b_0 = -0.110461;
+                    r_a_0 = 0.016272;
+                case 0.1
+                    r_b_0 = -0.114661;
+                    r_a_0 = 0.019372;
+                case 0.15
+                    r_b_0 = -0.127261;
+                    r_a_0 = 0.023572;
+            end
+    end
+end
+
+calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
+x0 = calibrator.create_initial_condition([r_b_0, r_a_0]);
+
+opts = optimoptions('fsolve', 'MaxFunctionEvaluations', 400, 'MaxIterations', 600);
+fsolve(calibrator.objective, x0, opts);
+
+end
+
+%% r_b, r_a calibration for rho calibrated to RA = 1, NEW adj costs
+
+if p.chi1 ~= 0.15
+    
+if p.invies == 1
+    switch p.riskaver
+        case 1
+            switch p.sigma_r
+                case 0
+                    r_b_0 = 0.005;
+                    r_a_0 = 0.01979;
+                case 0.01
+                    r_b_0 = 0.005006;
+                    r_a_0 = 0.020877;
+                case 0.02
+                    r_b_0 = 0.005026;
+                    r_a_0 = 0.020909;
+                case 0.05
+                    r_b_0 = 0.005154;
+                    r_a_0 = 0.02113;
+                case 0.1
+                    r_b_0 = 0.005539;
+                    r_a_0 = 0.021891;
+                case 0.15
+                    r_b_0 = 0.006049;
+                    r_a_0 = 0.022091;
+            end
+        case 2
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.009868;
+                    r_a_0 = 0.01987;
+                case 0.01
+                    r_b_0 = -0.009856;
+                    r_a_0 = 0.022877;
+                case 0.02
+                    r_b_0 = -0.00982;
+                    r_a_0 = 0.020134;
+                case 0.05
+                    r_b_0 = -0.00975;
+                    r_a_0 = 0.021134;
+                case 0.1
+                    r_b_0 = -0.009709;
+                    r_a_0 = 0.024941;
+                case 0.15
+                    r_b_0 = -0.00961;
+                    r_a_0 = 0.028941;
+            end
+        case 5
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.051442;
+                    r_a_0 = 0.009666;
+                case 0.01
+                    r_b_0 = -0.051958;
+                    r_a_0 = 0.009898;
+                case 0.02
+                    r_b_0 = -0.05323;
+                    r_a_0 = 0.010561;
+                case 0.05
+                    r_b_0 = -0.057679;
+                    r_a_0 = 0.014174;
+                case 0.1
+                    r_b_0 = -0.065535;
+                    r_a_0 = 0.022612;
+                case 0.15
+                    r_b_0 = -0.07403;
+                    r_a_0 = 0.03228;
+            end
+        case 10
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.092879;
+                    r_a_0 = 0.00526;
+                case 0.01
+                    r_b_0 = -0.094133;
+                    r_a_0 = 0.005732;
+                case 0.02
+                    r_b_0 = -0.096433;
+                    r_a_0 = 0.006332;
+                case 0.05
+                    r_b_0 = -0.099433;
+                    r_a_0 = 0.006832;
+                case 0.1
+                    r_b_0 = -0.105433;
+                    r_a_0 = 0.007332;
+                case 0.15
+                    r_b_0 = -0.111433;
+                    r_a_0 = 0.008032;
+            end
+        case 20
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.124384;
+                    r_a_0 = 0.004371;
+                case 0.01
+                    r_b_0 = -0.128384;
+                    r_a_0 = 0.006371;
+                case 0.02
+                    r_b_0 = -0.133384;
+                    r_a_0 = 0.007371;
+                case 0.05
+                    r_b_0 = -0.144384;
+                    r_a_0 = 0.008371;
+                case 0.1
+                    r_b_0 = -0.152;
+                    r_a_0 = 0.009471;
+                case 0.15
+                    r_b_0 = -0.1689;
+                    r_a_0 = 0.012;
+            end
+    end
+else
+    switch p.riskaver
+        case 1.01
+            switch p.sigma_r
+                case 0
+                    r_b_0 = 0.016998;
+                    r_a_0 = 0.027251;
+                case 0.01
+                    r_b_0 = 0.017017;
+                    r_a_0 = 0.027289;
+                case 0.02
+                    r_b_0 = 0.017073;
+                    r_a_0 = 0.027399;
+                case 0.05
+                    r_b_0 = 0.017508;
+                    r_a_0 = 0.028097;
+                case 0.1
+                    r_b_0 = 0.018308;
+                    r_a_0 = 0.029097;
+                case 0.15
+                    r_b_0 = 0.019308;
+                    r_a_0 = 0.030597;
+            end
+        case 2
+            switch p.sigma_r
+                case 0
+                    r_b_0 = 0.00373;
+                    r_a_0 = 0.024604;
+                case 0.01
+                    r_b_0 = 0.003824;
+                    r_a_0 = 0.024692;
+                case 0.02
+                    r_b_0 = 0.004089;
+                    r_a_0 = 0.024949;
+                case 0.05
+                    r_b_0 = 0.005161;
+                    r_a_0 = 0.026571;
+                case 0.1
+                    r_b_0 = 0.006461;
+                    r_a_0 = 0.0281971;
+                case 0.15
+                    r_b_0 = 0.007861;
+                    r_a_0 = 0.0321971;
+            end
+        case 5
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.036748;
+                    r_a_0 = 0.014726;
+                case 0.01
+                    r_b_0 = -0.036771;
+                    r_a_0 = 0.014992;
+                case 0.02
+                    r_b_0 = -0.036853;
+                    r_a_0 = 0.015755;
+                case 0.05
+                    r_b_0 = -0.038872;
+                    r_a_0 = 0.020275;
+                case 0.1
+                    r_b_0 = -0.047149;
+                    r_a_0 = 0.031595;
+                case 0.15
+                    r_b_0 = -0.059149;
+                    r_a_0 = 0.043595;
+            end
+        case 10
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.077692;
+                    r_a_0 = 0.010993;
+                case 0.01
+                    r_b_0 = -0.077745;
+                    r_a_0 = 0.011551;
+                case 0.02
+                    r_b_0 = -0.07771;
+                    r_a_0 = 0.013081;
+                case 0.05
+                    r_b_0 = -0.082419;
+                    r_a_0 = 0.02136;
+                case 0.1
+                    r_b_0 = -0.092419;
+                    r_a_0 = 0.031595;
+                case 0.15
+                    r_b_0 = -0.109149;
+                    r_a_0 = 0.043595;
+            end
+        case 20
+            switch p.sigma_r
+                case 0
+                    r_b_0 = -0.1018;
+                    r_a_0 = 0.010889;
+                case 0.01
+                    r_b_0 = -0.104769;
+                    r_a_0 = 0.012029;
+                case 0.02
+                    r_b_0 = -0.108461;
+                    r_a_0 = 0.014972;
+                case 0.05
+                    r_b_0 = -0.110461;
+                    r_a_0 = 0.016272;
+                case 0.1
+                    r_b_0 = -0.114661;
+                    r_a_0 = 0.019372;
+                case 0.15
+                    r_b_0 = -0.127261;
+                    r_a_0 = 0.023572;
+            end
+    end
+end
+
+calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
+x0 = calibrator.create_initial_condition([r_b_0, r_a_0]);
+
+opts = optimoptions('fsolve', 'MaxFunctionEvaluations', 400, 'MaxIterations', 600);
+fsolve(calibrator.objective, x0, opts);
+
+end
 
 %% r_b, r_a calibration for rho calibrated to RA = 5
 % calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
@@ -369,20 +604,20 @@ p.print();
 % fsolve(calibrator.objective, x0);
 
 %% r_a, rho calibration
-calibrator = solver.Calibrator(runopts, p, "r_a, rho");
-x0 = calibrator.create_initial_condition([0.043541, 0.0319]);
-fsolve(calibrator.objective, x0);
+% calibrator = solver.Calibrator(runopts, p, "r_a, rho");
+% x0 = calibrator.create_initial_condition([0.043541, 0.0319]);
+% fsolve(calibrator.objective, x0);
 
 %% rho calibration
 % calibrator = solver.Calibrator(runopts, p, "rho");
 % x0 = calibrator.create_initial_condition(0.035);
 % fsolve(calibrator.objective, x0);
 
-% % final run
-% p.set("NoRisk", 1);
-% p.set("ComputeMPCS", 1);
-% % p.set("ComputeMPCS_news", 1);
-% p.set("SaveResults", 1);
-% tic
-% stats = main(runopts, p);
-% toc
+% final run
+p.set("NoRisk", 1);
+p.set("ComputeMPCS", 1);
+% p.set("ComputeMPCS_news", 1);
+p.set("SaveResults", 1);
+tic
+stats = main(runopts, p);
+toc
