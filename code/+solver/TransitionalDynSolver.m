@@ -17,8 +17,6 @@ classdef TransitionalDynSolver < handle
 		income;
 		grids;
 
-        dim2;
-
 		% intermediate values of V, A, policy fns, cumcon
 		V;
 		A_constructor_HJB;
@@ -130,6 +128,13 @@ classdef TransitionalDynSolver < handle
 				obj.savedTimesUntilShock = round(savedTimesUntilShock*40)/40;
 				save([obj.p.tempdirec 'savedTimesUntilShock.mat'],'savedTimesUntilShock')
             end
+
+            if numel(obj.p.rhos) > 1
+		        rhocol = kron(obj.p.rhos',ones(obj.p.nb_KFE*obj.p.na_KFE,1));
+		        obj.rho_diag = spdiags(rhocol,0,obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz, obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz);
+		    else
+		        obj.rho_diag = obj.p.rho * speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz);
+			end
             
             % loop over shocks
 			for ishock = obj.shocks
@@ -178,9 +183,6 @@ classdef TransitionalDynSolver < handle
 			% obj.A : the transition matrix over the KFE grids; this method
 			%	initializes A with the terminal transition matrix
 
-		    obj.KFEint = KFE_terminal;
-            obj.A = A_terminal;
-			
             shock = obj.p.mpc_shocks(ishock);
 
             success = false;
@@ -188,45 +190,20 @@ classdef TransitionalDynSolver < handle
 			% Get the guess of terminal value function
 			% V_{T+1}as V(b+shock,a,y)
 
-			dim2vec = obj.grids.a.vec;
-			dim2mat = obj.grids.a.matrix;
-
 			if numel(obj.p.rhos) > 1
 		        rho_mat = reshape(obj.p.rhos,[1 1 numel(obj.p.rhos)]);
 		    else
 		        rho_mat = obj.p.rho;
 		    end
 
-			if (obj.p.ny > 1) && (obj.p.nz > 1)
-				interp_grids = {obj.grids.b.vec,dim2vec,obj.grids.z.vec,obj.income.y.vec};
-            elseif obj.p.ny > 1
-                interp_grids = {obj.grids.b.vec,dim2vec,obj.income.y.vec};
-            elseif obj.p.nz > 1
-                interp_grids = {obj.grids.b.vec,dim2vec,obj.grids.z.vec};
-			else
-				interp_grids = {obj.grids.b.vec,dim2vec};
-			end
-			Vinterp = griddedInterpolant(interp_grids,squeeze(KFE.Vn),'linear');
+			Vg_terminal = obj.get_value_at_instant_of_shock(KFE, shock);
 
-			if (obj.p.ny > 1) && (obj.p.nz > 1)
-				Vg_terminal = Vinterp(obj.grids.b.matrix(:)+shock,...
-					dim2mat(:),obj.grids.z.matrix(:),obj.income.y.matrixKFE(:));
-            elseif obj.p.ny > 1
-                Vg_terminal = Vinterp(obj.grids.b.matrix(:)+shock,...
-					dim2mat(:),obj.income.y.matrixKFE(:));
-            elseif obj.p.nz > 1
-                Vg_terminal = Vinterp(obj.grids.b.matrix(:)+shock,...
-					dim2mat(:),obj.grids.z.matrix(:));
-			else
-				Vg_terminal = Vinterp(obj.grids.b.matrix(:)+shock,...
-					dim2mat(:));
-			end
-			reshape_vec = [obj.p.nb_KFE,obj.dim2,obj.p.nz,obj.p.ny];
+			reshape_vec = [obj.p.nb_KFE,obj.p.na_KFE,obj.p.nz,obj.p.ny];
 			Vg_terminal = reshape(Vg_terminal,reshape_vec);
 			Vg_terminal_k = reshape(Vg_terminal,[],obj.p.ny);
 
 			% iterate with implicit-explicit scheme to get V_terminal
-			reshape_vec = [obj.p.nb_KFE,obj.dim2,obj.p.nz,obj.p.ny];
+			reshape_vec = [obj.p.nb_KFE,obj.p.na_KFE,obj.p.nz,obj.p.ny];
 		    V_terminal = Vg_terminal;
 		    V_terminal_k = reshape(V_terminal,[],obj.p.ny);
             
@@ -236,18 +213,18 @@ classdef TransitionalDynSolver < handle
 
 		    	u_k = reshape(KFE_terminal.u,[],obj.p.ny);
 
-		    	V1_terminal_k = zeros(obj.p.nb_KFE*obj.dim2*obj.p.nz,obj.p.ny);
+		    	V1_terminal_k = zeros(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz,obj.p.ny);
                 deltaLarge = 1e-3;
 		    	for k = 1:obj.p.ny
-		    		ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
-			    	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
+		    		ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
+			    	ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
 		    		Ak = A_terminal(ind1:ind2, ind1:ind2);
                     
                     ez_adj = obj.income.SDU_income_risk_adjustment(obj.p, V_terminal);
    
 		    		indx_k = ~ismember(1:obj.p.ny,k);
 		    		if obj.p.SDU == 0
-			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.dim2*obj.p.nz,1) ...
+			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz,1) ...
 	                            .* V_terminal_k(:,indx_k),2);
 			    	else
 			    		Vk_stacked = sum(squeeze(ez_adj(:,k,indx_k)) .* V_terminal_k(:,indx_k),2);
@@ -255,14 +232,14 @@ classdef TransitionalDynSolver < handle
 
 			    	if obj.p.SDU == 0
 	                    V1_terminal_k(:,k) = (deltaLarge* obj.rho_diag + (deltaLarge/obj.p.delta_mpc + 1 + deltaLarge*(obj.p.deathrate - obj.income.ytrans(k,k)))...
-			        				*speye(obj.p.nb_KFE*obj.dim2*obj.p.nz) - deltaLarge* Ak)...
+			        				*speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz) - deltaLarge* Ak)...
 			                 	\ (deltaLarge* (u_k(:,k) + Vk_stacked)...
 			                 		+ deltaLarge*Vg_terminal_k(:,k)/obj.p.delta_mpc + V_terminal_k(:,k));
 			        else
 			        	V1_terminal_k(:,k) = ...
 			        		(deltaLarge* obj.rho_diag + (deltaLarge/obj.p.delta_mpc + 1 + ...
-			        			deltaLarge*obj.p.deathrate.*speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)) - deltaLarge* Ak...
-			        			- deltaLarge * spdiags(ez_adj(:,k,k), 0, obj.p.nb_KFE*obj.dim2*obj.p.nz, obj.p.nb_KFE*obj.dim2*obj.p.nz))...
+			        			deltaLarge*obj.p.deathrate.*speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz)) - deltaLarge* Ak...
+			        			- deltaLarge * spdiags(ez_adj(:,k,k), 0, obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz, obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz))...
 			                 	\ (deltaLarge* (u_k(:,k) + Vk_stacked)...
 			                 		+ deltaLarge*Vg_terminal_k(:,k)/obj.p.delta_mpc + V_terminal_k(:,k));
 		        	end
@@ -285,7 +262,41 @@ classdef TransitionalDynSolver < handle
 
 		    obj.V = V_terminal;
 		    obj.KFEint = KFE_terminal;
-            obj.A = A_terminal;
+            obj.A_HJB = A_terminal;
+
+            if (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 0)
+				obj.A_FK = obj.A_constructor_FK.construct(obj.KFEint);
+			end
+		end
+
+		function V_at_shock = get_value_at_instant_of_shock(obj, KFE, shock)
+			% V_at_shock is needed to find the value function an instant
+			% before the shock
+
+			if (obj.p.ny > 1) && (obj.p.nz > 1)
+				interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.grids.z.vec,obj.income.y.vec};
+            elseif obj.p.ny > 1
+                interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.income.y.vec};
+            elseif obj.p.nz > 1
+                interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.grids.z.vec};
+			else
+				interp_grids = {obj.grids.b.vec,obj.grids.a.vec};
+			end
+			Vinterp = griddedInterpolant(interp_grids,squeeze(KFE.Vn),'linear');
+
+			if (obj.p.ny > 1) && (obj.p.nz > 1)
+				V_at_shock = Vinterp(obj.grids.b.matrix(:)+shock,...
+					obj.grids.a.matrix(:),obj.grids.z.matrix(:),obj.income.y.matrixKFE(:));
+            elseif obj.p.ny > 1
+                V_at_shock = Vinterp(obj.grids.b.matrix(:)+shock,...
+					obj.grids.a.matrix(:),obj.income.y.matrixKFE(:));
+            elseif obj.p.nz > 1
+                V_at_shock = Vinterp(obj.grids.b.matrix(:)+shock,...
+					obj.grids.a.matrix(:),obj.grids.z.matrix(:));
+			else
+				V_at_shock = Vinterp(obj.grids.b.matrix(:)+shock,...
+					obj.grids.a.matrix(:));
+			end
 		end
 
 		function iterateBackwards(obj, ishock)
@@ -312,9 +323,9 @@ classdef TransitionalDynSolver < handle
 			% modifies other class properties.
 			
             shock = obj.p.mpc_shocks(ishock);
-			obj.cumcon = zeros(obj.p.nb_KFE*obj.dim2*obj.income.ny*obj.p.nz,4);
+			obj.cumcon = zeros(obj.p.nb_KFE*obj.p.na_KFE*obj.income.ny*obj.p.nz,4);
 
-			dim = obj.p.nb_KFE*obj.dim2*obj.income.ny*obj.p.nz;
+			dim = obj.p.nb_KFE*obj.p.na_KFE*obj.income.ny*obj.p.nz;
 
 			for it = 4:-obj.p.delta_mpc:obj.p.delta_mpc
 				timeUntilShock = obj.p.delta_mpc + 4 - it;
@@ -331,29 +342,29 @@ classdef TransitionalDynSolver < handle
                 V_k = reshape(obj.V,[],obj.p.ny);
                 V_k1 = zeros(size(V_k));
                 for k = 1:obj.p.ny
-                    ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
-			    	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
+                    ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
+			    	ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
                     Ak = obj.A_HJB(ind1:ind2,ind1:ind2);
                     
                     indx_k = ~ismember(1:obj.income.ny,k);
 
                     if obj.p.SDU == 0
-			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.dim2*obj.p.nz,1) ...
+			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz,1) ...
 	                            .* V_k(:,indx_k),2);
 			    		V_k1(:,k) = (obj.rho_diag + (1/obj.p.delta_mpc + obj.p.deathrate - obj.income.ytrans(k,k))...
-		        				* speye(obj.p.nb_KFE*obj.dim2*obj.p.nz) - Ak)...
+		        				* speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz) - Ak)...
 		                 	\ (u_k(:,k) + Vk_stacked + V_k(:,k)/obj.p.delta_mpc);
 			    	else
 			    		Vk_stacked 	= sum(squeeze(ez_adj(:, k, indx_k)) .* V_k(:,indx_k),2);
 			    		V_k1(:,k) = (obj.rho_diag + (1/obj.p.delta_mpc + obj.p.deathrate)...
-		        				* speye(obj.p.nb_KFE*obj.dim2*obj.p.nz) - Ak - ...
-		        				spdiags(ez_adj(:, k, k), 0, obj.p.nb_KFE*obj.dim2*obj.p.nz, obj.p.nb_KFE*obj.dim2*obj.p.nz))...
+		        				* speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz) - Ak - ...
+		        				spdiags(ez_adj(:, k, k), 0, obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz, obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz))...
 		                 	\ (u_k(:,k) + Vk_stacked + V_k(:,k)/obj.p.delta_mpc);
 			    	end
                         
                     
                 end
-                obj.V = reshape(V_k1,[obj.p.nb_KFE,obj.dim2,obj.income.ny,obj.p.nz]);
+                obj.V = reshape(V_k1,[obj.p.nb_KFE,obj.p.na_KFE,obj.income.ny,obj.p.nz]);
 
 		        % find policies a fraction of a period back
 		        obj.update_policies();
@@ -365,8 +376,8 @@ classdef TransitionalDynSolver < handle
 				    % matrix divisor for Feynman-Kac
 				    FKmat = cell(1,obj.income.ny);
 			        for k = 1:obj.income.ny
-			        	ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
-			        	ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
+			        	ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
+			        	ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
 
 			        	if (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 0)
 			        		Ak = obj.A_FK(ind1:ind2, ind1:ind2);
@@ -374,7 +385,7 @@ classdef TransitionalDynSolver < handle
 			        		Ak = obj.A_HJB(ind1:ind2, ind1:ind2);
 			        	end
 
-			        	FKmat{k} = speye(obj.p.nb_KFE*obj.dim2*obj.p.nz)*(...
+			        	FKmat{k} = speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz)*(...
 				            	1/obj.p.delta_mpc + obj.p.deathrate - obj.income.ytrans(k,k)) - Ak;
 			            FKmat{k} = inverse(FKmat{k});
 			        end
@@ -456,8 +467,8 @@ classdef TransitionalDynSolver < handle
 
                 deathin_cc_k = obj.get_death_inflows(cumcon_t_k, k);
 
-                ind1 = 1+obj.p.nb_KFE*obj.dim2*obj.p.nz*(k-1);
-                ind2 = obj.p.nb_KFE*obj.dim2*obj.p.nz*k;
+                ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
+                ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
                 RHS = reshape(obj.KFEint.c(:,:,:,k),[],1) + ytrans_cc_k + deathin_cc_k ...
                         + cumcon_t_k(:,k)/obj.p.delta_mpc;
                 obj.cumcon(ind1:ind2,period) = FKmat{k}*RHS;

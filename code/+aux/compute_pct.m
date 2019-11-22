@@ -1,8 +1,17 @@
-function percentiles_values = compute_pct(values,pmf,percentiles)
+function percentiles_values = compute_pct(values, pmf, percentiles)
 	% finds percentiles, given a pmf over values
 
-	% 'percentiles' input vector should be fractions, i.e.
-	% to compute 99th percentile, use 0.99
+	% Parameters
+	% ----------
+	% values : values at states
+	%
+	% pmf : probability mass function over states
+	%
+	% percentiles : percentiles requested, between 0 and 1
+	%
+	% Returns
+	% -------
+	% percentiles_values : the values of the requested percentiles
 	
 	sorted_by_values = sortrows([values(:) pmf(:)]);
 	values_sorted = sorted_by_values(:,1);

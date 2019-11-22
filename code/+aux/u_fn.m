@@ -1,4 +1,4 @@
-function u = u_fn(c, gamma, rho)
+function u = u_fn(c, gamma)
     % utility function
     %
     % dimz is the dimension in 'c' along which there is heterogeneity
@@ -39,9 +39,4 @@ function u = u_fn(c, gamma, rho)
 				u(:,:,~gamma1,:) = 1. / (1-gammasNeq1) * (c(:,:,~gamma1,:) .^ (1-gammasNeq1));
 		end
 	end
-
-	if nargin == 3
-    	% SDU, multiply by rho
-    	u = u .* rho;
-    end
 end

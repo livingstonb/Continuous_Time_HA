@@ -1,8 +1,19 @@
 function interpolant = interpolate_integral(gridValues, integrandValues, pmf)
-	% returns an interpolant that interpolates to find the value of
+	% creates an interpolant that approximates the value of the integral
 	% int_0^{epsilon} values(a)g(a)da for a given epsilon
+
+	% Parameters
+	% ----------
+	% gridValues : values at which the integrand is evaluated
 	%
-	% evaluate the above integral by calling interpolant(epsilon)
+	% integrandValues : values of the integrand
+	%
+	% pmf : the probability mass function over states
+	%
+	% Results
+	% -------
+	% interpolant : a griddedInterpolant object such that interpolant(x)
+	%	is the approximated value of the integral from 0 to x
 
 	sortedInputs = sortrows([gridValues(:) integrandValues(:) pmf(:)]);
 	gridSorted = sortedInputs(:,1);
