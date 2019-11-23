@@ -44,7 +44,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 32;
+runopts.param_index = 5;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -372,11 +372,11 @@ else
     end
 end
 
-% calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
-% x0 = calibrator.create_initial_condition([r_b_0, r_a_0]);
-% 
-% opts = optimoptions('fsolve', 'MaxFunctionEvaluations', 400, 'MaxIterations', 600);
-% fsolve(calibrator.objective, x0, opts);
+calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
+x0 = calibrator.create_initial_condition([r_b_0, r_a_0]);
+
+opts = optimoptions('fsolve', 'MaxFunctionEvaluations', 400, 'MaxIterations', 600);
+fsolve(calibrator.objective, x0, opts);
 
 end
 
