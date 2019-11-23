@@ -73,6 +73,7 @@ function Vn1 = solveHJB(p, A, income, Vn, u, nn, risk_adj)
         %% -----------------------------------------------------
         % IMPLICIT-EXPLICIT UPDATING
         % ------------------------------------------------------
+        
         u_k = reshape(u,[],ny);
 
         Vn1_k = NaN(nb*na*nz,ny);
