@@ -8,7 +8,7 @@ function outparams = SDU_tests(runopts)
     %% calibrated rho's
     % adj cost original, calibrated to RA = 1
     rho_ies1_chi1_015 = 0.03394;
-    rho_ies1_5_chi1_015 = 0.039426; % not correct
+    rho_ies1_5_chi1_015 = 0.026993; % not correct
 %   
 
     % new adj cost, calibrated to IES = 1
@@ -98,7 +98,7 @@ function outparams = SDU_tests(runopts)
                     % discount factor
                     if ies == 1 && (chi1 == 0.15)
                         params(ii).rho = rho_ies1_chi1_015;
-                    elseif ies == 5 && (chi1 == 0.15)
+                    elseif chi1 == 0.15
                         params(ii).rho = rho_ies1_5_chi1_015;
                     elseif ies == 1
                         params(ii).rho = rho_ies1_chi1_high;
