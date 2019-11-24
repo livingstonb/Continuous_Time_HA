@@ -5,16 +5,17 @@ classdef Params < handle
     
     properties (SetAccess=protected)
         % Run options
-        ComputeMPCS;
-        SimulateMPCS;
-        ComputeMPCS_news;
-        SimulateMPCS_news;
+        ComputeMPCS = 0;
+        SimulateMPCS = 0;;
+        ComputeMPCS_news = 0;;
+        SimulateMPCS_news = 0;;
         Bequests = 0;
         ResetIncomeUponDeath = 0; % WARNING: keep = 0, may not be up to date
         SaveResults = 1;
         OneAsset = 1;
-        DealWithSpecialCase;
+        DealWithSpecialCase = 0;;
         NoRisk = 1;
+        fast = 0;
         
         % Identifier
         name = 'unnamed';
@@ -139,7 +140,21 @@ classdef Params < handle
 	end
 
     methods
-        function obj = Params(runopts,params)
+        function obj = Params(runopts, params)
+
+            if nargin >= 1
+                % run options were passed
+                obj.param_index = runopts.param_index;
+                obj.ComputeMPCS = runopts.ComputeMPCS;
+                obj.SimulateMPCS = runopts.SimulateMPCS;
+                obj.ComputeMPCS_news = runopts.ComputeMPCS_news;
+                obj.SimulateMPCS_news = runopts.SimulateMPCS_news;
+                bj.DealWithSpecialCase = runopts.DealWithSpecialCase;
+                obj.tempdirec = runopts.temp;
+                obj.fast = runopts.fast;
+            end
+
+
 			 % allow some properties to be set by params structure
             if nargin > 1
                 if isstruct(params)
@@ -170,18 +185,9 @@ classdef Params < handle
                 obj.nz = max(numel(obj.rho_grid),numel(obj.riskaver));
             end
             
-            obj.param_index = runopts.param_index;
-            obj.ComputeMPCS = runopts.ComputeMPCS;
-            obj.SimulateMPCS = runopts.SimulateMPCS;
-            obj.ComputeMPCS_news = runopts.ComputeMPCS_news;
-            obj.SimulateMPCS_news = runopts.SimulateMPCS_news;
-            obj.tempdirec = runopts.temp;
 
             obj.rhos = obj.rho + obj.rho_grid;
             obj.riskaver_fulldim = reshape(obj.riskaver,[1 1 numel(obj.riskaver) 1]);
-
-            obj.SimulateMPCS = runopts.SimulateMPCS;
-            obj.DealWithSpecialCase = runopts.DealWithSpecialCase;
 
             % adjust interest rates
             obj.r_b_borr = obj.r_b + obj.borrwedge;
@@ -200,7 +206,7 @@ classdef Params < handle
                 obj.r_a = obj.r_b;
             end
 
-            if runopts.fast == 1
+            if obj.fast == 1
                 obj.nb = 16;
                 obj.nb_pos = 16;
                 obj.nb_neg = 0;
