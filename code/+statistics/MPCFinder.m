@@ -10,6 +10,7 @@ classdef MPCFinder < handle
 	% the MPCs.
 
 	properties (SetAccess=private)
+		% p : Model parameters
 		p; % parameters
 		income;
 		grids;
@@ -101,7 +102,9 @@ classdef MPCFinder < handle
 
 			obj.solved = true;
 		end
+	end
 
+	methods (Access=private)
 		function create_FK_matrices(obj, A)
 			% finds the matrix divisor for the Feynman-Kac formula
 

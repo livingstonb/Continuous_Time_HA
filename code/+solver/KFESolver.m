@@ -5,7 +5,7 @@ classdef KFESolver
 	% See the documentation with the 'help KFESolver' command.
 
 	properties (SetAccess=protected)
-		% p :	An object with the following required attributes:
+		%	An object with the following required attributes:
 		%
 		%		nb_KFE >= 1
 		%		- Number of points on the liquid asset grid.
@@ -25,7 +25,7 @@ classdef KFESolver
 		%		  redrawn from the stationary distribution upon death.
 		p;
 
-		% income : An object with the following required attributes:
+		%	An object with the following required attributes:
 		%
 		%		ny >= 1
 		%		- number of income grid points
@@ -37,37 +37,37 @@ classdef KFESolver
 		%		- stationary pmf of the income process, vector, must sum to 1
 		income;
 
-		% grdKFE : A Grid object. See the Grid documentation for details.
+		%	A Grid object. See the Grid documentation for details.
 		grdKFE;
 
-		% options : A structure used internally by KFESolver.
+		%	A structure used internally by KFESolver.
 		%	The options can be set manually using the set_option()
 		%	method, or they can be included in 'p' when
 		%	instantiating the class. This variable includes:
 		%
-		%	deltaKFE > 0
-		%	- Step size for the iterative method. Default = 1e5.
+		%		deltaKFE > 0
+		%		- Step size for the iterative method. Default = 1e5.
 		%
-		%	KFE_maxiter > 1
-		%	- Max number of iterations for the iterative method.
-		%	  Default = 1e4.
+		%		KFE_maxiter > 1
+		%		- Max number of iterations for the iterative method.
+		%		  Default = 1e4.
 		%
-		%	KFE_tol > 0
-		%	- Convergence tolerance for the iterative method.
-		%	  Default = 1e-8.
+		%		KFE_tol > 0
+		%		- Convergence tolerance for the iterative method.
+		%		  Default = 1e-8.
 		%
-		%	iterateKFE
-		%	- Boolean, the solver uses the iterative method if
-		%	  iterateKFE is true. Default = true.
+		%		iterateKFE
+		%		- Boolean, the solver uses the iterative method if
+		%		  iterateKFE is true. Default = true.
 		%
-		%	intermediateCheck
-		%	- Boolean, if intermediateCheck evaluates to true,
-		%	  the solver will check the norm of the error. If
-		%	  it is large, an exception is thrown.
-		%	  Default = True.
+		%		intermediateCheck
+		%		- Boolean, if intermediateCheck evaluates to true,
+		%		  the solver will check the norm of the error. If
+		%		  it is large, an exception is thrown.
+		%		  Default = True.
 		options;
 
-		% n_states : Total number of states.
+		% Total number of states.
         n_states;
 	end
 
@@ -128,7 +128,8 @@ classdef KFESolver
 		end
 
 		function set_option(obj, keyword, value)
-			% Allows the user to manually set 
+			% Allows the user to manually set values in
+			% the 'options' structure.
 			if isprop(keyword)
 				obj.options.(keyword) = value;
 			end

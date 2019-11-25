@@ -49,9 +49,6 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	% create interpolation matrix between KFE grid and regular grid
 	interp_decision = aux.interpTwoD(grdKFE.b.vec,grdKFE.a.vec,grd.b.vec,grd.a.vec);
 	interp_decision = kron(speye(ny*nz),interp_decision);
-
-	% returns grid
-	r_b_mat = p.r_b .* (grd.b.matrix>=0) +  p.r_b_borr .* (grd.b.matrix<0);
 	
 	% initial guess for value function and distribution
     [Vn, gg] = solver.make_initial_guess(p, grd, grdKFE, income);
