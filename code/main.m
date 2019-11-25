@@ -7,7 +7,7 @@ function [stats,p] = main(runopts, p)
     % runopts : a structure containing run options
     %
     % p : a Params object containing model parameters
-    %
+    
     % Returns
     % -------
     % stats : a structure containing statistics from the solved model
@@ -24,10 +24,10 @@ function [stats,p] = main(runopts, p)
 
     p.set("ny", income.ny);
 
-	grd = setup.Grid(p,income.ny,'HJB'); % grid for HJB
-    grd_norisk = setup.Grid(p,1,'HJB');
-	grdKFE = setup.Grid(p,income.ny,'KFE');% grid for KFE
-    grdKFE_norisk = setup.Grid(p,1,'KFE');
+	grd = setup.Grid(p,income.ny,'HJB').auto_construct(); % grid for HJB
+    grd_norisk = setup.Grid(p,1,'HJB').auto_construct();
+	grdKFE = setup.Grid(p,income.ny,'KFE').auto_construct();% grid for KFE
+    grdKFE_norisk = setup.Grid(p,1,'KFE').auto_construct();
 
     if numel(p.rhos) > 1
     	grd.add_zgrid(p.rhos',p.na);

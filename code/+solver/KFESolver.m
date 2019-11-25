@@ -18,7 +18,7 @@ classdef KFESolver
 			% p : 	An object with the following required attributes:
 			%		nb_KFE (number of points on liquid asset grid)
 			%		na_KFE (number of points on illiquid asset grid)
-			%		nz (number of states in extra dimension of heterogeneity)
+			%		nz (number of states in extra dimension of heterogeneity, typically 1)
 			%		deathrate (rate of death)
 			%		ResetIncomeUponDeath (whether or not income is redrawn upon death, untested...)
 			%
@@ -34,7 +34,7 @@ classdef KFESolver
 			%		ytrans (the income transition matrix, row sums should be 0)
 			%		ydist (stationary pmf of the income process)
 				
-			% grdKFE : A Grid object
+			% grdKFE : A Grid object.
 			
 			obj.p = p;
 			obj.income = income;
@@ -55,7 +55,8 @@ classdef KFESolver
 			% Parameters
 			% ----------
 
-			% A : square, sparse transition matrix
+			% A : square, sparse transition matrix which does
+            %   not include income or death transitions.
 			
 			% g0 : optional, the initial distribution for
 			%	the iterative method

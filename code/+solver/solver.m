@@ -112,19 +112,13 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
     Au = A_Constructor_KFE.construct(KFE, KFE.Vn);
     
     kfe_solver = solver.KFESolver(p, income, grdKFE);
-    g = kfe_solver.solve(Au);
+    KFE.g = kfe_solver.solve(Au);
     
 	%% --------------------------------------------------------------------
 	% COMPUTE WEALTH
 	% ---------------------------------------------------------------------
-	Eillwealth = (g(:) .* grdKFE.trapezoidal.matrix(:))' * grdKFE.a.matrix(:);
-	Eliqwealth = (g(:) .* grdKFE.trapezoidal.matrix(:))' * grdKFE.b.matrix(:);
-	Etotwealth = Eillwealth + Eliqwealth;
-    
-    KFE.g = g;
-
-	AYdiff = Etotwealth - p.targetAY;
-	fprintf('    --- MEAN WEALTH = %f ---\n\n',Etotwealth)
+	wealth = compute_wealth(KFE.g, grdKFE);
+	fprintf('    --- MEAN WEALTH = %f ---\n\n',wealth)
 end
 
 function check_if_max_iters_exceeded(iterAY, p)
@@ -188,4 +182,10 @@ function risk_adj = compute_risk_adjustment_for_nodrift_case(...
 	else
 		risk_adj = [];
 	end
+end
+
+function wealth = compute_wealth(g, grdKFE)
+	iwealth= (g(:) .* grdKFE.trapezoidal.matrix(:))' * grdKFE.a.matrix(:);
+	lwealth = (g(:) .* grdKFE.trapezoidal.matrix(:))' * grdKFE.b.matrix(:);
+	wealth = iwealth + lwealth;
 end
