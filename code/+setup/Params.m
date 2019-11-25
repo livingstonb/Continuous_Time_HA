@@ -100,10 +100,10 @@ classdef Params < handle
 		crit_HIS 		= 1e-5; % critical value
 
 		% KFE loop
-		maxit_KFE 		= 1e4; % maximal allowable number of KFE iterations
-		crit_KFE 		= 1e-8; % critical value
-		delta_KFE 		= 1e6; %1e6; % step size
-        iterateKFE      = 1;
+		KFE_maxiter = 1e4; % maximal allowable number of KFE iterations
+		KFE_tol = 1e-8; % critical value
+		deltaKFE = 1e6; %1e6; % step size
+        iterateKFE = true;
 
 		% Outer assets-income ratio grid
 		maxit_AY 		= 100; % maximal allowable number of loops over capital-labor ratio

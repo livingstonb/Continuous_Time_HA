@@ -89,51 +89,6 @@ classdef A_Matrix_Constructor < handle
                 obj.perform_returns_risk_computations();
             end
         end
-        
-        %% --------------------------------------------------------------------
-        % COMPUTATIONS FOR RETURNS RISK
-        % ---------------------------------------------------------------------
-        function perform_returns_risk_computations(obj)
-            % pre-computes terms needed for risky returns
-
-            % Modified
-            % --------
-            % obj.asset_dB : deltaBackward for the grid of the risky asset
-            %
-            % obj.asset_dF : deltaForward for the grid of the risky asset
-            %
-            % obj.top : indicator for top of risky asset grid
-            %
-            % obj.risk_term : (asset * sigma_r) ^ 2
-            %
-            % obj.shift_dimension : dimension for offset of the risky asset on lower and upper diags
-            %
-            % obj.asset_dSum : deltaBackward + deltaForward
-
-            obj.top = false(obj.nb, obj.na, obj.nz, obj.ny);
-            if obj.p.OneAsset == 1
-                obj.asset_dB = repmat(obj.grids.b.dB, [1 1 obj.nz obj.ny]);
-                obj.asset_dF = repmat(obj.grids.b.dF, [1 1 obj.nz obj.ny]);
-
-                obj.top(obj.nb, :, :, :) = true;
-
-                obj.risk_term = (obj.grids.b.matrix * obj.p.sigma_r) .^ 2;
-
-                obj.shift_dimension = 1;
-            else
-                obj.asset_dB = repmat(obj.grids.a.dB, [1 1 obj.nz obj.ny]);
-                obj.asset_dF = repmat(obj.grids.a.dF, [1 1 obj.nz obj.ny]);
-
-                obj.top(:, obj.na, :, :) = true;
-
-                obj.risk_term = (obj.grids.a.matrix * obj.p.sigma_r) .^ 2;
-
-                obj.shift_dimension = 2;
-            end
-
-            obj.asset_dF(obj.top) = obj.asset_dB(obj.top);
-            obj.asset_dSum = obj.asset_dB + obj.asset_dF;
-        end
 
         %% --------------------------------------------------------------------
         % CONSTRUCT THE A MATRIX
@@ -251,6 +206,53 @@ classdef A_Matrix_Constructor < handle
                     A = A + Arisk_Va;
                 end     
             end
+        end
+    end
+
+    methods (Access=private)
+        %% --------------------------------------------------------------------
+        % COMPUTATIONS FOR RETURNS RISK
+        % ---------------------------------------------------------------------
+        function perform_returns_risk_computations(obj)
+            % pre-computes terms needed for risky returns
+
+            % Modified
+            % --------
+            % obj.asset_dB : deltaBackward for the grid of the risky asset
+            %
+            % obj.asset_dF : deltaForward for the grid of the risky asset
+            %
+            % obj.top : indicator for top of risky asset grid
+            %
+            % obj.risk_term : (asset * sigma_r) ^ 2
+            %
+            % obj.shift_dimension : dimension for offset of the risky asset on lower and upper diags
+            %
+            % obj.asset_dSum : deltaBackward + deltaForward
+
+            obj.top = false(obj.nb, obj.na, obj.nz, obj.ny);
+            if obj.p.OneAsset == 1
+                obj.asset_dB = repmat(obj.grids.b.dB, [1 1 obj.nz obj.ny]);
+                obj.asset_dF = repmat(obj.grids.b.dF, [1 1 obj.nz obj.ny]);
+
+                obj.top(obj.nb, :, :, :) = true;
+
+                obj.risk_term = (obj.grids.b.matrix * obj.p.sigma_r) .^ 2;
+
+                obj.shift_dimension = 1;
+            else
+                obj.asset_dB = repmat(obj.grids.a.dB, [1 1 obj.nz obj.ny]);
+                obj.asset_dF = repmat(obj.grids.a.dF, [1 1 obj.nz obj.ny]);
+
+                obj.top(:, obj.na, :, :) = true;
+
+                obj.risk_term = (obj.grids.a.matrix * obj.p.sigma_r) .^ 2;
+
+                obj.shift_dimension = 2;
+            end
+
+            obj.asset_dF(obj.top) = obj.asset_dB(obj.top);
+            obj.asset_dSum = obj.asset_dB + obj.asset_dF;
         end
 
         function Arisk_Vaa = compute_V_aa_terms(obj, nb, na, nz, ny)

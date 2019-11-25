@@ -111,8 +111,9 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
     A_Constructor_KFE = solver.A_Matrix_Constructor(p, income, grdKFE, 'KFE', returns_risk);
     Au = A_Constructor_KFE.construct(KFE, KFE.Vn);
     
-	g = solver.solveKFE(p,income,grdKFE,gg,Au,KFE.Vn);
-
+    kfe_solver = solver.KFESolver(p, income, grdKFE);
+    g = kfe_solver.solve(Au);
+    
 	%% --------------------------------------------------------------------
 	% COMPUTE WEALTH
 	% ---------------------------------------------------------------------
