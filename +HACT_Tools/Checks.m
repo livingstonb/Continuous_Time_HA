@@ -1,4 +1,7 @@
-classdef Asserts
+classdef Checks
+	% A collection of assertions, mostly for checking
+	% numeric arrays.
+
 	methods (Static)
 		function has_shape(variable, shape)
 			% Throws if variable is not a real array
@@ -6,8 +9,10 @@ classdef Asserts
 
 			assert(isreal(variable),...
 				"Input is not an array of real numbers")
-			assert(isequal(size(variable), shape),...
-				"Input is not of the required shape")
+            for k = 1:length(shape)
+                assert(size(variable, k) == shape(k),...
+                    "Input is not of required shape")
+            end
 		end
 
 		function have_same_shape(varargin)
@@ -34,9 +39,9 @@ classdef Asserts
 			% Throws if 'variable' is not a real, sparse,
 			% nonempty square matrix.
 
-			import HACT_Tools.aux.Asserts
+			import HACT_Tools.Checks
 
-			Asserts.is_square_matrix(variable);
+			Checks.is_square_matrix(variable);
 			assert(issparse(variable), "Matrix is not sparse")
 
 			if nargin == 2
@@ -72,6 +77,21 @@ classdef Asserts
 			msg = "Input must be an integer";
 			assert(isscalar(variable), msg);
 			assert(round(variable == variable), msg);
+		end
+
+		function has_attributes(object, props)
+			% Checks 'object' to verify that it has at least
+			% the required attributes.
+		
+			assert(iscell(props),...
+				"Second arg to has_properties must be a cell array")
+
+			for i = 1:numel(props)
+				if ~isprop(object, props{i})
+					msg = sprintf("Required attribute '%s' not found", props{i});
+					error(msg)
+				end
+			end
 		end
 	end
 end

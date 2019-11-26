@@ -14,7 +14,7 @@ classdef HJBSolverSDU < HACT.solvers.HJBSolver
 			if nargin == 2
 				RHS = get_RHS_implicit@HACT.solvers.HJBSolver(obj, u, V);
 			elseif nargin == 3
-				assert_same_shape(V, varargin{1});
+				HACT_Tools.Checks.have_same_shape(V, varargin{1});
 				RHS = obj.options.delta * (u(:) + reshape(varargin{1}, [], 1)) + Vn(:);
 			else
 				error("Expected <= 3 arguments");

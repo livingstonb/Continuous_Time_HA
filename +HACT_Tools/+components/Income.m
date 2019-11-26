@@ -69,9 +69,8 @@ classdef Income < handle
 					obj.y.vec = p.MPL * obj.y.vec;
 					
 					obj.logy.vec = log(obj.y.vec);
-
-					obj.generate(p);
 		        end
+		        obj.generate(p);
 	        end
         end
 

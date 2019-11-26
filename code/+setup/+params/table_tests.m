@@ -181,6 +181,6 @@ function outparams = table_tests(runopts)
     chosen_param = params(runopts.param_index);
 
     % Create Params object
-    outparams = setup.Params(runopts,chosen_param);
+    outparams = HACT_Tools.components.Params(runopts,chosen_param);
 
 end

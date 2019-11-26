@@ -9,6 +9,17 @@ classdef HJBSolver
 	% use other objects that satisfy the requirements laid
 	% out in the properties block.
 
+	properties (Constant)
+		% Update this array when the required parameters
+		% change.
+		required_parameters = {'nb', 'na', 'nz',...
+			'rho', 'rhos', 'deathrate'};
+
+		% Update this array when the required income
+		% variables change.
+		required_income_vars = {'ny', 'ytrans'};
+	end
+
 	properties (SetAccess=protected)
 		%	An object with the following required attributes:
 		%
@@ -22,6 +33,10 @@ classdef HJBSolver
 		%		  If there is no rho heterogeneity, set rhos = [].
 		%
 		%		deathrate > 0
+		%
+		%		SDU
+		%		- A boolean indicator, true if using stochastic
+		%		  differential utility and false otherwise.
 		p;
 
 		%	An object with the following required attributes:
@@ -82,10 +97,10 @@ classdef HJBSolver
 			% ---------------------------------------------------------
 			% Validate Input Arguments and Set Options
 			% ---------------------------------------------------------
-			check_parameters(p);
+			obj.check_parameters(p);
 			obj.p = p;
 
-			check_income(income);
+			obj.check_income(income);
 			obj.income = income;
 
 			if exist('options', 'var')
@@ -109,9 +124,7 @@ classdef HJBSolver
 			% ---------------------------------------------------------
 			obj.create_rho_matrix();
 		end
-	end
 
-	methods
 		function V_update = solve(obj, A, u, V, varargin)
 			% Updates the value function.
 
@@ -146,11 +159,11 @@ classdef HJBSolver
 		end
 
 		function check_inputs(obj, A, u, V)
-			import HACT_Tools.aux.Asserts;
+			import HACT_Tools.Checks;
 
-			Asserts.is_square_sparse_matrix(A, obj.n_states);
-			Asserts.have_same_shape(u, V);
-			Asserts.has_shape(V, obj.shape);
+			Checks.is_square_sparse_matrix(A, obj.n_states);
+			Checks.has_shape(u, obj.shape);
+			Checks.has_shape(V, obj.shape);
 		end
 
 		function check_if_SDU(obj)
@@ -282,23 +295,16 @@ classdef HJBSolver
 		        end
     		end
 		end
+
+		function check_parameters(obj, p)
+			HACT_Tools.Checks.has_attributes(....
+				p, obj.required_parameters);
+		end
+
+		function check_income(obj, income)
+			HACT_Tools.Checks.has_attributes(...
+				income, obj.required_income_vars);
+			HACT_Tools.Checks.is_square_matrix(income.ytrans);
+		end
 	end
-end
-
-function check_parameters(p)
-	required_parameter_vars = {'nb', 'na', 'nz',...
-			'rho', 'rhos', 'deathrate'};
-	HACT_Tools.validation.check_for_required_properties(....
-		p, required_parameter_vars);
-end
-
-function check_income(income)
-	required_income_vars = {'ny', 'ytrans'};
-	HACT_Tools.validation.check_for_required_properties(...
-		income, required_income_vars);
-
-	assert(income.ny > 0, "Must have ny >= 1");
-	assert(ismatrix(income.ytrans), "Income transition matrix must be a matrix");
-	assert(isequal(size(income.ytrans), [income.ny, income.ny]),...
-		"Income transition matrix has different size than (ny, ny)");
 end

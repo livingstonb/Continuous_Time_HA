@@ -1,32 +1,35 @@
 function [stats,p] = main(runopts, p)
-    % instantiates necessary classes and calls functions to solve the
+    % Instantiates necessary classes and calls functions to solve the
     % model and compute statistics
-
+    %
     % Parameters
     % ----------
     % runopts : a structure containing run options
     %
     % p : a Params object containing model parameters
-    
+    %
     % Returns
     % -------
     % stats : a structure containing statistics from the solved model
     %
     % p : the Params object used to solve the model
 
+    import HACT_Tools.components.Grid
+    import HACT_Tools.components.Income
+
     %% --------------------------------------------------------------------
     % CREATE GRID, INCOME OBJECTS
     % ---------------------------------------------------------------------
 	income_path = fullfile(runopts.direc, 'input', p.income_dir);
-	income = setup.Income(income_path, p,false);
-    income_norisk = setup.Income(runopts.direc, p, true);
+	income = Income(income_path, p,false);
+    income_norisk = Income(runopts.direc, p, true);
 
     p.set("ny", income.ny, true);
 
-	grd = setup.Grid(p,income.ny,'HJB').auto_construct(); % grid for HJB
-    grd_norisk = setup.Grid(p,1,'HJB').auto_construct();
-	grdKFE = setup.Grid(p,income.ny,'KFE').auto_construct();% grid for KFE
-    grdKFE_norisk = setup.Grid(p,1,'KFE').auto_construct();
+	grd = Grid(p,income.ny,'HJB').auto_construct(); % grid for HJB
+    grd_norisk = Grid(p,1,'HJB').auto_construct();
+	grdKFE = Grid(p,income.ny,'KFE').auto_construct();% grid for KFE
+    grdKFE_norisk = Grid(p,1,'KFE').auto_construct();
 
     if numel(p.rhos) > 1
     	grd.add_zgrid(p.rhos',p.na);
