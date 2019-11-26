@@ -34,9 +34,9 @@ function outparams = SDU_tests(runopts)
     params(ii).invies = 1;
     params(ii).SDU = 0;
     params(ii).r_a = 0.022866;
-    params(ii).delta_HJB = 10;
+    params(ii).HJB_delta = 10;
     params(ii).KFE_delta = 1e6;
-    params(ii).maxit_HJB = 1e6;
+    params(ii).HJB_maxiters = 1e6;
     params(ii).KFE_maxiters = 1e6;
     params(ii).NoRisk = 0;
     params(ii).nb = 50;
@@ -47,7 +47,7 @@ function outparams = SDU_tests(runopts)
     params(ii).rho = rho_ies1_chi1_015;
     params(ii).rhoL = 0.022;
     params(ii).transfer = 0.0081 * 2.0;
-    params(ii).implicit = 0;
+    params(ii).HJB_implicit = false;
     params(ii).SaveResults = 0;
 
     %%--------------------------------------------------------------
@@ -76,20 +76,20 @@ function outparams = SDU_tests(runopts)
                     params(ii).riskaver = risk_aver;
                     params(ii).invies = 1 / ies;
                     params(ii).SDU = 1;
-                    params(ii).maxit_HJB = 1e6;
+                    params(ii).HJB_maxiters = 1e6;
                     params(ii).KFE_maxiters = 1e6;
-                    params(ii).crit_HJB = 1e-9;
+                    params(ii).HJB_tol = 1e-9;
                     params(ii).sigma_r = sd_r;
                     params(ii).retrisk_KFE = 0;
                     params(ii).NoRisk = 0;
-                    params(ii).delta_HJB = 10;
+                    params(ii).HJB_delta = 10;
                     params(ii).KFE_delta = 1e6;
                     params(ii).nb = 50;
                     params(ii).nb_KFE = 50;
                     params(ii).na = 50;
                     params(ii).na_KFE = 50;
                     params(ii).deathrate = 0;
-                    params(ii).implicit = 0;
+                    params(ii).HJB_implicit = false;
                     params(ii).transfer = 0.0081 * 2.0;
                     params(ii).r_b = 0.02 / 4;
                     params(ii).KFE_iterative = true;
@@ -117,76 +117,76 @@ function outparams = SDU_tests(runopts)
                     end
 
                     if RA5calibration == 0
-                        % set delta_HJB to depend on parameters
+                        % set HJB_delta to depend on parameters
                         if ies == 1
                             if (risk_aver == 5) && (sd_r > 0.01)
-                                params(ii).delta_HJB = 0.2;
+                                params(ii).HJB_delta = 0.2;
                             elseif (risk_aver == 10) && (sd_r <= 0.01)
-                                params(ii).delta_HJB = 0.2;
+                                params(ii).HJB_delta = 0.2;
                             elseif risk_aver == 10
-                                params(ii).delta_HJB = 0.05;
+                                params(ii).HJB_delta = 0.05;
                             elseif (risk_aver == 20) && (sd_r <= 0.01)
-                                params(ii).delta_HJB = 0.1;
+                                params(ii).HJB_delta = 0.1;
                             elseif (risk_aver == 20) && (sd_r <= 0.1)
-                                params(ii).delta_HJB = 0.025;
+                                params(ii).HJB_delta = 0.025;
                             elseif (risk_aver == 20) && (sd_r < 0.15)
-                                params(ii).delta_HJB = 0.01;
+                                params(ii).HJB_delta = 0.01;
                             elseif (risk_aver == 20)
-                                params(ii).delta_HJB = 0.005;
+                                params(ii).HJB_delta = 0.005;
                             end
                         elseif ies == 1.5
                             if risk_aver <= 2
-                                params(ii).delta_HJB = 2;
+                                params(ii).HJB_delta = 2;
                             elseif (risk_aver == 5) && (sd_r <= 0.02)
-                                params(ii).delta_HJB = 2;
+                                params(ii).HJB_delta = 2;
                             elseif (risk_aver == 5)
-                                params(ii).delta_HJB = 0.5;
+                                params(ii).HJB_delta = 0.5;
                             elseif (risk_aver == 10) && (sd_r <= 0.02)
-                                params(ii).delta_HJB = 0.5;
+                                params(ii).HJB_delta = 0.5;
                             elseif risk_aver == 10
-                                params(ii).delta_HJB = 0.1;
+                                params(ii).HJB_delta = 0.1;
                             elseif (risk_aver == 20) && (sd_r <= 0.05)
-                                params(ii).delta_HJB = 0.05;
+                                params(ii).HJB_delta = 0.05;
                             elseif (risk_aver == 20) && (sd_r < 0.15)
-                                params(ii).delta_HJB = 0.01;
+                                params(ii).HJB_delta = 0.01;
                             elseif (risk_aver == 20)
-                                params(ii).delta_HJB = 0.005;
+                                params(ii).HJB_delta = 0.005;
                             end
                         end
                     else
                         if ies == 1
                             if (risk_aver == 5) && (sd_r > 0.01)
-                                params(ii).delta_HJB = 0.1;
+                                params(ii).HJB_delta = 0.1;
                             elseif (risk_aver == 10) && (sd_r <= 0.01)
-                                params(ii).delta_HJB = 1;
+                                params(ii).HJB_delta = 1;
                             elseif risk_aver == 10
-                                params(ii).delta_HJB = 0.1;
+                                params(ii).HJB_delta = 0.1;
                             elseif (risk_aver == 20) && (sd_r <= 0.01)
-                                params(ii).delta_HJB = 0.1;
+                                params(ii).HJB_delta = 0.1;
                             elseif (risk_aver == 20) && (sd_r <= 0.1)
-                                params(ii).delta_HJB = 0.025;
+                                params(ii).HJB_delta = 0.025;
                             elseif (risk_aver == 20) && (sd_r < 0.15)
-                                params(ii).delta_HJB = 0.01;
+                                params(ii).HJB_delta = 0.01;
                             elseif (risk_aver == 20)
-                                params(ii).delta_HJB = 0.005;
+                                params(ii).HJB_delta = 0.005;
                             end
                         elseif ies == 1.5
                             if risk_aver <= 2
-                                params(ii).delta_HJB = 2;
+                                params(ii).HJB_delta = 2;
                             elseif (risk_aver == 5) && (sd_r <= 0.02)
-                                params(ii).delta_HJB = 2;
+                                params(ii).HJB_delta = 2;
                             elseif (risk_aver == 5)
-                                params(ii).delta_HJB = 0.5;
+                                params(ii).HJB_delta = 0.5;
                             elseif (risk_aver == 10) && (sd_r <= 0.02)
-                                params(ii).delta_HJB = 0.5;
+                                params(ii).HJB_delta = 0.5;
                             elseif risk_aver == 10
-                                params(ii).delta_HJB = 0.1;
+                                params(ii).HJB_delta = 0.1;
                             elseif (risk_aver == 20) && (sd_r <= 0.05)
-                                params(ii).delta_HJB = 0.05;
+                                params(ii).HJB_delta = 0.05;
                             elseif (risk_aver == 20) && (sd_r < 0.15)
-                                params(ii).delta_HJB = 0.01;
+                                params(ii).HJB_delta = 0.01;
                             elseif (risk_aver == 20)
-                                params(ii).delta_HJB = 0.005;
+                                params(ii).HJB_delta = 0.005;
                             end
                         end
                     end

@@ -88,15 +88,16 @@ classdef Params < handle
 
 		% ------------ approximation parameters -----------
 		% HJB loop
-		maxit_HJB 		= 2000; % maximal allowable number of HJB iterations
-		crit_HJB 		= 1e-8; % critical value
-		delta_HJB 		= 1e6; % step size (large steps work even though method is partially explicit)
-        implicit = 0;
+		hjb_options;
+		HJB_maxiters = 2000; % maximal allowable number of HJB iterations
+		HJB_tol = 1e-8; % critical value
+		HJB_delta = 1e6; % step size
+        HJB_implicit = false;
 
 		% Howard improvement step in HJB loop
-		maxit_HIS 		= 10; % total number of Howard improvement steps
-		start_HIS 		= 2; % when in HJB loop do Howard improvement steps begin?
-		crit_HIS 		= 1e-5; % critical value
+		HIS_maxiters = 10; % total number of Howard improvement steps
+		HIS_start = 2; % when in HJB loop do Howard improvement steps begin?
+		HIS_tol= 1e-5; % critical value
 
 		% KFE loop
 		kfe_options;
@@ -170,11 +171,18 @@ classdef Params < handle
                 obj.nz = max(numel(obj.rho_grid),numel(obj.riskaver));
             end
 
-            obj.kfe_options = solver.KFEOptions(...
+             obj.kfe_options = solver.KFEOptions(...
 				'maxiters', obj.KFE_maxiters,...
 				'tol', obj.KFE_tol,...
 				'delta', obj.KFE_delta,...
 				'iterative', obj.KFE_iterative);
+
+            obj.hjb_options = solver.HJBOptions(...
+				'delta', obj.HJB_delta,...
+				'implicit', obj.HJB_implicit,...
+				'HIS_maxiters', obj.HIS_maxiters,...
+				'HIS_tol', obj.HIS_tol,...
+				'HIS_start', obj.HIS_start);
             
             obj.param_index = runopts.param_index;
             obj.ComputeMPCS = runopts.ComputeMPCS;

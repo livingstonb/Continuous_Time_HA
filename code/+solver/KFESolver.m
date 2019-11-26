@@ -4,8 +4,19 @@ classdef KFESolver
 	%
 	% See the documentation with the 'help KFESolver' command.
 
+	properties (Constant)
+		% Update this array when the required parameters change.
+		required_parameters = {'nb_KFE', 'na_KFE', 'nz',...
+					'deathrate', 'ResetIncomeUponDeath'};
+
+		% Update this array when the required income variables
+		% change.
+		required_income_vars = {'ny', 'ytrans', 'ydist'};
+	end
+
 	properties (SetAccess=protected)
-		%	An object with the following required attributes:
+		%	'p' is a Params object or any object with the following
+		%	attributes:
 		%
 		%		nb_KFE >= 1
 		%		- Number of points on the liquid asset grid.
@@ -25,7 +36,8 @@ classdef KFESolver
 		%		  redrawn from the stationary distribution upon death.
 		p;
 
-		%	An object with the following required attributes:
+		%	'income' is an Income object or any object with the following
+		%	attributes:
 		%
 		%		ny >= 1
 		%		- number of income grid points
@@ -40,31 +52,7 @@ classdef KFESolver
 		%	A Grid object. See the Grid documentation for details.
 		grdKFE;
 
-		%	A KFEOptions object used internally by KFESolver.
-		%	The options can be set manually using the set_option()
-		%	method, or they can be passed as a KFEOptions object
-		%	to the constructor.
-		%
-		%		delta > 0
-		%		- Step size for the iterative method. Default = 1e5.
-		%
-		%		maxiters > 1
-		%		- Max number of iterations for the iterative method.
-		%		  Default = 1e4.
-		%
-		%		tol > 0
-		%		- Convergence tolerance for the iterative method.
-		%		  Default = 1e-8.
-		%
-		%		iterate
-		%		- Boolean, the solver uses the iterative method if
-		%		  iterateKFE is true. Default = true.
-		%
-		%		intermediate_check
-		%		- Boolean, if intermediate_check evaluates to true,
-		%		  the solver will check the norm of the error. If
-		%		  it is large, an exception is thrown.
-		%		  Default = True.
+		%	A KFEOptions object.
 		options;
 
 		% Total number of states.
@@ -73,45 +61,30 @@ classdef KFESolver
 
 	methods
 		function obj = KFESolver(p, income, grdKFE, options)
-			% Class constructor. If p is not a Params object
-			% or income is not an Income object, see the help
-			% documentation for the requirements these variables
-			% must satisfy.
-			%
 			% The optional argument 'options' must be a KFEOptions
 			% object. If this argument is not passed, the default
 			% options will be used. See KFEOptions for more details.
-			% Note that if 'p' has a KFEOptions object as an
-			% attribute named 'kfe_options', that object will
-			% will be used to set the options. Passing options
-			% to the last argument of this constructor will
-			% override this, however.
+
+% 			arguments
+% 				p {@(x) aux.check_for_required_properties(x, obj.required_parameters)}
+% 			end
 			
 			obj.p = p;
 			obj.income = income;
 			obj.grdKFE = grdKFE;
 			obj.n_states = p.nb_KFE * p.na_KFE * p.nz * income.ny;
 
-			required_parameter_vars = {'nb_KFE', 'na_KFE', 'nz',...
-					'deathrate', 'ResetIncomeUponDeath'};
-			aux.check_for_required_properties(p, required_parameter_vars);
+			% ---------------------------------------------------------
+			% Validate Input Arguments and Set Options
+			% ---------------------------------------------------------			
+			obj.check_parameters(p);
+			obj.check_income(income);
+			check_grid(grdKFE);
 
-			required_income_vars = {'ny', 'ytrans', 'ydist'};
-			aux.check_for_required_properties(income, required_income_vars);
-
-			options_passed_in_p = false;
-			if isprop(p, 'kfe_options')
-				if isa(p.kfe_options, 'KFEOptions')
-					options_passed_in_p = true;
-				end
-			end
-
-			if exist('options')
-				assert(isa(options, KFEOptions),...
+			if exist('options', 'var')
+				assert(isa(options, 'solver.KFEOptions'),...
 					"options argument must be a KFEOptions object");
 				obj.options = options;
-			elseif options_passed_in_p
-				obj.options = p.kfe_options;
 			else
 				obj.options = solver.KFEOptions();
 			end
@@ -131,12 +104,9 @@ classdef KFESolver
 			% g : The stationary distribution, of shape
 			%	(nb_KFE, na_KFE, nz, ny).
 
-			size_A = size(A);
-			assert(size_A(1) == size_A(2), "KFESolver requires a square transition matrix")
-			assert(numel(size_A) == 2, "KFESolver requires a square transition matrix")
-			assert(issparse(A), "KFESolver requires a sparse transition matrix")
+			check_A(A);
 
-			if obj.options.iterate
+			if obj.options.iterative
 				if ~exist('g0')
 					% g0 wasn't passed
 				    g0 = obj.guess_initial_distribution();
@@ -161,10 +131,9 @@ classdef KFESolver
 	end
 
 	methods (Access=private)
-
 		function g0 = guess_initial_distribution(obj)
 			g0 = ones(obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny);
-		    g0 = g0 .* permute(repmat(obj.income.ydist,...
+		    g0 = g0 .* permute(repmat(obj.income.ydist(:),...
 		    	[1 obj.p.nb_KFE obj.p.na_KFE obj.p.nz]),[2 3 4 1]);
 		    if obj.p.OneAsset
 		        g0(:,obj.grdKFE.a.vec>0,:,:) = 0;
@@ -174,7 +143,7 @@ classdef KFESolver
 		end
 
 		function g = solve_direct(obj, A)
-			% solves the eigenvalue problem directly
+			% Solves the eigenvalue problem directly.
 
 			inctrans = kron(obj.income.ytrans, speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz));
 	        Ap_extended = sparse([(A+inctrans)'; ones(1, obj.n_states)]);
@@ -186,7 +155,7 @@ classdef KFESolver
 		end
 
 		function g = solve_iterative(obj, A, g0)
-			% solves using an iterative method
+			% Solves using an iterative method.
 
 			% compute the LHS of the KFE
 			KFE_LHS = obj.KFE_matrix_divisor(A);
@@ -271,7 +240,32 @@ classdef KFESolver
 				error('KFE did not converge')
 			end
 		end
+
+		function check_income(obj, income)
+			aux.check_for_required_properties(income, obj.required_income_vars);
+			assert(ismatrix(income.ytrans), "Income transition matrix must be a matrix");
+			assert(size(income.ytrans, 1) == income.ny,...
+				"Income transition matrix has different size than (ny, ny)");
+			assert(numel(income.ydist(:)) == income.ny,...
+				"Income distribution has does not have ny elements");
+			assert(income.ny > 0, "Must have ny >= 1");
+		end
+
+		function check_parameters(obj, p)
+			aux.check_for_required_properties(p, obj.required_parameters);
+		end
 	end
+end
+
+function check_grid(grd)
+	assert(grd.fully_initialized,...
+		"Asset grids have not been fully initialized");
+end
+
+function check_A(A)
+	size_A = size(A);
+	assert(issparse(A), "KFESolver requires a sparse transition matrix")
+	assert(size_A(1) == size_A(2), "KFESolver requires a square transition matrix")			
 end
 
 function check_if_not_converging(dst, iter)

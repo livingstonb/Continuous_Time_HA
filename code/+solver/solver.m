@@ -61,9 +61,11 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
     returns_risk = (p.sigma_r > 0);
     A_Constructor = solver.A_Matrix_Constructor(p, income, grd, 'HJB', returns_risk);
 
+    hjb_solver = solver.HJBSolver(p, income, p.hjb_options);
+
     fprintf('    --- Iterating over HJB ---\n')
     dst = 1e5;
-	for nn	= 1:p.maxit_HJB
+	for nn	= 1:p.HJB_maxiters
 	  	[HJB, V_deriv_risky_asset_nodrift] = solver.find_policies(p,income,grd,Vn);
 
 	    % construct transition matrix 
@@ -73,7 +75,7 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
     		p, grd, V_deriv_risky_asset_nodrift, stationary, Vn);
         
 		% update value function
-		Vn1 = solver.solveHJB(p, A, income, Vn, HJB.u, nn, risk_adj);
+		Vn1 = hjb_solver.solve_implicit_explicit(A, HJB.u, Vn, risk_adj);
 
 	    % check for convergence
 	    Vdiff = Vn1 - Vn;
@@ -83,14 +85,14 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	    	fprintf('\tHJB iteration = %i, distance = %e\n',nn,dst);
         end
 
-        if dst < p.crit_HJB
+        if dst < p.HJB_tol
 	        fprintf('\tHJB converged after %i iterations\n',nn);
 		 	break
 		end
 		check_if_not_converging(dst, nn);
     end
     
-    if (nn >= p.maxit_HJB)
+    if (nn >= p.HJB_maxiters)
         error("HJB didn't converge");
     end
     
@@ -108,7 +110,7 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
     A_Constructor_KFE = solver.A_Matrix_Constructor(p, income, grdKFE, 'KFE', returns_risk);
     Au = A_Constructor_KFE.construct(KFE, KFE.Vn);
     
-    kfe_solver = solver.KFESolver(p, income, grdKFE);
+    kfe_solver = solver.KFESolver(p, income, grdKFE, p.kfe_options);
     KFE.g = kfe_solver.solve(Au);
     
 	%% --------------------------------------------------------------------

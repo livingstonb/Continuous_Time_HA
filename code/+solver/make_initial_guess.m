@@ -46,13 +46,13 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
         u = aux.u_fn(c_0, p.riskaver);
     end
 
-    if p.SDU == 1
+    if p.SDU
         % risk-adjust income transitions
-        ez_adj = income.SDU_income_risk_adjustment(p, u);
+        inctrans = income.income_transition_matrix_SDU(p, u);
     else
-        ez_adj = [];
+        inctrans = kron(income.ytrans, speye(nb*na*nz, nb*na*nz));
     end
-    inctrans = income.sparse_income_transitions(p, ez_adj, 'HJB');
+    
 
     if p.sigma_r > 0
         % Vaa term

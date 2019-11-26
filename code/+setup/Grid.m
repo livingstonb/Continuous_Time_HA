@@ -86,6 +86,10 @@ classdef Grid < handle
         % A grid of rho values. In particular, the sum of
         % rho and rho_grid, a vector.
         rhos;
+
+        % Indicator of whether or not the all of the grids
+        % have been initialized.
+        fully_initialized = false;
 	end
 
 	methods
@@ -147,6 +151,7 @@ classdef Grid < handle
             obj.create_agrids();
             obj.create_bgrids();
             obj.generate_variables();
+            obj.fully_initialized = true;
         end
 
         function obj = generate_variables(obj)
@@ -166,6 +171,7 @@ classdef Grid < handle
             
             obj.construct_trapezoidal_grid();
             obj.create_zgrids();
+            obj.fully_initialized = true;
         end
 
 	    function create_agrids(obj, grid_vec)
@@ -205,6 +211,7 @@ classdef Grid < handle
             obj.a.vec = grid_vec(:);
             obj.a.wide = reshape(grid_vec, [1 obj.na 1 1]);
 			obj.a.matrix = repmat(obj.a.wide, [obj.nb, 1, obj.nz, obj.ny]);
+			assert(all(diff(obj.a.vec)>0), 'agrid not strictly increasing')
 	    end
 
 	    function create_bgrids(obj, bgrid_vec)
@@ -306,7 +313,7 @@ classdef Grid < handle
 				obj.b.vec = bgrid_vec(:);
 			end
 			obj.b.matrix = repmat(obj.b.vec, [1 obj.na obj.nz obj.ny]);
-		    assert(all(diff(obj.b.vec)>0),'bgrid not strictly increasing')
+		    assert(all(diff(obj.b.vec)>0), 'bgrid not strictly increasing')
 	    end
 
 	    function obj = set(obj, varname, value)
