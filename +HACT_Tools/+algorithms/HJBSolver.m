@@ -1,4 +1,4 @@
-classdef HJBSolver
+classdef HJBSolver < handle
 	% A solver for the Hamilton-Jacobi-Bellman equation.
 	% Implicit and implicit-explicit solution methods are
 	% provided.
@@ -115,10 +115,6 @@ classdef HJBSolver
 			obj.states_per_income = p.nb * p.na * p.nz;
 			obj.shape = [p.nb p.na p.nz income.ny];
 
-			assert(~p.SDU,...
-					[	"Model uses stochastic differential utility, ",...
-						"the SDU subclass must be used instead"])
-
 			% ---------------------------------------------------------
 			% Discount Factor Matrix
 			% ---------------------------------------------------------
@@ -139,7 +135,7 @@ classdef HJBSolver
 	end
 
 	methods (Access=protected)
-		function create_rho_matrix(obj)
+		function obj = create_rho_matrix(obj)
 			if obj.options.implicit
 				% discount factor values
 		        if numel(obj.p.rhos) > 1
@@ -150,7 +146,7 @@ classdef HJBSolver
 		        end
 		    else
 		    	if numel(obj.p.rhos) > 1
-			        rhocol = kron(obj.p.rhos(:), ones(p.nb*p.na,1));
+			        rhocol = kron(obj.p.rhos(:), ones(obj.p.nb*obj.p.na,1));
 			        obj.rho_mat = spdiags(rhocol, obj.states_per_income, obj.states_per_income);
 			    else
 			        obj.rho_mat = obj.p.rho * speye(obj.states_per_income);
@@ -186,9 +182,9 @@ classdef HJBSolver
 	        end
 
 	        % The user may want to overload the method called here.
-	        obj.get_RHS_implicit(u, V, varargin{:});
+	        RHS = obj.get_RHS_implicit(u, V, varargin{:});
 	        
-	        B = (rho_mat - B) * obj.options.delta + speye(obj.n_states);
+	        B = (obj.rho_mat - B) * obj.options.delta + speye(obj.n_states);
 	        Vn1 = B \ RHS;
 	        Vn1 = reshape(Vn1, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
@@ -209,8 +205,7 @@ classdef HJBSolver
 
 			u_k = reshape(u, [], obj.income.ny);
 
-	        Vn_k = reshape(V, [], obj.income.ny);
-	        [Vn1_k, Bk_inv] = obj.loop_over_income_implicit_explicit(Vn_k, A, u, varargin{:});
+	        [Vn1_k, Bk_inv] = obj.loop_over_income_implicit_explicit(V, A, u, varargin{:});
 
 	        % Howard improvement step
 	        if (obj.current_iteration >= obj.options.HIS_start) && (~obj.p.SDU)
@@ -219,8 +214,9 @@ classdef HJBSolver
 	        Vn1 = reshape(Vn1_k, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
 
-		function [Vn1_k, Bk_inv] = loop_over_income_implicit_explicit(obj, Vn_k, A, u, varargin)
+		function [Vn1_k, Bk_inv] = loop_over_income_implicit_explicit(obj, V, A, u, varargin)
         	u_k = reshape(u, [], obj.income.ny);
+        	Vn_k = reshape(V, [], obj.income.ny);
 
         	Vn1_k = zeros(obj.states_per_income, obj.income.ny);
         	Bk_inv = cell(1, obj.income.ny);
@@ -246,19 +242,11 @@ classdef HJBSolver
 		    % Bk = (rho + deathrate - A)*delta + I, which serves
 		    % as the divisor in the implicit-explicit update scheme.
 
-		    if numel(obj.p.rhos) > 1
-		        rhocol = kron(obj.p.rhos(:), ones(obj.p.nb*obj.p.na, 1));
-		        rho_mat = spdiags(rhocol, obj.states_per_income, obj.states_per_income);
-		    else
-		        rho_mat = obj.p.rho * speye(obj.states_per_income);
-		    end
-
-		    indx_k = ~ismember(1:obj.income.ny,k);
-		    i1 = 1+(k-1)*(obj.states_per_income);
-		    i2 = k*(obj.states_per_income);
+		    i1 = 1 + (k-1) * obj.states_per_income;
+		    i2 = k * obj.states_per_income;
 
 		    Ak = A(i1:i2, i1:i2);
-		    Bk = obj.options.delta * rho_mat...
+		    Bk = obj.options.delta * obj.rho_mat...
 		    	+ (1 + obj.options.delta * obj.p.deathrate) * speye(obj.states_per_income)...
 		        - obj.options.delta * Ak;
 

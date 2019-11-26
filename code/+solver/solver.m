@@ -29,7 +29,8 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	import HACT_Tools.algorithms.HJBSolver
     import HACT_Tools.algorithms.HJBSolverSDU
 	import HACT_Tools.algorithms.KFESolver
-	import HACT_Tools.algorithms.A_Matrix_Constructor
+	import HACT_Tools.algorithms.TransitionMatrixConstructor
+	import HACT_Tools.algorithms.TransitionMatrixConstructorSDU
 
     % keep track of number of mean asset iterations
 	persistent iterAY
@@ -64,7 +65,12 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	check_if_max_iters_exceeded(iterAY, p);
 
     returns_risk = (p.sigma_r > 0);
-    A_constructor = A_Matrix_Constructor(p, income, grd, returns_risk);
+
+    if p.SDU
+    	A_constructor = TransitionMatrixConstructorSDU(p, income, grd, returns_risk);
+    else
+    	A_constructor = TransitionMatrixConstructor(p, income, grd, returns_risk);
+    end
 
     if p.SDU
         hjb_solver = HJBSolverSDU(p, income, p.hjb_options);
@@ -116,7 +122,7 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	% ---------------------------------------------------------------------
 	% true if returns should be treated as risky in the KFE
 	returns_risk = (p.sigma_r > 0) && (p.retrisk_KFE == 1);
-    A_constructor_kfe = A_Matrix_Constructor(p, income, grdKFE, returns_risk);
+    A_constructor_kfe = TransitionMatrixConstructor(p, income, grdKFE, returns_risk);
     Au = A_constructor_kfe.construct(KFE, KFE.Vn);
     
     kfe_solver = KFESolver(p, income, grdKFE, p.kfe_options);

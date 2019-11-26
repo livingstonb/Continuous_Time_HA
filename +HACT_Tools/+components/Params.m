@@ -68,7 +68,7 @@ classdef Params < handle
         retrisk_KFE = 0; % by default, don't include risk in KFE when sigma_r > 0
 
 		% ------------ preferences -------------------------
-        SDU = 0;
+        SDU = false;
 		riskaver = 1; % risk aversion, can be a row vector
         % Stochastic differential utility
         invies = 1;

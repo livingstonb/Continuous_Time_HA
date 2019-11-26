@@ -186,7 +186,7 @@ classdef Income < handle
 		    nz = p.nz;
 		    ny = obj.ny;
 		    
-		    shape = size(Vn);
+		    shape = size(V);
 		    nb = shape(1);
 		    na = shape(2);
 		    

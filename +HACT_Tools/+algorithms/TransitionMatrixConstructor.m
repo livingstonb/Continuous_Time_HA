@@ -1,4 +1,4 @@
-classdef A_Matrix_Constructor < handle
+classdef TransitionMatrixConstructor < handle
     % This class constructs the A matrix for the HJB or KFE
     % First, instantiate the class with the required arguments,
     % then call the construct method with the policy functions
@@ -39,20 +39,10 @@ classdef A_Matrix_Constructor < handle
     	% A Grid object.
         grids;
 
-        % Number of points in the liquid asset grid.
         nb;
-
-        % Number of points in the illiquid asset grid.
         na;
-
-        % Number of points on the income grid.
         ny;
-
-        % Number of states in the extra dimension of
-        % heterogeneity.
         nz;
-
-        % Total number of states.
         n_states;
 
         % Shape of the full state space, a row vector.
@@ -85,22 +75,21 @@ classdef A_Matrix_Constructor < handle
     end
 
     methods
-        %% --------------------------------------------------------------------
-        % CLASS CONSTRUCTOR
-        % ---------------------------------------------------------------------
-        function obj = A_Matrix_Constructor(p, income, grids, returns_risk)
+        function obj = TransitionMatrixConstructor(p, income, grids, returns_risk)
             % Class constructor.
             %
             % Parameters
             % ----------
-            % p : a Params object which contains the parameters of the model
+            % p : An object with the required attributes outlined in the
+            %	  Properties block.
             %
-            % income : an Income object
+            % income : An object with the required attributes outlined in
+            %	  the Properties block.
             %
-            % grids : a Grid object which contains the grids
+            % grids : A Grid object.
             %
-            % returns_risk : a flag that determines whether returns risk is to
-            %   be included in the A matrix.
+            % returns_risk : A boolean indicator for whether or not returns
+            %	  risk is to be included in the transition matrix.
 
             obj.nb = numel(grids.b.vec);
             obj.na = numel(grids.a.vec);
@@ -129,34 +118,32 @@ classdef A_Matrix_Constructor < handle
         end
 
         %% --------------------------------------------------------------------
-        % CONSTRUCT THE A MATRIX
+        % Construct the A Matrix
         % ---------------------------------------------------------------------
         function [A, stationary] = construct(obj, model, V)
-            % constructs the transition matrix
-
+            % Constructs the transition matrix.
+            %
             % Parameters
             % ----------
-            % model : a structure containing the policy functions. saving (s)
-            %   and deposits (d) are used here
-            % V : the value function, shape (nb, na, nz, ny)
+            % model : A structure containing the policy functions, saving (s)
+            %   and deposits (d) are used here.
+            %
+            % V : The value function, of shape (nb, na, nz, ny).
             %
             % Returns
             % -------
-            % A : the sparse transition matrix of shape (nb*na*nz*ny, nb*na*nz*ny)
+            % A : The sparse transition matrix of shape (nb*na*nz*ny, nb*na*nz*ny).
             %
-            % stationary : a boolean mask indicating states where drift in the
-            %   risky asset was neither backward nor forward. risk computations
-            %   for these states will be included outside the A matrix
+            % stationary : A boolean mask indicating states where drift in the
+            %   risky asset was neither backward nor forward. Risk computations
+            %   for these states will be included outside the A matrix.
 
-            % policy functions
+            % Policy functions
             s = model.s;
             d = model.d;
 
-            % states where drift in risky asset is neither forward nor backward
-            stationary = [];
-
             %% --------------------------------------------------------------------
-            % COMPUTE ASSET DRIFTS
+            % Compute Asset Drifts
             % ---------------------------------------------------------------------
             if strcmp(obj.gridtype,'KFE')
                 adriftB = min(model.d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
@@ -184,29 +171,21 @@ classdef A_Matrix_Constructor < handle
 
             A = A + obj.compute_illiquid_transitions(adriftB, adriftF);
 
-            %% --------------------------------------------------------------------
-            % RATE OF RETURN RISK
-            % ---------------------------------------------------------------------
-            if (obj.p.OneAsset == 1) && (obj.returns_risk == 1)
+            stationary = [];
+            if obj.returns_risk
+            	A = A + obj.compute_Vaa_terms();
 
-                % Second derivative component, Vaa
-                A = A + obj.compute_V_aa_terms(nb, na, nz, ny);
+            	% Does nothing unless using stochastic differential
+            	% utility.
+            	if obj.p.OneAsset
+            		[Va_terms, stationary] = obj.compute_Va_terms(bdriftB, bdriftF, V);
+	            else
+	            	[Va_terms, stationary] = obj.compute_Va_terms(adriftB, adriftF, V);
+	            end
 
-                if obj.p.SDU == 1
-                    % First derivative component, Va
-                    A = A + obj.compute_V_a_terms(nb, na, nz, ny, V, adriftB, adriftF);
-                end
-
-            elseif (obj.p.OneAsset == 0) && (obj.returns_risk == 1)
-
-                % Second derivative component, Vaa
-                A = A + obj.compute_V_aa_terms(nb, na, nz, ny);
-
-                if obj.p.SDU == 1
-                    % First derivative component, Va
-                    [Arisk_Va, stationary] = obj.compute_V_a_terms(nb, na, nz, ny, V, adriftB, adriftF);
-                    A = A + Arisk_Va;
-                end     
+	            if numel(Va_terms) > 1
+	            	A = A + Va_terms;
+		        end
             end
         end
     end
@@ -256,8 +235,8 @@ classdef A_Matrix_Constructor < handle
         % Computations for Returns Risk
         % ---------------------------------------------------------------------
         function perform_returns_risk_computations(obj)
-            % pre-computes terms needed for risky returns
-
+            % Pre-computes terms needed for risky returns.
+            %
             % Modified
             % --------
             % obj.asset_dB : deltaBackward for the grid of the risky asset
@@ -297,7 +276,7 @@ classdef A_Matrix_Constructor < handle
             obj.asset_dSum = obj.asset_dB + obj.asset_dF;
         end
 
-        function Arisk_Vaa = compute_V_aa_terms(obj, nb, na, nz, ny)
+        function Arisk_Vaa = compute_Vaa_terms(obj)
             % This function computes the (1/2) * (a * sigma_r) ^2 * Vaa component
             % of the A matrix.
 
@@ -327,71 +306,9 @@ classdef A_Matrix_Constructor < handle
             Arisk_Vaa = obj.put_on_diags(V_i_minus_1_term, V_i_term, V_i_plus_1_term, obj.shift_dimension);
         end
 
-        function [Arisk_Va, stationary] = compute_V_a_terms(obj, nb, na,...
-            nz, ny, V, driftB, driftF)
-            % computes the (1/2) * (a * sigma_r) ^ 2 * Va ^2 ... term when returns are risky
-
-            % Parameters
-            % ----------
-            % nb, na, nz, ny : grid lengths
-            %
-            % V : the value function, of shape (nb, nz, nz, ny)
-            %
-            % driftB : the backward drift of the risky asset, where negative
-            %
-            % driftF : the forward drift of the risky asset, where positive
-            %
-            % Returns
-            % -------
-            % Arisk_Va : after multiplying by V, this is the component of the A matrix that
-            %   produces the Va ^ 2 term
-            %
-            % stationary : a boolean mask indicating states where drift in the
-            %   risky asset was neither backward nor forward. risk computations
-            %   for these states will be included outside the A matrix
-
-            assert(obj.p.SDU == 1, "This term only applies to SDU.")
-
-            V1B = zeros(nb, na, nz, ny);
-            V1F = zeros(nb, na, nz, ny);
-            
-            if obj.p.OneAsset == 1
-                V1B(2:nb,:,:,:) = (V(2:nb,:,:,:) - V(1:nb-1,:,:,:)) ./ obj.grids.b.dB(2:nb, :);
-                V1F(1:nb-1,:,:,:) = (V(2:nb,:,:,:) - V(1:nb-1,:,:,:)) ./ obj.grids.b.dF(1:nb-1, :);
-            else
-                V1B(:,2:na,:,:) = (V(:,2:na,:,:) - V(:,1:na-1,:,:)) ./ obj.grids.a.dB(:,2:na);
-                V1F(:,1:na-1,:,:) = (V(:,2:na,:,:) - V(:,1:na-1,:,:)) ./ obj.grids.a.dF(:,1:na-1);
-            end
-
-            V1 = (driftB < 0) .* V1B + (driftF > 0) .* V1F;
-
-            % some states may have no drift, will need to deal with them separately
-            % by adding to the RHS of HJB
-            stationary = (driftB >= 0) & (driftF <= 0);
-
-            % now add zeta(a) * Va^2 term
-            if obj.p.invies == 1
-                adj_term = obj.risk_term .* V1 * (1 - obj.p.riskaver);
-            else
-                adj_term = obj.risk_term .* V1 ./ V * (obj.p.invies - obj.p.riskaver) / (1 - obj.p.invies);
-            end
-
-            updiag = zeros(nb, na, nz, ny);
-            lowdiag = zeros(nb, na, nz, ny);
-
-            lowdiag(driftB < 0) = - adj_term(driftB < 0) ./ obj.asset_dB(driftB < 0);
-            updiag(driftF > 0) = adj_term(driftF > 0) ./ obj.asset_dF(driftF > 0);
-
-            if obj.p.OneAsset == 1
-                lowdiag(1, :, :, :) = 0;
-                updiag(nb, :, :, :) = 0;
-            else
-                lowdiag(:, 1, :, :) = 0;
-                updiag(:, na, :, :) = 0;
-            end
-            centdiag = - lowdiag - updiag;
-
-            Arisk_Va = obj.put_on_diags(lowdiag, centdiag, updiag, obj.shift_dimension);
+        function [out1, out2]  = compute_Va_terms(obj, varargin)
+        	out1 = 0;
+        	out2 = [];
         end
 
         function A = put_on_diags(obj, lower, middle, upper, shift_dim)

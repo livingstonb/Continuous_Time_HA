@@ -32,7 +32,7 @@ function outparams = SDU_tests(runopts)
     params(ii).a_lb = 0.25;
     params(ii).riskaver = 1;
     params(ii).invies = 1;
-    params(ii).SDU = 0;
+    params(ii).SDU = false;
     params(ii).r_a = 0.022866;
     params(ii).HJB_delta = 10;
     params(ii).KFE_delta = 1e6;
@@ -75,7 +75,7 @@ function outparams = SDU_tests(runopts)
                     params(ii).a_lb = 0.25;
                     params(ii).riskaver = risk_aver;
                     params(ii).invies = 1 / ies;
-                    params(ii).SDU = 1;
+                    params(ii).SDU = true;
                     params(ii).HJB_maxiters = 1e6;
                     params(ii).KFE_maxiters = 1e6;
                     params(ii).HJB_tol = 1e-9;
@@ -113,7 +113,7 @@ function outparams = SDU_tests(runopts)
                     
                     % log utility case
                     if (risk_aver == 1) && (ies == 1)
-                        params(ii).SDU = 0;
+                        params(ii).SDU = false;
                     end
 
                     if RA5calibration == 0
