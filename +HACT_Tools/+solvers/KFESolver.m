@@ -240,7 +240,8 @@ classdef KFESolver
 		end
 
 		function check_income(obj, income)
-			aux.check_for_required_properties(income, obj.required_income_vars);
+			HACT_Tools.validation.check_for_required_properties(...
+				income, obj.required_income_vars);
 			assert(ismatrix(income.ytrans), "Income transition matrix must be a matrix");
 			assert(size(income.ytrans, 1) == income.ny,...
 				"Income transition matrix has different size than (ny, ny)");
@@ -250,7 +251,8 @@ classdef KFESolver
 		end
 
 		function check_parameters(obj, p)
-			aux.check_for_required_properties(p, obj.required_parameters);
+			HACT_Tools.validation.check_for_required_properties(...
+				p, obj.required_parameters);
 		end
 	end
 end

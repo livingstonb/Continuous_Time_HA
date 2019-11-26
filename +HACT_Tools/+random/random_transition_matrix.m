@@ -1,10 +1,79 @@
-function A = random_transition_matrix(m, n, nonzero_density)
+function A = random_transition_matrix(nb, na, varargin)
+	% Constructs a random, sparse,
+	% transition matrix with row sums of zero. .
+	%
+	% Inputs
+	% ------
+	% nb : Number of points on the liquid asset grid.
+	%
+	% na : Number of points on the illiquid asset grid.
+	%	Must be >= 1.
+	%
+	% ny : Number of points on the income grid. Must
+	%	be >= 1.
+	%
+	% Outputs
+	% -------
+	% A : A sparse transition matrix. 'A' will have
+	%	a sparsity structure consistent with that
+	%	found in an HACT model, given grid sizes of nb,
+	%	na, and ny.
 
-	A = sprand(m, n, nonzero_density);
-	A = triu(A) + tril(A');
-	A = 100 * A .^ 3;
-	A_diag = spdiags(A, 0);
-	A = A - A_diag;
-	A_offdiag_sums = sum(A-spdiags(A_diag, size(A,1), size(A,2)), 2);
-	A = A - spdiags(A_offdiag_sums, 0, size(A,1), size(A,2));
+	options = parse_keyword_inputs(varargin{:});
+	n_states = nb * na * options.ny;
+
+	bdrift = (rand(n_states, 1) - 0.5) * options.max_bdrift;
+	bdrift_pos = max(bdrift, 0);
+	bdrift_pos = [0; bdrift_pos(1:end-1)];
+
+	bdrift_neg = -min(bdrift, 0);
+	bdrift_neg = [bdrift_neg(2:end); 0];
+
+	bdrift_center = -bdrift_pos - bdrift_neg;
+
+	A = spdiags(bdrift_pos, 1, n_states, n_states)...
+		+ spdiags(bdrift_center, 0, n_states, n_states)...
+		+ spdiags(bdrift_neg, -1, n_states, n_states);
+
+	adrift = (rand(n_states, 1) - 0.5) * options.max_adrift;
+	adrift_pos = max(adrift, 0);
+	adrift_pos = [zeros(nb, 1); adrift_pos(1:end-nb)];
+
+	adrift_neg = -min(adrift, 0);
+	adrift_neg = [adrift_neg(nb+1:end); zeros(nb, 1)];
+
+	adrift_center = -adrift_pos - adrift_neg;
+
+	A = A + spdiags(adrift_pos, nb, n_states, n_states)...
+		+ spdiags(adrift_center, 0, n_states, n_states)...
+		+ spdiags(adrift_neg, -nb, n_states, n_states);
+
+	if nargin <= 2
+		return
+	end
+
+	ytrans = rand(options.ny, options.ny);
+	ytrans = ytrans ./ sum(ytrans, 2);
+	for k = 1:options.ny
+		indx_k = ~ismember(1:options.ny, k);
+		ytrans(k, k) = -sum(ytrans(k, indx_k), 2);
+	end
+
+	A = A + kron(ytrans, speye(nb*na));
+end
+
+function options = parse_keyword_inputs(varargin)
+	parser = inputParser;
+	addParameter(parser, 'ny', 1);
+	addParameter(parser, 'max_bdrift', 50);
+	addParameter(parser, 'max_adrift', 50);
+	parse(parser, varargin{:});
+
+	options = parser.Results;
+	assert(options.ny >= 1,...
+		"ny must be greater than or equal to 1")
+	assert(options.max_bdrift > 0,...
+		"max_bdrift must be positive")
+	assert(options.max_adrift > 0,...
+		"max_adrift must be positive")
 end

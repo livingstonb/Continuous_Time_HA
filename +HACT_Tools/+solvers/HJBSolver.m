@@ -146,7 +146,7 @@ classdef HJBSolver
 		end
 
 		function check_inputs(obj, A, u, V)
-			import HACT_Tools.validation.*
+			import HACT_Tools.aux.Asserts
 
 			assert_square_sparse(A, obj.n_states);
 			assert_same_shape(u, V);
@@ -294,12 +294,14 @@ end
 function check_parameters(p)
 	required_parameter_vars = {'nb', 'na', 'nz',...
 			'rho', 'rhos', 'deathrate'};
-	aux.check_for_required_properties(p, required_parameter_vars);
+	HACT_Tools.validation.check_for_required_properties(....
+		p, required_parameter_vars);
 end
 
 function check_income(income)
 	required_income_vars = {'ny', 'ytrans'};
-	aux.check_for_required_properties(income, required_income_vars);
+	HACT_Tools.validation.check_for_required_properties(...
+		income, required_income_vars);
 
 	assert(income.ny > 0, "Must have ny >= 1");
 	assert(ismatrix(income.ytrans), "Income transition matrix must be a matrix");
