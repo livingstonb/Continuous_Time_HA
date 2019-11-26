@@ -1,66 +1,87 @@
-classdef HJBSolverSDU < HACT_Tools.algorithms.HJBSolver
+classdef HJBSolverSDU < HACT_Tools.algorithms.HJBBase
+
+	methods
+		function obj = HJBSolverSDU(p, income, options)
+			obj = obj@HACT_Tools.algorithms.HJBBase(p, income, options);
+		end
+	end
+
+	properties (Constant)
+		% Update this array when the required parameters
+		% change.
+		required_parameters = {'nb', 'na', 'nz',...
+			'rho', 'rhos', 'deathrate'};
+
+		% Update this array when the required income
+		% variables change.
+		required_income_vars = {'ny', 'ytrans'};
+	end
+
 	methods (Access=protected)
 		function check_if_SDU(obj)
-			assert(obj.p.SDU,...
-				[	"Model does not use stochastic differential utility, ",...
-					"this subclass should not be used."])
+			msg = [	"Model does not use stochastic differential utility, ",...
+					"this subclass should not be used."]
+			assert(obj.p.SDU, msg);
 		end
 
-		function RHS = get_RHS_implicit(obj, u, V, varargin)
-			% Overloads the same method in HJBSolver.
-			% The risk adjustment term should be passed as
-			% a third argument.
+		%%--------------------------------------------------------------
+	    % Implicit Updating
+	    % --------------------------------------------------------------
+		function Vn1 = solve_implicit(obj, A, u, V, varargin)
+			assert(obj.p.deathrate == 0,...
+				"Fully implicit updating does not support death.")
 
-			if nargin == 3
-				RHS = get_RHS_implicit@HACT_Tools.algorithms.HJBSolver(obj, u, V);
-			elseif nargin == 4
-				HACT_Tools.Checks.have_same_shape(V, varargin{1});
-				RHS = obj.options.delta * (u(:) + reshape(varargin{1}, [], 1)) + Vn(:);
-			else
-				error("Expected <= 3 arguments");
-			end
+			A_income = obj.income.income_transition_matrix_SDU(obj.p, V);
+
+			if obj.returns_risk
+				risk_adj = reshape(vargin{1}, [], 1);
+		        RHS = obj.options.delta * (u(:) + risk_adj) + Vn(:);
+		    else
+		    	RHS = obj.options.delta * u(:) + Vn(:);
+		    end
+	        
+	        B = (obj.rho_mat - A - A_income) * obj.options.delta + speye(obj.n_states);
+	        Vn1 = B \ RHS;
+	        Vn1 = reshape(Vn1, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
 
-		function [Vn1_k, Bk_inv] = loop_over_income_implicit_explicit(obj, V, A, u, varargin)
-			narginchk(4, 5);
-        	u_k = reshape(u, [], obj.income.ny);
-        	Vn_k = reshape(V, [], obj.income.ny);
+		function Vn1 = solve_implicit_explicit(obj, A, u, V, varargin)
+			obj.current_iteration = obj.current_iteration + 1;
 
-        	ez_adj = obj.income.income_transitions_SDU(obj.p, V);
+			u_k = reshape(u, [], obj.income.ny);
+			Vn_k = reshape(V, [], obj.income.ny);
+			risk_adj_k = reshape(varargin{1}, [], obj.income.ny);
 
-        	if nargin > 4
-        		risk_adj_k = reshape(varargin{1}, [], obj.income.ny);
-        	end
+			ez_adj = obj.income.income_transitions_SDU(obj.p, V);
 
-        	Vn1_k = zeros(obj.states_per_income, obj.income.ny);
-        	Bk_inv = cell(1, obj.income.ny);
-        	for k = 1:obj.income.ny
-        		Bk = obj.construct_Bk(k, A, ez_adj(:, k, k));
-            	Bk_inv{k} = inverse(Bk);
+			Vn1_k = zeros(obj.states_per_income, obj.income.ny);			
+			for k = 1:obj.income.ny
+				inctrans = spdiags(ez_adj(:, k, k), 0,...
+					obj.states_per_income, obj.states_per_income);
+				Bk = obj.construct_Bk(k, A, inctrans, varargin{:});
+            	Bk_inv = inverse(Bk);
+	        	Vn1_k(:,k) = obj.update_Vk_implicit_explicit(...
+	        		Vn_k, u_k, k, Bk_inv, ez_adj, risk_adj_k(:,k), varargin{:});
+	        end
+	        Vn1 = reshape(Vn1_k, obj.shape);
+		end
 
-            	indx_k = ~ismember(1:obj.income.ny, k);
+		function Vn1_k = update_Vk_implicit_explicit(...
+			obj, V_k, u_k, k, Bk_inv, ez_adj, varargin)
+        	
+        	indx_k = ~ismember(1:obj.income.ny, k);
 
-	            offdiag_inc_term = sum(squeeze(ez_adj(:, k, indx_k))...
-	           		.* Vn_k(:, indx_k), 2);
+            offdiag_inc_term = sum(...
+            	squeeze(ez_adj(:, k, indx_k)) .* V_k(:, indx_k), 2);
 
-	            RHSk = obj.options.delta * u_k(:,k)...
-		            	+ Vn_k(:,k) + obj.options.delta * offdiag_inc_term;
-		            	
-            	if nargin > 4
-            		RHSk = RHSk + obj.options.delta * risk_adj_k(:, k);
-            	end
-	            
-	            Vn1_k(:,k) = Bk_inv{k} * RHSk;
-        	end
-	    end
-
-	    function inc_term = get_Bk_income_term(obj, k, varargin)
-	    	% Adds risk-adjusted diagonal income transitions to
-	    	% the left-hand-side of the HJB.
-
-	    	inc_term = spdiags(varargin{1}, 0,...
-	    		obj.states_per_income,...
-	    		obj.states_per_income);
-	    end
+            RHSk = obj.options.delta * u_k(:,k)...
+            	+ V_k(:,k) + obj.options.delta * offdiag_inc_term;
+           	
+           	if numel(varargin) == 1
+           		RHSk = RHSk + obj.options.delta * varargin{1};
+           	end
+            
+            Vn1_k = Bk_inv * RHSk;
+        end
 	end
 end

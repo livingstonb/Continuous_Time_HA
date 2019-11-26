@@ -105,6 +105,18 @@ classdef (Abstract) HJBBase < handle
 			% ---------------------------------------------------------
 			obj.create_rho_matrix();
 		end
+
+		function V_update = solve(obj, A, u, V, varargin)
+			% Updates the value function.
+
+			obj.check_inputs(A, u, V);
+
+			if obj.options.implicit
+				V_update = obj.solve_implicit(A, u, V, varargin{:});
+			else
+				V_update = obj.solve_implicit_explicit(A, u, V, varargin{:});
+			end
+		end
 	end
 
 	methods (Access=protected)
@@ -161,13 +173,10 @@ classdef (Abstract) HJBBase < handle
 		end
 	end
 
-	methods (Abstract)
-		V_update = solve(obj, A, u, V, varargin);
-	end
-
 	methods (Abstract, Access=protected)
 		check_if_SDU(obj);
 		Vn1 = solve_implicit(obj, A, u, V, varargin);
+		Vn1 = solve_implicit_explicit(obj, A, u, V, varargin);
 	end
 
 end

@@ -67,7 +67,6 @@ function [stats,p] = main(runopts, p)
     stats.mpcs = struct();
 
     if p.SDU == 1
-        ez_adj = income.SDU_income_risk_adjustment(p, KFE.Vn);
         mpc_finder = statistics.MPCFinder(p,income,grdKFE);
     else
         mpc_finder = statistics.MPCFinder(p,income,grdKFE);

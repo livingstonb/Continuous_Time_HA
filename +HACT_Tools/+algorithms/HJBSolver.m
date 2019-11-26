@@ -24,18 +24,6 @@ classdef HJBSolver < HACT_Tools.algorithms.HJBBase
 		function obj = HJBSolver(p, income, options)
 			obj = obj@HACT_Tools.algorithms.HJBBase(p, income, options);
 		end
-
-		function V_update = solve(obj, A, u, V, varargin)
-			% Updates the value function.
-
-			obj.check_inputs(A, u, V);
-
-			if obj.options.implicit
-				V_update = obj.solve_implicit(A, u, V, varargin{:});
-			else
-				V_update = obj.solve_implicit_explicit(A, u, V, varargin{:});
-			end
-		end
 	end
 
 	methods (Access=protected)
@@ -70,7 +58,6 @@ classdef HJBSolver < HACT_Tools.algorithms.HJBBase
 
 			u_k = reshape(u, [], obj.income.ny);
 			Vn_k = reshape(V, [], obj.income.ny);
-			inctrans_diag = diag(obj.income.ytrans)';
 
 			Vn1_k = zeros(obj.states_per_income, obj.income.ny);
 			Bk_inv = cell(1, obj.income.ny);
@@ -82,10 +69,10 @@ classdef HJBSolver < HACT_Tools.algorithms.HJBBase
 	        		Vn_k, u_k, k, Bk_inv{k}, varargin{:});
 	        end
 
-	        % % Howard improvement step
-	        % if (obj.current_iteration >= obj.options.HIS_start) && (~obj.p.SDU)
-	        %     Vn1_k = obj.howard_improvement_step(Vn1_k, u_k, Bk_inv);
-	        % end
+	        % Howard improvement step
+	        if obj.current_iteration >= obj.options.HIS_start
+	            Vn1_k = obj.howard_improvement_step(Vn1_k, u_k, Bk_inv);
+	        end
 	        Vn1 = reshape(Vn1_k, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
 
@@ -104,29 +91,27 @@ classdef HJBSolver < HACT_Tools.algorithms.HJBBase
             Vn1_k = Bk_inv * RHSk;
 	    end
 
-		% function Vn2_k = howard_improvement_step(obj, Vn1_k, u_k, Bik_all)
-		%     % Technique to speed up convergence.
+		function Vn2_k = howard_improvement_step(obj, Vn1_k, u_k, Bik_all)
+		    % Technique to speed up convergence.
 
-		%     for jj = 1:obj.options.HIS_maxiters
-		%         Vn2_k = NaN(obj.states_per_income, obj.income.ny);
-		%         for kk = 1:obj.income.ny
-		%             indx_k = ~ismember(1:obj.income.ny, kk);
+		    for jj = 1:obj.options.HIS_maxiters
+		        Vn2_k = zeros(obj.states_per_income, obj.income.ny);
+		        for kk = 1:obj.income.ny
+		            indx_k = ~ismember(1:obj.income.ny, kk);
 		            
-		%             Vkp_stacked = sum(...
-		%                 	repmat(obj.income.ytrans(kk,indx_k),obj.states_per_income,1)...
-		%                 	.* Vn1_k(:,indx_k), 2);
-		%             qk = obj.options.delta * (u_k(:,kk) + Vkp_stacked) + Vn1_k(:,kk);
-		%             Vn2_k(:,kk) = Bik_all{kk} * qk;
-		%         end
+		            Vkp_stacked = sum(...
+		                	repmat(obj.income.ytrans(kk, indx_k), obj.states_per_income,1)...
+		                	.* Vn1_k(:,indx_k), 2);
+		            qk = obj.options.delta * (u_k(:,kk) + Vkp_stacked) + Vn1_k(:,kk);
+		            Vn2_k(:,kk) = Bik_all{kk} * qk;
+		        end
 
-		%         dst = max(abs(Vn2_k(:) - Vn1_k(:)));
-		%         Vn1_k = Vn2_k;
-		%         if dst < obj.options.HIS_tol
-		%             break
-		%         end
-  %   		end
-		% end
-
-		
+		        dst = max(abs(Vn2_k(:) - Vn1_k(:)));
+		        Vn1_k = Vn2_k;
+		        if dst < obj.options.HIS_tol
+		            break
+		        end
+    		end
+		end
 	end
 end
