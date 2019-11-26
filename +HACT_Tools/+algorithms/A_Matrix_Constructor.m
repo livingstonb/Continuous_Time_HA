@@ -5,10 +5,39 @@ classdef A_Matrix_Constructor < handle
     % and value function as arguments.
 
     properties (SetAccess = protected)
+    	%	An object with the following required attributes:
+    	%
+    	%		deathrate
+    	%		- The Poisson rate at which households die.
+    	%
+    	%		perfectannuities
+    	%		- Boolean, true turns on annuities, false
+    	%		  leaves them off.
+    	%
+    	%		directdeposit
+    	%		- Fraction of income being paid out to the
+    	%		  illiquid asset.
+    	%
+    	%		SDU
+    	%		- A boolean indicator of whether or not stochastic
+    	%		  differential utility is present.
+    	%		
+    	%		sigma_r
+    	%		- The standard deviation of returns risk, typically
+    	%		  zero.
+    	%
+    	%    and if SDU evaluates to true, then 'p' must also include:
+    	%		
+    	%		riskaver
+    	%		- The coefficient of risk aversion.
+    	%
+    	%		invies
+    	%		- The inverse of the intertemporal elasticity of
+    	%		  substitution.
+    	p;
+
     	% A Grid object.
         grids;
-
-        p;
 
         % Number of points in the liquid asset grid.
         nb;
@@ -16,46 +45,50 @@ classdef A_Matrix_Constructor < handle
         % Number of points in the illiquid asset grid.
         na;
 
-        % Number of states for the extra dimension of
-        % heterogeneity.
-        nz;
-
         % Number of points on the income grid.
         ny;
 
+        % Number of states in the extra dimension of
+        % heterogeneity.
+        nz;
+
         % Total number of states.
-        dim;
+        n_states;
+
+        % Shape of the full state space, a row vector.
+        shape;
 
         % returns risk is on or off
         returns_risk;
 
-        % grid deltas
+        % Grid deltas
         asset_dB;
         asset_dF;
         asset_dSum; % (deltaB + deltaF)
 
-        % boolean mask for top of the b (1-asset) or a (2-asset) grid
+        % Boolean mask for top of the b (1-asset) or a (2-asset) grid
         top;
 
-        % pre-computed term when returns are risky
+        % Pre-computed term when returns are risky
         risk_term;
 
-        % offset of terms on lower/upper diagonals for risky asset
-        % 1 for liquid, 2 for illiquid
+        % Dimension of terms for upper/lower diagonals. Offset
+        % from diagonal by 1 if shift_dimension = 1 and by 
+        % nb if shift_dimension = 2.
         shift_dimension;
 
-        % income values
+        % Matrix of income values.
         y_mat;
 
         % 'HJB' or 'KFE' grid
-        modeltype;
+        gridtype;
     end
 
     methods
         %% --------------------------------------------------------------------
         % CLASS CONSTRUCTOR
         % ---------------------------------------------------------------------
-        function obj = A_Matrix_Constructor(p, income, grids, modeltype, returns_risk)
+        function obj = A_Matrix_Constructor(p, income, grids, returns_risk)
             % Class constructor.
             %
             % Parameters
@@ -66,29 +99,27 @@ classdef A_Matrix_Constructor < handle
             %
             % grids : a Grid object which contains the grids
             %
-            % modeltype : a string ('HJB' or 'KFE') indicating which grids are
-            %   to be used
-            %
             % returns_risk : a flag that determines whether returns risk is to
             %   be included in the A matrix.
 
             obj.nb = numel(grids.b.vec);
             obj.na = numel(grids.a.vec);
-            obj.nz = p.nz;
+            obj.nz = grids.nz;
             obj.ny = numel(income.y.vec);
-            obj.dim = obj.nb * obj.na * obj.nz * obj.ny;
+            obj.n_states = obj.nb * obj.na * obj.nz * obj.ny;
+            obj.shape = [obj.nb obj.na obj.nz obj.ny];
+
+            obj.gridtype = grids.gtype;
 
             obj.grids = grids;
             
             obj.p = p;
 
-            obj.modeltype = modeltype;
-
             obj.returns_risk = returns_risk;
 
-            if strcmp(modeltype,'KFE')
+            if strcmp(obj.gridtype, 'KFE')
                 obj.y_mat = income.y.matrixKFE;
-            elseif strcmp(modeltype,'HJB')
+            elseif strcmp(obj.gridtype, 'HJB')
                 obj.y_mat = income.y.matrix;
             end
 
@@ -117,13 +148,6 @@ classdef A_Matrix_Constructor < handle
             %   risky asset was neither backward nor forward. risk computations
             %   for these states will be included outside the A matrix
 
-            % grids
-            nb = obj.nb;
-            na = obj.na;
-            nz = obj.nz;
-            ny = obj.ny;
-            dim = obj.dim;
-
             % policy functions
             s = model.s;
             d = model.d;
@@ -131,64 +155,35 @@ classdef A_Matrix_Constructor < handle
             % states where drift in risky asset is neither forward nor backward
             stationary = [];
 
-            %% ----------------------------------------------
-            % INITIALIZE
-            % -----------------------------------------------
-            chi = NaN(nb,na,nz,ny);
-            yy = NaN(nb,na,nz,ny);
-            zetta = NaN(nb,na,nz,ny);
-
-            X = NaN(nb,na,nz,ny);
-            Y = NaN(nb,na,nz,ny);
-            Z = NaN(nb,na,nz,ny);
-
             %% --------------------------------------------------------------------
             % COMPUTE ASSET DRIFTS
             % ---------------------------------------------------------------------
-            if strcmp(obj.modeltype,'KFE')
-                adriftB = min(d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
+            if strcmp(obj.gridtype,'KFE')
+                adriftB = min(model.d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
                                                          + obj.p.directdeposit * obj.y_mat,0);
-                adriftF = max(d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
+                adriftF = max(model.d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
                                                          + obj.p.directdeposit * obj.y_mat,0);
 
-                bdriftB = min(s - d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0);
-                bdriftF = max(s - d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0);
-            elseif strcmp(obj.modeltype,'HJB')
-                adriftB = min(d,0) + min(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities) + obj.p.directdeposit * obj.y_mat,0);
-                adriftF = max(d,0) + max(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities) + obj.p.directdeposit * obj.y_mat,0);
+                bdriftB = min(model.s - model.d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0);
+                bdriftF = max(model.s - model.d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0);
+            elseif strcmp(obj.gridtype,'HJB')
+                adriftB = min(model.d, 0)...
+                	+ min(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
+                	+ obj.p.directdeposit * obj.y_mat,0);
+                adriftF = max(model.d, 0)...
+                	+ max(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
+                	+ obj.p.directdeposit * obj.y_mat,0);
 
-                bdriftB = min(-d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0) + min(s,0);
-                bdriftF = max(-d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0) + max(s,0);    
+                bdriftB = min(-model.d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0)...
+                	+ min(model.s, 0);
+                bdriftF = max(-model.d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0)...
+                	+ max(model.s, 0);    
             end
 
-            %% --------------------------------------------------------------------
-            % ILLIQUID ASSET TRANSITIONS
-            % ---------------------------------------------------------------------
-            chi(:,2:na,:,:) = -adriftB(:,2:na,:,:)./obj.grids.a.dB(:,2:na); 
-            chi(:,1,:,:) = zeros(nb,1,nz,ny);
-            yy(:,2:na-1,:,:) = adriftB(:,2:na-1,:,:)./obj.grids.a.dB(:,2:na-1) ...
-                - adriftF(:,2:na-1,:,:)./obj.grids.a.dF(:,2:na-1); 
-            yy(:,1,:,:) = - adriftF(:,1,:,:)./obj.grids.a.dF(:,1); 
-            yy(:,na,:,:) = adriftB(:,na,:,:)./obj.grids.a.dB(:,na);
-            zetta(:,1:na-1,:,:) = adriftF(:,1:na-1,:,:)./obj.grids.a.dF(:,1:na-1); 
-            zetta(:,na,:,:) = zeros(nb,1,nz,ny);
+            A = obj.compute_liquid_transitions(bdriftB, bdriftF);
 
-            A = obj.put_on_diags(chi, yy, zetta, 2);
+            A = A + obj.compute_illiquid_transitions(adriftB, adriftF);
 
-            %% --------------------------------------------------------------------
-            % LIQUID ASSET TRANSITIONS
-            % ---------------------------------------------------------------------
-            X(2:nb,:,:,:) = - bdriftB(2:nb,:,:,:)./obj.grids.b.dB(2:nb,:); 
-            X(1,:,:,:) = zeros(1,na,nz,ny);
-            Y(2:nb-1,:,:,:) = bdriftB(2:nb-1,:,:,:)./obj.grids.b.dB(2:nb-1,:) ...
-                - bdriftF(2:nb-1,:,:,:)./obj.grids.b.dF(2:nb-1,:); 
-            Y(1,:,:,:) = - bdriftF(1,:,:,:)./obj.grids.b.dF(1,:); 
-            Y(nb,:,:,:) = bdriftB(nb,:,:,:)./obj.grids.b.dB(nb,:);
-            Z(1:nb-1,:,:,:) = bdriftF(1:nb-1,:,:,:)./obj.grids.b.dF(1:nb-1,:); 
-            Z(nb,:,:,:) = zeros(1,na,nz,ny);
-
-            A = A + obj.put_on_diags(X, Y, Z, 1);
-            
             %% --------------------------------------------------------------------
             % RATE OF RETURN RISK
             % ---------------------------------------------------------------------
@@ -216,9 +211,49 @@ classdef A_Matrix_Constructor < handle
         end
     end
 
-    methods (Access=private)
+    methods (Access=protected)
+    	%% --------------------------------------------------------------------
+        % Liquid Asset Transitions
+        % ---------------------------------------------------------------------
+    	function A_liquid = compute_liquid_transitions(obj, bdriftB, bdriftF)
+    		% Computes the sparse, square matrix for liquid asset transitions,
+    		% adjusted for grid deltas.
+
+    		lowdiag = - bdriftB ./ obj.grids.b.dB; 
+            lowdiag(1,:,:,:) = 0;
+
+            centerdiag = bdriftB ./ obj.grids.b.dB - bdriftF ./ obj.grids.b.dF; 
+            centerdiag(1,:,:,:) = - bdriftF(1,:,:,:)./obj.grids.b.dF(1,:); 
+            centerdiag(obj.nb,:,:,:) = bdriftB(obj.nb,:,:,:)./obj.grids.b.dB(obj.nb,:);
+
+            updiag = bdriftF ./ obj.grids.b.dF; 
+            updiag(obj.nb,:,:,:) = 0;
+
+            A_liquid = obj.put_on_diags(lowdiag, centerdiag, updiag, 1);
+        end
+
+    	%% --------------------------------------------------------------------
+        % Illiquid Asset Transitions
+        % ---------------------------------------------------------------------
+        function A_illiquid = compute_illiquid_transitions(obj, adriftB, adriftF)
+        	% Computes the sparse, square matrix for illiquid asset transitions,
+    		% adjusted for grid deltas.
+
+    		lowdiag = -adriftB ./ obj.grids.a.dB; 
+            lowdiag(:,1,:,:) = 0;
+
+            centerdiag = adriftB ./ obj.grids.a.dB - adriftF ./ obj.grids.a.dF; 
+            centerdiag(:,1,:,:) = -adriftF(:,1,:,:) ./ obj.grids.a.dF(:,1); 
+            centerdiag(:,obj.na,:,:) = adriftB(:,obj.na,:,:) ./ obj.grids.a.dB(:,obj.na);
+
+            updiag = adriftF ./ obj.grids.a.dF; 
+            updiag(:,obj.na,:,:) = zeros(obj.nb,1,obj.nz,obj.ny);
+
+            A_illiquid = obj.put_on_diags(lowdiag, centerdiag, updiag, 2);
+        end
+
         %% --------------------------------------------------------------------
-        % COMPUTATIONS FOR RETURNS RISK
+        % Computations for Returns Risk
         % ---------------------------------------------------------------------
         function perform_returns_risk_computations(obj)
             % pre-computes terms needed for risky returns
@@ -381,17 +416,17 @@ classdef A_Matrix_Constructor < handle
                 upper = [0; upper(1:end-1)];
                 lower = lower(:);
                 lower = [lower(2:end); 0];
-                A = spdiags(upper(:), 1, obj.dim, obj.dim) ...
-                    + spdiags(middle(:), 0, obj.dim, obj.dim) ...
-                    + spdiags(lower(:), -1, obj.dim, obj.dim);
+                A = spdiags(upper(:), 1, obj.n_states, obj.n_states) ...
+                    + spdiags(middle(:), 0, obj.n_states, obj.n_states) ...
+                    + spdiags(lower(:), -1, obj.n_states, obj.n_states);
             elseif shift_dim == 2
                 upper = upper(:);
                 upper = [zeros(obj.nb, 1); upper(1:end-obj.nb)];
                 lower = lower(:);
                 lower = [lower(obj.nb+1:end); zeros(obj.nb, 1)];
-                A = spdiags(upper(:), obj.nb, obj.dim, obj.dim) ...
-                    + spdiags(middle(:), 0, obj.dim, obj.dim) ...
-                    + spdiags(lower(:), -obj.nb, obj.dim, obj.dim);                
+                A = spdiags(upper(:), obj.nb, obj.n_states, obj.n_states) ...
+                    + spdiags(middle(:), 0, obj.n_states, obj.n_states) ...
+                    + spdiags(lower(:), -obj.nb, obj.n_states, obj.n_states);                
             end
         end
     end

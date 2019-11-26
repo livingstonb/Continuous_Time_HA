@@ -26,9 +26,10 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	% Au : the transition matrix for the KFE, shape
 	%	(nb_KFE*na_KFE*nz*ny, nb_KFE*na_KFE*nz*ny)
 
-	import HACT_Tools.solvers.HJBSolver
-    import HACT_Tools.solvers.HJBSolverSDU
-	import HACT_Tools.solvers.KFESolver
+	import HACT_Tools.algorithms.HJBSolver
+    import HACT_Tools.algorithms.HJBSolverSDU
+	import HACT_Tools.algorithms.KFESolver
+	import HACT_Tools.algorithms.A_Matrix_Constructor
 
     % keep track of number of mean asset iterations
 	persistent iterAY
@@ -63,7 +64,7 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	check_if_max_iters_exceeded(iterAY, p);
 
     returns_risk = (p.sigma_r > 0);
-    A_Constructor = solver.A_Matrix_Constructor(p, income, grd, 'HJB', returns_risk);
+    A_constructor = A_Matrix_Constructor(p, income, grd, returns_risk);
 
     if p.SDU
         hjb_solver = HJBSolverSDU(p, income, p.hjb_options);
@@ -77,7 +78,7 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	  	[HJB, V_deriv_risky_asset_nodrift] = solver.find_policies(p,income,grd,Vn);
 
 	    % construct transition matrix 
-        [A, stationary] = A_Constructor.construct(HJB, Vn);
+        [A, stationary] = A_constructor.construct(HJB, Vn);
 
     	risk_adj = compute_risk_adjustment_for_nodrift_case(...
     		p, grd, V_deriv_risky_asset_nodrift, stationary, Vn);
@@ -115,8 +116,8 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	% ---------------------------------------------------------------------
 	% true if returns should be treated as risky in the KFE
 	returns_risk = (p.sigma_r > 0) && (p.retrisk_KFE == 1);
-    A_Constructor_KFE = solver.A_Matrix_Constructor(p, income, grdKFE, 'KFE', returns_risk);
-    Au = A_Constructor_KFE.construct(KFE, KFE.Vn);
+    A_constructor_kfe = A_Matrix_Constructor(p, income, grdKFE, returns_risk);
+    Au = A_constructor_kfe.construct(KFE, KFE.Vn);
     
     kfe_solver = KFESolver(p, income, grdKFE, p.kfe_options);
     KFE.g = kfe_solver.solve(Au);
