@@ -33,7 +33,7 @@ classdef HJBSolverSDU < HACT.solvers.HJBSolver
         	Vn1_k = zeros(obj.states_per_income, obj.income.ny);
         	Bk_inv = cell(1, obj.income.ny);
         	for k = 1:obj.income.ny
-        		Bk = obj.construct_Bk(k, A, ez_adj);
+        		Bk = obj.construct_Bk(k, A, ez_adj(:, k, k));
             	Bk_inv{k} = inverse(Bk);
 
             	indx_k = ~ismember(1:obj.income.ny, k);
@@ -50,6 +50,15 @@ classdef HJBSolverSDU < HACT.solvers.HJBSolver
 	            
 	            Vn1_k(:,k) = Bk_inv{k} * RHSk;
         	end
+	    end
+
+	    function inc_term = get_Bk_income_term(obj, k, varargin)
+	    	% Adds risk-adjusted diagonal income transitions to
+	    	% the left-hand-side of the HJB.
+
+	    	inc_term = spdiags(varargin{1}, 0,...
+	    		obj.states_per_income,...
+	    		obj.states_per_income);
 	    end
 	end
 end

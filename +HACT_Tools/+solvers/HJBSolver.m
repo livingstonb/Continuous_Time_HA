@@ -146,11 +146,11 @@ classdef HJBSolver
 		end
 
 		function check_inputs(obj, A, u, V)
-			import HACT_Tools.aux.Asserts
+			import HACT_Tools.aux.Asserts;
 
-			assert_square_sparse(A, obj.n_states);
-			assert_same_shape(u, V);
-			assert_correct_shape(V, obj.shape);
+			Asserts.is_square_sparse_matrix(A, obj.n_states);
+			Asserts.have_same_shape(u, V);
+			Asserts.has_shape(V, obj.shape);
 		end
 
 		function check_if_SDU(obj)
@@ -196,27 +196,23 @@ classdef HJBSolver
 
 			u_k = reshape(u, [], obj.income.ny);
 
-	        Vn1_k = zeros(obj.states_per_income, obj.income.ny);
 	        Vn_k = reshape(V, [], obj.income.ny);
-	        Bik_all = cell(obj.income.ny, 1);
-
-	        Vn1_k, Bk_inv = obj.loop_over_income_implicit_explicit(Vn_k, A, u, varargin{:});
+	        [Vn1_k, Bk_inv] = obj.loop_over_income_implicit_explicit(Vn_k, A, u, varargin{:});
 
 	        % Howard improvement step
 	        if (obj.current_iteration >= obj.options.HIS_start) && (~obj.p.SDU)
-	            Vn1_k = obj.howard_improvement_step(ez_adj, Vn1_k, u_k, Bik_all);
+	            Vn1_k = obj.howard_improvement_step(Vn1_k, u_k, Bk_inv);
 	        end
 	        Vn1 = reshape(Vn1_k, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
 
 		function [Vn1_k, Bk_inv] = loop_over_income_implicit_explicit(obj, Vn_k, A, u, varargin)
-			narginchk(4, 4);
-        	u_k = reshape(u, obj.income.ny);
+        	u_k = reshape(u, [], obj.income.ny);
 
         	Vn1_k = zeros(obj.states_per_income, obj.income.ny);
         	Bk_inv = cell(1, obj.income.ny);
         	for k = 1:obj.income.ny
-        		Bk = obj.construct_Bk(k, A, ez_adj);
+        		Bk = obj.construct_Bk(k, A);
             	Bk_inv{k} = inverse(Bk);
 
             	indx_k = ~ismember(1:obj.income.ny, k);
@@ -228,11 +224,11 @@ classdef HJBSolver
 	            RHSk = obj.options.delta * u_k(:,k)...
 	            	+ Vn_k(:,k) + obj.options.delta * offdiag_inc_term;
 	            
-	            Vn1_k(:,k) = Bk_inv{k} * qk;
+	            Vn1_k(:,k) = Bk_inv{k} * RHSk;
         	end
 	    end
 
-		function Bk = construct_Bk(obj, k, A, ez_adj)
+		function Bk = construct_Bk(obj, k, A, varargin)
 		    % For the k-th income state, constructs the matrix
 		    % Bk = (rho + deathrate - A)*delta + I, which serves
 		    % as the divisor in the implicit-explicit update scheme.
@@ -253,16 +249,18 @@ classdef HJBSolver
 		    	+ (1 + obj.options.delta * obj.p.deathrate) * speye(obj.states_per_income)...
 		        - obj.options.delta * Ak;
 
-		    if obj.p.SDU
-		        Bk = Bk - obj.options.delta...
-		        	* spdiags(ez_adj(:, k, k), 0, obj.states_per_income, obj.states_per_income);
-		    else
-		        Bk = Bk - obj.options.delta * obj.income.ytrans(k, k)...
-		        	* speye(obj.states_per_income);
-		    end
+		    Bk = Bk - obj.options.delta * get_Bk_income_term(obj, k, varargin{:});
 		end
 
-		function Vn2_k = howard_improvement_step(obj, ez_adj, Vn1_k, u_k, Bik_all)
+		function inc_term = get_Bk_income_term(obj, k, varargin)
+			% Add income transitions to the left-hand-side of
+			% the HJB. This method is overloaded for stochastic
+			% differential utility.
+
+			inc_term = obj.income.ytrans(k, k) * speye(obj.states_per_income);
+		end
+
+		function Vn2_k = howard_improvement_step(obj, Vn1_k, u_k, Bik_all)
 		    % Technique to speed up convergence.
 
 		    for jj = 1:obj.options.HIS_maxiters
@@ -270,14 +268,10 @@ classdef HJBSolver
 		        for kk = 1:obj.income.ny
 		            indx_k = ~ismember(1:obj.income.ny, kk);
 		            
-		            if p.SDU == 1
-		                Vkp_stacked = sum(squeeze(ez_adj(:, kk, indx_k)) .* Vn1_k(:, indx_k), 2);
-		            else
-		                Vkp_stacked = sum(...
+		            Vkp_stacked = sum(...
 		                	repmat(obj.income.ytrans(kk,indx_k),obj.states_per_income,1)...
 		                	.* Vn1_k(:,indx_k), 2);
-		            end
-		            qk = obj.options.delta * u_k(:,kk) + Vn1_k(:,kk) + obj.options.delta * Vkp_stacked;
+		            qk = obj.options.delta * (u_k(:,kk) + Vkp_stacked) + Vn1_k(:,kk);
 		            Vn2_k(:,kk) = Bik_all{kk} * qk;
 		        end
 

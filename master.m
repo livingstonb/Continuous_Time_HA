@@ -31,7 +31,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 % -------------------------------------------------------------------------
 
 runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
-runopts.fast = 0; % use small grid for debugging
+runopts.fast = 1; % use small grid for debugging
 runopts.mode = 'table_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = 0;
 runopts.SimulateMPCS = 0; % also estimate MPCs by simulation
