@@ -22,27 +22,35 @@ function A = random_transition_matrix(nb, na, varargin)
 	options = parse_keyword_inputs(varargin{:});
 	n_states = nb * na * options.ny;
 
-	bdrift = (rand(n_states, 1) - 0.5) * options.max_bdrift;
+	bdrift = (rand(nb, na, options.ny) - 0.5) * options.max_bdrift;
 	bdrift_pos = max(bdrift, 0);
-	bdrift_pos = [0; bdrift_pos(1:end-1)];
-
+    bdrift_pos(nb, :, :) = 0;
+    bdrift_pos = bdrift_pos(:);
+    
 	bdrift_neg = -min(bdrift, 0);
+    bdrift_neg(1, :, :) = 0;
+    bdrift_neg = bdrift_neg(:);
+    bdrift_center = -bdrift_pos - bdrift_neg;
+    
+    bdrift_pos = [0; bdrift_pos(1:end-1)];
 	bdrift_neg = [bdrift_neg(2:end); 0];
-
-	bdrift_center = -bdrift_pos - bdrift_neg;
 
 	A = spdiags(bdrift_pos, 1, n_states, n_states)...
 		+ spdiags(bdrift_center, 0, n_states, n_states)...
 		+ spdiags(bdrift_neg, -1, n_states, n_states);
 
-	adrift = (rand(n_states, 1) - 0.5) * options.max_adrift;
-	adrift_pos = max(adrift, 0);
-	adrift_pos = [zeros(nb, 1); adrift_pos(1:end-nb)];
-
+	adrift = (rand(nb, na, options.ny) - 0.5) * options.max_adrift;
+    adrift_pos = max(adrift, 0);
+    adrift_pos(:,na,:) = 0;
+    adrift_pos = adrift_pos(:);
+    
 	adrift_neg = -min(adrift, 0);
+    adrift_neg(:,1,:) = 0;
+    adrift_neg = adrift_neg(:);
+    adrift_center = -adrift_pos - adrift_neg;
+    
+    adrift_pos = [zeros(nb, 1); adrift_pos(1:end-nb)];
 	adrift_neg = [adrift_neg(nb+1:end); zeros(nb, 1)];
-
-	adrift_center = -adrift_pos - adrift_neg;
 
 	A = A + spdiags(adrift_pos, nb, n_states, n_states)...
 		+ spdiags(adrift_center, 0, n_states, n_states)...
