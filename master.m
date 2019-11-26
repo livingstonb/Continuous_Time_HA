@@ -72,13 +72,13 @@ end
 runopts.suffix = num2str(runopts.param_index);
 
 % directory to save output, and temp directory
-runopts.savedir = [runopts.direc 'output/'];
+runopts.savedir = fullfile(runopts.direc, 'output');
 
 % temp directory
-runopts.temp = [runopts.direc 'temp/'];
+runopts.temp = fullfile(runopts.direc, 'temp');
 
-addpath([runopts.direc,'code']);
-addpath([runopts.direc,'code/factorization_lib']);
+addpath(fullfile(runopts.direc, 'code'));
+addpath(fullfile(runopts.direc, 'code', 'factorization_lib'));
 
 mkdir(runopts.temp);
 mkdir(runopts.savedir);

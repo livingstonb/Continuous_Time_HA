@@ -20,6 +20,8 @@ classdef Params < handle
         name = 'unnamed';
         param_index;
 
+        maindir;
+        income_dir;
         tempdirec;
 
         % ------------ grid parameters ---------------------
@@ -77,9 +79,6 @@ classdef Params < handle
 		rhos;
 		rho_grid;
 
-		% ------------ income process ---------------------
-		DirIncomeProcess = 'input/IncomeGrids/continuous_a';
-
 		% ------------ taxes ------------------------------
 		transfer = 0; % transfer to households 
 		wagetax = 0; % tax rate on wage income
@@ -100,10 +99,11 @@ classdef Params < handle
 		crit_HIS 		= 1e-5; % critical value
 
 		% KFE loop
-		KFE_maxiter = 1e4; % maximal allowable number of KFE iterations
+		kfe_options;
+		KFE_maxiters = 1e4; % maximal allowable number of KFE iterations
 		KFE_tol = 1e-8; % critical value
-		deltaKFE = 1e6; %1e6; % step size
-        iterateKFE = true;
+		KFE_delta = 1e6; %1e6; % step size
+        KFE_iterative = true;
 
 		% Outer assets-income ratio grid
 		maxit_AY 		= 100; % maximal allowable number of loops over capital-labor ratio
@@ -169,12 +169,19 @@ classdef Params < handle
             else
                 obj.nz = max(numel(obj.rho_grid),numel(obj.riskaver));
             end
+
+            obj.kfe_options = solver.KFEOptions(...
+				'maxiters', obj.KFE_maxiters,...
+				'tol', obj.KFE_tol,...
+				'delta', obj.KFE_delta,...
+				'iterative', obj.KFE_iterative);
             
             obj.param_index = runopts.param_index;
             obj.ComputeMPCS = runopts.ComputeMPCS;
             obj.SimulateMPCS = runopts.SimulateMPCS;
             obj.ComputeMPCS_news = runopts.ComputeMPCS_news;
             obj.SimulateMPCS_news = runopts.SimulateMPCS_news;
+            obj.maindir = runopts.direc;
             obj.tempdirec = runopts.temp;
 
             obj.rhos = obj.rho + obj.rho_grid;
@@ -237,15 +244,49 @@ classdef Params < handle
                 obj.rhoL = 0.023;
             end
         end
-
-        function obj = reset_rho(obj,newrho)
-            obj.rho = newrho;
-            obj.rhos = newrho + obj.rho_grid;
-        end
         
-        function obj = set(obj, name_str, new_val)
-            obj.(name_str) = new_val;
-            disp(strcat(name_str, sprintf(" has been reset to %.9f", new_val)));
+        function obj = set(obj, field, new_val, quiet)
+        	% Sets the value of a parameter.
+        	%
+        	% Inputs
+        	% ------
+        	%
+        	% field : A string containing the parameter
+        	%	name.
+        	%
+        	% new_val : The desired value of the parameter.
+        	%
+        	% quiet : An optional argument that, when it
+        	%	evaluates to true, suppresses printing
+        	%	to the screen.
+
+        	field = char(field);
+
+        	KFE_option_passed = false;
+        	if numel(field) > 4
+        		if strcmp(field(1:3), 'KFE')
+        			KFE_option_passed = true;
+        		end
+        	end
+
+        	if strcmp(field, 'rho')
+        		obj.rhos = new_val + obj.rho_grid;
+        	elseif KFE_option_passed
+        		assert(isprop(obj.kfe_options, field(5:end)), "Invalid KFE option");
+        		obj.kfe_options.set(field(5:end), new_val);
+    		elseif ~isprop(obj, field)
+    			error("Requested field is not an attribute of Params.");
+        	end
+
+            obj.(field) = new_val;
+
+            if ~exist('quiet', 'var')
+            	quiet = false;
+            end
+
+            if ~quiet
+            	disp(strcat(field, sprintf(" has been reset to %.9f", new_val)));
+            end
         end
 
         function print(obj)

@@ -40,28 +40,28 @@ classdef KFESolver
 		%	A Grid object. See the Grid documentation for details.
 		grdKFE;
 
-		%	A structure used internally by KFESolver.
+		%	A KFEOptions object used internally by KFESolver.
 		%	The options can be set manually using the set_option()
-		%	method, or they can be included in 'p' when
-		%	instantiating the class. This variable includes:
+		%	method, or they can be passed as a KFEOptions object
+		%	to the constructor.
 		%
-		%		deltaKFE > 0
+		%		delta > 0
 		%		- Step size for the iterative method. Default = 1e5.
 		%
-		%		KFE_maxiter > 1
+		%		maxiters > 1
 		%		- Max number of iterations for the iterative method.
 		%		  Default = 1e4.
 		%
-		%		KFE_tol > 0
+		%		tol > 0
 		%		- Convergence tolerance for the iterative method.
 		%		  Default = 1e-8.
 		%
-		%		iterateKFE
+		%		iterate
 		%		- Boolean, the solver uses the iterative method if
 		%		  iterateKFE is true. Default = true.
 		%
-		%		intermediateCheck
-		%		- Boolean, if intermediateCheck evaluates to true,
+		%		intermediate_check
+		%		- Boolean, if intermediate_check evaluates to true,
 		%		  the solver will check the norm of the error. If
 		%		  it is large, an exception is thrown.
 		%		  Default = True.
@@ -72,11 +72,20 @@ classdef KFESolver
 	end
 
 	methods
-		function obj = KFESolver(p, income, grdKFE)
+		function obj = KFESolver(p, income, grdKFE, options)
 			% Class constructor. If p is not a Params object
 			% or income is not an Income object, see the help
 			% documentation for the requirements these variables
 			% must satisfy.
+			%
+			% The optional argument 'options' must be a KFEOptions
+			% object. If this argument is not passed, the default
+			% options will be used. See KFEOptions for more details.
+			% Note that if 'p' has a KFEOptions object as an
+			% attribute named 'kfe_options', that object will
+			% will be used to set the options. Passing options
+			% to the last argument of this constructor will
+			% override this, however.
 			
 			obj.p = p;
 			obj.income = income;
@@ -90,7 +99,22 @@ classdef KFESolver
 			required_income_vars = {'ny', 'ytrans', 'ydist'};
 			aux.check_for_required_properties(income, required_income_vars);
 
-			obj.options = obj.parse_input(aux.to_structure(p));
+			options_passed_in_p = false;
+			if isprop(p, 'kfe_options')
+				if isa(p.kfe_options, 'KFEOptions')
+					options_passed_in_p = true;
+				end
+			end
+
+			if exist('options')
+				assert(isa(options, KFEOptions),...
+					"options argument must be a KFEOptions object");
+				obj.options = options;
+			elseif options_passed_in_p
+				obj.options = p.kfe_options;
+			else
+				obj.options = solver.KFEOptions();
+			end
 		end
 
 		function g = solve(obj, A, g0)
@@ -112,7 +136,7 @@ classdef KFESolver
 			assert(numel(size_A) == 2, "KFESolver requires a square transition matrix")
 			assert(issparse(A), "KFESolver requires a sparse transition matrix")
 
-			if obj.options.iterateKFE
+			if obj.options.iterate
 				if ~exist('g0')
 					% g0 wasn't passed
 				    g0 = obj.guess_initial_distribution();
@@ -130,24 +154,13 @@ classdef KFESolver
 		function set_option(obj, keyword, value)
 			% Allows the user to manually set values in
 			% the 'options' structure.
-			if isprop(keyword)
-				obj.options.(keyword) = value;
+			if isprop(obj.options, keyword)
+				obj.options.set(keyword, value);
 			end
 		end
 	end
 
 	methods (Access=private)
-		function options = parse_input(obj, p)
-			parser = inputParser;
-			parser.KeepUnmatched = true;
-			addParameter(parser, 'deltaKFE', 1e5);
-			addParameter(parser, 'KFE_tol', 1e-8);
-			addParameter(parser, 'KFE_maxiter', 1e4);
-			addParameter(parser, 'iterateKFE', true);
-			addParameter(parser, 'intermediateCheck', true);
-			parse(parser, p);
-			options = parser.Results;
-		end
 
 		function g0 = guess_initial_distribution(obj)
 			g0 = ones(obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny);
@@ -187,7 +200,7 @@ classdef KFESolver
 			dst = 1e5;
 			fprintf('    --- Iterating over KFE ---\n')
             g = g0(:);
-			while (iter <= obj.options.KFE_maxiter) && (dst > obj.options.KFE_tol)
+			while (iter <= obj.options.maxiters) && (dst > obj.options.tol)
 				iter = iter + 1;
 
 			    gg_tilde = obj.grdKFE.trapezoidal.diagm * g(:);
@@ -197,7 +210,7 @@ classdef KFESolver
 			            .* reshape(gg_tilde, states_per_income, obj.income.ny),2);
 			    	death_inflows = obj.compute_death_inflows(gg_tilde, iy);
 		            g1(:,iy) = KFE_LHS{iy}*(gg_tilde(1+(iy-1)*states_per_income:iy*states_per_income)...
-		                		+ obj.options.deltaKFE*gk_sum + obj.options.deltaKFE*death_inflows);
+		                		+ obj.options.delta*gk_sum + obj.options.delta*death_inflows);
 		        end
 
 			    g1 = g1(:) ./ sum(g1(:));
@@ -205,7 +218,7 @@ classdef KFESolver
 
 		        dst = max(abs(g1(:) - g(:)));
 
-		        if obj.options.intermediateCheck
+		        if obj.options.intermediate_check
 		        	check_if_not_converging(dst, iter);
 		        end
 		        
@@ -231,8 +244,8 @@ classdef KFESolver
 				i1 = 1 + (k-1) * states_per_income;
 				i2 = k * states_per_income;
 
-				LHS{k} = (speye(states_per_income) - obj.options.deltaKFE * A(i1:i2, i1:i2)'...
-			   		- obj.options.deltaKFE * (obj.income.ytrans(k,k) - obj.p.deathrate) * speye(states_per_income));
+				LHS{k} = (speye(states_per_income) - obj.options.delta * A(i1:i2, i1:i2)'...
+			   		- obj.options.delta * (obj.income.ytrans(k,k) - obj.p.deathrate) * speye(states_per_income));
 				LHS{k} = inverse(LHS{k});
 			end
 		end
@@ -252,9 +265,9 @@ classdef KFESolver
 	    end
 
 	    function check_if_converged(obj, dst, iter)
-	    	if dst < obj.options.KFE_tol
+	    	if dst < obj.options.tol
 			    fprintf('\tKFE converged after %i iterations\n', iter);
-			elseif dst >= obj.options.KFE_tol
+			elseif dst >= obj.options.tol
 				error('KFE did not converge')
 			end
 		end

@@ -3,17 +3,28 @@ classdef A_Matrix_Constructor < handle
     % First, instantiate the class with the required arguments,
     % then call the construct method with the policy functions
     % and value function as arguments.
+
     properties (SetAccess = protected)
-        % grid sizes
-        nb;
-        na;
-        nz;
-        ny;
-        dim;
-       
-        % grids and parameters
+    	% A Grid object.
         grids;
+
         p;
+
+        % Number of points in the liquid asset grid.
+        nb;
+
+        % Number of points in the illiquid asset grid.
+        na;
+
+        % Number of states for the extra dimension of
+        % heterogeneity.
+        nz;
+
+        % Number of points on the income grid.
+        ny;
+
+        % Total number of states.
+        dim;
 
         % returns risk is on or off
         returns_risk;

@@ -17,12 +17,11 @@ function [stats,p] = main(runopts, p)
     %% --------------------------------------------------------------------
     % CREATE GRID, INCOME OBJECTS
     % ---------------------------------------------------------------------
-	dimsHJB = [p.nb p.na p.nz];
-	dimsKFE = [p.nb_KFE p.na_KFE p.nz];
-	income = setup.Income(runopts.direc,p,dimsHJB,dimsKFE,false);
-    income_norisk = setup.Income(runopts.direc,p,dimsHJB,dimsKFE,true);
+	income_path = fullfile(runopts.direc, 'input', p.income_dir);
+	income = setup.Income(income_path, p,false);
+    income_norisk = setup.Income(runopts.direc, p, true);
 
-    p.set("ny", income.ny);
+    p.set("ny", income.ny, true);
 
 	grd = setup.Grid(p,income.ny,'HJB').auto_construct(); % grid for HJB
     grd_norisk = setup.Grid(p,1,'HJB').auto_construct();
@@ -45,12 +44,12 @@ function [stats,p] = main(runopts, p)
     end
     
     runopts.RunMode = 'Final';
-	[HJB, KFE, Au] = solver.solver(runopts,p,income,grd,grdKFE);
+	[HJB, KFE, Au] = solver.solver(runopts, p, income, grd, grdKFE);
 
     if p.NoRisk == 1
         runopts.RunMode = 'NoRisk';
-        [HJB_nr, KFE_nr, Au_nr] = solver.solver(runopts,p,income_norisk,...
-                                            grd_norisk,grdKFE_norisk);
+        [HJB_nr, KFE_nr, Au_nr] = solver.solver(runopts, p, income_norisk,...
+                                            grd_norisk, grdKFE_norisk);
     end
 
     %% ----------------------------------------------------------------
