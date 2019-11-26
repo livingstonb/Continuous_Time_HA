@@ -1,7 +1,7 @@
 function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	% Solve for the steady state via the HJB and KFE equations, then
 	% compute some relevant statistics.
-
+	%
 	% Parameters
 	% ----------
 	% runopts : a structure of boolean variables indicating various
@@ -25,6 +25,10 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	%
 	% Au : the transition matrix for the KFE, shape
 	%	(nb_KFE*na_KFE*nz*ny, nb_KFE*na_KFE*nz*ny)
+
+	import HACT_Tools.solvers.HJBSolver
+    import HACT_Tools.solvers.HJBSolverSDU
+	import HACT_Tools.solvers.KFESolver
 
     % keep track of number of mean asset iterations
 	persistent iterAY
@@ -61,7 +65,11 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
     returns_risk = (p.sigma_r > 0);
     A_Constructor = solver.A_Matrix_Constructor(p, income, grd, 'HJB', returns_risk);
 
-    hjb_solver = solver.HJBSolver(p, income, p.hjb_options);
+    if p.SDU
+        hjb_solver = HJBSolverSDU(p, income, p.hjb_options);
+    else
+        hjb_solver = HJBSolver(p, income, p.hjb_options);
+    end
 
     fprintf('    --- Iterating over HJB ---\n')
     dst = 1e5;
@@ -75,7 +83,7 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
     		p, grd, V_deriv_risky_asset_nodrift, stationary, Vn);
         
 		% update value function
-		Vn1 = hjb_solver.solve_implicit_explicit(A, HJB.u, Vn, risk_adj);
+		Vn1 = hjb_solver.solve(A, HJB.u, Vn, risk_adj);
 
 	    % check for convergence
 	    Vdiff = Vn1 - Vn;
@@ -110,7 +118,7 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
     A_Constructor_KFE = solver.A_Matrix_Constructor(p, income, grdKFE, 'KFE', returns_risk);
     Au = A_Constructor_KFE.construct(KFE, KFE.Vn);
     
-    kfe_solver = solver.KFESolver(p, income, grdKFE, p.kfe_options);
+    kfe_solver = KFESolver(p, income, grdKFE, p.kfe_options);
     KFE.g = kfe_solver.solve(Au);
     
 	%% --------------------------------------------------------------------

@@ -56,8 +56,8 @@ classdef A_Matrix_Constructor < handle
         % CLASS CONSTRUCTOR
         % ---------------------------------------------------------------------
         function obj = A_Matrix_Constructor(p, income, grids, modeltype, returns_risk)
-            % instantiate the constructor
-
+            % Class constructor.
+            %
             % Parameters
             % ----------
             % p : a Params object which contains the parameters of the model
@@ -70,11 +70,7 @@ classdef A_Matrix_Constructor < handle
             %   to be used
             %
             % returns_risk : a flag that determines whether returns risk is to
-            %   be included in the A matrix
-            %
-            % Returns
-            % -------
-            % an A_Matrix_Constructor object
+            %   be included in the A matrix.
 
             obj.nb = numel(grids.b.vec);
             obj.na = numel(grids.a.vec);

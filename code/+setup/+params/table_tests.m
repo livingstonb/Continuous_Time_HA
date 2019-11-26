@@ -13,7 +13,7 @@ function outparams = table_tests(runopts)
     for ra = ras
         params(ii).name = sprintf('contB, fixed_adj_costs, r_a=%f',ra); 
         params(ii).OneAsset = 0;
-        params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+        params(ii).income_dir = 'continuous_b';
         params(ii).chi0 = 0;
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
@@ -30,7 +30,7 @@ function outparams = table_tests(runopts)
     for chi1 = [0.1,0.4]
         params(ii).name = sprintf('chi1=%f',chi1);
         params(ii).OneAsset = 0;
-        params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+        params(ii).income_dir = 'continuous_b';
         params(ii).chi0 = 0;
         params(ii).chi1 = chi1;
         params(ii).chi2 = 0.25;
@@ -44,7 +44,7 @@ function outparams = table_tests(runopts)
     for chi2 = [0.1,0.15,0.5,1]
         params(ii).name = sprintf('chi2=%f',chi2);
         params(ii).OneAsset = 0;
-        params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+        params(ii).income_dir = 'continuous_b';
         params(ii).chi0 = 0;
         params(ii).chi1 = 0.15;
         params(ii).chi2 = chi2;
@@ -66,7 +66,7 @@ function outparams = table_tests(runopts)
     for ra = ras_quarterly
         params(ii).name = sprintf('annual r_a=%f',(1+ra)^4-1);
         params(ii).OneAsset = 0;
-        params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+        params(ii).income_dir = 'continuous_b';
         params(ii).chi0 = 0;
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
@@ -85,7 +85,7 @@ function outparams = table_tests(runopts)
     for rb = rbs_quarterly
         params(ii).name = sprintf('annual r_b=%f',(1+rb)^4-1);
         params(ii).OneAsset = 0;
-        params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+        params(ii).income_dir = 'continuous_b';
         params(ii).chi0 = 0;
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
@@ -103,7 +103,7 @@ function outparams = table_tests(runopts)
     for ra = ras
         params(ii).name = 'cont_a, recalibrated'; 
         params(ii).OneAsset = 0;
-        params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_a';
+        params(ii).income_dir = 'continuous_a';
         params(ii).chi0 = 0;
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
@@ -118,7 +118,7 @@ function outparams = table_tests(runopts)
     ii = 401;
     params(ii).name = sprintf('conta, no recalibration'); 
     params(ii).OneAsset = 0;
-    params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_a';
+    params(ii).income_dir = 'continuous_a';
     params(ii).chi0 = 0;
     params(ii).chi1 = 0.15;
     params(ii).chi2 = 0.25;
@@ -133,7 +133,7 @@ function outparams = table_tests(runopts)
     for riskaver = [0.5,2,4,6]
         params(ii).name = sprintf('risk aversion = %f',riskaver); 
         params(ii).OneAsset = 0;
-        params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+        params(ii).income_dir = 'continuous_b';
         params(ii).chi0 = 0;
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
@@ -147,11 +147,11 @@ function outparams = table_tests(runopts)
         elseif riskaver == 2
             params(ii).rhoL = 0.017;
         elseif riskaver == 4
-            params(ii).delta_KFE = 0.2;
-            params(ii).maxit_KFE = 25000;
+            params(ii).KFE_delta = 0.2;
+            params(ii).KFE_maxiters = 25000;
             params(ii).rhoL = 0.024;
         elseif riskaver == 6
-            params(ii).delta_KFE = 0.01;
+            params(ii).KFE_delta = 0.01;
             params(ii).rhoL = 0.04;
         end
         ii = ii + 1;
@@ -163,7 +163,7 @@ function outparams = table_tests(runopts)
     for w = [0.001,0.005]
         params(ii).name = sprintf('rho het, width = %f',w); 
         params(ii).OneAsset = 0;
-        params(ii).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+        params(ii).income_dir = 'continuous_b';
         params(ii).chi0 = 0;
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;

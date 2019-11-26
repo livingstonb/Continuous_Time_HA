@@ -1,6 +1,6 @@
 classdef Calibrator
-	% class used in coordination with fsolve to calibrate the model
-	% to one or more targets
+	% Class used in coordination with fsolve to
+	% calibrate the model to one or more targets
 
 	properties (SetAccess = protected)
 	% objective function for fsolve

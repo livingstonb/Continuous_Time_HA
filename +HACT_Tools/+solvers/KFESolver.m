@@ -65,9 +65,7 @@ classdef KFESolver
 			% object. If this argument is not passed, the default
 			% options will be used. See KFEOptions for more details.
 
-% 			arguments
-% 				p {@(x) aux.check_for_required_properties(x, obj.required_parameters)}
-% 			end
+			import HACT_Tools.options.KFEOptions
 			
 			obj.p = p;
 			obj.income = income;
@@ -82,11 +80,11 @@ classdef KFESolver
 			check_grid(grdKFE);
 
 			if exist('options', 'var')
-				assert(isa(options, 'solver.KFEOptions'),...
+				assert(isa(options, 'KFEOptions'),...
 					"options argument must be a KFEOptions object");
 				obj.options = options;
 			else
-				obj.options = solver.KFEOptions();
+				obj.options = KFEOptions();
 			end
 		end
 
@@ -130,7 +128,7 @@ classdef KFESolver
 		end
 	end
 
-	methods (Access=private)
+	methods (Access=protected)
 		function g0 = guess_initial_distribution(obj)
 			g0 = ones(obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny);
 		    g0 = g0 .* permute(repmat(obj.income.ydist(:),...
@@ -265,7 +263,8 @@ end
 function check_A(A)
 	size_A = size(A);
 	assert(issparse(A), "KFESolver requires a sparse transition matrix")
-	assert(size_A(1) == size_A(2), "KFESolver requires a square transition matrix")			
+	assert(ismatrix(A), "KFESolver requires a square transition matrix")	
+	assert(size_A(1) == size_A(2), "KFESolver requires a square transition matrix")	
 end
 
 function check_if_not_converging(dst, iter)

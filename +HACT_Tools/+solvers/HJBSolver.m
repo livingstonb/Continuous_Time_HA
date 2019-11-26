@@ -58,6 +58,9 @@ classdef HJBSolver
 		% Number of states per income level.
 		states_per_income;
 
+		% Number of states along each dim, a vector.
+		shape;
+
 		% Sparse matrix of discount factors.
 		rho_mat;
         
@@ -74,6 +77,8 @@ classdef HJBSolver
 			% documentation to see the requirements of the
 			% input parameters.
 
+			import HACT_Tools.options.HJBOptions
+
 			% ---------------------------------------------------------
 			% Validate Input Arguments and Set Options
 			% ---------------------------------------------------------
@@ -84,22 +89,43 @@ classdef HJBSolver
 			obj.income = income;
 
 			if exist('options', 'var')
-				assert(isa(options, 'solver.HJBOptions'),...
+				assert(isa(options, 'HJBOptions'),...
 					"options argument must be a HJBOptions object");
 				obj.options = options;
 			else
-				obj.options = solver.HJBOptions();
+				obj.options = HJBOptions();
 			end
 
 			obj.n_states = p.nb * p.na * p.nz * income.ny;
 			obj.states_per_income = p.nb * p.na * p.nz;
+			obj.shape = [p.nb p.na p.nz income.ny];
+
+			assert(~p.SDU,...
+					[	"Model uses stochastic differential utility, ",...
+						"the SDU subclass must be used instead"])
 
 			% ---------------------------------------------------------
 			% Discount Factor Matrix
 			% ---------------------------------------------------------
 			obj.create_rho_matrix();
 		end
+	end
 
+	methods
+		function V_update = solve(obj, A, u, V, varargin)
+			% Updates the value function.
+
+			obj.check_inputs(A, u, V);
+
+			if obj.options.implicit
+				V_update = obj.solve_implicit(A, u, V, varargin{:});
+			else
+				V_update = obj.solve_implicit_explicit(A, u, V, varargin{:});
+			end
+		end
+	end
+
+	methods (Access=protected)
 		function create_rho_matrix(obj)
 			if obj.options.implicit
 				% discount factor values
@@ -119,7 +145,24 @@ classdef HJBSolver
 	    	end
 		end
 
-		function Vn1 = solve_implicit(obj, A, u, V, risk_adj)
+		function check_inputs(obj, A, u, V)
+			import HACT_Tools.validation.*
+
+			assert_square_sparse(A, obj.n_states);
+			assert_same_shape(u, V);
+			assert_correct_shape(V, obj.shape);
+		end
+
+		function check_if_SDU(obj)
+			assert(~obj.p.SDU,...
+				[	"Model uses stochastic differential utility, "...
+					"the appropriate subclass should be used"])
+		end
+
+		%%--------------------------------------------------------------
+	    % Implicit Updating
+	    % --------------------------------------------------------------
+		function Vn1 = solve_implicit(obj, A, u, V, varargin)
 			assert(obj.p.deathrate == 0, "Fully implicit assumes no death.")
 
 	        % add income transitions
@@ -129,54 +172,35 @@ classdef HJBSolver
 	        	B = A + kron(obj.income.ytrans, speye(obj.states_per_income));
 	        end
 
-	        if isempty(risk_adj)
-	            RHS = obj.options.delta * u(:) + Vn(:);
-	        else
-	            RHS = obj.options.delta * (u(:) + risk_adj(:)) + Vn(:);
-	        end
+	        % The user may want to overload the method called here.
+	        obj.get_RHS_implicit(u, V, varargin{:});
 	        
 	        B = (rho_mat - B) * obj.options.delta + speye(obj.n_states);
 	        Vn1 = B \ RHS;
 	        Vn1 = reshape(Vn1, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
 
-		function Vn1 = solve_implicit_explicit(obj, A, u, V, risk_adj)
+		function RHS = get_RHS_implicit(obj, u, V, varargin)
+			% Computes the right-hand-side of the implicit updating
+			% equation. If using stochastic differential utility,
+			% HJBSolverSDU should be used, which overloads this method.
+
+			RHS = obj.options.delta * u(:) + Vn(:);
+		end
+
+		%%--------------------------------------------------------------
+	    % Implicit-Explicit Updating
+	    % --------------------------------------------------------------
+		function Vn1 = solve_implicit_explicit(obj, A, u, V, varargin)
 			obj.current_iteration = obj.current_iteration + 1;
 
 			u_k = reshape(u, [], obj.income.ny);
-            risk_adj_k = reshape(risk_adj, [], obj.income.ny);
 
 	        Vn1_k = zeros(obj.states_per_income, obj.income.ny);
 	        Vn_k = reshape(V, [], obj.income.ny);
 	        Bik_all = cell(obj.income.ny, 1);
 
-	        if obj.p.SDU
-	        	ez_adj = obj.income.income_transitions_SDU(obj.p, V);
-	        else
-	        	ez_adj = [];
-	        end
-
-	        % loop over income states
-	        for kk = 1:obj.income.ny
-	            Bk = obj.construct_Bk(kk, A, ez_adj);
-	            
-	            Bik_all{kk} = inverse(Bk);
-	            indx_k = ~ismember(1:obj.income.ny,kk);
-
-	            if obj.p.SDU == 1
-	                Vkp_stacked = sum(squeeze(ez_adj(:, kk, indx_k)) .* Vn_k(:, indx_k), 2);
-	            else
-	                Vkp_stacked = sum(repmat(obj.income.ytrans(kk,indx_k),obj.states_per_income,1)...
-	                	.* Vn_k(:,indx_k), 2);
-	            end
-
-	            qk = obj.options.delta * u_k(:,kk) + Vn_k(:,kk) + obj.options.delta * Vkp_stacked;
-	            if ~isempty(risk_adj)
-	                qk = qk + obj.options.delta * risk_adj_k(:,kk);
-	            end
-	            
-	            Vn1_k(:,kk) = Bik_all{kk} * qk;
-	        end
+	        Vn1_k, Bk_inv = obj.loop_over_income_implicit_explicit(Vn_k, A, u, varargin{:});
 
 	        % Howard improvement step
 	        if (obj.current_iteration >= obj.options.HIS_start) && (~obj.p.SDU)
@@ -184,9 +208,30 @@ classdef HJBSolver
 	        end
 	        Vn1 = reshape(Vn1_k, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
-	end
 
-	methods (Access=private)
+		function [Vn1_k, Bk_inv] = loop_over_income_implicit_explicit(obj, Vn_k, A, u, varargin)
+			narginchk(4, 4);
+        	u_k = reshape(u, obj.income.ny);
+
+        	Vn1_k = zeros(obj.states_per_income, obj.income.ny);
+        	Bk_inv = cell(1, obj.income.ny);
+        	for k = 1:obj.income.ny
+        		Bk = obj.construct_Bk(k, A, ez_adj);
+            	Bk_inv{k} = inverse(Bk);
+
+            	indx_k = ~ismember(1:obj.income.ny, k);
+
+	            offdiag_inc_term = sum(...
+	            	repmat(obj.income.ytrans(k,indx_k), obj.states_per_income,1)...
+	                .* Vn_k(:,indx_k), 2);
+
+	            RHSk = obj.options.delta * u_k(:,k)...
+	            	+ Vn_k(:,k) + obj.options.delta * offdiag_inc_term;
+	            
+	            Vn1_k(:,k) = Bk_inv{k} * qk;
+        	end
+	    end
+
 		function Bk = construct_Bk(obj, k, A, ez_adj)
 		    % For the k-th income state, constructs the matrix
 		    % Bk = (rho + deathrate - A)*delta + I, which serves

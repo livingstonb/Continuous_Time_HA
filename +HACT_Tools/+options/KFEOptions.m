@@ -18,23 +18,28 @@ classdef KFEOptions
 	properties (SetAccess=private)
 		% True if using iterative procedure, false
 		% otherwise.
-		iterative (1,1) logical = solver.KFEOptions.default_iterative;
+
+		iterative (1,1) logical...
+			= HACT_Tools.options.KFEOptions.default_iterative;
 
 		% Step size for the iterative procedure.
-		delta (1,1) double {mustBePositive} = solver.KFEOptions.default_delta;
+		delta (1,1) double {mustBePositive}...
+			= HACT_Tools.options.KFEOptions.default_delta;
 
 		% Convergence tolerance for the iterative
 		% procedure.
-		tol (1,1) double {mustBePositive} = solver.KFEOptions.default_tol;
+		tol (1,1) double {mustBePositive}...
+			= HACT_Tools.options.KFEOptions.default_tol;
 
 		% Maximum number of iterations for the
 		% iterative procedure.
-		maxiters (1,1) double {mustBePositive} = solver.KFEOptions.default_maxiters;
+		maxiters (1,1) double {mustBePositive}...
+			= HACT_Tools.options.KFEOptions.default_maxiters;
 
 		% If true, performs a check after a number
 		% of iterations. If convergence looks unlikely,
 		% an error is thrown.
-		intermediate_check (1,1) logical = solver.KFEOptions.default_intermediate_check;
+		intermediate_check (1,1) logical = HACT_Tools.options.KFEOptions.default_intermediate_check;
 	end
 	methods
 		function obj = KFEOptions(varargin)

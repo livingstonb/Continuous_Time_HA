@@ -1,10 +1,10 @@
-function interpolant = interpolate_integral(grid_values, integrand_values, pmf)
+function interpolant = create_integral_interpolant(grid_values, integrand_values, pmf)
 	% Creates an interpolant that approximates the value of the integral
 	% int_0^{epsilon} values(a)g(a)da for a given epsilon.
 	%
 	% Parameters
 	% ----------
-	% gridValues : Values at which the integrand is evaluated.
+	% grid_values : Values at which the integrand is evaluated.
 	%
 	% integrand_values : Values of the integrand.
 	%
@@ -32,5 +32,10 @@ function interpolant = interpolate_integral(grid_values, integrand_values, pmf)
 end
 
 function validate_inputs(grid_values, integrand_values, pmf)
-	
+	assert(numel(grid_values(:)) == numel(integrand_values(:)),...
+		"Inputs have inconsistent shapes");
+	assert(numel(grid_values(:)) == numel(pmf(:)),...
+		"Inputs have inconsistent shapes");
+	assert(~(isempty(grid_values) || isempty(integrand_values) || isempty(pmf)),...
+		"One or more imputs is empty");
 end

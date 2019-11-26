@@ -1,15 +1,16 @@
 function gini = direct_gini(level, distr)
 	% computes the approximate Gini index
-
+	
 	% Parameters
 	% ----------
-	% level : levels of the desired variable (e.g. wealth)
+	%	level : levels of the desired variable
+	%		    (e.g. wealth)
 	%
-	% distr : probability mass associated with levels
+	%	distr : probability mass associated with levels
 	%
 	% Returns
 	% -------
-	% gini : the Gini index, a scalar
+	%	gini : the Gini index, a scalar
 
     % sort distribution and levels by levels
     sort1 = sortrows([level(:),distr(:)]);
