@@ -18,10 +18,6 @@ classdef (Abstract) HJBBase < handle
 		%		  If there is no rho heterogeneity, set rhos = [].
 		%
 		%		deathrate > 0
-		%
-		%		SDU
-		%		- A boolean indicator, true if using stochastic
-		%		  differential utility and false otherwise.
 		p;
 
 		%	An object with the following required attributes:
