@@ -317,17 +317,17 @@ classdef TransitionMatrixConstructor < handle
                 upper = [0; upper(1:end-1)];
                 lower = lower(:);
                 lower = [lower(2:end); 0];
-                A = spdiags(upper(:), 1, obj.n_states, obj.n_states) ...
-                    + spdiags(middle(:), 0, obj.n_states, obj.n_states) ...
-                    + spdiags(lower(:), -1, obj.n_states, obj.n_states);
+                diags = [lower, middle(:), upper];
+                inds = [-1, 0, 1];
+                A = spdiags(diags, inds, obj.n_states, obj.n_states);
             elseif shift_dim == 2
                 upper = upper(:);
                 upper = [zeros(obj.nb, 1); upper(1:end-obj.nb)];
                 lower = lower(:);
                 lower = [lower(obj.nb+1:end); zeros(obj.nb, 1)];
-                A = spdiags(upper(:), obj.nb, obj.n_states, obj.n_states) ...
-                    + spdiags(middle(:), 0, obj.n_states, obj.n_states) ...
-                    + spdiags(lower(:), -obj.nb, obj.n_states, obj.n_states);                
+                diags = [lower, middle(:), upper];
+                inds = [-obj.nb, 0, obj.nb];
+                A = spdiags(diags, inds, obj.n_states, obj.n_states);                
             end
         end
     end

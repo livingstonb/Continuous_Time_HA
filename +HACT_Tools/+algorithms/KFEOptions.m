@@ -1,60 +1,49 @@
-classdef KFEOptions
+classdef KFEOptions < handle
 	% Class used for declaring the options passed to KFESolver.
 
 	properties (Constant)
-		% Property defaults
-
-		default_iterative (1,1) logical = true;
-
-		default_tol (1,1) double {mustBePositive} = 1e-8;
-
-		default_delta (1,1) double {mustBePositive} = 1e5;
-
-		default_maxiters (1,1) double {mustBePositive} = 1e4;
-
-		default_intermediate_check (1,1) logical = true;
+		% Default values
+		defaults = struct(...
+						'iterative', true,...
+						'tol', 1e-8,...
+						'delta', 1e5,...
+						'maxiters', 1e4,...
+						'intermediate_check', true...
+					);
 	end
 
 	properties (SetAccess=private)
 		% True if using iterative procedure, false
 		% otherwise.
-
-		iterative (1,1) logical...
-			= HACT_Tools.algorithms.KFEOptions.default_iterative;
+		iterative (1,1) logical = obj.defaults.iterative;
 
 		% Step size for the iterative procedure.
-		delta (1,1) double {mustBePositive}...
-			= HACT_Tools.algorithms.KFEOptions.default_delta;
+		delta (1,1) double {mustBePositive} = obj.defaults.delta;
 
 		% Convergence tolerance for the iterative
 		% procedure.
-		tol (1,1) double {mustBePositive}...
-			= HACT_Tools.algorithms.KFEOptions.default_tol;
+		tol (1,1) double {mustBePositive} = obj.defaults.tol;
 
 		% Maximum number of iterations for the
 		% iterative procedure.
-		maxiters (1,1) double {mustBePositive}...
-			= HACT_Tools.algorithms.KFEOptions.default_maxiters;
+		maxiters (1,1) double {mustBePositive} = obj.defaults.tol;
 
 		% If true, performs a check after a number
 		% of iterations. If convergence looks unlikely,
 		% an error is thrown.
-		intermediate_check (1,1) logical = HACT_Tools.algorithms.KFEOptions.default_intermediate_check;
+		intermediate_check (1,1) logical = obj.defaults.intermediate_check;
 	end
 	methods
 		function obj = KFEOptions(varargin)
+			% Creates an HJBOptions object via kew
+			options = HACT_Tools.aux.parse_keyvalue_pairs(...
+				obj.defaults, varargin{:});
+			obj.set_from_struct(options);
+		end
 
-			parser = inputParser;
-			addParameter(parser, 'delta', obj.default_delta);
-			addParameter(parser, 'tol', obj.default_tol);
-			addParameter(parser, 'maxiters', obj.default_maxiters);
-			addParameter(parser, 'iterative', obj.default_iterative);
-			addParameter(parser, 'intermediate_check', obj.default_intermediate_check);
-
-			parse(parser, varargin{:});
-
-			for name = fieldnames(parser.Results)'
-				obj.(name{:}) = parser.Results.(name{:});
+		function set_from_struct(options)
+			for name = fieldnames(options)'
+				obj.(name{1}) = options.(name{1});
 			end
 		end
 	end
