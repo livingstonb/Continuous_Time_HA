@@ -10,17 +10,10 @@ classdef Params < HACTLib.model_objects.ParamsBase
 
         	import HACTLib.computation.HJBOptions
         	import HACTLib.computation.KFEOptions
-
+            
         	obj.set_from_structure(varargin{:});
-
-            % Check for other heterogeneity
-            if (numel(obj.rho_grid)>1) && (numel(obj.riskaver)>1)
-            	error('Cannot have both rho and riskaver heterogeneity')
-            else
-                obj.nz = max(numel(obj.rho_grid),numel(obj.riskaver));
-            end
-
-             obj.kfe_options = KFEOptions(...
+            
+            obj.kfe_options = KFEOptions(...
 				'maxiters', obj.KFE_maxiters,...
 				'tol', obj.KFE_tol,...
 				'delta', obj.KFE_delta,...
@@ -32,6 +25,13 @@ classdef Params < HACTLib.model_objects.ParamsBase
 				'HIS_maxiters', obj.HIS_maxiters,...
 				'HIS_tol', obj.HIS_tol,...
 				'HIS_start', obj.HIS_start);
+
+            % Check for other heterogeneity
+            if (numel(obj.rho_grid)>1) && (numel(obj.riskaver)>1)
+            	error('Cannot have both rho and riskaver heterogeneity')
+            else
+                obj.nz = max(numel(obj.rho_grid),numel(obj.riskaver));
+            end
             
             obj.param_index = runopts.param_index;
             obj.ComputeMPCS = runopts.ComputeMPCS;
@@ -101,16 +101,28 @@ classdef Params < HACTLib.model_objects.ParamsBase
 
     		defaults = ParamsBase();
     		fields = properties(ParamsBase);
+            struct_options = varargin{1};
 
     		for k = 1:numel(fields)
     			field = fields{k};
-    			addParameter(parser, field, defaults.(field));
-    		end
-    		parse(parser, varargin{:});
+                if ~ismember(field, {'hjb_options', 'kfe_options'})
+                    addParameter(parser, field, defaults.(field));
+                end
+                
+                if isfield(struct_options, field)
+                    if ~isempty(struct_options.(field))
+                        cleaned.(field) = struct_options.(field);
+                    end
+                end
+            end
+            
+    		parse(parser, cleaned);
 
     		for k = 1:numel(fields)
     			field = fields{k};
-    			obj.(field) = parser.Results.(field);
+                if ~ismember(field, {'hjb_options', 'kfe_options'})
+                    obj.(field) = parser.Results.(field);
+                end
     		end
     	end
         

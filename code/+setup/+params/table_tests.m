@@ -18,7 +18,6 @@ function outparams = table_tests(runopts)
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.005;
         params(ii).rho = 0.015440584992491;
         params(ii).r_a = ra;
         
@@ -35,7 +34,6 @@ function outparams = table_tests(runopts)
         params(ii).chi1 = chi1;
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.005;
         params(ii).r_a = raBASELINE;
         
         ii = ii + 1;
@@ -49,7 +47,6 @@ function outparams = table_tests(runopts)
         params(ii).chi1 = 0.15;
         params(ii).chi2 = chi2;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.005;
         params(ii).r_a = raBASELINE;
         
         ii = ii + 1;
@@ -71,7 +68,6 @@ function outparams = table_tests(runopts)
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.005;
         params(ii).r_a = ra;
         
         ii = ii + 1;
@@ -90,7 +86,6 @@ function outparams = table_tests(runopts)
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.005;
         params(ii).r_b = rb;
         params(ii).r_a = 0.0190643216;
         
@@ -108,7 +103,6 @@ function outparams = table_tests(runopts)
         params(ii).chi1 = 0.15;
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
-        params(ii).rhoL = 0.008;
         params(ii).r_a = ra;
         
         ii = ii + 1;
@@ -123,7 +117,6 @@ function outparams = table_tests(runopts)
     params(ii).chi1 = 0.15;
     params(ii).chi2 = 0.25;
     params(ii).a_lb = 0.25;
-    params(ii).rhoL = 0.008;
     params(ii).r_a = 0.01906432159025;
     params(ii).rho = 0.015440584980253;
 
@@ -142,17 +135,11 @@ function outparams = table_tests(runopts)
         params(ii).r_a = raBASELINE;
         params(ii).riskaver = riskaver;
         
-        if riskaver == 0.5
-            params(ii).rhoL = 0.01;
-        elseif riskaver == 2
-            params(ii).rhoL = 0.017;
-        elseif riskaver == 4
+        if riskaver == 4
             params(ii).KFE_delta = 0.2;
             params(ii).KFE_maxiters = 25000;
-            params(ii).rhoL = 0.024;
         elseif riskaver == 6
             params(ii).KFE_delta = 0.01;
-            params(ii).rhoL = 0.04;
         end
         ii = ii + 1;
     end
@@ -169,7 +156,6 @@ function outparams = table_tests(runopts)
         params(ii).chi2 = 0.25;
         params(ii).a_lb = 0.25;
         params(ii).rho = 0.005;
-        params(ii).rhoL = 0.008;
         params(ii).r_a = raBASELINE;
         params(ii).rho_grid = [-w,0,w];
         ii = ii + 1;

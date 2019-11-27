@@ -74,24 +74,24 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
 	sspace_shape = [nb, na, nz, ny];
 
     % Derivatives illiquid assets
-    [VaB, VaF] = fd_firstorder(Vn, grd.a.dB, grd.a.dF, 2);
-    VaB(:,2:na,:,:) = max(VaB(:,2:na,:,:), Vamin);
-    VaF(:,1:na-1,:,:) = max(VaF(:,1:na-1,:,:), Vamin);
+    Va = fd_firstorder(Vn, grd.a.dB, grd.a.dF, 2);
+    Va.B(:,2:na,:,:) = max(Va.B(:,2:na,:,:), Vamin);
+    Va.F(:,1:na-1,:,:) = max(Va.F(:,1:na-1,:,:), Vamin);
 
     % Derivatives liquid assets
-    [VbB, VbF] = fd_firstorder(Vn, grd.b.dB, grd.b.dF, 1);
-    VbB(2:nb,:,:,:) = max(VbB(2:nb,:,:,:), Vbmin);
-    VbF(1:nb-1,:,:,:) = max(VbF(1:nb-1,:,:,:), Vbmin);
+    Vb = fd_firstorder(Vn, grd.b.dB, grd.b.dF, 1);
+    Vb.B(2:nb,:,:,:) = max(Vb.B(2:nb,:,:,:), Vbmin);
+    Vb.F(1:nb-1,:,:,:) = max(Vb.F(1:nb-1,:,:,:), Vbmin);
 
     % consumption and savings from forward-differenced V
-    cF = utility1inv(VbF);
+    cF = utility1inv(Vb.F);
     cF(nb,:,:,:) = 0;
 
     % hours worked from forward-difference
     if p.endogenousLabor == 0
         partial_drift = bdrift_without_c;
     else
-        hoursF = labordisutil1inv(y_mat .* VbF);
+        hoursF = labordisutil1inv(y_mat .* Vb.F);
         hoursF = min(hoursF, 1);
 
         partial_drift = bdrift_without_c(hoursF);
@@ -100,7 +100,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     sF = partial_drift - cF;
     sF(nb,:,:,:) = 0; % impose a state constraint at the top to improve stability
 
-    HcF = utility(cF) + VbF .* sF;
+    HcF = utility(cF) + Vb.F .* sF;
     HcF(nb,:,:,:) = -1e12;
 
     if p.endogenousLabor == 1
@@ -116,17 +116,17 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
         partial_drift = bdrift_without_c;
     else
         partial_drift = bdrift_without_c(hoursB);
-        hoursB = labordisutil1inv(y_mat .* VbB);
+        hoursB = labordisutil1inv(y_mat .* Vb.B);
         hoursB = min(hoursB, 1);
     end
 
-    cB  = utility1inv(VbB);
+    cB  = utility1inv(Vb.B);
     cB(1,:,:,:) = partial_drift(1,:,:,:);
     
     sB = partial_drift - cB;
     sB(1,:,:,:) = 0;
 
-    HcB = utility(cB) + VbB .* sB;
+    HcB = utility(cB) + Vb.B .* sB;
 
     if p.endogenousLabor == 1
         HcB = HcB - labordisutil(hoursB);
@@ -159,27 +159,27 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
 	opt_d = @(x, y) aux.opt_deposits(x, y, grd.a.matrix, p);
 
     % Deposit decision
-    dFB = opt_d(VaF, VbB);
+    dFB = opt_d(Va.F, Vb.B);
     dFB(:,na,:,:) = 0;
     dFB(1,1:na-1,:,:) = 0;
-    HdFB = VaF .* dFB - VbB .* (dFB + adjcost(dFB));
+    HdFB = Va.F .* dFB - Vb.B .* (dFB + adjcost(dFB));
     HdFB(:,na,:,:) = -1.0e12;
     HdFB(1,1:na-1,:,:) = -1.0e12;
     validFB = (dFB > 0) & (HdFB > 0);
 
-    dBF = opt_d(VaB, VbF);
+    dBF = opt_d(Va.B, Vb.F);
     dBF(:,1,:,:) = 0;
     dBF(nb,2:na,:,:) = 0;
-    HdBF = VaB .* dBF - VbF .* (dBF + adjcost(dBF));
+    HdBF = Va.B .* dBF - Vb.F .* (dBF + adjcost(dBF));
     HdBF(:,1,:,:) = -1.0e12;
     HdBF(nb,2:na,:,:) = -1.0e12;
     validBF = (dBF <= - adjcost(dBF)) & (HdBF > 0);
 
-    VbB(1,2:na,:,:) = utility(cB(1,2:na,:,:));
+    Vb.B(1,2:na,:,:) = utility(cB(1,2:na,:,:));
 
-    dBB = opt_d(VaB, VbB);
+    dBB = opt_d(Va.B, Vb.B);
     dBB(:,1,:,:) = 0;
-    HdBB = VaB .* dBB - VbB .* (dBB + adjcost(dBB));
+    HdBB = Va.B .* dBB - Vb.B .* (dBB + adjcost(dBB));
     HdBB(:,1,:,:) = -1.0e12;
     validBB = (dBB > - adjcost(dBB)) & (dBB <= 0) & (HdBB > 0);
     
@@ -188,7 +188,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
             error("Special case not coded for SDU")
         end
         
-    	[H_special,c_special,d_special] = aux.deal_with_special_case(p,income,grd,r_b_mat,VaB);
+    	[H_special,c_special,d_special] = aux.deal_with_special_case(p,income,grd,r_b_mat,Va.B);
 
         Ic_special	= (H_special > HdFB | ~validFB) & (H_special > HdBF | ~validBF) ...
             & (H_special > HdBB | ~validBB) & (H_special > 0) & (d_special < 0)...
