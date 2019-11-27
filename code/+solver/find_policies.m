@@ -54,33 +54,11 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
         labordisutil1 = @(h) p.labor_disutility * (h .^ (1./p.frisch));
         labordisutil1inv = @(v) (v./p.labor_disutility) .^ p.frisch;
     end
-
-    %% --------------------------------------------------------------------
-	% INITIALIZATION
-	% ---------------------------------------------------------------------
-    VaF = zeros(nb,na,nz,ny);
-    VaB = zeros(nb,na,nz,ny);
-    VbF = zeros(nb,na,nz,ny);
-    VbB = zeros(nb,na,nz,ny);
     
-    cF = NaN(nb,na,nz,ny);
-    sF = NaN(nb,na,nz,ny);
-    HcF = NaN(nb,na,nz,ny,'single');
-
-    cB = NaN(nb,na,nz,ny);
-    sB = NaN(nb,na,nz,ny);
-
-    c0 = NaN(nb,na,nz,ny);
-    s0 = NaN(nb,na,nz,ny);
-
-    dFB = NaN(nb,na,nz,ny);
-    HdFB = NaN(nb,na,nz,ny,'single');
-    dBF = NaN(nb,na,nz,ny);
-    HdBF = NaN(nb,na,nz,ny,'single');
-    dBB = NaN(nb,na,nz,ny);
-    HdBB = NaN(nb,na,nz,ny,'single');
-
-    Vamin = 0;
+    %% --------------------------------------------------------------------
+	% UPWINDING FOR CONSUMPTION
+	% ---------------------------------------------------------------------
+	Vamin = 0;
     Vbmin = 1e-8;
 
     if p.endogenousLabor == 0
@@ -91,24 +69,29 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
             + grd.b.matrix .* (r_b_mat + p.deathrate*p.perfectannuities) + p.transfer;
     end
 
-    %% --------------------------------------------------------------------
-	% UPWINDING FOR CONSUMPTION
-	% ---------------------------------------------------------------------
+	sspace_shape = [nb, na, nz, ny];
+
     % Derivatives illiquid assets
-    VaF(:,1:na-1,:,:) = (Vn(:,2:na,:,:)-Vn(:,1:na-1,:,:)) ./ grd.a.dF(:,1:na-1);
-    VaF(:,1:na-1,:,:) = max(VaF(:,1:na-1,:,:),Vamin);
-    VaB(:,2:na,:,:) = (Vn(:,2:na,:,:)-Vn(:,1:na-1,:,:)) ./ grd.a.dB(:,2:na);
-    VaB(:,2:na,:,:) = max(VaB(:,2:na,:,:),Vamin);
+    VaF = zeros(sspace_shape);
+    VaF(:,1:na-1,:,:) = diff(Vn, 2) ./ grd.a.dF(:,1:na-1);
+    VaF(:,1:na-1,:,:) = max(VaF(:,1:na-1,:,:), Vamin);
+
+    VaB = zeros(sspace_shape);
+    VaB(:,2:na,:,:) = diff(Vn, 2) ./ grd.a.dB(:,2:na);
+    VaB(:,2:na,:,:) = max(VaB(:,2:na,:,:), Vamin);
 
     % Derivatives liquid assets
-    VbF(1:nb-1,:,:,:) = (Vn(2:nb,:,:,:)-Vn(1:nb-1,:,:,:)) ./ grd.b.dF(1:nb-1,:);
-    VbF(1:nb-1,:,:,:) = max(VbF(1:nb-1,:,:,:),Vbmin); % ensure cF is well defined
-    VbB(2:nb,:,:,:) = (Vn(2:nb,:,:,:)-Vn(1:nb-1,:,:,:)) ./ grd.b.dB(2:nb,:);
-    VbB(2:nb,:,:,:) = max(VbB(2:nb,:,:,:),Vbmin); % ensure cF is well defined
+    VbF = zeros(sspace_shape);
+    VbF(1:nb-1,:,:,:) = diff(Vn, 1) ./ grd.b.dF(1:nb-1,:);
+    VbF(1:nb-1,:,:,:) = max(VbF(1:nb-1,:,:,:), Vbmin); % ensure cF is well defined
+
+    VbB = zeros(sspace_shape);
+    VbB(2:nb,:,:,:) = diff(Vn, 1) ./ grd.b.dB(2:nb,:);
+    VbB(2:nb,:,:,:) = max(VbB(2:nb,:,:,:), Vbmin); % ensure cF is well defined
 
     % consumption and savings from forward-differenced V
-    cF(1:nb-1,:,:,:) = utility1inv(VbF(1:nb-1,:,:,:));
-    cF(nb,:,:,:) 		= zeros(1,na,nz,ny);
+    cF = utility1inv(VbF);
+    cF(nb,:,:,:) = 0;
 
     % hours worked from forward-difference
     if p.endogenousLabor == 0
@@ -120,17 +103,17 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
         partial_drift = bdrift_without_c(hoursF);
     end
 
-    sF(1:nb-1,:,:,:)    = partial_drift(1:nb-1,:,:,:) - cF(1:nb-1,:,:,:);
-    sF(nb,:,:,:)        = zeros(1,na,nz,ny); % impose a state constraint at the top to improve stability
+    sF = partial_drift - cF;
+    sF(nb,:,:,:) = 0; % impose a state constraint at the top to improve stability
 
-    HcF(1:nb-1,:,:,:) = utility(cF(1:nb-1,:,:,:)) + VbF(1:nb-1,:,:,:) .* sF(1:nb-1,:,:,:);
-    HcF(nb,:,:,:) 		= -1e12 * ones(1,na,nz,ny);
+    HcF = utility(cF) + VbF .* sF;
+    HcF(nb,:,:,:) = -1e12;
 
     if p.endogenousLabor == 1
         HcF = HcF - labordisutil(hoursF);
     end
 
-    validcF         	= cF > 0;
+    validcF = cF > 0;
 
     % consumption and savings from backward-differenced V
     
@@ -143,11 +126,11 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
         hoursB = min(hoursB, 1);
     end
 
-    cB(2:nb,:,:,:)  = utility1inv(VbB(2:nb,:,:,:));
+    cB  = utility1inv(VbB);
     cB(1,:,:,:) = partial_drift(1,:,:,:);
     
-    sB(2:nb,:,:,:) = partial_drift(2:nb,:,:,:) - cB(2:nb,:,:,:);
-    sB(1,:,:,:) = zeros(1,na,nz,ny);
+    sB = partial_drift - cB;
+    sB(1,:,:,:) = 0;
 
     HcB = utility(cB) + VbB .* sB;
 
@@ -166,47 +149,45 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     validc0         = c0 > 0;
 
      % Upwinding direction: consumption
-    IcF 			= validcF & (sF > 0) & ((sB>=0) | ((HcF>=HcB) | ~validcB)) & ((HcF>=Hc0) | ~validc0);
-    IcB 			= validcB & (sB < 0) & ((sF<=0) | ((HcB>=HcF) | ~validcF)) & ((HcB>=Hc0) | ~validc0);
-    Ic0 			= validc0 & ~(IcF | IcB);
+    IcF = validcF & (sF > 0) & ((sB>=0) | ((HcF>=HcB) | ~validcB)) & ((HcF>=Hc0) | ~validc0);
+    IcB = validcB & (sB < 0) & ((sF<=0) | ((HcB>=HcF) | ~validcF)) & ((HcB>=Hc0) | ~validc0);
+    Ic0 = validc0 & ~(IcF | IcB);
     assert(isequal(IcF+IcB+Ic0,ones(nb,na,nz,ny,'logical')),'logicals do not sum to unity')
-    c 				= IcF .* cF + IcB .* cB + Ic0 .* c0;
-    s 				= IcF .* sF + IcB .* sB + Ic0 .* s0;
+    c = IcF .* cF + IcB .* cB + Ic0 .* c0;
+    s = IcF .* sF + IcB .* sB + Ic0 .* s0;
 
     u = utility(c);
 
     %% --------------------------------------------------------------------
 	% UPWINDING FOR DEPOSITS
 	% ---------------------------------------------------------------------
+	adjcost = @(x) aux.AdjustmentCost.cost(x, grd.a.matrix, p);
+	opt_d = @(x, y) aux.opt_deposits(x, y, grd.a.matrix, p);
+
     % Deposit decision
-    dFB(2:nb,1:na-1,:,:) = aux.opt_deposits(VaF(2:nb,1:na-1,:,:),VbB(2:nb,1:na-1,:,:),grd.a.matrix(2:nb,1:na-1,:,:),p);
-    dFB(:,na,:,:) = zeros(nb,1,nz,ny);
-    dFB(1,1:na-1,:,:) = zeros(1,na-1,nz,ny);
-    HdFB(2:nb,1:na-1,:,:) = VaF(2:nb,1:na-1,:,:) .* dFB(2:nb,1:na-1,:,:) ...
-                            - VbB(2:nb,1:na-1,:,:) ...
-                            .* (dFB(2:nb,1:na-1,:,:) + aux.AdjustmentCost.cost(dFB(2:nb,1:na-1,:,:),grd.a.matrix(2:nb,1:na-1,:,:),p));
-    HdFB(:,na,:,:) = -1.0e12 * ones(nb,1,nz,ny);
-    HdFB(1,1:na-1,:,:) = -1.0e12 * ones(1,na-1,nz,ny);
+    dFB = opt_d(VaF, VbB);
+    dFB(:,na,:,:) = 0;
+    dFB(1,1:na-1,:,:) = 0;
+    HdFB = VaF .* dFB - VbB .* (dFB + adjcost(dFB));
+    HdFB(:,na,:,:) = -1.0e12;
+    HdFB(1,1:na-1,:,:) = -1.0e12;
     validFB = (dFB > 0) & (HdFB > 0);
 
-    dBF(1:nb-1,2:na,:,:) = aux.opt_deposits(VaB(1:nb-1,2:na,:,:),VbF(1:nb-1,2:na,:,:),grd.a.matrix(1:nb-1,2:na,:,:),p);
-    dBF(:,1,:,:) = zeros(nb,1,nz,ny);
-    dBF(nb,2:na,:,:) = zeros(1,na-1,nz,ny);
-    HdBF(1:nb-1,2:na,:,:) = VaB(1:nb-1,2:na,:,:) .* dBF(1:nb-1,2:na,:,:) - VbF(1:nb-1,2:na,:,:)...
-                                 .* (dBF(1:nb-1,2:na,:,:) + aux.AdjustmentCost.cost(dBF(1:nb-1,2:na,:,:),grd.a.matrix(1:nb-1,2:na,:,:),p));
-    HdBF(:,1,:,:) = -1.0e12 * ones(nb,1,nz,ny);
-    HdBF(nb,2:na,:,:) = -1.0e12 * ones(1,na-1,nz,ny);
-    validBF = (dBF <= - aux.AdjustmentCost.cost(dBF,grd.a.matrix,p)) & (HdBF > 0);
+    dBF = opt_d(VaB, VbF);
+    dBF(:,1,:,:) 0;
+    dBF(nb,2:na,:,:) = 0;
+    HdBF = VaB .* dBF - VbF .* (dBF + adjcost(dBF));
+    HdBF(:,1,:,:) = -1.0e12;
+    HdBF(nb,2:na,:,:) = -1.0e12;
+    validBF = (dBF <= - adjcost(dBF)) & (HdBF > 0);
 
     VbB(1,2:na,:,:) = utility(cB(1,2:na,:,:));
 
-    dBB(:,2:na,:,:) = aux.opt_deposits(VaB(:,2:na,:,:),VbB(:,2:na,:,:),grd.a.matrix(:,2:na,:,:),p);
-    dBB(:,1,:,:) = zeros(nb,1,nz,ny);
-    HdBB(:,2:na,:,:) = VaB(:,2:na,:,:) .* dBB(:,2:na,:,:)...
-                        - VbB(:,2:na,:,:) .* (dBB(:,2:na,:,:)...
-                        + aux.AdjustmentCost.cost(dBB(:,2:na,:,:),grd.a.matrix(:,2:na,:,:),p));
+    dBB = opt_d(VaB, VbB);
+    dBB(:,1,:,:) = 0;
+    HdBB = VaB .* dBB - VbB .* (dBB + adjcost(dBB));
     HdBB(:,1,:,:) = -1.0e12 * ones(nb,1,nz,ny);
-    validBB = (dBB > - aux.AdjustmentCost.cost(dBB,grd.a.matrix,p)) & (dBB <= 0) & (HdBB > 0);
+    validBB = (dBB > - adjcost(dBB)) & (dBB <= 0) & (HdBB > 0);
     
     if (p.OneAsset == 0) && (p.DealWithSpecialCase == 1)
         if (p.SDU == 1)
@@ -239,7 +220,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     Isum = Ic_special+IcFB+IcBF+IcBB+Ic00;
     assert(isequal(Isum,ones(nb,na,nz,ny,'logical')),'logicals do not sum to unity')
 
-    d 	= IcFB .* dFB + IcBF .* dBF + IcBB .* dBB + Ic00 .* zeros(nb,na,nz,ny) ...
+    d 	= IcFB .* dFB + IcBF .* dBF + IcBB .* dBB...
             + Ic_special .* d_special;
 
     %% --------------------------------------------------------------------
@@ -250,7 +231,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     policies.d = d;
     policies.u = u;
     policies.bmin_consume_withdrawals = Ic_special;
-    policies.bdot = s - aux.AdjustmentCost.cost(d,grd.a.matrix,p);
+    policies.bdot = s - adjcost(d);
     policies.adot = (p.r_a + p.deathrate*p.perfectannuities) * grd.a.matrix...
         + p.directdeposit .* y_mat + d;
 

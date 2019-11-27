@@ -157,26 +157,26 @@ classdef TransitionMatrixConstructor < handle
         	% The input variable 'model' must contain the policy
         	% functions 's' and 'd'.
 
+        	illiq_income = obj.grids.a.matrix ...
+        		* (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
+                + obj.p.directdeposit * obj.y_mat;
+            adj_cost = aux.AdjustmentCost.cost(model.d, obj.grids.a.matrix, obj.p);
             if strcmp(obj.gridtype,'KFE')
-                drifts.a_B = min(model.d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
-                            + obj.p.directdeposit * obj.y_mat,0);
-                drifts.a_F = max(model.d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
-                            + obj.p.directdeposit * obj.y_mat,0);
-                drifts.b_B = min(model.s - model.d - aux.AdjustmentCost.cost(...
-                	model.d, obj.grids.a.matrix, obj.p), 0);
-                drifts.b_F = max(model.s - model.d - aux.AdjustmentCost.cost(...
-                	model.d, obj.grids.a.matrix, obj.p), 0);
+            	adrift = model.d + illiq_income;
+                drifts.a_B = min(adrift, 0);
+                drifts.a_F = max(adrift, 0);
+
+                bdrift = model.s - model.d - adj_cost;
+                drifts.b_B = min(bdrift, obj.p), 0);
+                drifts.b_F = max(bdrift, obj.p), 0);
             elseif strcmp(obj.gridtype, 'HJB')
-                drifts.a_B = min(model.d, 0)...
-                	+ min(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate * obj.p.perfectannuities)...
-                	+ obj.p.directdeposit * obj.y_mat, 0);
-                drifts.a_F = max(model.d, 0)...
-                	+ max(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate * obj.p.perfectannuities)...
-                	+ obj.p.directdeposit * obj.y_mat, 0);
-                drifts.b_B = min(-model.d - aux.AdjustmentCost.cost(model.d, obj.grids.a.matrix, obj.p), 0)...
-                	+ min(model.s, 0);
-                drifts.b_F = max(-model.d - aux.AdjustmentCost.cost(model.d, obj.grids.a.matrix, obj.p), 0)...
-                	+ max(model.s, 0);    
+            	adrift = illiq_income;
+                drifts.a_B = min(model.d, 0) + min(adrift, 0);
+                drifts.a_F = max(model.d, 0) + max(adrift, 0);
+
+                bdrift = -model.d - adj_cost;
+                drifts.b_B = min(bdrift, 0) + min(model.s, 0);
+                drifts.b_F = max(bdrift, 0) + max(model.s, 0);    
             end
         end
 
@@ -191,8 +191,8 @@ classdef TransitionMatrixConstructor < handle
             lowdiag(1,:,:,:) = 0;
 
             centerdiag = bdriftB ./ obj.grids.b.dB - bdriftF ./ obj.grids.b.dF; 
-            centerdiag(1,:,:,:) = - bdriftF(1,:,:,:)./obj.grids.b.dF(1,:); 
-            centerdiag(obj.nb,:,:,:) = bdriftB(obj.nb,:,:,:)./obj.grids.b.dB(obj.nb,:);
+            centerdiag(1,:,:,:) = - bdriftF(1,:,:,:) ./ obj.grids.b.dF(1,:); 
+            centerdiag(obj.nb,:,:,:) = bdriftB(obj.nb,:,:,:) ./ obj.grids.b.dB(obj.nb,:);
 
             updiag = bdriftF ./ obj.grids.b.dF; 
             updiag(obj.nb,:,:,:) = 0;
