@@ -117,6 +117,6 @@ classdef Checks
 end
 
 function err_struct = create_error_struct(caller, errortype, msg)
-	err_struct.identifier = ['HACT:' char(caller) ':' char(errortype)];
+	err_struct.identifier = strcat('HACTLib:', caller, ':', errortype);
 	err_struct.message = msg;
 end

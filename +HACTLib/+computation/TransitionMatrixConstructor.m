@@ -62,10 +62,8 @@ classdef TransitionMatrixConstructor < handle
         % Pre-computed term when returns are risky
         risk_term;
 
-        % Dimension of terms for upper/lower diagonals. Offset
-        % from diagonal by 1 if shift_dimension = 1 and by 
-        % nb if shift_dimension = 2.
-        shift_dimension;
+        % Offsets from the diagonal for risky returns.
+        offsets_for_rr;
 
         % Matrix of income values.
         y_mat;
@@ -197,7 +195,9 @@ classdef TransitionMatrixConstructor < handle
             updiag = bdriftF ./ obj.grids.b.dF; 
             updiag(obj.nb,:,:,:) = 0;
 
-            A_liquid = obj.put_on_diags(lowdiag, centerdiag, updiag, 1);
+            A_liquid = HACTLib.aux.sparse_diags(...
+                [lowdiag(:), centerdiag(:), updiag(:)],...
+                [-1, 0, 1]);
         end
 
     	%% --------------------------------------------------------------------
@@ -217,7 +217,9 @@ classdef TransitionMatrixConstructor < handle
             updiag = adriftF ./ obj.grids.a.dF; 
             updiag(:,obj.na,:,:) = zeros(obj.nb,1,obj.nz,obj.ny);
 
-            A_illiquid = obj.put_on_diags(lowdiag, centerdiag, updiag, 2);
+            A_illiquid = HACTLib.aux.sparse_diags(...
+                [lowdiag(:), centerdiag(:), updiag(:)],...
+                [-obj.nb, 0, obj.nb]);
         end
 
         %% --------------------------------------------------------------------
@@ -236,7 +238,8 @@ classdef TransitionMatrixConstructor < handle
             %
             % obj.risk_term : (asset * sigma_r) ^ 2
             %
-            % obj.shift_dimension : dimension for offset of the risky asset on lower and upper diags
+            % obj.offsets_for_rr : vector of offsets from the diagonal
+            %   for the risky asset
             %
             % obj.asset_dSum : deltaBackward + deltaForward
 
@@ -246,19 +249,15 @@ classdef TransitionMatrixConstructor < handle
                 obj.asset_dF = repmat(obj.grids.b.dF, [1 1 obj.nz obj.ny]);
 
                 obj.top(obj.nb, :, :, :) = true;
-
                 obj.risk_term = (obj.grids.b.matrix * obj.p.sigma_r) .^ 2;
-
-                obj.shift_dimension = 1;
+                obj.offsets_for_rr = [-1, 0, 1];
             else
                 obj.asset_dB = repmat(obj.grids.a.dB, [1 1 obj.nz obj.ny]);
                 obj.asset_dF = repmat(obj.grids.a.dF, [1 1 obj.nz obj.ny]);
 
                 obj.top(:, obj.na, :, :) = true;
-
                 obj.risk_term = (obj.grids.a.matrix * obj.p.sigma_r) .^ 2;
-
-                obj.shift_dimension = 2;
+                obj.offsets_for_rr = [-obj.nb, 0, obj.nb];
             end
 
             obj.asset_dF(obj.top) = obj.asset_dB(obj.top);
@@ -292,43 +291,8 @@ classdef TransitionMatrixConstructor < handle
             V_i_term(obj.top) = - obj.risk_term(obj.top) ./ (obj.asset_dB(obj.top) .* obj.asset_dSum(obj.top));
             V_i_plus_1_term(obj.top) = 0;
 
-            Arisk_Vaa = obj.put_on_diags(V_i_minus_1_term, V_i_term, V_i_plus_1_term, obj.shift_dimension);
-        end
-
-        function A = put_on_diags(obj, lower, middle, upper, shift_dim)
-            % constructs a sparse matrix by putting column vectors on the diagonals
-
-            % Parameters
-            % ----------
-            % lower : the vector to go on the lower diagonal
-            %
-            % middle : the vector to go on the middle diagonal
-            %
-            % upper : the vector to go on the upper diagonal
-            %
-            % shift : the offset of the lower and upper diagonals from the middle diagonal
-            %
-            % Returns
-            % -------
-            % A : a sparse matrix with lower, middle, and upper on the requested diagonals
-
-            if shift_dim == 1
-                upper = upper(:);
-                upper = [0; upper(1:end-1)];
-                lower = lower(:);
-                lower = [lower(2:end); 0];
-                diags = [lower, middle(:), upper];
-                inds = [-1, 0, 1];
-                A = spdiags(diags, inds, obj.n_states, obj.n_states);
-            elseif shift_dim == 2
-                upper = upper(:);
-                upper = [zeros(obj.nb, 1); upper(1:end-obj.nb)];
-                lower = lower(:);
-                lower = [lower(obj.nb+1:end); zeros(obj.nb, 1)];
-                diags = [lower, middle(:), upper];
-                inds = [-obj.nb, 0, obj.nb];
-                A = spdiags(diags, inds, obj.n_states, obj.n_states);                
-            end
+            arr = [V_i_minus_1_term(:), V_i_term(:), V_i_plus_1_term(:)];
+            Arisk_Vaa = HACTLib.aux.sparse_diags(arr, obj.offsets_for_rr);
         end
     end
 end

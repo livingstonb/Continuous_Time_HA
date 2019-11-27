@@ -60,8 +60,9 @@ classdef TransitionMatrixConstructorSDU < HACTLib.computation.TransitionMatrixCo
             end
 
             centdiag = - lowdiag - updiag;
-
-            Arisk_Va = obj.put_on_diags(lowdiag, centdiag, updiag, obj.shift_dimension);
+            Arisk_Va = HACTLib.aux.sparse_diags(...
+                [lowdiag(:), centdiag(:), updiag(:)],...
+                obj.offsets_for_rr);
 
             % Some states may have no drift, we will need to deal with them
             % separately by adding directly to the right_hand_side of the HJB.

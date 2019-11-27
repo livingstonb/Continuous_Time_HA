@@ -31,13 +31,10 @@ function A = random_transition_matrix(nb, na, varargin)
     bdrift_neg(1, :, :) = 0;
     bdrift_neg = bdrift_neg(:);
     bdrift_center = -bdrift_pos - bdrift_neg;
-    
-    bdrift_pos = [0; bdrift_pos(1:end-1)];
-	bdrift_neg = [bdrift_neg(2:end); 0];
 
-	A = spdiags(bdrift_pos, 1, n_states, n_states)...
-		+ spdiags(bdrift_center, 0, n_states, n_states)...
-		+ spdiags(bdrift_neg, -1, n_states, n_states);
+	A = HACTLib.aux.sparse_diags(...
+		[bdrift_neg, bdrift_center, bdrift_pos],...
+		[-1, 0, 1]);
 
 	adrift = (rand(nb, na, options.ny) - 0.5) * options.max_adrift;
     adrift_pos = max(adrift, 0);
@@ -49,12 +46,9 @@ function A = random_transition_matrix(nb, na, varargin)
     adrift_neg = adrift_neg(:);
     adrift_center = -adrift_pos - adrift_neg;
     
-    adrift_pos = [zeros(nb, 1); adrift_pos(1:end-nb)];
-	adrift_neg = [adrift_neg(nb+1:end); zeros(nb, 1)];
-
-	A = A + spdiags(adrift_pos, nb, n_states, n_states)...
-		+ spdiags(adrift_center, 0, n_states, n_states)...
-		+ spdiags(adrift_neg, -nb, n_states, n_states);
+	A = HACTLib.aux.sparse_diags(...
+		[adrift_neg, adrift_center, adrift_pos],...
+		[-nb, 0, nb]);
 
 	if nargin <= 2
 		return

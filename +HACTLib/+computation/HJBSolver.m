@@ -7,7 +7,7 @@ classdef HJBSolver < HACTLib.computation.HJBBase
 	% a Params object and an Income object, and pass these
 	% to the HJBSolver constructor. Alternatively, one can
 	% use other objects that satisfy the requirements laid
-	% out in the properties block.
+	% out in the properties block of HJBBase.
 
 	properties (Constant)
 		% Update this array when the required parameters
