@@ -7,7 +7,7 @@ function options = parse_keyvalue_pairs(defaults, varargin)
 
 	parser = inputParser;
 	for field = properties(defaults)'
-		addParameter(parser, field, defaults.(field));
+		addParameter(parser, char(field), defaults.(char(field)));
 	end
 	parse(parser, varargin{:});
 

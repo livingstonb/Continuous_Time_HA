@@ -1,4 +1,4 @@
-classdef Params < HACT_Tools.components.ParamsBase
+classdef Params < HACTLib.model_objects.ParamsBase
     % This class stores the parameters of the model and contains methods to
     % adjust them for frequency and other factors.
     %
@@ -8,8 +8,8 @@ classdef Params < HACT_Tools.components.ParamsBase
     methods
         function obj = Params(runopts, varargin)
 
-        	import HACT_Tools.algorithms.HJBOptions
-        	import HACT_Tools.algorithms.KFEOptions
+        	import HACTLib.computation.HJBOptions
+        	import HACTLib.computation.KFEOptions
 
         	obj.set_from_structure(varargin{:});
 
@@ -97,7 +97,7 @@ classdef Params < HACT_Tools.components.ParamsBase
         function set_from_structure(obj, varargin)
     		parser = inputParser;
 
-    		import HACT_Tools.components.ParamsBase
+    		import HACTLib.model_objects.ParamsBase
 
     		defaults = ParamsBase();
     		fields = properties(ParamsBase);

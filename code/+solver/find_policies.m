@@ -73,20 +73,20 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
 
     % Derivatives illiquid assets
     VaF = zeros(sspace_shape);
-    VaF(:,1:na-1,:,:) = diff(Vn, 2) ./ grd.a.dF(:,1:na-1);
+    VaF(:,1:na-1,:,:) = diff(Vn, 1, 2) ./ grd.a.dF(:,1:na-1);
     VaF(:,1:na-1,:,:) = max(VaF(:,1:na-1,:,:), Vamin);
 
     VaB = zeros(sspace_shape);
-    VaB(:,2:na,:,:) = diff(Vn, 2) ./ grd.a.dB(:,2:na);
+    VaB(:,2:na,:,:) = diff(Vn, 1, 2) ./ grd.a.dB(:,2:na);
     VaB(:,2:na,:,:) = max(VaB(:,2:na,:,:), Vamin);
 
     % Derivatives liquid assets
     VbF = zeros(sspace_shape);
-    VbF(1:nb-1,:,:,:) = diff(Vn, 1) ./ grd.b.dF(1:nb-1,:);
+    VbF(1:nb-1,:,:,:) = diff(Vn, 1, 1) ./ grd.b.dF(1:nb-1,:);
     VbF(1:nb-1,:,:,:) = max(VbF(1:nb-1,:,:,:), Vbmin); % ensure cF is well defined
 
     VbB = zeros(sspace_shape);
-    VbB(2:nb,:,:,:) = diff(Vn, 1) ./ grd.b.dB(2:nb,:);
+    VbB(2:nb,:,:,:) = diff(Vn, 1, 1) ./ grd.b.dB(2:nb,:);
     VbB(2:nb,:,:,:) = max(VbB(2:nb,:,:,:), Vbmin); % ensure cF is well defined
 
     % consumption and savings from forward-differenced V
@@ -174,7 +174,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     validFB = (dFB > 0) & (HdFB > 0);
 
     dBF = opt_d(VaB, VbF);
-    dBF(:,1,:,:) 0;
+    dBF(:,1,:,:) = 0;
     dBF(nb,2:na,:,:) = 0;
     HdBF = VaB .* dBF - VbF .* (dBF + adjcost(dBF));
     HdBF(:,1,:,:) = -1.0e12;

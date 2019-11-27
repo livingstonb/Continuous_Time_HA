@@ -31,7 +31,7 @@ function statistics = simulate_markov(trans, values, varargin)
     
 	% Validate input
 	options = parse_inputs(varargin{:});
-	HACT_Tools.Checks.is_square_matrix(trans);
+	HACTLib.Checks.is_square_matrix(trans);
 	assert(size(trans, 1) == size(values, 1),...
 		"Inputs have inconsistent shapes");
 
@@ -40,7 +40,7 @@ function statistics = simulate_markov(trans, values, varargin)
 	discrete_cumtrans = cumsum(discrete_trans, 2);
 
 	% Compute stationary distribution
-	edist = HACT_Tools.aux.stat_dist(trans');
+	edist = HACTLib.aux.stat_dist(trans');
 
 	if options.normalize
 		values = values ./ dot(values, edist);

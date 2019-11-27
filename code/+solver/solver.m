@@ -26,11 +26,11 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	% Au : the transition matrix for the KFE, shape
 	%	(nb_KFE*na_KFE*nz*ny, nb_KFE*na_KFE*nz*ny)
 
-	import HACT_Tools.algorithms.HJBSolver
-    import HACT_Tools.algorithms.HJBSolverSDU
-	import HACT_Tools.algorithms.KFESolver
-	import HACT_Tools.algorithms.TransitionMatrixConstructor
-	import HACT_Tools.algorithms.TransitionMatrixConstructorSDU
+	import HACTLib.computation.HJBSolver
+    import HACTLib.computation.HJBSolverSDU
+	import HACTLib.computation.KFESolver
+	import HACTLib.computation.TransitionMatrixConstructor
+	import HACTLib.computation.TransitionMatrixConstructorSDU
 
     % keep track of number of mean asset iterations
 	persistent iterAY

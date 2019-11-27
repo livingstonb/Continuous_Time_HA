@@ -65,7 +65,7 @@ classdef KFESolver
 			% object. If this argument is not passed, the default
 			% options will be used. See KFEOptions for more details.
 
-			import HACT_Tools.algorithms.KFEOptions
+			import HACTLib.computation.KFEOptions
 			
 			obj.p = p;
 			obj.income = income;
@@ -240,7 +240,7 @@ classdef KFESolver
 		end
 
 		function check_income(obj, income)
-			HACT_Tools.Checks.has_attributes('KFESolver',...
+			HACTLib.Checks.has_attributes('KFESolver',...
 				income, obj.required_income_vars);
 			assert(ismatrix(income.ytrans), "Income transition matrix must be a matrix");
 			assert(size(income.ytrans, 1) == income.ny,...
@@ -251,7 +251,7 @@ classdef KFESolver
 		end
 
 		function check_parameters(obj, p)
-			HACT_Tools.Checks.has_attributes('KFESolver',...
+			HACTLib.Checks.has_attributes('KFESolver',...
 				p, obj.required_parameters);
 		end
 	end

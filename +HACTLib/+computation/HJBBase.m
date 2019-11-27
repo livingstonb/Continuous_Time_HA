@@ -73,7 +73,7 @@ classdef (Abstract) HJBBase < handle
 			% documentation to see the requirements of the
 			% input parameters.
 
-			import HACT_Tools.algorithms.HJBOptions
+			import HACTLib.computation.HJBOptions
 
 			% ---------------------------------------------------------
 			% Validate Input Arguments and Set Options
@@ -136,7 +136,7 @@ classdef (Abstract) HJBBase < handle
 		end
 
 		function check_inputs(obj, A, u, V)
-			import HACT_Tools.Checks;
+			import HACTLib.Checks;
             
             super_class = split(class(obj), '.');
             super_class = super_class(end);

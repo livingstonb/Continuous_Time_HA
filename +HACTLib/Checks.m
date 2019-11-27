@@ -47,7 +47,7 @@ classdef Checks
 			% Throws if 'variable' is not a real, sparse,
 			% nonempty square matrix.
 
-			import HACT_Tools.Checks
+			import HACTLib.Checks
 
 			Checks.is_square_matrix(caller, variable);
 			if ~issparse(variable)

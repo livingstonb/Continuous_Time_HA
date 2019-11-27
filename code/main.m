@@ -14,8 +14,8 @@ function [stats,p] = main(runopts, p)
     %
     % p : the Params object used to solve the model
 
-    import HACT_Tools.components.Grid
-    import HACT_Tools.components.Income
+    import HACTLib.model_objects.Grid
+    import HACTLib.model_objects.Income
 
     %% --------------------------------------------------------------------
     % CREATE GRID, INCOME OBJECTS

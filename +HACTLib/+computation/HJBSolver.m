@@ -1,4 +1,4 @@
-classdef HJBSolver < HACT_Tools.algorithms.HJBBase
+classdef HJBSolver < HACTLib.computation.HJBBase
 	% A solver for the Hamilton-Jacobi-Bellman equation.
 	% Implicit and implicit-explicit solution methods are
 	% provided.
@@ -22,7 +22,7 @@ classdef HJBSolver < HACT_Tools.algorithms.HJBBase
 
 	methods
 		function obj = HJBSolver(p, income, options)
-			obj = obj@HACT_Tools.algorithms.HJBBase(p, income, options);
+			obj = obj@HACTLib.computation.HJBBase(p, income, options);
 		end
 	end
 
@@ -115,18 +115,18 @@ classdef HJBSolver < HACT_Tools.algorithms.HJBBase
 		end
 
 		% function check_inputs(obj, A, u, V)
-		% 	check_inputs@HACT_Tools.algorithms.HJBBase(class(obj), A, u, V);
+		% 	check_inputs@HACTLib.computation.HJBBase(class(obj), A, u, V);
 		% end
 
 		function check_parameters(obj, p)
-			HACT_Tools.Checks.has_attributes(...
+			HACTLib.Checks.has_attributes(...
 				'HJBSolver', p, obj.required_parameters);
 		end
 
 		function check_income(obj, income)
-			HACT_Tools.Checks.has_attributes('HJBSolver',...
+			HACTLib.Checks.has_attributes('HJBSolver',...
 				income, obj.required_income_vars);
-			HACT_Tools.Checks.is_square_matrix('HJBSolver',...
+			HACTLib.Checks.is_square_matrix('HJBSolver',...
 				income.ytrans);
 		end
 	end

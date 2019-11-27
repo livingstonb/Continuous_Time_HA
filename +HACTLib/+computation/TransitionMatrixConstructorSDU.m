@@ -1,8 +1,8 @@
-classdef TransitionMatrixConstructorSDU < HACT_Tools.algorithms.TransitionMatrixConstructor
+classdef TransitionMatrixConstructorSDU < HACTLib.computation.TransitionMatrixConstructor
 
 	methods
 		function [A, stationary] = construct(obj, model, V)
-			[A, stationary, drifts] = construct@HACT_Tools.algorithms.TransitionMatrixConstructor(obj, model, V);
+			[A, stationary, drifts] = construct@HACTLib.computation.TransitionMatrixConstructor(obj, model, V);
 
 			if obj.returns_risk
             	if obj.p.OneAsset

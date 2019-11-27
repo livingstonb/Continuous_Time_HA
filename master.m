@@ -47,7 +47,7 @@ runopts.DealWithSpecialCase = 0;
 runopts.param_index = 2;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/Users/brian-laptop/Documents/GitHub/Continuous_Time_HA/';
+runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 
 %% ------------------------------------------------------------------------

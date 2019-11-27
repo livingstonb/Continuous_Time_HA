@@ -68,6 +68,6 @@ function outparams = chi1_chi2_tests(runopts)
     chosen_param = params(runopts.param_index);
 
     % Create Params object
-    outparams = HACT_Tools.components.Params(runopts,chosen_param);
+    outparams = HACTLib.model_objects.Params(runopts,chosen_param);
 
 end

@@ -167,8 +167,8 @@ classdef TransitionMatrixConstructor < handle
                 drifts.a_F = max(adrift, 0);
 
                 bdrift = model.s - model.d - adj_cost;
-                drifts.b_B = min(bdrift, obj.p), 0);
-                drifts.b_F = max(bdrift, obj.p), 0);
+                drifts.b_B = min(bdrift, 0);
+                drifts.b_F = max(bdrift, 0);
             elseif strcmp(obj.gridtype, 'HJB')
             	adrift = illiq_income;
                 drifts.a_B = min(model.d, 0) + min(adrift, 0);
