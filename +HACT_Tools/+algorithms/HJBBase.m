@@ -137,10 +137,13 @@ classdef (Abstract) HJBBase < handle
 
 		function check_inputs(obj, A, u, V)
 			import HACT_Tools.Checks;
+            
+            super_class = split(class(obj), '.');
+            super_class = super_class(end);
 
-			Checks.is_square_sparse_matrix(A, obj.n_states);
-			Checks.has_shape(u, obj.shape);
-			Checks.has_shape(V, obj.shape);
+			Checks.is_square_sparse_matrix(super_class, A, obj.n_states);
+			Checks.has_shape(super_class, u, obj.shape);
+			Checks.has_shape(super_class, V, obj.shape);
 		end
 
 		function Bk = construct_Bk(obj, k, A, inctrans, varargin)
@@ -156,23 +159,13 @@ classdef (Abstract) HJBBase < handle
 		    	+ (1 + obj.options.delta * obj.p.deathrate) * speye(obj.states_per_income)...
 		        - obj.options.delta * (Ak + inctrans);
 		end
-
-		function check_parameters(obj, p)
-			HACT_Tools.Checks.has_attributes(....
-				p, obj.required_parameters);
-		end
-
-		function check_income(obj, income)
-			HACT_Tools.Checks.has_attributes(...
-				income, obj.required_income_vars);
-			HACT_Tools.Checks.is_square_matrix(income.ytrans);
-		end
 	end
 
 	methods (Abstract, Access=protected)
 		check_if_SDU(obj);
 		Vn1 = solve_implicit(obj, A, u, V, varargin);
 		Vn1 = solve_implicit_explicit(obj, A, u, V, varargin);
+		check_parameters(obj, p);
+		check_income(obj, income);
 	end
-
 end

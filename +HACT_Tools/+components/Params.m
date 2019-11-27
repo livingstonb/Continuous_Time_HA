@@ -1,174 +1,19 @@
-classdef Params < handle
+classdef Params < HACT_Tools.components.ParamsBase
     % This class stores the parameters of the model and contains methods to
-    % adjust them for frequency and other factors. See properties for the
-    % default values.
-    
-    properties (SetAccess=protected)
-        % Run options
-        ComputeMPCS;
-        SimulateMPCS;
-        ComputeMPCS_news;
-        SimulateMPCS_news;
-        Bequests = 0;
-        ResetIncomeUponDeath = 0; % WARNING: keep = 0, may not be up to date
-        SaveResults = 1;
-        OneAsset = 1;
-        DealWithSpecialCase;
-        NoRisk = 1;
-        
-        % Identifier
-        name = 'unnamed';
-        param_index;
-
-        maindir;
-        income_dir;
-        tempdirec;
-
-        % ------------ grid parameters ---------------------
-        % liquid grid parameters
-		bmin = 0;
-		b_soft_constraint = 0;
-		bmax = 50;
-		b_gcurv_pos = 0.2;
-		b_gcurv_neg = 0.4;
-        nb = 150;
-		nb_pos; % default is set to nb
-        nb_neg;
-		nb_KFE = 150;
-		nb_pos_KFE; % default is set to nb_KFE
-        nb_neg_KFE;
-
-        % illiquid grid parameters
-        na = 120;
-        amin = 0;
-        amax = 200;
-        a_gcurv = 0.2;
-        na_KFE = 120;
-
-        % income grid size
-        ny;
-
-        % other heterogeneity
-        nz;
-
-        min_grid_spacing = 0.001;
-        
-
-	    % ------------ returns -----------------------------
-		r_b = 0.02 / 4; %0.005; % steady-state savings rate, liquid assets
-        r_a = 0.06/4; % illiquid return
-		perfectannuities = 0;
-
-        % borrowing
-        borrwedge = 0.08/4; % steady-state borrowing wedge, liquid assets
-        r_b_borr; % steady-state borrowing rate, liquid assets
-
-        % Rate of return risk
-        sigma_r = 0; % turn off by default
-        retrisk_KFE = 0; % by default, don't include risk in KFE when sigma_r > 0
-
-		% ------------ preferences -------------------------
-        SDU = false;
-		riskaver = 1; % risk aversion, can be a row vector
-        % Stochastic differential utility
-        invies = 1;
-		riskaver_fulldim;
-		deathrate = 1 /200; % death rate (quarterly)
-		rho = 0.015; % discount factor (quarterly)
-		rhoL; % starting point to find rho lower bounds
-		rhos;
-		rho_grid;
-
-		% ------------ taxes ------------------------------
-		transfer = 0; % transfer to households 
-		wagetax = 0; % tax rate on wage income
-
-		% ------------ targets ----------------------------
-		targetAY = 3.5; % target for mean assets / mean annual income
-
-		% ------------ approximation parameters -----------
-		% HJB loop
-		hjb_options;
-		HJB_maxiters = 2000; % maximal allowable number of HJB iterations
-		HJB_tol = 1e-8; % critical value
-		HJB_delta = 1e6; % step size
-        HJB_implicit = false;
-
-		% Howard improvement step in HJB loop
-		HIS_maxiters = 10; % total number of Howard improvement steps
-		HIS_start = 2; % when in HJB loop do Howard improvement steps begin?
-		HIS_tol= 1e-5; % critical value
-
-		% KFE loop
-		kfe_options;
-		KFE_maxiters = 1e4; % maximal allowable number of KFE iterations
-		KFE_tol = 1e-8; % critical value
-		KFE_delta = 1e6; %1e6; % step size
-        KFE_iterative = true;
-
-		% Outer assets-income ratio grid
-		maxit_AY 		= 100; % maximal allowable number of loops over capital-labor ratio
-		crit_AY			= 1e-7; % critical value
-
-        % Step-size for Feynman-Kac formula
-        delta_mpc = 0.025;
-
-        % marginal product of labor/capital
-        endogenousLabor = 0;
-        labor_disutility = 1;
-        frisch = 0.5;
-        MPL = 1;
-        MPK = 1;
-        
-        % ----------- statistics variables -------------------------------
-        epsilon_HtM = [0 0.005 0.01 0.02 0.05 0.1 0.15]; % for looking at fraction HtM
-        wpercentiles = [10 25 50 90 99 99.9];
-        mpc_shocks = [-1e-5 -0.01 -0.1 1e-5 0.01 0.1];
-        decomp_thresholds = [0 0.01 0.05];
-        
-        T_mpcsim = 500;
-        n_mpcsim = 1e5;
-
-        % ----------- adjustment costs -----------------------------------
-        chi0 = 0.070046;
-        chi1 = 0.535791;
-        chi2 = 0.971050;
-        a_lb = 0.2407;
-
-        % deposit share     
-        directdeposit = 0;
-	end
+    % adjust them for frequency and other factors.
+    %
+    % 
+    % See the base class, ParamsBase, for default values.
 
     methods
-        function obj = Params(runopts,params)
+        function obj = Params(runopts, varargin)
 
         	import HACT_Tools.algorithms.HJBOptions
         	import HACT_Tools.algorithms.KFEOptions
 
-			 % allow some properties to be set by params structure
-            if nargin > 1
-                if isstruct(params)
-                	pfields = fields(params);
-		            if ~all(ismember(pfields,properties(obj)))
-		            	indices = find(~ismember(pfields,properties(obj)));
-			    		msg = sprintf('Some field(s) in the input parameters is invalid:\n');
-			    		for ii = indices
-			    			msg = [msg sprintf('\t%s',pfields{ii})];
-			    		end
-			    		error(msg)
-                    elseif numel(params) > 0
-		                for ip = 1:numel(pfields)
-                            if ~isempty(params.(pfields{ip}))
-                                obj.(pfields{ip}) = params.(pfields{ip});
-                            end
-		                end
-		            end
-			    else
-		         	error('Invalid argument type passed to constructor')
-                end
-            end
+        	obj.set_from_structure(varargin{:});
 
-            % check for other heterogeneity
+            % Check for other heterogeneity
             if (numel(obj.rho_grid)>1) && (numel(obj.riskaver)>1)
             	error('Cannot have both rho and riskaver heterogeneity')
             else
@@ -193,8 +38,8 @@ classdef Params < handle
             obj.SimulateMPCS = runopts.SimulateMPCS;
             obj.ComputeMPCS_news = runopts.ComputeMPCS_news;
             obj.SimulateMPCS_news = runopts.SimulateMPCS_news;
-            obj.maindir = runopts.direc;
-            obj.tempdirec = runopts.temp;
+            obj.main_dir = runopts.direc;
+            obj.temp_dir = runopts.temp;
 
             obj.rhos = obj.rho + obj.rho_grid;
             obj.riskaver_fulldim = reshape(obj.riskaver,[1 1 numel(obj.riskaver) 1]);
@@ -247,15 +92,27 @@ classdef Params < handle
             
             obj.nb_neg = obj.nb - obj.nb_pos;
             obj.nb_neg_KFE = obj.nb_KFE - obj.nb_pos_KFE;
-            
-            if obj.OneAsset == 1
-                obj.rhoL = obj.r_a + obj.perfectannuities*obj.deathrate - obj.deathrate;
-                obj.rhoL = obj.rhoL + 2.5e-3;
-            elseif ~ismember('rhoL',fields(params))
-                % two-asset case but rhoL was not set in parameters file
-                obj.rhoL = 0.023;
-            end
         end
+
+        function set_from_structure(obj, varargin)
+    		parser = inputParser;
+
+    		import HACT_Tools.components.ParamsBase
+
+    		defaults = ParamsBase();
+    		fields = properties(ParamsBase);
+
+    		for k = 1:numel(fields)
+    			field = fields{k};
+    			addParameter(parser, field, defaults.(field));
+    		end
+    		parse(parser, varargin{:});
+
+    		for k = 1:numel(fields)
+    			field = fields{k};
+    			obj.(field) = parser.Results.(field);
+    		end
+    	end
         
         function obj = set(obj, field, new_val, quiet)
         	% Sets the value of a parameter.

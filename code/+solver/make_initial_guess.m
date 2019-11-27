@@ -1,5 +1,5 @@
 function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
-    % makes initial guesses for the value function and distribution
+    % Makes initial guesses for the value function and distribution
 
     % Parameters
     % ----------

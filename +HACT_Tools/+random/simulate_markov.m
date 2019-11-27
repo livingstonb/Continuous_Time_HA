@@ -29,18 +29,14 @@ function statistics = simulate_markov(trans, values, varargin)
     % statistics : A table containing descriptive
     %   statistics from the simulations.
     
-	import HACT_Tools.Checks
-
 	% Validate input
 	options = parse_inputs(varargin{:});
-	Checks.is_square_matrix(trans);
+	HACT_Tools.Checks.is_square_matrix(trans);
 	assert(size(trans, 1) == size(values, 1),...
 		"Inputs have inconsistent shapes");
 
-	n_states = length(values);
-
 	% Approximate discrete time transition matrix
-	discrete_trans = options.stepsize * trans + speye(n_states);
+	discrete_trans = options.stepsize * trans + speye(length(values));
 	discrete_cumtrans = cumsum(discrete_trans, 2);
 
 	% Compute stationary distribution
@@ -51,28 +47,50 @@ function statistics = simulate_markov(trans, values, varargin)
 	end
 	cumdist = cumsum(edist);
 
-	%% --------------------------------------------------------------------
-    % Simulation
-    % ---------------------------------------------------------------------
-	yind = zeros(options.n_sim, options.t_sim, 'uint8');
+    yind = simulate(options, cumdist, discrete_cumtrans);
+    final_values = values(yind(:,options.t_sim));
+    statistics = create_table(final_values);
+end
+
+function options = parse_inputs(varargin)
+	parser = inputParser;
+	addParameter(parser, 'n_sim', 1e4);
+	addParameter(parser, 't_sim', 1e3);
+	addParameter(parser, 'stepsize', 1e-3);
+	addParameter(parser, 'normalize', false);
+    parse(parser, varargin{:});
+
+	options = parser.Results;
+end
+
+function yind = simulate(options, cumdist, discrete_cumtrans)
+	% Performs the simulations.
+	%
+	% Returns
+	% -------
+	% yind : An array of indices into the markov process,
+	%	indexed by observation and time.
+
+	yind = zeros(options.n_sim, options.t_sim, 'uint16');
 	draws = rand(options.n_sim, options.t_sim, 'single');
 
 	[~, yind(:,1)] = max(draws(:,1) <= cumdist', [], 2);
 
 	for t = 1:options.t_sim-1
-		for k = 1:n_states
+		for k = 1:numel(cumdist)
 			idx = yind(:,t) == k;
 			[~, yind(idx,t+1)] = max(draws(idx,t+1)...
                 <= discrete_cumtrans(k,:), [], 2);
 		end
 	end
+end
 
-	%% --------------------------------------------------------------------
-    % Table
-    % ---------------------------------------------------------------------
-    final_values = values(yind(:,options.t_sim));
-    final_values_demeaned = final_values - mean(final_values);
-    labels = {
+function statistics = create_table(values)
+
+	% Demeaned values
+	values_d = values - mean(values);
+
+	labels = {
     	'mean'
     	'min'
     	'max'
@@ -89,32 +107,21 @@ function statistics = simulate_markov(trans, values, varargin)
     	'kurtosis'
     };
     moments = {
-    	mean(final_values)
-    	min(final_values)
-    	max(final_values)
-        prctile(final_values, 0.1)
-        prctile(final_values, 0.25)
-        prctile(final_values, 0.5)
-        prctile(final_values, 0.75)
-        prctile(final_values, 0.9)
-    	std(final_values)
-    	std(log(final_values))
-    	mean(final_values_demeaned .^ 2)
-    	mean(final_values_demeaned .^ 3)
-    	skewness(final_values)
-    	kurtosis(final_values)
+    	mean(values)
+    	min(values)
+    	max(values)
+        prctile(values, 0.1)
+        prctile(values, 0.25)
+        prctile(values, 0.5)
+        prctile(values, 0.75)
+        prctile(values, 0.9)
+    	std(values)
+    	std(log(values))
+    	mean(values_d .^ 2)
+    	mean(values_d .^ 3)
+    	skewness(values)
+    	kurtosis(values)
     };
-	statistics = table(labels, moments, 'VariableNames',...
+    statistics = table(labels, moments, 'VariableNames',...
 		{'Statistic', 'Value'});
-end
-
-function options = parse_inputs(varargin)
-	parser = inputParser;
-	addParameter(parser, 'n_sim', 1e4);
-	addParameter(parser, 't_sim', 1e3);
-	addParameter(parser, 'stepsize', 1e-3);
-	addParameter(parser, 'normalize', false);
-    parse(parser, varargin{:});
-
-	options = parser.Results;
 end

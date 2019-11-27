@@ -83,5 +83,17 @@ classdef HJBSolverSDU < HACT_Tools.algorithms.HJBBase
             
             Vn1_k = Bk_inv * RHSk;
         end
+
+        function check_parameters(obj, p)
+			HACT_Tools.Checks.has_attributes(...
+				'HJBSolverSDU', p, obj.required_parameters);
+		end
+
+		function check_income(obj, income)
+			HACT_Tools.Checks.has_attributes('HJBSolverSDU',...
+				income, obj.required_income_vars);
+			HACT_Tools.Checks.is_square_matrix('HJBSolverSDU',...
+				income.ytrans);
+		end
 	end
 end

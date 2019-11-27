@@ -145,7 +145,7 @@ classdef TransitionMatrixConstructor < handle
             if obj.returns_risk
             	A = A + obj.compute_Vaa_terms();
             end  
-        endd
+        end
     end
 
     methods (Access=protected)

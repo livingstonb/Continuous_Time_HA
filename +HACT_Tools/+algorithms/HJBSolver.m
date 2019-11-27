@@ -113,5 +113,21 @@ classdef HJBSolver < HACT_Tools.algorithms.HJBBase
 		        end
     		end
 		end
+
+		% function check_inputs(obj, A, u, V)
+		% 	check_inputs@HACT_Tools.algorithms.HJBBase(class(obj), A, u, V);
+		% end
+
+		function check_parameters(obj, p)
+			HACT_Tools.Checks.has_attributes(...
+				'HJBSolver', p, obj.required_parameters);
+		end
+
+		function check_income(obj, income)
+			HACT_Tools.Checks.has_attributes('HJBSolver',...
+				income, obj.required_income_vars);
+			HACT_Tools.Checks.is_square_matrix('HJBSolver',...
+				income.ytrans);
+		end
 	end
 end

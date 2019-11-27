@@ -45,7 +45,6 @@ function outparams = SDU_tests(runopts)
     params(ii).na_KFE = 50;
     params(ii).deathrate = 0;
     params(ii).rho = rho_ies1_chi1_015;
-    params(ii).rhoL = 0.022;
     params(ii).transfer = 0.0081 * 2.0;
     params(ii).HJB_implicit = false;
     params(ii).SaveResults = 0;
