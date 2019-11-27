@@ -20,6 +20,8 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     %	first derivative of V for the case with no drift
     %	in the risky asset
 
+    import HACTLib.computation.fd_firstorder
+
     na = numel(grd.a.vec);
     nb = numel(grd.b.vec);
     nz = p.nz;
@@ -72,22 +74,14 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
 	sspace_shape = [nb, na, nz, ny];
 
     % Derivatives illiquid assets
-    VaF = zeros(sspace_shape);
-    VaF(:,1:na-1,:,:) = diff(Vn, 1, 2) ./ grd.a.dF(:,1:na-1);
+    [VaB, VaF] = fd_firstorder(Vn, grd.a.dB, grd.a.dF, 2);
+    VaB(:,2:na,:,:) = max(VaB(:,2:na,:,:), Vamin);
     VaF(:,1:na-1,:,:) = max(VaF(:,1:na-1,:,:), Vamin);
 
-    VaB = zeros(sspace_shape);
-    VaB(:,2:na,:,:) = diff(Vn, 1, 2) ./ grd.a.dB(:,2:na);
-    VaB(:,2:na,:,:) = max(VaB(:,2:na,:,:), Vamin);
-
     % Derivatives liquid assets
-    VbF = zeros(sspace_shape);
-    VbF(1:nb-1,:,:,:) = diff(Vn, 1, 1) ./ grd.b.dF(1:nb-1,:);
-    VbF(1:nb-1,:,:,:) = max(VbF(1:nb-1,:,:,:), Vbmin); % ensure cF is well defined
-
-    VbB = zeros(sspace_shape);
-    VbB(2:nb,:,:,:) = diff(Vn, 1, 1) ./ grd.b.dB(2:nb,:);
-    VbB(2:nb,:,:,:) = max(VbB(2:nb,:,:,:), Vbmin); % ensure cF is well defined
+    [VbB, VbF] = fd_firstorder(Vn, grd.b.dB, grd.b.dF, 1);
+    VbB(2:nb,:,:,:) = max(VbB(2:nb,:,:,:), Vbmin);
+    VbF(1:nb-1,:,:,:) = max(VbF(1:nb-1,:,:,:), Vbmin);
 
     % consumption and savings from forward-differenced V
     cF = utility1inv(VbF);
@@ -186,7 +180,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     dBB = opt_d(VaB, VbB);
     dBB(:,1,:,:) = 0;
     HdBB = VaB .* dBB - VbB .* (dBB + adjcost(dBB));
-    HdBB(:,1,:,:) = -1.0e12 * ones(nb,1,nz,ny);
+    HdBB(:,1,:,:) = -1.0e12;
     validBB = (dBB > - adjcost(dBB)) & (dBB <= 0) & (HdBB > 0);
     
     if (p.OneAsset == 0) && (p.DealWithSpecialCase == 1)

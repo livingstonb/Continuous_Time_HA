@@ -1,4 +1,4 @@
-function fd = fd_firstorder(values, deltaF, deltaB, dim)
+function [fdB, fdF] = fd_firstorder(values, deltaB, deltaF, dim)
 	% Approximates the derivative of the first argument
 	% via a first-order finite difference. Zeros are
 	% placed at the end of the dimension 'dim' for the
@@ -8,7 +8,7 @@ function fd = fd_firstorder(values, deltaF, deltaB, dim)
 	zeros_shape = size(values);
 	zeros_shape(dim) = 1;
 
-	diffs = diff(values, 1, dim);	
-	fd.F = cat(dim, diffs, zeros(zeros_shape)) ./ deltaF;
-	fd.B = cat(dim, zeros(zeros_shape), diffs) ./ deltaB;
+	diffs = diff(values, 1, dim);
+	fdB = cat(dim, zeros(zeros_shape), diffs) ./ deltaB;
+	fdF = cat(dim, diffs, zeros(zeros_shape)) ./ deltaF;
 end
