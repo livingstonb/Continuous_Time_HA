@@ -142,8 +142,8 @@ classdef Params < handle
     methods
         function obj = Params(runopts,params)
 
-        	import HACT_Tools.options.HJBOptions
-        	import HACT_Tools.options.KFEOptions
+        	import HACT_Tools.algorithms.HJBOptions
+        	import HACT_Tools.algorithms.KFEOptions
 
 			 % allow some properties to be set by params structure
             if nargin > 1

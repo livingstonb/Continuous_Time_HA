@@ -18,24 +18,24 @@ classdef HJBOptions
 	properties (SetAccess=private)
 		% Set to true for fully implicit updating.
 		implicit (1,1) logical...
-			= HACT_Tools.options.HJBOptions.default_implicit;
+			= HACT_Tools.algorithms.HJBOptions.default_implicit;
 
 		% Step size.
 		delta (1,1) double {mustBePositive}...
-			= HACT_Tools.options.HJBOptions.default_delta;
+			= HACT_Tools.algorithms.HJBOptions.default_delta;
 
 		% Max number of iterations for the Howard Improvement tep.
 		HIS_maxiters (1,1) uint16...
-			= HACT_Tools.options.HJBOptions.default_HIS_maxiters;
+			= HACT_Tools.algorithms.HJBOptions.default_HIS_maxiters;
 
 		% Tolerance for the Howard Improvement Step.
 		HIS_tol (1,1) double...
-			= HACT_Tools.options.HJBOptions.default_HIS_tol;
+			= HACT_Tools.algorithms.HJBOptions.default_HIS_tol;
 
 		% Number of HJB iterations before startin the Howard
 		% Improvement step.
 		HIS_start (1,1) uint16...
-			= HACT_Tools.options.HJBOptions.default_HIS_start;
+			= HACT_Tools.algorithms.HJBOptions.default_HIS_start;
 	end
 
 	methods

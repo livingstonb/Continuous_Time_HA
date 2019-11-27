@@ -73,7 +73,7 @@ classdef (Abstract) HJBBase < handle
 			% documentation to see the requirements of the
 			% input parameters.
 
-			import HACT_Tools.options.HJBOptions
+			import HACT_Tools.algorithms.HJBOptions
 
 			% ---------------------------------------------------------
 			% Validate Input Arguments and Set Options

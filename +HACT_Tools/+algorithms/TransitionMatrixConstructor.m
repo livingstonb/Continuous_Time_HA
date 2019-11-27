@@ -99,9 +99,7 @@ classdef TransitionMatrixConstructor < handle
             obj.shape = [obj.nb obj.na obj.nz obj.ny];
 
             obj.gridtype = grids.gtype;
-
             obj.grids = grids;
-            
             obj.p = p;
 
             obj.returns_risk = returns_risk;
@@ -120,7 +118,7 @@ classdef TransitionMatrixConstructor < handle
         %% --------------------------------------------------------------------
         % Construct the A Matrix
         % ---------------------------------------------------------------------
-        function [A, stationary] = construct(obj, model, V)
+        function [A, stationary, drifts] = construct(obj, model, V)
             % Constructs the transition matrix.
             %
             % Parameters
@@ -137,60 +135,51 @@ classdef TransitionMatrixConstructor < handle
             % stationary : A boolean mask indicating states where drift in the
             %   risky asset was neither backward nor forward. Risk computations
             %   for these states will be included outside the A matrix.
+            
+            drifts = obj.compute_asset_drifts(model);
 
-            % Policy functions
-            s = model.s;
-            d = model.d;
-
-            %% --------------------------------------------------------------------
-            % Compute Asset Drifts
-            % ---------------------------------------------------------------------
-            if strcmp(obj.gridtype,'KFE')
-                adriftB = min(model.d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
-                                                         + obj.p.directdeposit * obj.y_mat,0);
-                adriftF = max(model.d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
-                                                         + obj.p.directdeposit * obj.y_mat,0);
-
-                bdriftB = min(model.s - model.d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0);
-                bdriftF = max(model.s - model.d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0);
-            elseif strcmp(obj.gridtype,'HJB')
-                adriftB = min(model.d, 0)...
-                	+ min(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
-                	+ obj.p.directdeposit * obj.y_mat,0);
-                adriftF = max(model.d, 0)...
-                	+ max(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
-                	+ obj.p.directdeposit * obj.y_mat,0);
-
-                bdriftB = min(-model.d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0)...
-                	+ min(model.s, 0);
-                bdriftF = max(-model.d - aux.AdjustmentCost.cost(d,obj.grids.a.matrix,obj.p),0)...
-                	+ max(model.s, 0);    
-            end
-
-            A = obj.compute_liquid_transitions(bdriftB, bdriftF);
-
-            A = A + obj.compute_illiquid_transitions(adriftB, adriftF);
+            A = obj.compute_liquid_transitions(drifts.b_B, drifts.b_F);
+            A = A + obj.compute_illiquid_transitions(drifts.a_B, drifts.a_F);
 
             stationary = [];
             if obj.returns_risk
             	A = A + obj.compute_Vaa_terms();
-
-            	% Does nothing unless using stochastic differential
-            	% utility.
-            	if obj.p.OneAsset
-            		[Va_terms, stationary] = obj.compute_Va_terms(bdriftB, bdriftF, V);
-	            else
-	            	[Va_terms, stationary] = obj.compute_Va_terms(adriftB, adriftF, V);
-	            end
-
-	            if numel(Va_terms) > 1
-	            	A = A + Va_terms;
-		        end
-            end
-        end
+            end  
+        endd
     end
 
     methods (Access=protected)
+    	%% --------------------------------------------------------------------
+        % Compute Asset Drifts
+        % ---------------------------------------------------------------------
+        function drifts = compute_asset_drifts(obj, model)
+        	% Approximates the drifts of the liquid and illiquid assets.
+        	% The input variable 'model' must contain the policy
+        	% functions 's' and 'd'.
+
+            if strcmp(obj.gridtype,'KFE')
+                drifts.a_B = min(model.d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
+                            + obj.p.directdeposit * obj.y_mat,0);
+                drifts.a_F = max(model.d + obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
+                            + obj.p.directdeposit * obj.y_mat,0);
+                drifts.b_B = min(model.s - model.d - aux.AdjustmentCost.cost(...
+                	model.d, obj.grids.a.matrix, obj.p), 0);
+                drifts.b_F = max(model.s - model.d - aux.AdjustmentCost.cost(...
+                	model.d, obj.grids.a.matrix, obj.p), 0);
+            elseif strcmp(obj.gridtype, 'HJB')
+                drifts.a_B = min(model.d, 0)...
+                	+ min(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate * obj.p.perfectannuities)...
+                	+ obj.p.directdeposit * obj.y_mat, 0);
+                drifts.a_F = max(model.d, 0)...
+                	+ max(obj.grids.a.matrix * (obj.p.r_a + obj.p.deathrate * obj.p.perfectannuities)...
+                	+ obj.p.directdeposit * obj.y_mat, 0);
+                drifts.b_B = min(-model.d - aux.AdjustmentCost.cost(model.d, obj.grids.a.matrix, obj.p), 0)...
+                	+ min(model.s, 0);
+                drifts.b_F = max(-model.d - aux.AdjustmentCost.cost(model.d, obj.grids.a.matrix, obj.p), 0)...
+                	+ max(model.s, 0);    
+            end
+        end
+
     	%% --------------------------------------------------------------------
         % Liquid Asset Transitions
         % ---------------------------------------------------------------------
@@ -304,11 +293,6 @@ classdef TransitionMatrixConstructor < handle
             V_i_plus_1_term(obj.top) = 0;
 
             Arisk_Vaa = obj.put_on_diags(V_i_minus_1_term, V_i_term, V_i_plus_1_term, obj.shift_dimension);
-        end
-
-        function [out1, out2]  = compute_Va_terms(obj, varargin)
-        	out1 = 0;
-        	out2 = [];
         end
 
         function A = put_on_diags(obj, lower, middle, upper, shift_dim)

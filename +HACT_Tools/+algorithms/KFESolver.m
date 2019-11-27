@@ -65,7 +65,7 @@ classdef KFESolver
 			% object. If this argument is not passed, the default
 			% options will be used. See KFEOptions for more details.
 
-			import HACT_Tools.options.KFEOptions
+			import HACT_Tools.algorithms.KFEOptions
 			
 			obj.p = p;
 			obj.income = income;
