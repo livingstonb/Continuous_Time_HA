@@ -1,14 +1,16 @@
 
-function d = upwind_deposits(Vb, Va, adjcost, opt_d)
+function [d, Ic_special] = upwind_deposits(Vb, Va, adjcost, opt_d)
     % Performs upwinding for the deposit rate.
     %
     % Inputs
     % ------
-    % Vb : The approximate derivative of V w.r.t. liquid
-    %   assets.
+    % Vb : A structure containing the approximate derivatives
+    %   of V w.r.t. the liquid asset, from backward/forward
+    %   first differences.
     %
-    % Va : The approximate derivative of V w.r.t. illiquid
-    %   assets.
+    % Va : A structure containing the approximate derivatives
+    %   of V w.r.t. the illiquid asset, from backward/forward
+    %   first differences.
     %
     % adjcost : A function handle s.t. adjcost(d) returns
     %   an array of adjustment costs of shape size(d).
@@ -62,8 +64,8 @@ function d = upwind_deposits(Vb, Va, adjcost, opt_d)
         & validBB & (~Ic_special);
     Ic00  = (~validFB) & (~validBF) & (~validBB) & (~Ic_special);
 
-    Isum = Ic_special+IcFB+IcBF+IcBB+Ic00;
-    if ~isequal(Isum, ones(size(Isum)), 'logical')
+    Isum = Ic_special + IcFB + IcBF + IcBB + Ic00;
+    if ~isequal(Isum, ones(size(Isum)))
         error('HACT:upwind_deposits:LogicError',...
             'Logicals do not sum to unity')
     end
