@@ -51,7 +51,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
         utility1inv = @(x) (x ./ rho_mat_adj) .^ (-1/p.invies);
     end
 
-    if p.endogenousLabor == 1
+    if p.endogenous_labor == 1
         labordisutil = @(h) p.labor_disutility * (h .^ (1 + 1/p.frisch)) ./ (1 + 1/p.frisch);
         labordisutil1 = @(h) p.labor_disutility * (h .^ (1./p.frisch));
         labordisutil1inv = @(v) (v./p.labor_disutility) .^ p.frisch;
@@ -62,14 +62,6 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
 	% ---------------------------------------------------------------------
 	Vamin = 0;
     Vbmin = 1e-8;
-
-    if p.endogenousLabor == 0
-        bdrift_without_c = (1-p.directdeposit-p.wagetax) .* y_mat...
-            + grd.b.matrix .* (r_b_mat + p.deathrate*p.perfectannuities) + p.transfer;
-    else
-        bdrift_without_c = @(h) (1-p.directdeposit-p.wagetax) .* h .* y_mat...
-            + grd.b.matrix .* (r_b_mat + p.deathrate*p.perfectannuities) + p.transfer;
-    end
 
 	sspace_shape = [nb, na, nz, ny];
 
@@ -88,59 +80,51 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     cF(nb,:,:,:) = 0;
 
     % hours worked from forward-difference
-    if p.endogenousLabor == 0
-        partial_drift = bdrift_without_c;
-    else
+    if p.endogenous_labor
         hoursF = labordisutil1inv(y_mat .* Vb.F);
         hoursF = min(hoursF, 1);
-
-        partial_drift = bdrift_without_c(hoursF);
+        sF = income.nety_HJB_liq(hoursF)
+    else
+        sF = income.nety_HJB_liq - cF;
     end
-
-    sF = partial_drift - cF;
     sF(nb,:,:,:) = 0; % impose a state constraint at the top to improve stability
 
     HcF = utility(cF) + Vb.F .* sF;
     HcF(nb,:,:,:) = -1e12;
 
-    if p.endogenousLabor == 1
+    if p.endogenous_labor
         HcF = HcF - labordisutil(hoursF);
     end
 
     validcF = cF > 0;
 
     % consumption and savings from backward-differenced V
+    cB  = utility1inv(Vb.B);
+    cB(1,:,:,:) = income.nety_HJB_liq(1,:,:,:);
     
-
-    if p.endogenousLabor == 0
-        partial_drift = bdrift_without_c;
-    else
-        partial_drift = bdrift_without_c(hoursB);
+    if p.endogenous_labor
         hoursB = labordisutil1inv(y_mat .* Vb.B);
         hoursB = min(hoursB, 1);
+        sB = income.nety_HJB_liq(hoursB) - cB;
+    else
+        sB = income.nety_HJB_liq - cB;
     end
-
-    cB  = utility1inv(Vb.B);
-    cB(1,:,:,:) = partial_drift(1,:,:,:);
-    
-    sB = partial_drift - cB;
     sB(1,:,:,:) = 0;
 
     HcB = utility(cB) + Vb.B .* sB;
-
-    if p.endogenousLabor == 1
+    if p.endogenous_labor
         HcB = HcB - labordisutil(hoursB);
     end
 
     validcB = cB > 0;
 
     % no drift
-    c0 = bdrift_without_c;
+    c0 = income.nety_HJB_liq;
     s0 = zeros(nb,na,nz,ny);
 
     Hc0 = utility(c0);
 
-    validc0         = c0 > 0;
+    validc0 = c0 > 0;
 
      % Upwinding direction: consumption
     IcF = validcF & (sF > 0) & ((sB>=0) | ((HcF>=HcB) | ~validcB)) & ((HcF>=Hc0) | ~validc0);
@@ -175,7 +159,8 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     HdBF(nb,2:na,:,:) = -1.0e12;
     validBF = (dBF <= - adjcost(dBF)) & (HdBF > 0);
 
-    Vb.B(1,2:na,:,:) = utility(cB(1,2:na,:,:));
+    % Vb.B(1,2:na,:,:) = utility(cB(1,2:na,:,:));
+    Vb.B(1,2:na,:,:) = utility1(cB(1,2:na,:,:));
 
     dBB = opt_d(Va.B, Vb.B);
     dBB(:,1,:,:) = 0;

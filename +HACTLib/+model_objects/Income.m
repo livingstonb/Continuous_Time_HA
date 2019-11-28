@@ -23,6 +23,12 @@ classdef Income < handle
 		% Indicator of whether or not the all of the grids
         % have been initialized.
         fully_initialized = false;
+
+        % Net income accruing to the liquid asset, over the HJB grids.
+        nety_HJB_liq;
+
+        % Net income accruing to the liquid asset, over the KFE grids.
+        nety_KFE_liq;
 	end
 
 	methods
@@ -118,6 +124,29 @@ classdef Income < handle
 		    obj.y.matrix = repmat(obj.y.wide,[p.nb p.na p.nz 1]);
             obj.y.matrixKFE = repmat(obj.y.wide,[p.nb_KFE p.na_KFE p.nz 1]);
             obj.fully_initialized = true;
+        end
+
+        function set_net_income(obj, p, gridsHJB, gridsKFE)
+        	% Sets the net income attributes (for income accruing to the liquid asset).
+        	% If labor is endogenous, a function handle is returned, otherwise an
+        	% array is returned.
+
+        	r_b_HJB = p.r_b .* (gridsHJB.b.matrix>=0) +  p.r_b_borr .* (gridsHJB.b.matrix<0);
+        	r_b_KFE = p.r_b .* (gridsKFE.b.matrix>=0) +  p.r_b_borr .* (gridsKFE.b.matrix<0);
+
+        	if p.endogenous_labor
+	        	obj.nety_HJB_liq = @(h) (1-p.directdeposit - p.wagetax) * obj.y.matrix .* h ...
+		            + (r_b_HJB + p.deathrate*p.perfectannuities) .* gridsHJB.b.matrix + p.transfer;
+
+	            obj.nety_KFE_liq = @(h) (1-p.directdeposit - p.wagetax) * obj.y.matrixKFE .* h ...
+		            + (r_b_KFE + p.deathrate*p.perfectannuities) .* gridsKFE.b.matrix + p.transfer;
+	        else
+	        	obj.nety_HJB_liq = (1-p.directdeposit - p.wagetax) * obj.y.matrix ...
+		            + (r_b_HJB + p.deathrate*p.perfectannuities) .* gridsHJB.b.matrix + p.transfer;
+
+	            obj.nety_KFE_liq = (1-p.directdeposit - p.wagetax) * obj.y.matrixKFE ...
+		            + (r_b_KFE + p.deathrate*p.perfectannuities) .* gridsKFE.b.matrix + p.transfer;
+        	end
         end
 
         function inctrans = income_transition_matrix_SDU(obj, p, V)

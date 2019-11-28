@@ -28,55 +28,55 @@ classdef ParamsBase < handle
         temp_dir;
 
         %% -------------------------------------------
-		% Liquid Asset Grid Parameters
-		% --------------------------------------------
+	% Liquid Asset Grid Parameters
+	% --------------------------------------------
         % Min value of liquid assets
-		bmin = 0;
+	bmin = 0;
 
-		% Minimum value of liquid assets before
-		% borrowing wedge kicks in
-		b_soft_constraint = 0;
+	% Minimum value of liquid assets before
+	% borrowing wedge kicks in
+	b_soft_constraint = 0;
 
-		% Max value for liquid assets
-		bmax = 50;
+	% Max value for liquid assets
+	bmax = 50;
 
-		% Curvature of positive section of liquid asset,
-		% lower value implies more curvature
-		b_gcurv_pos = 0.2;
+	% Curvature of positive section of liquid asset,
+	% lower value implies more curvature
+	b_gcurv_pos = 0.2;
 
-		% Curvature of negative section of liquid asset,
-		% lower value implies more curvature
-		b_gcurv_neg = 0.4;
+	% Curvature of negative section of liquid asset,
+	% lower value implies more curvature
+	b_gcurv_neg = 0.4;
 
-		% Number of points on liquid asset grid
+	% Number of points on liquid asset grid
         nb = 150;
         
         % Number of points on positive section of liquid
         % asset grid, defaults to nb
-		nb_pos;
+	nb_pos;
 
-		% Number of points on negative section of liquid
-		% asset grid, defaults to 0
+	% Number of points on negative section of liquid
+	% asset grid, defaults to 0
         nb_neg;
 
         % Number of points on liquid asset grid for the KFE
-		nb_KFE = 150;
+	nb_KFE = 150;
 
-		% Number of points on positive section of liquid
-		% asset grid for the KFE, defaults to nb_KFE
-		nb_pos_KFE;
+	% Number of points on positive section of liquid
+	% asset grid for the KFE, defaults to nb_KFE
+	nb_pos_KFE;
 
-		% Number of points on negative section of liquid
-		% asset grid for the KFE, defaults to 0
+	% Number of points on negative section of liquid
+	% asset grid for the KFE, defaults to 0
         nb_neg_KFE;
 
         %% -------------------------------------------
-		% Illiquid Asset Grid Parameters
-		% --------------------------------------------
-		% Min value of illiquid assets
-		amin = 0;
+	% Illiquid Asset Grid Parameters
+	% --------------------------------------------
+	% Min value of illiquid assets
+	amin = 0;
 
-		% Max value of illiquid assets
+	% Max value of illiquid assets
         amax = 200;
 
         % Number of points on the illiquid asset grid
@@ -91,8 +91,8 @@ classdef ParamsBase < handle
         na_KFE = 120;
 
         %% -------------------------------------------
-		% Other Parameters
-		% --------------------------------------------
+	% Other Parameters
+	% --------------------------------------------
         % Number of income states
         ny;
 
@@ -104,12 +104,12 @@ classdef ParamsBase < handle
         min_grid_spacing = 0.001;
         
 	    %% -------------------------------------------
-		% Returns
-		% --------------------------------------------
-		% Liquid returns, at a quarterly rate
-		r_b = 0.02 / 4;
+	% Returns
+	% --------------------------------------------
+	% Liquid returns, at a quarterly rate
+	r_b = 0.02 / 4;
 
-		% Illiquid returns, at a quarterly rate
+	% Illiquid returns, at a quarterly rate
         r_a = 0.06/4;
 
         % Annuities, 0 turns off annuities
@@ -130,11 +130,11 @@ classdef ParamsBase < handle
         % returns risk in the KFE
         retrisk_KFE = false;
 
-		%% -------------------------------------------
-		% Preferences
-		% --------------------------------------------
+	%% -------------------------------------------
+	% Preferences
+	% --------------------------------------------
 
-		% Stochastic differential utility
+	% Stochastic differential utility
         SDU = false;
 
         % Coefficient of risk aversion, can be set
@@ -147,58 +147,58 @@ classdef ParamsBase < handle
 
         % Array of risk aversion coefficients, set
         % automatically
-		riskaver_fulldim;
+	riskaver_fulldim;
 
-		% Transition into death, at a quarterly rate
-		deathrate = 1 /200;
+	% Transition into death, at a quarterly rate
+	deathrate = 1 /200;
 
-		% Time discount factor, at a quarterly rate
-		rho = 0.015;
+	% Time discount factor, at a quarterly rate
+	rho = 0.015;
 
-		% Grid for rho values if there is rho
-		% heterogeneity, automatically set to
-		% rho + rho_grid
-		rhos;
+	% Grid for rho values if there is rho
+	% heterogeneity, automatically set to
+	% rho + rho_grid
+	rhos;
 
-		% Grid to accomodate rho heterogeneity
-		rho_grid;
+	% Grid to accomodate rho heterogeneity
+	rho_grid;
 
-		% ------------ taxes ------------------------------
-		transfer = 0; % transfer to households 
-		wagetax = 0; % tax rate on wage income
+	% ------------ taxes ------------------------------
+	transfer = 0; % transfer to households 
+	wagetax = 0; % tax rate on wage income
 
-		% ------------ targets ----------------------------
-		targetAY = 3.5; % target for mean assets / mean annual income
+	% ------------ targets ----------------------------
+	targetAY = 3.5; % target for mean assets / mean annual income
 
-		% ------------ approximation parameters -----------
-		% HJB loop
-		hjb_options;
-		HJB_maxiters = 2000; % maximal allowable number of HJB iterations
-		HJB_tol = 1e-8; % critical value
-		HJB_delta = 1e6; % step size
+	% ------------ approximation parameters -----------
+	% HJB loop
+	hjb_options;
+	HJB_maxiters = 2000; % maximal allowable number of HJB iterations
+	HJB_tol = 1e-8; % critical value
+	HJB_delta = 1e6; % step size
         HJB_implicit = false;
 
-		% Howard improvement step in HJB loop
-		HIS_maxiters = 10; % total number of Howard improvement steps
-		HIS_start = 2; % when in HJB loop do Howard improvement steps begin?
-		HIS_tol= 1e-5; % critical value
+	% Howard improvement step in HJB loop
+	HIS_maxiters = 10; % total number of Howard improvement steps
+	HIS_start = 2; % when in HJB loop do Howard improvement steps begin?
+	HIS_tol= 1e-5; % critical value
 
-		% KFE loop
-		kfe_options;
-		KFE_maxiters = 1e4; % maximal allowable number of KFE iterations
-		KFE_tol = 1e-8; % critical value
-		KFE_delta = 1e6; %1e6; % step size
+	% KFE loop
+	kfe_options;
+	KFE_maxiters = 1e4; % maximal allowable number of KFE iterations
+	KFE_tol = 1e-8; % critical value
+	KFE_delta = 1e6; %1e6; % step size
         KFE_iterative = true;
 
-		% Outer assets-income ratio grid
-		maxit_AY = 100; % maximal allowable number of loops over capital-labor ratio
-		crit_AY = 1e-7; % critical value
+	% Outer assets-income ratio grid
+	maxit_AY = 100; % maximal allowable number of loops over capital-labor ratio
+	crit_AY = 1e-7; % critical value
 
         % Step-size for Feynman-Kac formula
         delta_mpc = 0.025;
 
         % marginal product of labor/capital
-        endogenousLabor = 0;
+        endogenous_labor = false;
         labor_disutility = 1;
         frisch = 0.5;
         MPL = 1;

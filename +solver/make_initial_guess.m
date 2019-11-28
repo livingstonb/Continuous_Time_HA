@@ -60,21 +60,17 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
         deltas(:, 1) = 2 * grids.a.dF(:, 1);
         deltas(:, na) = 2 * grids.a.dB(:, na);
 
-        updiag = zeros(nb, na, nz, ny);
-        centdiag = zeros(nb, na, nz, ny);
-        lowdiag = zeros(nb, na, nz, ny);
-        
-        updiag(:, 1:na-1, :, :) = repmat(1 ./ grids.a.dF(:, 1:na-1), [1 1 nz ny]);
+        updiag = repmat(1 ./ grids.a.dF, [1 1 nz ny]);
 
-        centdiag(:, 1:na-1, :, :) = - repmat(1 ./ grids.a.dF(:, 1:na-1) + 1 ./ grids.a.dB(:, 1:na-1), [1 1 nz ny]);
-        centdiag(:, na, :, :) = - repmat(1 ./ grids.a.dB(:, na), [1 1 nz ny]);
+        centdiag = - repmat(1 ./ grids.a.dF + 1 ./ grids.a.dB, [1 1 nz ny]);
+        centdiag(:,na,:,:) = - repmat(1 ./ grids.a.dB(:,na), [1 1 nz ny]);
 
-        lowdiag(:, 1:na-1, :, :) = repmat(1 ./ grids.a.dB(:, 1:na-1), [1 1 nz ny]);
-        lowdiag(:, na, :, :) = repmat(1 ./ grids.a.dB(:, na), [1 1 nz ny]);
+        lowdiag = repmat(1 ./ grids.a.dB, [1 1 nz ny]);
+        lowdiag(:,na,:,:) = repmat(1 ./ grids.a.dB(:,na), [1 1 nz ny]);
         
-        updiag(:, 1, :, :) = 0;
-        centdiag(:, 1, :, :) = 0;
-        lowdiag(:, 1, :, :) = 0;
+        updiag(:,1, :,:) = 0;
+        centdiag(:,1,:,:) = 0;
+        lowdiag(:,1,:,:) = 0;
 
         risk_adj = (grids.a.matrix .* p.sigma_r) .^ 2;
 
@@ -82,12 +78,9 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
         centdiag = risk_adj .* centdiag ./ deltas;
         lowdiag = risk_adj .* lowdiag ./ deltas;
 
-        updiag = circshift(reshape(updiag, nb*na, nz, ny), nb);
-        lowdiag = circshift(reshape(lowdiag, nb*na, nz, ny), -nb);
-
-        Arisk = spdiags(updiag(:), nb, dim, dim)...
-        	+ spdiags(centdiag(:), 0, dim, dim)...
-        	+ spdiags(lowdiag(:), -nb, dim, dim);
+        Arisk = HACTLib.aux.sparse_diags(...
+            [lowdiag(:), centdiag(:), updiag(:)],...
+            [-nb, 0, nb]);
     else
         Arisk = sparse(dim, dim);
     end

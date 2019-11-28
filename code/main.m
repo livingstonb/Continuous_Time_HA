@@ -21,7 +21,11 @@ function [stats,p] = main(runopts, p)
     % CREATE GRID, INCOME OBJECTS
     % ---------------------------------------------------------------------
 	income_path = fullfile(runopts.direc, 'input', p.income_dir);
+
+    % Main income process
 	income = Income(income_path, p,false);
+
+    % Turn off income risk (set y equal to the mean)
     income_norisk = Income(runopts.direc, p, true);
 
     p.set("ny", income.ny, true);
@@ -37,6 +41,9 @@ function [stats,p] = main(runopts, p)
     	grdKFE.add_zgrid(p.rhos',p.na_KFE);
     	grdKFE_norisk.add_zgrid(p.rhos',p.na_KFE);
     end
+
+    % Add net income variables
+    income.set_net_income(p, grd, grdKFE);
     
     if p.bmin < 0
         % check that borrowing limit does not violate NBL
