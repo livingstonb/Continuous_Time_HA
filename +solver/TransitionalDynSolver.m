@@ -79,7 +79,8 @@ classdef TransitionalDynSolver < handle
 
             % initialize constructors of the A matrix
             returns_risk = (obj.p.sigma_r > 0);
-		    obj.A_constructor_HJB = solver.A_Matrix_Constructor(obj.p, obj.income, obj.grids, 'KFE', returns_risk);
+		    obj.A_constructor_HJB = HACTLib.computation.TransitionMatrixConstructor(...
+                obj.p, obj.income, obj.grids, 'KFE', returns_risk);
 
 		    % if returns are risky and returns risk is used in the KFE,
 		    % this A constructor will be used instead:

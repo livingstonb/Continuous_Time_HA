@@ -2,7 +2,6 @@ classdef Params < HACTLib.defaults.ParamsDefaults
     % This class stores the parameters of the model and contains methods to
     % adjust them for frequency and other factors.
     %
-    % 
     % See the base class, ParamsDefaults, for default values.
 
     methods
@@ -207,7 +206,6 @@ classdef Params < HACTLib.defaults.ParamsDefaults
             end
 
             fprintf('\tBequests = %i\n',obj.Bequests)
-            fprintf('\tResetIncomeUponDeath %i\n',obj.ResetIncomeUponDeath)
             fprintf('\n')
 
             fprintf('\tr_b = %f\n',obj.r_b)

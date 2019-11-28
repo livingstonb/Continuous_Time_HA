@@ -44,6 +44,7 @@ function [stats,p] = main(runopts, p)
 
     % Add net income variables
     income.set_net_income(p, grd, grdKFE);
+    income_norisk.set_net_income(p, grd_norisk, grdKFE_norisk);
     
     if p.bmin < 0
         % check that borrowing limit does not violate NBL
@@ -73,14 +74,12 @@ function [stats,p] = main(runopts, p)
     % -----------------------------------------------------------------
     stats.mpcs = struct();
 
-    if p.SDU == 1
-        mpc_finder = statistics.MPCFinder(p,income,grdKFE);
-    else
-        mpc_finder = statistics.MPCFinder(p,income,grdKFE);
-    end
+    import HACTLib.computation.MPCs
+    MPCoptions = {'delta', p.MPCs_delta,'interp_method', 'linear'};
+    mpc_finder = MPCs(p, income, grdKFE, MPCoptions{:});
 
     shocks = [4,5,6];
-    trans_dyn_solver = solver.TransitionalDynSolver(p,income,grdKFE,shocks);
+%     trans_dyn_solver = solver.TransitionalDynSolver(p,income,grdKFE,shocks);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')
@@ -129,7 +128,7 @@ function [stats,p] = main(runopts, p)
     %% ----------------------------------------------------------------
     % MPCs WITHOUT INCOME RISK
     % -----------------------------------------------------------------
-    mpc_finder_norisk = statistics.MPCFinder(...
+    mpc_finder_norisk = HACTLib.computation.MPCs(...
     	p,income_norisk,grdKFE_norisk);
     
     if p.ComputeMPCS == 1

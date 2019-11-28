@@ -10,7 +10,7 @@ classdef TransitionMatrixConstructorSDU < HACTLib.computation.TransitionMatrixCo
 	            else
 	            	A = A + obj.compute_Va_terms(drifts.a_B, drifts.a_F, V);
 	            end
-            end  
+            end 
 		end
 	end
 

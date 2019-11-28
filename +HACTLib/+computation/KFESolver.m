@@ -6,8 +6,7 @@ classdef KFESolver
 
 	properties (Constant)
 		% Update this array when the required parameters change.
-		required_parameters = {'nb_KFE', 'na_KFE', 'nz',...
-					'deathrate', 'ResetIncomeUponDeath'};
+		required_parameters = {'nb_KFE', 'na_KFE', 'nz', 'deathrate'};
 
 		% Update this array when the required income variables
 		% change.
@@ -30,10 +29,6 @@ classdef KFESolver
 		%
 		%		deathrate >= 0
 		%		- Poisson rate of death.
-		%
-		%		ResetIncomeUponDeath, true/false
-		%		- Boolean indicator of whether or not income should be
-		%		  redrawn from the stationary distribution upon death.
 		p;
 
 		%	'income' is an Income object or any object with the following
@@ -218,14 +213,9 @@ classdef KFESolver
 		end
 
 		function death_inflows  = compute_death_inflows(obj, gg_tilde, iy)
-	    	if (obj.p.Bequests == 1) && (obj.p.ResetIncomeUponDeath == 1)
-                death_inflows = obj.p.deathrate * obj.income.ydist(iy) * sum(reshape(gg_tilde, [], obj.income.ny), 2);
-            elseif (obj.p.Bequests == 1) && (obj.p.ResetIncomeUponDeath == 0)
+	    	if obj.p.Bequests
                 death_inflows = obj.p.deathrate * gg_tilde(1+(iy-1)*(obj.nb_KFE*obj.na_KFE*obj.nz):iy*(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz));
-            elseif (obj.p.Bequests == 0) && (obj.p.ResetIncomeUponDeath == 1)
-                death_inflows = sparse(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz,1);
-                death_inflows(1:obj.p.nb_KFE*obj.p.na_KFE:end) = obj.p.deathrate * obj.income.ydist(iy) * (1/obj.p.nz);
-            elseif (obj.p.Bequests == 0) && (obj.p.ResetIncomeUponDeath == 0)
+            else
                 death_inflows = sparse(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz,1);
                 death_inflows(obj.grdKFE.loc0b0a:obj.p.nb_KFE*obj.p.na_KFE:end) = obj.p.deathrate * obj.income.ydist(iy) * (1/obj.p.nz);
 	    	end

@@ -72,20 +72,30 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     Vb.B(2:nb,:,:,:) = max(Vb.B(2:nb,:,:,:), Vbmin);
     Vb.F(1:nb-1,:,:,:) = max(Vb.F(1:nb-1,:,:,:), Vbmin);
 
-    nety_mat = (1-p.wagetax) * income.y.matrix;
+    if strcmp(grd.gtype, 'HJB')
+        nety_mat = (1-p.wagetax) * income.y.matrix;
+    else
+        nety_mat = (1-p.wagetax) * income.y.matrixKFE;
+    end
     hours_fn = @(Vb) labordisutil1inv(nety_mat .* Vb);
 
     import HACTLib.computation.upwind_consumption
+    
+    if strcmp(grd.gtype, 'HJB')
+        net_income_liq = income.nety_HJB_liq;
+    else
+        net_income_liq = income.nety_KFE_liq;
+    end
 
     if p.endogenous_labor
-        upwindB = upwind_consumption(income, Vb.B,...
+        upwindB = upwind_consumption(net_income_liq, Vb.B,...
                     'B', prefs, hours_fn, labordisutil);
-        upwindF = upwind_consumption(income, Vb.F,...
+        upwindF = upwind_consumption(net_income_liq, Vb.F,...
                     'F', prefs, hours_fn, labordisutil);
     else
-        upwindB = upwind_consumption(income, Vb.B, 'B',...
+        upwindB = upwind_consumption(net_income_liq, Vb.B, 'B',...
                     prefs);
-        upwindF = upwind_consumption(income, Vb.F, 'F',...
+        upwindF = upwind_consumption(net_income_liq, Vb.F, 'F',...
                     prefs);
     end
 
@@ -96,7 +106,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     validcB = upwindB.c > 0;
 
     % no drift
-    c0 = income.nety_HJB_liq;
+    c0 = net_income_liq;
     s0 = zeros(nb,na,nz,ny);
 
     Hc0 = prefs.u(c0);
@@ -136,7 +146,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
         + p.directdeposit .* y_mat + d;
 
     %% --------------------------------------------------------------------
-    % FIRST DIFF OF VALUE FUNCTION FOR SDU WITH RETURNS RISK
+    % DERIVATIVE OF VALUE FUNCTION FOR SDU WITH RETURNS RISK
     % ---------------------------------------------------------------------
     if (p.sigma_r > 0) && (p.OneAsset == 1)
         V_deriv_risky_asset_nodrift = prefs.u1(c);

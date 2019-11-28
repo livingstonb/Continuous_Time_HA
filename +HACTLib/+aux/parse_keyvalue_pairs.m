@@ -6,7 +6,12 @@ function options = parse_keyvalue_pairs(defaults, varargin)
 	% of 'defaults', an error is thrown by the parser.
 
 	parser = inputParser;
-	for field = properties(defaults)'
+    if isstruct(defaults)
+        attributes = fieldnames(defaults)';
+    else
+        attributes = properties(defaults)';
+    end
+	for field = attributes
 		addParameter(parser, char(field), defaults.(char(field)));
 	end
 	parse(parser, varargin{:});

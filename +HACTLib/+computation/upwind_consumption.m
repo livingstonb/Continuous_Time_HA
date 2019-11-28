@@ -1,4 +1,4 @@
-function out = upwind_consumption(income, Vb_fd, direction,...
+function out = upwind_consumption(net_income_liq, Vb_fd, direction,...
 	prefs, hours_fn, labor_disutil)
 
 	endogenous_labor = (nargin > 5);
@@ -13,7 +13,7 @@ function out = upwind_consumption(income, Vb_fd, direction,...
 	out.c = prefs.u1inv(Vb_fd);
 
 	if strcmp(direction, 'B')
-		out.c(1,:,:,:) = income.nety_HJB_liq(1,:,:,:);
+		out.c(1,:,:,:) = net_income_liq(1,:,:,:);
 	else
     	out.c(nb,:,:,:) = 0;
     end
@@ -22,9 +22,9 @@ function out = upwind_consumption(income, Vb_fd, direction,...
     if endogenous_labor
         out.hours = hours_fn(Vb_fd);
         out.hours = min(out.hours, 1);
-        out.s = income.nety_HJB_liq(out.hours) - out.c;
+        out.s = net_income_liq(out.hours) - out.c;
     else
-        out.s = income.nety_HJB_liq - out.c;
+        out.s = net_income_liq - out.c;
     end
 
     % Impose a state constraint to improve stability

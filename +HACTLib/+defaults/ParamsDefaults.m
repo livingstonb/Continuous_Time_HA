@@ -5,8 +5,7 @@ classdef ParamsDefaults < handle
         SimulateMPCS;
         ComputeMPCS_news;
         SimulateMPCS_news;
-        Bequests = 0;
-        ResetIncomeUponDeath = 0; % WARNING: keep = 0, may not be up to date
+        Bequests = false;
         SaveResults = 1;
         OneAsset = 1;
         DealWithSpecialCase;
@@ -141,8 +140,9 @@ classdef ParamsDefaults < handle
         % to a row vector to accomodate RA heterogeneity
 		riskaver = 1;
 
-        % Inverse of the IES, only relevant if using
-        % SDU preferences
+        % Inverse of the IES, only set this for SDU
+        % preferences. Otherwise it is automaticaly set
+        % equal to 'riskaver'.
         invies = 1;
 
         % Array of risk aversion coefficients, set
@@ -195,7 +195,7 @@ classdef ParamsDefaults < handle
     	crit_AY = 1e-7; % critical value
 
         % Step-size for Feynman-Kac formula
-        delta_mpc = 0.025;
+        MPCs_delta = 0.025;
 
         % marginal product of labor/capital
         endogenous_labor = false;
