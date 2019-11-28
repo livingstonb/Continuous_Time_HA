@@ -212,12 +212,9 @@ classdef Income < handle
 		        return;
 		    end
 
-		    nz = p.nz;
-		    ny = obj.ny;
-		    
+		    nz = p.nz; ny = obj.ny;
 		    shape = size(V);
-		    nb = shape(1);
-		    na = shape(2);
+		    nb = shape(1); na = shape(2);
 		    
 		    if p.invies ~= 1
 		    	if p.riskaver == 1

@@ -45,6 +45,9 @@ classdef HJBSolverSDU < HACTLib.computation.HJBBase
 	        Vn1 = reshape(Vn1, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
 
+		%%--------------------------------------------------------------
+	    % Implicit-Explicit Updating
+	    % --------------------------------------------------------------
 		function Vn1 = solve_implicit_explicit(obj, A, u, V, varargin)
 			obj.current_iteration = obj.current_iteration + 1;
 

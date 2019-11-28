@@ -20,8 +20,6 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     %	first derivative of V for the case with no drift
     %	in the risky asset
 
-    import HACTLib.computation.fd_firstorder
-
     na = numel(grd.a.vec);
     nb = numel(grd.b.vec);
     nz = p.nz;
@@ -51,7 +49,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
         utility1inv = @(x) (x ./ rho_mat_adj) .^ (-1/p.invies);
     end
 
-    if p.endogenous_labor == 1
+    if p.endogenous_labor
         labordisutil = @(h) p.labor_disutility * (h .^ (1 + 1/p.frisch)) ./ (1 + 1/p.frisch);
         labordisutil1 = @(h) p.labor_disutility * (h .^ (1./p.frisch));
         labordisutil1inv = @(v) (v./p.labor_disutility) .^ p.frisch;
@@ -64,7 +62,8 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     Vbmin = 1e-8;
 
 	sspace_shape = [nb, na, nz, ny];
-
+    import HACTLib.computation.fd_firstorder
+    
     % Derivatives illiquid assets
     Va = fd_firstorder(Vn, grd.a.dB, grd.a.dF, 2);
     Va.B(:,2:na,:,:) = max(Va.B(:,2:na,:,:), Vamin);
@@ -75,47 +74,32 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     Vb.B(2:nb,:,:,:) = max(Vb.B(2:nb,:,:,:), Vbmin);
     Vb.F(1:nb-1,:,:,:) = max(Vb.F(1:nb-1,:,:,:), Vbmin);
 
-    % consumption and savings from forward-differenced V
-    cF = utility1inv(Vb.F);
-    cF(nb,:,:,:) = 0;
+    nety_mat = (1-p.wagetax) * income.y.matrix;
+    hours_fn = @(Vb) labordisutil1inv(nety_mat .* Vb);
 
-    % hours worked from forward-difference
+    import HACTLib.computation.upwind_consumption
+
     if p.endogenous_labor
-        hoursF = labordisutil1inv(y_mat .* Vb.F);
-        hoursF = min(hoursF, 1);
-        sF = income.nety_HJB_liq(hoursF)
+        upwindB = upwind_consumption(income, Vb.B,...
+                    'B', utility, utility1inv, hours_fn, labordisutil);
+        upwindF = upwind_consumption(income, Vb.F,...
+                    'F', utility, utility1inv, hours_fn, labordisutil);
     else
-        sF = income.nety_HJB_liq - cF;
+        upwindB = upwind_consumption(income, Vb.B, 'B',...
+                    utility, utility1inv);
+        upwindF = upwind_consumption(income, Vb.F, 'F',...
+                    utility, utility1inv);
     end
-    sF(nb,:,:,:) = 0; % impose a state constraint at the top to improve stability
 
-    HcF = utility(cF) + Vb.F .* sF;
-    HcF(nb,:,:,:) = -1e12;
+    cB = upwindB.c;
+    sB = upwindB.s;
+    HcB = upwindB.H;
 
-    if p.endogenous_labor
-        HcF = HcF - labordisutil(hoursF);
-    end
+    cF = upwindF.c;
+    sF = upwindF.s;
+    HcF = upwindF.H;
 
     validcF = cF > 0;
-
-    % consumption and savings from backward-differenced V
-    cB  = utility1inv(Vb.B);
-    cB(1,:,:,:) = income.nety_HJB_liq(1,:,:,:);
-    
-    if p.endogenous_labor
-        hoursB = labordisutil1inv(y_mat .* Vb.B);
-        hoursB = min(hoursB, 1);
-        sB = income.nety_HJB_liq(hoursB) - cB;
-    else
-        sB = income.nety_HJB_liq - cB;
-    end
-    sB(1,:,:,:) = 0;
-
-    HcB = utility(cB) + Vb.B .* sB;
-    if p.endogenous_labor
-        HcB = HcB - labordisutil(hoursB);
-    end
-
     validcB = cB > 0;
 
     % no drift
@@ -123,7 +107,6 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     s0 = zeros(nb,na,nz,ny);
 
     Hc0 = utility(c0);
-
     validc0 = c0 > 0;
 
      % Upwinding direction: consumption
