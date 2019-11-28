@@ -39,26 +39,12 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
         rho_mat_adj = rho_mat_adj + p.deathrate;
     end
 
+    import HACTLib.model_objects.Preferences
+    prefs = Preferences();
     if p.SDU == 0
-        % utility = @(x) aux.u_fn(x, p.riskaver_fulldim);
-        % utility1 = @(x) x .^ (-p.riskaver_fulldim);
-        % utility1inv = @(x) x .^ (-1./p.riskaver_fulldim);
-
-        import HACTLib.model_objects.Preferences
-
-        prefs = Preferences.set_crra(p.riskaver);
-        utility = @(x) CRRA.utility(x, p.riskaver);
-        utility1 = @(x) CRRA.marginal_utility(x, p.riskaver);
-        utility1inv = @(x) CRRA.u1inv(x, p.riskaver);
+        prefs.set_crra(p.invies);
     else
-        % utility = @(x) rho_mat_adj .* aux.u_fn(x, p.invies);
-        % utility1 = @(x) rho_mat_adj .* x .^ (-p.invies);
-        % utility1inv = @(x) (x ./ rho_mat_adj) .^ (-1/p.invies);
-
-        import HACTLib.model_objects.CRRA.*
-        utility = @(x) rho_mat_adj .* utility(x, p.invies);
-        utility1 = @(x) rho_mat_adj .* marginal_utility(x, p.invies);
-        utility1inv = @(x) (x ./ rho_mat_adj) .^ (-1/p.invies);
+        prefs.set_sdu(p.invies);
     end
 
     if p.endogenous_labor
@@ -93,43 +79,38 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
 
     if p.endogenous_labor
         upwindB = upwind_consumption(income, Vb.B,...
-                    'B', utility, utility1inv, hours_fn, labordisutil);
+                    'B', prefs, hours_fn, labordisutil);
         upwindF = upwind_consumption(income, Vb.F,...
-                    'F', utility, utility1inv, hours_fn, labordisutil);
+                    'F', prefs, hours_fn, labordisutil);
     else
         upwindB = upwind_consumption(income, Vb.B, 'B',...
-                    utility, utility1inv);
+                    prefs);
         upwindF = upwind_consumption(income, Vb.F, 'F',...
-                    utility, utility1inv);
+                    prefs);
     end
 
-    cB = upwindB.c;
-    sB = upwindB.s;
     HcB = upwindB.H;
-
-    cF = upwindF.c;
-    sF = upwindF.s;
     HcF = upwindF.H;
 
-    validcF = cF > 0;
-    validcB = cB > 0;
+    validcF = upwindF.c > 0;
+    validcB = upwindB.c > 0;
 
     % no drift
     c0 = income.nety_HJB_liq;
     s0 = zeros(nb,na,nz,ny);
 
-    Hc0 = utility(c0);
+    Hc0 = prefs.u(c0);
     validc0 = c0 > 0;
 
      % Upwinding direction: consumption
-    IcF = validcF & (sF > 0) & ((sB>=0) | ((HcF>=HcB) | ~validcB)) & ((HcF>=Hc0) | ~validc0);
-    IcB = validcB & (sB < 0) & ((sF<=0) | ((HcB>=HcF) | ~validcF)) & ((HcB>=Hc0) | ~validc0);
+    IcF = validcF & (upwindF.s > 0) & ((upwindB.s>=0) | ((HcF>=HcB) | ~validcB)) & ((HcF>=Hc0) | ~validc0);
+    IcB = validcB & (upwindB.s < 0) & ((upwindF.s<=0) | ((HcB>=HcF) | ~validcF)) & ((HcB>=Hc0) | ~validc0);
     Ic0 = validc0 & ~(IcF | IcB);
     assert(isequal(IcF+IcB+Ic0,ones(nb,na,nz,ny,'logical')),'logicals do not sum to unity')
-    c = IcF .* cF + IcB .* cB + Ic0 .* c0;
-    s = IcF .* sF + IcB .* sB + Ic0 .* s0;
+    c = IcF .* upwindF.c + IcB .* upwindB.c + Ic0 .* c0;
+    s = IcF .* upwindF.s + IcB .* upwindB.s + Ic0 .* s0;
 
-    u = utility(c);
+    u = prefs.u(c);
 
     %% --------------------------------------------------------------------
 	% UPWINDING FOR DEPOSITS
@@ -139,7 +120,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
 
     import HACTLib.computation.upwind_deposits
 
-    Vb.B(1,2:na,:,:) = utility1(cB(1,2:na,:,:));
+    Vb.B(1,2:na,:,:) = prefs.u1(upwindB.c(1,2:na,:,:));
     [d, I_specialcase] = upwind_deposits(Vb, Va, adjcost, opt_d);
 
     %% --------------------------------------------------------------------
@@ -158,9 +139,9 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     % FIRST DIFF OF VALUE FUNCTION FOR SDU WITH RETURNS RISK
     % ---------------------------------------------------------------------
     if (p.sigma_r > 0) && (p.OneAsset == 1)
-        V_deriv_risky_asset_nodrift = utility1(c);
+        V_deriv_risky_asset_nodrift = prefs.u1(c);
     elseif (p.sigma_r > 0) && (p.OneAsset == 0)
-        V_deriv_risky_asset_nodrift = utility1(c) .* (1 + aux.AdjustmentCost.derivative(d, grd.a.matrix, p));
+        V_deriv_risky_asset_nodrift = prefs.u1(c) .* (1 + aux.AdjustmentCost.derivative(d, grd.a.matrix, p));
     else
         V_deriv_risky_asset_nodrift = [];
     end

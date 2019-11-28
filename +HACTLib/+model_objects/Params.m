@@ -1,9 +1,9 @@
-classdef Params < HACTLib.model_objects.ParamsBase
+classdef Params < HACTLib.defaults.ParamsDefaults
     % This class stores the parameters of the model and contains methods to
     % adjust them for frequency and other factors.
     %
     % 
-    % See the base class, ParamsBase, for default values.
+    % See the base class, ParamsDefaults, for default values.
 
     methods
         function obj = Params(runopts, varargin)
@@ -43,6 +43,10 @@ classdef Params < HACTLib.model_objects.ParamsBase
 
             obj.rhos = obj.rho + obj.rho_grid;
             obj.riskaver_fulldim = reshape(obj.riskaver,[1 1 numel(obj.riskaver) 1]);
+
+            if ~obj.SDU
+                obj.invies = obj.riskaver;
+            end
 
             obj.SimulateMPCS = runopts.SimulateMPCS;
             obj.DealWithSpecialCase = runopts.DealWithSpecialCase;
@@ -97,10 +101,10 @@ classdef Params < HACTLib.model_objects.ParamsBase
         function set_from_structure(obj, varargin)
     		parser = inputParser;
 
-    		import HACTLib.model_objects.ParamsBase
+    		import HACTLib.defaults.ParamsDefaults
 
-    		defaults = ParamsBase();
-    		fields = properties(ParamsBase);
+    		defaults = ParamsDefaults();
+    		fields = properties(ParamsDefaults);
             struct_options = varargin{1};
 
     		for k = 1:numel(fields)
