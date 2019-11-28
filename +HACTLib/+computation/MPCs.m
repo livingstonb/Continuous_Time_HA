@@ -10,6 +10,14 @@ classdef MPCs < handle
 	% the MPCs.
 
 	properties (Constant)
+		% Update this array when the required parameters change.
+		required_parameters = {'nb_KFE', 'na_KFE', 'nz', 'deathrate'};
+
+		% Update this array when the required income variables
+		% change.
+		required_income_vars = {'ny', 'ytrans'};
+
+		% Default option values.
 		defaults = struct(...
 					'delta', 0.01,...
 					'interp_method', 'linear'...
@@ -129,7 +137,6 @@ classdef MPCs < handle
 				error('Already solved, create another instance')
             end
 
-            import 
 			obj.FKmat = HACTLib.computation.feynman_kac_divisor(...
                 obj.p, obj.income, obj.options.delta, A, true);
 			obj.iterate_backward(KFE);
@@ -178,7 +185,7 @@ classdef MPCs < handle
 				for period = ceil(it):4
 					% when 'it' falls to 'period', start updating
 					% that 'period'
-					obj.update_cumcon(KFE,period)
+					obj.update_cumcon(KFE,period);
 				end
 			end
 
@@ -325,6 +332,22 @@ classdef MPCs < handle
 
 			obj.mpcs(ishock).quarterly = mpcs' * pmf(:);
 			obj.mpcs(ishock).annual = sum(mpcs,2)' * pmf(:);
+		end
+
+		function check_income(obj, income)
+			HACTLib.Checks.has_attributes('MPCs',...
+				income, obj.required_income_vars);
+			assert(ismatrix(income.ytrans), "Income transition matrix must be a matrix");
+			assert(size(income.ytrans, 1) == income.ny,...
+				"Income transition matrix has different size than (ny, ny)");
+			assert(numel(income.ydist(:)) == income.ny,...
+				"Income distribution has does not have ny elements");
+			assert(income.ny > 0, "Must have ny >= 1");
+		end
+
+		function check_parameters(obj, p)
+			HACTLib.Checks.has_attributes('MPCs',...
+				p, obj.required_parameters);
 		end
 	end
 end

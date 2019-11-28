@@ -11,6 +11,15 @@ classdef KFESolver
 		% Update this array when the required income variables
 		% change.
 		required_income_vars = {'ny', 'ytrans', 'ydist'};
+
+		% Default option values.
+		defaults = struct(...
+			'iterative', true,...
+			'tol', 1e-8,...
+			'delta', 1e5,...
+			'maxiters', 1e4,...
+			'intermediate_check', true...
+			);
 	end
 
 	properties (SetAccess=protected)
@@ -55,12 +64,7 @@ classdef KFESolver
 	end
 
 	methods
-		function obj = KFESolver(p, income, grdKFE, options)
-			% The optional argument 'options' must be a KFEOptions
-			% object. If this argument is not passed, the default
-			% options will be used. See KFEOptions for more details.
-
-			import HACTLib.computation.KFEOptions
+		function obj = KFESolver(p, income, grdKFE, varargin)
 			
 			obj.p = p;
 			obj.income = income;
@@ -74,13 +78,7 @@ classdef KFESolver
 			obj.check_income(income);
 			check_grid(grdKFE);
 
-			if exist('options', 'var')
-				assert(isa(options, 'KFEOptions'),...
-					"options argument must be a KFEOptions object");
-				obj.options = options;
-			else
-				obj.options = KFEOptions();
-			end
+			obj.options = parse_options(varargin{:});
 		end
 
 		function g = solve(obj, A, g0)
@@ -257,6 +255,23 @@ function check_A(A)
 	assert(issparse(A), "KFESolver requires a sparse transition matrix")
 	assert(ismatrix(A), "KFESolver requires a square transition matrix")	
 	assert(size_A(1) == size_A(2), "KFESolver requires a square transition matrix")	
+end
+
+function options = parse_options(varargin)
+	import HACTLib.computation.KFESolver
+	import HACTLib.aux.parse_keyvalue_pairs
+	import HACTLib.Checks
+
+	defaults = KFESolver.defaults;
+	options = parse_keyvalue_pairs(defaults, varargin{:});
+
+	mustBePositive(options.delta);
+	mustBePositive(options.tol);
+	mustBePositive(options.maxiters);
+
+	Checks.is_real_integer('KFESolver', options.maxiters);
+	Checks.is_logical('KFESolver', options.iterative);
+	Checks.is_logical('KFESolver', options.intermediate_check);
 end
 
 function check_if_not_converging(dst, iter)

@@ -82,6 +82,13 @@ classdef Checks
 			end
 		end
 
+		function is_logical(caller, variable)
+			if ~islogical(variable)
+				msg = "Input must be true/false";
+				error(create_error_struct(caller, 'InvalidType', msg));
+			end
+		end
+
 		function is_real_integer(caller, variable)
 			msg = "Input must be real";
 
