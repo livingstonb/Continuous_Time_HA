@@ -77,15 +77,18 @@ classdef TransitionalDynSolver < handle
 				obj.mpcs(ishock).avg_4_annual = NaN;
             end
 
+            import HACTLib.computation.TransitionMatrixConstructor
+
             % initialize constructors of the A matrix
             returns_risk = (obj.p.sigma_r > 0);
-		    obj.A_constructor_HJB = HACTLib.computation.TransitionMatrixConstructor(...
-                obj.p, obj.income, obj.grids, 'KFE', returns_risk);
+		    obj.A_constructor_HJB = TransitionMatrixConstructor(...
+                	obj.p, obj.income, obj.grids, returns_risk);
 
 		    % if returns are risky and returns risk is used in the KFE,
 		    % this A constructor will be used instead:
-		    if returns_risk && (obj.p.retrisk_KFE == 0)
-		    	obj.A_constructor_FK = solver.A_Matrix_Constructor(obj.p, obj.income, obj.grids, 'KFE', false);
+		    if returns_risk && (~obj.p.retrisk_KFE)
+		    	obj.A_constructor_FK = TransitionMatrixConstructor(...
+		    		obj.p, obj.income, obj.grids, false);
 		    end
 		end
 
@@ -265,7 +268,7 @@ classdef TransitionalDynSolver < handle
 		    obj.KFEint = KFE_terminal;
             obj.A_HJB = A_terminal;
 
-            if (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 0)
+            if (obj.p.sigma_r > 0) && (~obj.p.retrisk_KFE)
 				obj.A_FK = obj.A_constructor_FK.construct(obj.KFEint);
 			end
 		end
@@ -336,7 +339,7 @@ classdef TransitionalDynSolver < handle
                 end
 
                 if obj.p.SDU == 1
-			    	ez_adj = solver.SDU_income_risk_adjustment(obj.p, obj.V, obj.income);
+                	ez_adj = obj.income.income_transitions_SDU(obj, obj.p, obj.V)
 			    end
                 
                 u_k = reshape(obj.KFEint.u,[],obj.p.ny);
@@ -374,25 +377,14 @@ classdef TransitionalDynSolver < handle
 		        obj.update_A_matrix();
 
 			    if obj.p.ComputeMPCS_news == 1
-				    % matrix divisor for Feynman-Kac
-				    FKmat = cell(1,obj.income.ny);
-                    
-                    FKmats = HACTLib.computation.feynman_kac_divisor(...
-                        obj.p, obj.income, obj.options.delta, A, true);
-			        for k = 1:obj.income.ny
-			        	ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
-			        	ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
-
-			        	if (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 0)
-			        		Ak = obj.A_FK(ind1:ind2, ind1:ind2);
-			        	else
-			        		Ak = obj.A_HJB(ind1:ind2, ind1:ind2);
-                        end
-                        
-			        	FKmat{k} = speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz)*(...
-				            	1/obj.p.delta_mpc + obj.p.deathrate - obj.income.ytrans(k,k)) - Ak;
-			            FKmat{k} = inverse(FKmat{k});
-			        end
+			    	import HACTLib.computation.feynman_kac_divisor
+				    if (obj.p.sigma_r > 0) && (~obj.p.retrisk_KFE)
+	                    FKmats = feynman_kac_divisor(obj.p, obj.income,...
+	                    			obj.p.delta_mpc, A_FK, true);
+	                else
+	                	FKmats = feynman_kac_divisor(obj.p, obj.income,...
+	                				obj.p.delta_mpc, A_HJB, true);
+	                end
 
 			        for period = ceil(it):4
 			        	obj.update_cum_con(period,FKmat);
@@ -445,7 +437,7 @@ classdef TransitionalDynSolver < handle
 			% obj.A_FK : 
 			obj.A_HJB = obj.A_constructor_HJB.construct(obj.KFEint, obj.V);
 
-			if (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 0)
+			if (obj.p.sigma_r > 0) && (~obj.p.retrisk_KFE)
 				obj.A_FK = obj.A_constructor_FK.construct(obj.KFEint);
 			end
 		end
@@ -494,21 +486,9 @@ classdef TransitionalDynSolver < handle
             reshape_vec = [obj.p.nb_KFE*obj.p.na_KFE obj.p.nz obj.p.ny];
 			cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
 
-            if (obj.p.Bequests == 1) && (obj.p.ResetIncomeUponDeath == 1)
-                deathin_cc_k = obj.p.deathrate * sum(obj.income.ydist' .* cumcon_t_k(:,k),2);
-                error('need to recode')
-                if nz > 1
-                    error('not correctly coded for nz > 1')
-                end
-            elseif (obj.p.Bequests == 1) && (obj.p.ResetIncomeUponDeath == 0)
+            if obj.p.Bequests
                 deathin_cc_k = obj.p.deathrate * cumcon_t_k(:,k);
-            elseif (obj.p.Bequests == 0) && (obj.p.ResetIncomeUponDeath == 1)
-                deathin_cc_k = obj.p.deathrate * sum(obj.income.ydist' .* cumcon_t_k(1,k),2);
-                error('neet to recode')
-                if nz > 1
-                    error('not correctly coded for nz > 1')
-                end
-            elseif (obj.p.Bequests == 0) && (obj.p.ResetIncomeUponDeath == 0)
+            elseif obj.p.Bequests
                 deathin_cc_k = obj.p.deathrate * squeeze(cumcon_t_z_k(obj.grids.loc0b0a,:,k));
                 deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.p.na_KFE,1));
             end

@@ -37,13 +37,14 @@ classdef MPCs < handle
 		%	- The number of income states.
 		income;
 
-		% A Grid object.
+		% A Grid object defined on the KFE grids.
 		grids;
 
 		% Options used internally by this class.
 		options;
 
-		FKmat; % Feynman-Kac divisor matrix
+		% Feynman-Kac divisor matrix
+		FKmat; 
 
 		% cumulative consumption
 		cumcon; % current state
@@ -65,13 +66,13 @@ classdef MPCs < handle
 
 			% Required Inputs
 			% ---------------
-			% p : An object with at least the following attributes:
+			% p : An object that satisfies the requirements
+			%	laid out by the class properties.
 			%	
-			% 
-			% income : an Income object
+			% income : An object that satisfies the requirements
+			%	laid out by the class properties.
 			%
-			% grids : a Grid object, providing the asset grids
-			%	for the KFE
+			% grids : A Grid object on the KFE grid.
 			%
 			% Optional Key-Value Inputs
 			% -------------------------
@@ -126,9 +127,11 @@ classdef MPCs < handle
 
 			if obj.solved
 				error('Already solved, create another instance')
-			end
+            end
 
-			obj.create_FK_matrices(A);
+            import 
+			obj.FKmat = HACTLib.computation.feynman_kac_divisor(...
+                obj.p, obj.income, obj.options.delta, A, true);
 			obj.iterate_backward(KFE);
 
 			for ishock = 1:6
@@ -141,29 +144,6 @@ classdef MPCs < handle
 	end
 
 	methods (Access=private)
-		function create_FK_matrices(obj, A)
-			% finds the matrix divisor for the Feynman-Kac formula
-
-			% Parameters
-			% ----------
-			% A : the KFE transition matrix
-			%
-			% Modifies
-			% --------
-			% obj.FKmat: a cell array containing the FK matrix divisors
-			%	for each income block, shape (1, ny)
-
-			obj.FKmat = cell(1,obj.income.ny);
-		    for k = 1:obj.income.ny
-		    	ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
-		    	ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
-
-		        obj.FKmat{k} = speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz)*(1/obj.options.delta ...
-		        					+ obj.p.deathrate - obj.income.ytrans(k,k))...
-		                		- A(ind1:ind2,ind1:ind2);
-		        obj.FKmat{k} = inverse(obj.FKmat{k});
-		    end
-		end
 
 		function iterate_backward(obj, KFE)
 			% iterates backward four quarters on the Feynman-Kac equation
@@ -209,7 +189,6 @@ classdef MPCs < handle
 					- obj.cumcon(:,period-1);
 			end
 
-			reshape_vec = [obj.p.nb_KFE,obj.p.na_KFE,obj.p.nz,obj.income.ny,4];
 		    obj.cum_con_baseline = reshape(obj.cum_con_baseline,[],4);
 		end
 
@@ -312,7 +291,8 @@ classdef MPCs < handle
 
 	            if (shock < 0) && (sum(below_bgrid)>0) && (period==1)
 	                temp = reshape(obj.cum_con_shock{ishock}(:,period),reshape_vec);
-	                temp(below_bgrid,:,:,:) = con_period(1,:,:,:) + shock + obj.grids.b.vec(below_bgrid) - obj.grids.b.vec(1);
+	                temp(below_bgrid,:,:,:) = con_period(1,:,:,:) + shock...
+	                	+ obj.grids.b.vec(below_bgrid) - obj.grids.b.vec(1);
 	                obj.cum_con_shock{ishock}(:,period) = temp(:);                      
 	            end
 	        end
@@ -355,4 +335,12 @@ function options = parse_options(varargin)
 
 	defaults = MPCs.defaults;
 	options = parse_keyvalue_pairs(defaults, varargin{:});
+
+	mustBePositive(options.delta);
+	if ~ismember(options.interp_method, {'linear', 'nearest',...
+		'next', 'previous', 'pchip', 'cubic', 'spline', 'makime'})
+		error("HACTLib:MPCs:InvalidArgument",...
+			strcat("Invalid interpolation method entered.",...
+				"Check griddedInterpolant documentation."))
+	end
 end
