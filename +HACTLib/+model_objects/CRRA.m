@@ -3,7 +3,7 @@ classdef CRRA
 	% without IES heterogeneity.
 
 	methods (Static)
-		function u = utility(c, invies, invies_dim)
+		function u = utility(c, invies, zdim)
 			% CRRA utility function. Heterogeneity in IES
 			% is accomodated by passing as the third argument
 			% the dimension of IES heterogeneity in 'c'. If it
@@ -26,7 +26,7 @@ classdef CRRA
 				if nargin == 2
 					zdim = look_for_zdim(c, nIES);
 				else
-					if size(c, invies_dim) ~= numel(invies)
+					if size(c, zdim) ~= numel(invies)
 						error("HACT:crra:InvalidArgument",...
 							strcat("invies dimension of first input does ",...
 								"not match the size of the second argument"))
@@ -47,7 +47,6 @@ classdef CRRA
 				
 				new_shape = ones(1, ndims(c));
 				new_shape(zdim) = nIES;
-
 				rep_shape = size(c);
 				rep_shape(zdim) = 1;
 
@@ -59,7 +58,48 @@ classdef CRRA
 			end
 		end
 
-		function marginal_utility(c, invies, invies_dim)
+		function muc = marginal_utility(c, invies, zdim)
+			nIES = numel(invies);
+
+			if nIES > 1
+				if nargin == 2
+					zdim = look_for_zdim(c, nIES);
+				else
+					if size(c, zdim) ~= numel(invies)
+						error("HACT:crra:InvalidArgument",...
+							strcat("invies dimension of first input does ",...
+								"not match the size of the second argument"))
+					end
+				end
+
+				new_shape = ones(1, ndims(c));
+				new_shape(zdim) = nIES;
+				invies = reshape(invies, new_shape);
+			end
+
+			muc = c .^ (-invies); 
+		end
+
+		function c = u1inv(v, invies, zdim)
+			nIES = numel(invies);
+
+			if nIES > 1
+				if nargin == 2
+					zdim = look_for_zdim(c, nIES);
+				else
+					if size(c, zdim) ~= numel(invies)
+						error("HACT:crra:InvalidArgument",...
+							strcat("invies dimension of first input does ",...
+								"not match the size of the second argument"))
+					end
+				end
+
+				new_shape = ones(1, ndims(c));
+				new_shape(zdim) = nIES;
+				invies = reshape(invies, new_shape);
+			end
+
+			c = v .^ (-1./invies);
 		end
 	end
 end

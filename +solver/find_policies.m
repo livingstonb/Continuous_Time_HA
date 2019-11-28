@@ -40,12 +40,24 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     end
 
     if p.SDU == 0
-        utility = @(x) aux.u_fn(x, p.riskaver_fulldim);
-        utility1 = @(x) x .^ (-p.riskaver_fulldim);
-        utility1inv = @(x) x .^ (-1./p.riskaver_fulldim);
+        % utility = @(x) aux.u_fn(x, p.riskaver_fulldim);
+        % utility1 = @(x) x .^ (-p.riskaver_fulldim);
+        % utility1inv = @(x) x .^ (-1./p.riskaver_fulldim);
+
+        import HACTLib.model_objects.Preferences
+
+        prefs = Preferences.set_crra(p.riskaver);
+        utility = @(x) CRRA.utility(x, p.riskaver);
+        utility1 = @(x) CRRA.marginal_utility(x, p.riskaver);
+        utility1inv = @(x) CRRA.u1inv(x, p.riskaver);
     else
-        utility = @(x) rho_mat_adj .* aux.u_fn(x, p.invies);
-        utility1 = @(x) rho_mat_adj .* x .^ (-p.invies);
+        % utility = @(x) rho_mat_adj .* aux.u_fn(x, p.invies);
+        % utility1 = @(x) rho_mat_adj .* x .^ (-p.invies);
+        % utility1inv = @(x) (x ./ rho_mat_adj) .^ (-1/p.invies);
+
+        import HACTLib.model_objects.CRRA.*
+        utility = @(x) rho_mat_adj .* utility(x, p.invies);
+        utility1 = @(x) rho_mat_adj .* marginal_utility(x, p.invies);
         utility1inv = @(x) (x ./ rho_mat_adj) .^ (-1/p.invies);
     end
 
