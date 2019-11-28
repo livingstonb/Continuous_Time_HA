@@ -5,6 +5,18 @@ classdef (Abstract) HJBBase < handle
 		required_income_vars;
 	end
 
+	properties (Constant)
+		% Default options
+		defaults = struct(...
+				'implicit', false,...
+				'delta', 1e5,...
+				'HIS_maxiters', 0,...
+				'HIS_tol', 1e-5,...
+				'HIS_start', 2 ...
+				);
+ 
+	end
+
 	properties (SetAccess=protected)
 		%	An object with the following required attributes:
 		%
@@ -68,12 +80,10 @@ classdef (Abstract) HJBBase < handle
 	end
 
 	methods
-		function obj = HJBBase(p, income, options)
+		function obj = HJBBase(p, income, varargin)
 			% See the properties block above or view this class'
 			% documentation to see the requirements of the
 			% input parameters.
-
-			import HACTLib.computation.HJBOptions
 
 			% ---------------------------------------------------------
 			% Validate Input Arguments and Set Options
@@ -84,13 +94,7 @@ classdef (Abstract) HJBBase < handle
 			obj.check_income(income);
 			obj.income = income;
 
-			if exist('options', 'var')
-				assert(isa(options, 'HJBOptions'),...
-					"options argument must be a HJBOptions object");
-				obj.options = options;
-			else
-				obj.options = HJBOptions();
-			end
+			obj.options = obj.parse_options(varargin{:});
 
 			obj.n_states = p.nb * p.na * p.nz * income.ny;
 			obj.states_per_income = p.nb * p.na * p.nz;
@@ -116,6 +120,24 @@ classdef (Abstract) HJBBase < handle
 	end
 
 	methods (Access=protected)
+		function options = parse_options(obj, varargin)
+			import HACTLib.computation.HJBBase
+			import HACTLib.aux.parse_keyvalue_pairs
+			import HACTLib.Checks
+
+			defaults = HJBBase.defaults;
+			options = parse_keyvalue_pairs(defaults, varargin{:});
+
+			mustBePositive(options.delta);
+			mustBePositive(options.HIS_tol);
+
+			super_class = split(class(obj), '.');
+		    super_class = super_class(end);
+
+			Checks.is_real_integer(super_class, options.HIS_maxiters);
+			Checks.is_logical(super_class, options.implicit);
+		end
+
 		function obj = create_rho_matrix(obj)
 			if obj.options.implicit
 				% discount factor values
