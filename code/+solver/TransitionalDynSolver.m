@@ -26,6 +26,7 @@ classdef TransitionalDynSolver < handle
 		KFEint;
         
         shocks;
+
         savedTimesUntilShock;
 
 		cumcon;

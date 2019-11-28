@@ -31,24 +31,32 @@ classdef TransitionalDynSolver < handle
 		cumcon;
 		ytrans_offdiag;
 
-		% cumulative consumption for q1, q4 shock
+		% Cumulative consumption for the q1, q4 shock
 		cum_con_q1 = cell(1,6);
 		cum_con_q4 = cell(1,6);
 
-		% results
+		% Results structure.
 		mpcs = struct();
 
+		% A sparse diagonal matrix with rho values on
+		% the diagonal.
 		rho_diag;
+
+		% Total number of states.
+		n_states;
+
+		% States in each income block.
+		states_per_income;
 
 	end
 
 	methods
-		function obj = TransitionalDynSolver(params, income, grids, shocks)
+		function obj = TransitionalDynSolver(p, income, grids, shocks)
 			% class constructor
 
 			% Parameters
 			% ----------
-			% params : a Params object
+			% p : a Params object
 			%
 			% income : an Income object
 			%
@@ -62,10 +70,13 @@ classdef TransitionalDynSolver < handle
 			% obj : a TransitionalDynSolver object
 
 			% store references to important model objects
-			obj.p = params;
+			obj.p = p;
 			obj.income = income;
 			obj.grids = grids;
             obj.shocks = shocks;
+
+            obj.states_per_income = p.nb_KFE * p.na_KFE * p.nz;
+            obj.n_states = obj.states_per_income * income.ny;
 
 			obj.ytrans_offdiag = income.ytrans - diag(diag(income.ytrans));
 
@@ -130,14 +141,13 @@ classdef TransitionalDynSolver < handle
             if obj.p.SimulateMPCS_news == 1
 				savedTimesUntilShock = [4:-0.1:0.1 obj.p.delta_mpc];
 				obj.savedTimesUntilShock = round(savedTimesUntilShock*40)/40;
-				save([obj.p.tempdirec 'savedTimesUntilShock.mat'],'savedTimesUntilShock')
             end
 
             if numel(obj.p.rhos) > 1
-		        rhocol = kron(obj.p.rhos',ones(obj.p.nb_KFE*obj.p.na_KFE,1));
-		        obj.rho_diag = spdiags(rhocol,0,obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz, obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz);
+		        rhocol = kron(obj.p.rhos', ones(obj.p.nb_KFE*obj.p.na_KFE, 1));
+		        obj.rho_diag = HACTLib.aux.sparse_diags(rhocol, 0);
 		    else
-		        obj.rho_diag = obj.p.rho * speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz);
+		        obj.rho_diag = obj.p.rho * speye(obj.states_per_income);
 			end
             
             % loop over shocks
