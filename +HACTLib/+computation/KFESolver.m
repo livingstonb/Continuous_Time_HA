@@ -269,7 +269,7 @@ function options = parse_options(varargin)
 	mustBePositive(options.tol);
 	mustBePositive(options.maxiters);
 
-	Checks.is_real_integer('KFESolver', options.maxiters);
+	Checks.is_integer('KFESolver', options.maxiters);
 	Checks.is_logical('KFESolver', options.iterative);
 	Checks.is_logical('KFESolver', options.intermediate_check);
 end

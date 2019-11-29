@@ -175,6 +175,8 @@ classdef MPCs < handle
 			% This method also modifies other class properties
 			% via other methods.
 
+			import HACTLib.computation.feynman_kac
+
 			dim = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*obj.income.ny;
 			obj.cumcon = zeros(dim,4);
 			for it = 4:-obj.options.delta:obj.options.delta
@@ -185,7 +187,8 @@ classdef MPCs < handle
 				for period = ceil(it):4
 					% when 'it' falls to 'period', start updating
 					% that 'period'
-					obj.update_cumcon(KFE,period);
+					obj.cumcon(:,period) = feynman_kac(obj.p, obj.grids,...
+						obj.income, obj.cumcon(:,period), obj.FKmat, KFE.c, obj.options.delta);
 				end
 			end
 
@@ -197,46 +200,6 @@ classdef MPCs < handle
 			end
 
 		    obj.cum_con_baseline = reshape(obj.cum_con_baseline,[],4);
-		end
-
-		function update_cumcon(obj, KFE, period)
-			% update cumulative consumption in the baseline case by
-			% iterating on the Feynman-Kac equation
-
-			% Parameters
-			% ----------
-			% KFE : a structure containing the policy functions and the
-			%	value function, on the KFE grid
-			%
-			% period : the current period, integer
-			%
-			% Modifies
-			% --------
-			% obj.cumcon : cumulative consumption, modified for the given
-			%	period, and has shape (nb_KFE*na_KFE*nz*ny, num_periods)
-
-			cumcon_t = obj.cumcon(:,period);
-			cumcon_t_k = reshape(cumcon_t,[],obj.income.ny);
-
-            reshape_vec = [obj.p.nb_KFE*obj.p.na_KFE obj.p.nz obj.income.ny];
-            cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
-                
-			for k = 1:obj.income.ny
-				ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
-  
-                if obj.p.Bequests
-                	deathin_cc_k = obj.p.deathrate * cumcon_t_k(:,k);
-                else
-                    deathin_cc_k = obj.p.deathrate * cumcon_t_z_k(obj.grids.loc0b0a,:,k)';
-                    deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.p.na_KFE,1));
-                end
-
-                ind1 = 1+obj.p.na_KFE*obj.p.nb_KFE*obj.p.nz*(k-1);
-                ind2 = obj.p.na_KFE*obj.p.nb_KFE*obj.p.nz*k;
-                RHS = reshape(KFE.c(:,:,:,k),[],1) + ytrans_cc_k + deathin_cc_k ...
-                            + cumcon_t_k(:,k)/obj.options.delta;
-                obj.cumcon(ind1:ind2,period) = obj.FKmat{k}*RHS;
-			end
 		end
 
 		function cumulative_consumption_with_shock(obj, ishock)

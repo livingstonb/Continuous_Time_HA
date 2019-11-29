@@ -10,6 +10,15 @@ classdef TransitionalDynSolver < handle
 	% this class allows for saving the policy functions
 	% so they can be used to simulate MPCs out of news as well
 
+	properties (Constant)
+		% Default option values.
+		defaults = struct(...
+					'delta', 0.025,...
+					'delta_terminal', 1e-3,...
+					'save_policies', false...
+					);
+	end
+
 	properties (SetAccess = protected)
 
 		% parameters, grids of the model
@@ -57,7 +66,7 @@ classdef TransitionalDynSolver < handle
 	end
 
 	methods
-		function obj = TransitionalDynSolver(p, income, grids, shocks)
+		function obj = TransitionalDynSolver(p, income, grids, shocks, varargin)
 			% class constructor
 
 			% Parameters
@@ -80,6 +89,8 @@ classdef TransitionalDynSolver < handle
 			obj.income = income;
 			obj.grids = grids;
             obj.shocks = shocks;
+
+            obj.options = parse_options(varargin{:});
 
             obj.states_per_income = p.nb_KFE * p.na_KFE * p.nz;
             obj.n_states = obj.states_per_income * income.ny;
@@ -108,6 +119,13 @@ classdef TransitionalDynSolver < handle
 		    	obj.A_constructor_FK = TransitionMatrixConstructor(...
 		    		obj.p, obj.income, obj.grids, false);
 		    end
+
+		    if numel(obj.p.rhos) > 1
+		        rhocol = kron(obj.p.rhos', ones(obj.p.nb_KFE*obj.p.na_KFE, 1));
+		        obj.rho_diag = HACTLib.aux.sparse_diags(rhocol, 0);
+		    else
+		        obj.rho_diag = obj.p.rho * speye(obj.states_per_income);
+			end
 		end
 
 		function solve(obj, KFE, pmf, cum_con_baseline)
@@ -136,30 +154,15 @@ classdef TransitionalDynSolver < handle
 			% ----
 			% This method calls various other class methods and so indirectly
 			% modifies other class properties.
-
-            if obj.p.nz > 1
-                warning('Transitional dynamics not coded for nz > 1')
-                return
-            elseif obj.p.SDU || (obj.p.sigma_r > 0)
-            	warning('Transitional dynamics not coded for SDU or returns risk')
-                return
-            end
             
             if obj.p.SimulateMPCS_news == 1
-				savedTimesUntilShock = [4:-0.1:0.1 obj.p.MPCs_delta];
+				savedTimesUntilShock = [4:-0.1:0.1 obj.options.delta];
 				obj.savedTimesUntilShock = round(savedTimesUntilShock*40)/40;
             end
-
-            if numel(obj.p.rhos) > 1
-		        rhocol = kron(obj.p.rhos', ones(obj.p.nb_KFE*obj.p.na_KFE, 1));
-		        obj.rho_diag = HACTLib.aux.sparse_diags(rhocol, 0);
-		    else
-		        obj.rho_diag = obj.p.rho * speye(obj.states_per_income);
-			end
             
             % loop over shocks
 			for ishock = obj.shocks
-                fprintf('    --- Shock = %f ---\n',obj.p.mpc_shocks(ishock))
+                fprintf('    --- Shock = %f ---\n', obj.p.mpc_shocks(ishock))
 				success = obj.getTerminalCondition(KFE,ishock);
 				if ~success
 					return
@@ -204,6 +207,8 @@ classdef TransitionalDynSolver < handle
 			% obj.A : the transition matrix over the KFE grids; this method
 			%	initializes A with the terminal transition matrix
 
+			import HACTLib.aux.sparse_diags
+
             shock = obj.p.mpc_shocks(ishock);
 
             success = false;
@@ -219,16 +224,16 @@ classdef TransitionalDynSolver < handle
 
 			% iterate with implicit-explicit scheme to get V_terminal
 		    V_terminal = Vg_terminal;
-		    V_terminal_k = reshape(V_terminal,[],obj.p.ny);
+		    V_terminal_k = reshape(V_terminal, [], obj.p.ny);
             
 		    for ii = 1:5000
 		    	KFE_terminal = solver.find_policies(obj.p, obj.income, obj.grids, V_terminal);
 		    	A_terminal = obj.A_constructor_HJB.construct(KFE_terminal);
 
-		    	u_k = reshape(KFE_terminal.u,[],obj.income.ny);
+		    	u_k = reshape(KFE_terminal.u, [], obj.income.ny);
 
 		    	V1_terminal_k = zeros(obj.states_per_income, obj.income.ny);
-                deltaLarge = 1e-3;
+                obj.options.delta_terminal = 1e-3;
 		    	for k = 1:obj.p.ny
 		    		ind1 = 1+obj.states_per_income * (k-1);
 			    	ind2 = obj.states_per_income * k;
@@ -245,17 +250,18 @@ classdef TransitionalDynSolver < handle
 			    	end
 
 			    	if ~obj.p.SDU
-	                    V1_terminal_k(:,k) = (deltaLarge* obj.rho_diag + (deltaLarge/obj.p.MPCs_delta + 1 + deltaLarge*(obj.p.deathrate - obj.income.ytrans(k,k)))...
-			        				* speye(obj.states_per_income) - deltaLarge* Ak)...
-			                 	\ (deltaLarge* (u_k(:,k) + Vk_stacked)...
-			                 		+ deltaLarge*Vg_terminal_k(:,k)/obj.p.MPCs_delta + V_terminal_k(:,k));
+	                    V1_terminal_k(:,k) = (obj.options.delta_terminal* obj.rho_diag + (obj.options.delta_terminal/obj.options.delta + 1 +...
+	                    	obj.options.delta_terminal*(obj.p.deathrate - obj.income.ytrans(k,k)))...
+			        				* speye(obj.states_per_income) - obj.options.delta_terminal* Ak)...
+			                 	\ (obj.options.delta_terminal* (u_k(:,k) + Vk_stacked)...
+			                 		+ obj.options.delta_terminal*Vg_terminal_k(:,k)/obj.options.delta + V_terminal_k(:,k));
 			        else
 			        	V1_terminal_k(:,k) = ...
-			        		(deltaLarge* obj.rho_diag + (deltaLarge/obj.p.MPCs_delta + 1 + ...
-			        			deltaLarge*obj.p.deathrate.*speye(obj.states_per_income)) - deltaLarge* Ak...
-			        			- deltaLarge * spdiags(ez_adj(:,k,k), 0, obj.states_per_income, obj.states_per_income))...
-			                 	\ (deltaLarge* (u_k(:,k) + Vk_stacked)...
-			                 		+ deltaLarge*Vg_terminal_k(:,k)/obj.p.MPCs_delta + V_terminal_k(:,k));
+			        		(obj.options.delta_terminal* obj.rho_diag + (obj.options.delta_terminal/obj.options.delta + 1 + ...
+			        			obj.options.delta_terminal*obj.p.deathrate.*speye(obj.states_per_income)) - obj.options.delta_terminal * Ak...
+			        			- obj.options.delta_terminal * sparse_diags(ez_adj(:,k,k), 0))...
+			                 	\ (obj.options.delta_terminal* (u_k(:,k) + Vk_stacked)...
+			                 		+ obj.options.delta_terminal*Vg_terminal_k(:,k)/obj.options.delta + V_terminal_k(:,k));
 		        	end
 		    	end
 
@@ -342,8 +348,8 @@ classdef TransitionalDynSolver < handle
             shock = obj.p.mpc_shocks(ishock);
 			obj.cumcon = zeros(obj.n_states, 4);
 
-			for it = 4:-obj.p.MPCs_delta:obj.p.MPCs_delta
-				timeUntilShock = obj.p.MPCs_delta + 4 - it;
+			for it = 4:-obj.options.delta:obj.options.delta
+				timeUntilShock = obj.options.delta + 4 - it;
                 timeUntilShock = round(timeUntilShock * 40) / 40;
 				if mod(it,0.5) == 0
 		            fprintf('\tUpdating cumulative consumption given news, quarter=%0.2f\n',it)
@@ -368,12 +374,12 @@ classdef TransitionalDynSolver < handle
                     	Bk = hjb_divisor(obj.MPCs_delta, obj.p.deathrate, k, obj.A_HJB, inctrans, obj.rho_diag);
 			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k), [obj.states_per_income 1]) ...
 	                            .* V_k(:,indx_k), 2);
-			    		V_k1(:,k) = Bk \ (obj.p.MPCs_delta * (u_k(:,k) + Vk_stacked) + V_k(:,k));
+			    		V_k1(:,k) = Bk \ (obj.options.delta * (u_k(:,k) + Vk_stacked) + V_k(:,k));
 			    	else
 			    		inctrans = sparse_diags(ez_adj(:,k,k), 0);
-			    		Bk = hjb_divisor(obj.p.MPCs_delta, obj.p.deathrate, k, obj.A_HJB, inctrans, obj.rho_diag);
+			    		Bk = hjb_divisor(obj.options.delta, obj.p.deathrate, k, obj.A_HJB, inctrans, obj.rho_diag);
 			    		Vk_stacked 	= sum(squeeze(ez_adj(:,k,indx_k)) .* V_k(:,indx_k),2);
-			    		V_k1(:,k) = Bk \ (obj.p.MPCs_delta * (u_k(:,k) + Vk_stacked) + V_k(:,k));
+			    		V_k1(:,k) = Bk \ (obj.options.delta * (u_k(:,k) + Vk_stacked) + V_k(:,k));
 			    	end
                         
                     
@@ -390,17 +396,19 @@ classdef TransitionalDynSolver < handle
 			    	import HACTLib.computation.feynman_kac_divisor
 				    if (obj.p.sigma_r > 0) && (~obj.p.retrisk_KFE)
 	                    FKmats = feynman_kac_divisor(obj.p, obj.income,...
-	                    			obj.p.MPCs_delta, obj.A_FK, true);
+	                    			obj.options.delta, obj.A_FK, true);
 	                else
 	                	FKmats = feynman_kac_divisor(obj.p, obj.income,...
-	                				obj.p.MPCs_delta, obj.A_HJB, true);
+	                				obj.options.delta, obj.A_HJB, true);
 	                end
 
 			        for period = ceil(it):4
-			        	obj.update_cum_con(period, FKmats);
+			        	obj.cumcon(:,period) = feynman_kac(obj.p, obj.grids,...
+							obj.income, obj.cumcon(:,period), FKmats, obj.KFEint.c,...
+							obj.options.delta);
 	                end
 
-			        if (it == 3 + obj.p.MPCs_delta)
+			        if (it == 3 + obj.options.delta)
 			        	obj.cum_con_q1{ishock} = obj.cumcon(:,4);
 			        end
                 end
@@ -452,57 +460,6 @@ classdef TransitionalDynSolver < handle
 			end
 		end
 
-		function update_cum_con(obj, period, FKmat)
-			% updates cumulative consumption for a subperiod during backward iteration
-
-			% Parameters
-			% ----------
-			% period : the current quarter, integer
-			%
-			% FKmat : the matrix divisor for the Feynman-Kac equation
-			%
-			% Modifies
-			% --------
-			% obj.cumcon : the array of cumulative consumption, which is indexed
-			%	by states and periods, of shape (nb_KFE*na_KFE*nz*ny, num_periods)
-
-            cumcon_t_k = reshape(obj.cumcon(:,period), [], obj.p.ny);
-
-			for k = 1:obj.income.ny
-                ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k, 2);
-
-                deathin_cc_k = obj.get_death_inflows(cumcon_t_k, k);
-
-                ind1 = 1 + obj.states_per_income * (k-1);
-                ind2 = obj.states_per_income * k;
-                RHS = reshape(obj.KFEint.c(:,:,:,k), [], 1) + ytrans_cc_k + deathin_cc_k ...
-                        + cumcon_t_k(:,k) / obj.p.MPCs_delta;
-                obj.cumcon(ind1:ind2,period) = FKmat{k} * RHS;
-            end
-		end
-
-		function deathin_cc_k = get_death_inflows(obj, cumcon_t_k, k)
-			% computes inflows for death
-
-			% Parameters
-			% ----------
-			% cumcon_t_k : cumulative consumption for period t,
-			%	of shape (nb_KFE*na_KFE*nz, ny)
-			%
-			% Returns
-			% -------
-			% deathin_cc_k : death inflows multiplied by cumulative consumption
-
-			cumcon_t_z_k = reshape(cumcon_t_k, obj.state_dims);
-
-            if obj.p.Bequests
-                deathin_cc_k = obj.p.deathrate * cumcon_t_k(:,k);
-            else
-                deathin_cc_k = obj.p.deathrate * squeeze(cumcon_t_z_k(obj.grids.loc0b0a,:,k));
-                deathin_cc_k = kron(deathin_cc_k, ones(obj.p.nb_KFE*obj.p.na_KFE, 1));
-            end
-        end
-
 		function computeMPCs(obj, pmf, ishock, cum_con_baseline)
 			% performs MPC computations
 
@@ -528,4 +485,17 @@ classdef TransitionalDynSolver < handle
         end
 	end
 
+end
+
+function options = parse_options(varargin)
+	import HACTLib.computation.TransitionalDynSolver
+	import HACTLib.aux.parse_keyvalue_pairs
+    import HACTLib.Checks
+
+	defaults = TransitionalDynSolver.defaults;
+	options = parse_keyvalue_pairs(defaults, varargin{:});
+
+	mustBePositive(options.delta);
+	mustBePositive(options.delta_terminal);
+	Checks.is_logical("TransitionalDynSolver", options.save_policies);
 end

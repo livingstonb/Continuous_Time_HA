@@ -134,7 +134,7 @@ classdef (Abstract) HJBBase < handle
 			super_class = split(class(obj), '.');
 		    super_class = super_class(end);
 
-			Checks.is_real_integer(super_class, options.HIS_maxiters);
+			Checks.is_integer(super_class, options.HIS_maxiters);
 			Checks.is_logical(super_class, options.implicit);
 		end
 
