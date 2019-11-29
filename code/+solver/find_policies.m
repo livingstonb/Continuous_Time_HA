@@ -30,7 +30,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     r_b_mat = p.r_b .* (grd.b.matrix>=0) +  p.r_b_borr .* (grd.b.matrix<0);
 
     % If using stoch diff utility, multiply utility by rho
-    if p.SDU == 1
+    if p.SDU
         if numel(p.rhos) > 1
             rho_mat_adj = reshape(p.rhos,[1 1 numel(p.rhos)]);
         else
@@ -41,7 +41,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
 
     import HACTLib.model_objects.Preferences
     prefs = Preferences();
-    if p.SDU == 0
+    if ~p.SDU
         prefs.set_crra(p.invies);
     else
         prefs.set_sdu(p.invies);

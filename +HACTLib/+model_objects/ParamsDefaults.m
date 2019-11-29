@@ -150,7 +150,7 @@ classdef ParamsDefaults < handle
     	riskaver_fulldim;
 
     	% Transition into death, at a quarterly rate
-    	deathrate = 1 /200;
+    	deathrate = 1 / 200;
 
     	% Time discount factor, at a quarterly rate
     	rho = 0.015;

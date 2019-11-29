@@ -133,7 +133,7 @@ classdef TransitionalDynSolver < handle
             if obj.p.nz > 1
                 warning('Transitional dynamics not coded for nz > 1')
                 return
-            elseif (obj.p.SDU == 1) || (obj.p.sigma_r > 0)
+            elseif obj.p.SDU || (obj.p.sigma_r > 0)
             	warning('Transitional dynamics not coded for SDU or returns risk')
                 return
             end
@@ -204,12 +204,6 @@ classdef TransitionalDynSolver < handle
 			% Get the guess of terminal value function
 			% V_{T+1}as V(b+shock,a,y)
 
-			if numel(obj.p.rhos) > 1
-		        rho_mat = reshape(obj.p.rhos,[1 1 numel(obj.p.rhos)]);
-		    else
-		        rho_mat = obj.p.rho;
-		    end
-
 			Vg_terminal = obj.get_value_at_instant_of_shock(KFE, shock);
 
 			reshape_vec = [obj.p.nb_KFE,obj.p.na_KFE,obj.p.nz,obj.p.ny];
@@ -222,8 +216,8 @@ classdef TransitionalDynSolver < handle
 		    V_terminal_k = reshape(V_terminal,[],obj.p.ny);
             
 		    for ii = 1:5000
-		    	KFE_terminal = solver.find_policies(obj.p,obj.income,obj.grids,V_terminal);
-		    	A_terminal = obj.A_constructor_HJB.construct(KFE_terminal, V_terminal);
+		    	KFE_terminal = solver.find_policies(obj.p, obj.income, obj.grids, V_terminal);
+		    	A_terminal = obj.A_constructor_HJB.construct(KFE_terminal);
 
 		    	u_k = reshape(KFE_terminal.u,[],obj.income.ny);
 
@@ -237,16 +231,16 @@ classdef TransitionalDynSolver < handle
                     ez_adj = obj.income.income_transitions_SDU(obj.p, V_terminal);
    
 		    		indx_k = ~ismember(1:obj.p.ny,k);
-		    		if obj.p.SDU == 0
+		    		if ~obj.p.SDU
 			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k), obj.states_per_income, 1) ...
 	                            .* V_terminal_k(:,indx_k),2);
 			    	else
-			    		Vk_stacked = sum(squeeze(ez_adj(:,k,indx_k)) .* V_terminal_k(:,indx_k),2);
+			    		Vk_stacked = sum(squeeze(ez_adj(:,k,indx_k)) .* V_terminal_k(:,indx_k), 2);
 			    	end
 
-			    	if obj.p.SDU == 0
+			    	if ~obj.p.SDU
 	                    V1_terminal_k(:,k) = (deltaLarge* obj.rho_diag + (deltaLarge/obj.p.MPCs_delta + 1 + deltaLarge*(obj.p.deathrate - obj.income.ytrans(k,k)))...
-			        				*speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz) - deltaLarge* Ak)...
+			        				* speye(obj.states_per_income) - deltaLarge* Ak)...
 			                 	\ (deltaLarge* (u_k(:,k) + Vk_stacked)...
 			                 		+ deltaLarge*Vg_terminal_k(:,k)/obj.p.MPCs_delta + V_terminal_k(:,k));
 			        else
@@ -340,9 +334,7 @@ classdef TransitionalDynSolver < handle
 			import HACTLib.aux.sparse_diags
 			
             shock = obj.p.mpc_shocks(ishock);
-			obj.cumcon = zeros(obj.p.nb_KFE*obj.p.na_KFE*obj.income.ny*obj.p.nz,4);
-
-			dim = obj.p.nb_KFE*obj.p.na_KFE*obj.income.ny*obj.p.nz;
+			obj.cumcon = zeros(obj.n_states, 4);
 
 			for it = 4:-obj.p.MPCs_delta:obj.p.MPCs_delta
 				timeUntilShock = obj.p.MPCs_delta + 4 - it;
@@ -351,31 +343,31 @@ classdef TransitionalDynSolver < handle
 		            fprintf('\tUpdating cumulative consumption given news, quarter=%0.2f\n',it)
                 end
 
-                if obj.p.SDU == 1
-                	ez_adj = obj.income.income_transitions_SDU(obj, obj.p, obj.V)
+                if obj.p.SDU
+                	ez_adj = obj.income.income_transitions_SDU(obj.p, obj.V)
 			    end
                 
                 u_k = reshape(obj.KFEint.u,[],obj.p.ny);
                 V_k = reshape(obj.V,[],obj.p.ny);
                 V_k1 = zeros(size(V_k));
-                for k = 1:obj.p.ny
-                    ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
-			    	ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
+                for k = 1:obj.income.ny
+                    ind1 = 1+obj.states_per_income*(k-1);
+			    	ind2 = obj.states_per_income*k;
                     Ak = obj.A_HJB(ind1:ind2,ind1:ind2);
                     
                     indx_k = ~ismember(1:obj.income.ny, k);
 
-                    if obj.p.SDU == 0
-			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k),obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz,1) ...
-	                            .* V_k(:,indx_k),2);
+                    if ~obj.p.SDU
+			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k), [obj.states_per_income 1]) ...
+	                            .* V_k(:,indx_k), 2);
 			    		V_k1(:,k) = (obj.rho_diag + (1/obj.p.MPCs_delta + obj.p.deathrate - obj.income.ytrans(k,k))...
-		        				* speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz) - Ak)...
+		        				* speye(obj.states_per_income) - Ak)...
 		                 	\ (u_k(:,k) + Vk_stacked + V_k(:,k)/obj.p.MPCs_delta);
 			    	else
 			    		Vk_stacked 	= sum(squeeze(ez_adj(:, k, indx_k)) .* V_k(:,indx_k),2);
 
 			    		inctrans = sparse_diags(ez_adj(:,k,k), 0);
-			    		Bk = hjb_divisor(obj.p.MPCs_delta, k, A, inctrans, obj.rho_diag);
+			    		Bk = hjb_divisor(obj.p.MPCs_delta, obj.p.deathrate, k, obj.A_HJB, inctrans, obj.rho_diag);
 			    		V_k1(:,k) = Bk \ (obj.p.MPCs_delta * (u_k(:,k) + Vk_stacked) + V_k(:,k));
 			    		% V_k1(:,k) = (obj.rho_diag + (1/obj.p.delta_mpc + obj.p.deathrate)...
 		       %  				* speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz) - Ak - ...
@@ -385,7 +377,7 @@ classdef TransitionalDynSolver < handle
                         
                     
                 end
-                obj.V = reshape(V_k1,[obj.p.nb_KFE,obj.p.na_KFE,obj.income.ny,obj.p.nz]);
+                obj.V = reshape(V_k1,[obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
 
 		        % find policies a fraction of a period back
 		        obj.update_policies();
@@ -397,14 +389,14 @@ classdef TransitionalDynSolver < handle
 			    	import HACTLib.computation.feynman_kac_divisor
 				    if (obj.p.sigma_r > 0) && (~obj.p.retrisk_KFE)
 	                    FKmats = feynman_kac_divisor(obj.p, obj.income,...
-	                    			obj.p.MPCs_delta, A_FK, true);
+	                    			obj.p.MPCs_delta, obj.A_FK, true);
 	                else
 	                	FKmats = feynman_kac_divisor(obj.p, obj.income,...
-	                				obj.p.MPCs_delta, A_HJB, true);
+	                				obj.p.MPCs_delta, obj.A_HJB, true);
 	                end
 
 			        for period = ceil(it):4
-			        	obj.update_cum_con(period,FKmat);
+			        	obj.update_cum_con(period, FKmats);
 	                end
 
 			        if (it == 3 + obj.p.MPCs_delta)
@@ -452,7 +444,7 @@ classdef TransitionalDynSolver < handle
 			%	solve the Feynman-Kac equations
 			%
 			% obj.A_FK : 
-			obj.A_HJB = obj.A_constructor_HJB.construct(obj.KFEint, obj.V);
+			obj.A_HJB = obj.A_constructor_HJB.construct(obj.KFEint);
 
 			if (obj.p.sigma_r > 0) && (~obj.p.retrisk_KFE)
 				obj.A_FK = obj.A_constructor_FK.construct(obj.KFEint);
@@ -476,15 +468,15 @@ classdef TransitionalDynSolver < handle
             cumcon_t_k = reshape(obj.cumcon(:,period),[],obj.p.ny);
 
 			for k = 1:obj.income.ny
-                ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
+                ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k, 2);
 
                 deathin_cc_k = obj.get_death_inflows(cumcon_t_k, k);
 
-                ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
-                ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
+                ind1 = 1 + obj.states_per_income * (k-1);
+                ind2 = obj.states_per_income * k;
                 RHS = reshape(obj.KFEint.c(:,:,:,k),[],1) + ytrans_cc_k + deathin_cc_k ...
-                        + cumcon_t_k(:,k)/obj.p.MPCs_delta;
-                obj.cumcon(ind1:ind2,period) = FKmat{k}*RHS;
+                        + cumcon_t_k(:,k) / obj.p.MPCs_delta;
+                obj.cumcon(ind1:ind2,period) = FKmat{k} * RHS;
             end
 		end
 
@@ -505,7 +497,7 @@ classdef TransitionalDynSolver < handle
 
             if obj.p.Bequests
                 deathin_cc_k = obj.p.deathrate * cumcon_t_k(:,k);
-            elseif obj.p.Bequests
+            else
                 deathin_cc_k = obj.p.deathrate * squeeze(cumcon_t_z_k(obj.grids.loc0b0a,:,k));
                 deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.p.na_KFE,1));
             end

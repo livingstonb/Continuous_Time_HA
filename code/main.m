@@ -78,7 +78,7 @@ function [stats,p] = main(runopts, p)
     MPCoptions = {'delta', p.MPCs_delta,'interp_method', 'linear'};
     mpc_finder = MPCs(p, income, grdKFE, MPCoptions{:});
 
-    shocks = [4,5,6];
+    shocks = [5,6];
     import HACTLib.computation.TransitionalDynSolver
     trans_dyn_solver = TransitionalDynSolver(p, income, grdKFE, shocks);
     
