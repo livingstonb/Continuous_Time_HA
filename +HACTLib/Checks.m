@@ -8,14 +8,16 @@ classdef Checks
 			% with the required shape.
 
 			if ~isreal(variable)
-				error(create_error_struct(caller, "NotReal",...
-					"Input is not an array of real numbers"))
+				me = gen_exception("Input is not an array of real numbers",...
+						caller, "NotReal");
+				throwAsCaller(me);
 			end
 
             for k = 1:length(shape)
             	if size(variable, k) ~= shape(k)
-            		msg = sprintf("Expected length %d along dimension %d%");
-            		error(create_error_struct(caller, "InvalidShape", msg))
+            		me = gen_exception("Expected length %d along dimension %d%",...
+						caller, "InvalidShape");
+					throwAsCaller(me);
             	end
             end
 		end
@@ -29,16 +31,18 @@ classdef Checks
 
 			for k = 1:nargin
 				if ~(isnumeric(varargin{k}) || iscell(varargin{k}))
-					error(create_error_struct(caller, "InvalidType",...
-						"One or more of the inputs is not an array"))
+					me = gen_exception("One or more of the inputs is not an array",...
+						caller, "InvalidType");
+					throwAsCaller(me);
 				end
 			end
 
 			shape = size(varargin{1});
 			for k = 2:nargin
 				if ~isequal(shape, size(varargin{k}))
-					error(create_error_struct(caller, "InvalidShape",...
-						"Inputs do not have the same shape"))
+					me = gen_exception("Inputs do not have the same shape",...
+						caller, "InvalidShape");
+					throwAsCaller(me);
 				end
 			end
 		end
@@ -51,14 +55,16 @@ classdef Checks
 
 			Checks.is_square_matrix(caller, variable);
 			if ~issparse(variable)
-				error(create_error_struct(caller, "NotSparse",...
-					"Matrix must be sparse"))
+				me = gen_exception("Matrix must be sparse",...
+						caller, "NotSparse");
+				throwAsCaller(me);
 			end
 
 			if nargin == 2
 				if size(variable, 1) ~= n
-					error(create_error_struct(caller, "InvalidShape",...
-						"Size of matrix does not match declared size"))
+					me = gen_exception("Size of matrix does not match declared size",...
+						caller, "InvalidShape");
+					throwAsCaller(me);
 				end
 			end
 		end
@@ -69,33 +75,39 @@ classdef Checks
 
 			dim1dim2_equal = (size(variable, 1) == size(variable, 2));
 			if ~(ismatrix(variable) && dim1dim2_equal)
-				error(create_error_struct(caller, "InvalidShape",...
-					"Input array is not a square matrix"))
+				me = gen_exception("Input array is not a square matrix", caller,...
+					"InvalidShape");
+				throwAsCaller(me);
 			end
 
 			if size(variable, 1) == 0
-				error(create_error_struct(caller, "Empty",...
-					"At least one input is empty"))
+				me = gen_exception("At least one input is empty", caller,...
+					"Empty");
+				throwAsCaller(me);
 			elseif ~isreal(variable)
-				error(create_error_struct(caller, "NotReal",...
-					"Input is complex and must be real"))
+				me = gen_exception("Input must be real", caller,...
+					"InvalidType");
+				throwAsCaller(me);
 			end
 		end
 
 		function is_logical(caller, variable)
 			if ~islogical(variable)
-				error(create_error_struct(caller, "InvalidType",...
-					"Input must be true/false"))
+				me = gen_exception("Input must be true/false", caller,...
+					"InvalidType");
+				throwAsCaller(me);
 			end
 		end
 
 		function is_integer(caller, variable)
 			if ~isreal(variable)
-				error(create_error_struct(caller, "NotReal",...
-					"Input must be real"))
+				me = gen_exception("Input must be real", caller,...
+					"InvalidType");
+				throwAsCaller(me);
 			elseif variable ~= round(variable)
-				error(create_error_struct(caller, "InvalidType",...
-					"Input is not an integer"))
+				me = gen_exception("Input is not an integer", caller,...
+					"InvalidType");
+				throwAsCaller(me);
 			end
 		end
 
@@ -104,13 +116,16 @@ classdef Checks
 			% the required attributes.
 		
 			if ~iscell(props)
-				error(create_error_struct(caller, "InvalidType",...
-					"Attributes to check must be listed in a cell array"))
+				me = gen_exception("'Attributes' is not a cell array", caller,...
+					"InvalidType");
+				throwAsCaller(me);
+			end
 
 			for i = 1:numel(props)
 				if (~isprop(object, props{i}) && ~isfield(object, props{i}))
 					msg = sprintf("Required attribute '%s' not found", props{i});
-					error(create_error_struct(caller, "NotFound",msg))
+					me = gen_exception(msg, caller, "InvalidType");
+					throwAsCaller(me);
 				end
 			end
 		end
@@ -120,4 +135,20 @@ end
 function err_struct = create_error_struct(caller, errortype, msg)
 	err_struct.identifier = strcat('HACTLib:', caller, ':', errortype);
 	err_struct.message = msg;
+end
+
+function msgId = gen_msgId(caller, varargin)
+	msgId = "HACTLib";
+	for k = 1:nargin-1
+		msgId = cat(msgId, ":", varargin{k});
+	end
+end
+
+function me = gen_exception(msg, varargin)
+	msgId = "HACTLib";
+	for k = 1:nargin-1
+		msgId = cat(msgId, ":", varargin{k});
+	end
+
+	me = MException(msgId, msg);
 end
