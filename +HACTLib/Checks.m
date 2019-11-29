@@ -84,39 +84,33 @@ classdef Checks
 
 		function is_logical(caller, variable)
 			if ~islogical(variable)
-				msg = "Input must be true/false";
-				error(create_error_struct(caller, 'InvalidType', msg));
-			end
-		end
-
-		function is_real_integer(caller, variable)
-			msg = "Input must be real";
-
-			if ~isreal(variable)
-				error(create_error_struct(caller, 'NotReal', msg))
-			elseif variable ~= round(variable)
-				error(create_error_struct(caller, 'InvalidType',...
-					"Input is not an integer"))
+				error(create_error_struct(caller, "InvalidType",...
+					"Input must be true/false"))
 			end
 		end
 
 		function is_integer(caller, variable)
-			msg = "Input must be an integer";
-			assert(isscalar(variable), msg);
-			assert(round(variable == variable), msg);
+			if ~isreal(variable)
+				error(create_error_struct(caller, "NotReal",...
+					"Input must be real"))
+			elseif variable ~= round(variable)
+				error(create_error_struct(caller, "InvalidType",...
+					"Input is not an integer"))
+			end
 		end
 
 		function has_attributes(caller, object, props)
 			% Checks 'object' to verify that it has at least
 			% the required attributes.
 		
-			assert(iscell(props),...
-				"Second arg to has_properties must be a cell array")
+			if ~iscell(props)
+				error(create_error_struct(caller, "InvalidType",...
+					"Attributes to check must be listed in a cell array"))
 
 			for i = 1:numel(props)
-				if ~isprop(object, props{i})
+				if (~isprop(object, props{i}) && ~isfield(object, props{i}))
 					msg = sprintf("Required attribute '%s' not found", props{i});
-					error(msg)
+					error(create_error_struct(caller, "NotFound",msg))
 				end
 			end
 		end
