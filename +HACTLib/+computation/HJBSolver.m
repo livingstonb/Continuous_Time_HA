@@ -54,6 +54,7 @@ classdef HJBSolver < HACTLib.computation.HJBBase
 	    % Implicit-Explicit Updating
 	    % --------------------------------------------------------------
 		function Vn1 = solve_implicit_explicit(obj, A, u, V, varargin)
+			import HACTLib.computation.hjb_divisor
 			obj.current_iteration = obj.current_iteration + 1;
 
 			u_k = reshape(u, [], obj.income.ny);
@@ -62,8 +63,10 @@ classdef HJBSolver < HACTLib.computation.HJBBase
 			Vn1_k = zeros(obj.states_per_income, obj.income.ny);
 			Bk_inv = cell(1, obj.income.ny);
 			for k = 1:obj.income.ny
+
 				inctrans = obj.income.ytrans(k, k) * speye(obj.states_per_income);
-				Bk = obj.construct_Bk(k, A, inctrans, varargin{:});
+				Bk = hjb_divisor(obj.options.delta, obj.p.deathrate, k,...
+					A, inctrans, obj.rho_mat);
             	Bk_inv{k} = inverse(Bk);
 	        	Vn1_k(:,k) = obj.update_Vk_implicit_explicit(...
 	        		Vn_k, u_k, k, Bk_inv{k}, varargin{:});

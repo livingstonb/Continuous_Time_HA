@@ -167,20 +167,6 @@ classdef (Abstract) HJBBase < handle
 			Checks.has_shape(super_class, u, obj.shape);
 			Checks.has_shape(super_class, V, obj.shape);
 		end
-
-		function Bk = construct_Bk(obj, k, A, inctrans, varargin)
-		    % For the k-th income state, constructs the matrix
-		    % Bk = (rho + deathrate - A)*delta + I, which serves
-		    % as the divisor in the implicit-explicit update scheme.
-
-		    i1 = 1 + (k-1) * obj.states_per_income;
-		    i2 = k * obj.states_per_income;
-
-		    Ak = A(i1:i2, i1:i2);
-		    Bk = obj.options.delta * obj.rho_mat...
-		    	+ (1 + obj.options.delta * obj.p.deathrate) * speye(obj.states_per_income)...
-		        - obj.options.delta * (Ak + inctrans);
-		end
 	end
 
 	methods (Abstract, Access=protected)

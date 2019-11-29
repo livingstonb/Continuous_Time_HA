@@ -49,8 +49,10 @@ classdef HJBSolverSDU < HACTLib.computation.HJBBase
 	    % Implicit-Explicit Updating
 	    % --------------------------------------------------------------
 		function Vn1 = solve_implicit_explicit(obj, A, u, V, varargin)
-			obj.current_iteration = obj.current_iteration + 1;
+			import HACTLib.computation.hjb_divisor
+			import HACTLib.aux.sparse_diags
 
+			obj.current_iteration = obj.current_iteration + 1;
 			u_k = reshape(u, [], obj.income.ny);
 			Vn_k = reshape(V, [], obj.income.ny);
 			risk_adj_k = reshape(varargin{1}, [], obj.income.ny);
@@ -59,9 +61,9 @@ classdef HJBSolverSDU < HACTLib.computation.HJBBase
 
 			Vn1_k = zeros(obj.states_per_income, obj.income.ny);			
 			for k = 1:obj.income.ny
-				inctrans = spdiags(ez_adj(:, k, k), 0,...
-					obj.states_per_income, obj.states_per_income);
-				Bk = obj.construct_Bk(k, A, inctrans, varargin{:});
+				inctrans = sparse_diags(ez_adj(:, k, k), 0);
+				Bk = hjb_divisor(obj.options.delta, obj.p.deathrate, k,...
+					A, inctrans, obj.rho_mat);
             	Bk_inv = inverse(Bk);
 	        	Vn1_k(:,k) = obj.update_Vk_implicit_explicit(...
 	        		Vn_k, u_k, k, Bk_inv, ez_adj, risk_adj_k(:,k), varargin{:});

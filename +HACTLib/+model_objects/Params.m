@@ -1,4 +1,4 @@
-classdef Params < HACTLib.defaults.ParamsDefaults
+classdef Params < HACTLib.model_objects.ParamsDefaults
     % This class stores the parameters of the model and contains methods to
     % adjust them for frequency and other factors.
     %
@@ -97,7 +97,7 @@ classdef Params < HACTLib.defaults.ParamsDefaults
         function set_from_structure(obj, varargin)
     		parser = inputParser;
 
-    		import HACTLib.defaults.ParamsDefaults
+    		import HACTLib.model_objects.ParamsDefaults
 
     		defaults = ParamsDefaults();
     		fields = properties(ParamsDefaults);
