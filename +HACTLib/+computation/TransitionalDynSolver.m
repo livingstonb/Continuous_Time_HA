@@ -245,24 +245,18 @@ classdef TransitionalDynSolver < handle
 		    		if ~obj.p.SDU
 			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k), obj.states_per_income, 1) ...
 	                            .* V_terminal_k(:,indx_k),2);
+			    		inctrans = obj.income.ytrans(k,k) * speye(obj.states_per_income);
 			    	else
 			    		Vk_stacked = sum(squeeze(ez_adj(:,k,indx_k)) .* V_terminal_k(:,indx_k), 2);
+			    		inctrans = sparse_diags(ez_adj(:,k,k), 0);
 			    	end
 
-			    	if ~obj.p.SDU
-	                    V1_terminal_k(:,k) = (obj.options.delta_terminal* obj.rho_diag + (obj.options.delta_terminal/obj.options.delta + 1 +...
-	                    	obj.options.delta_terminal*(obj.p.deathrate - obj.income.ytrans(k,k)))...
-			        				* speye(obj.states_per_income) - obj.options.delta_terminal* Ak)...
-			                 	\ (obj.options.delta_terminal* (u_k(:,k) + Vk_stacked)...
-			                 		+ obj.options.delta_terminal*Vg_terminal_k(:,k)/obj.options.delta + V_terminal_k(:,k));
-			        else
-			        	V1_terminal_k(:,k) = ...
-			        		(obj.options.delta_terminal* obj.rho_diag + (obj.options.delta_terminal/obj.options.delta + 1 + ...
+			    	RHS = obj.options.delta_terminal* (u_k(:,k) + Vk_stacked)...
+			           		+ obj.options.delta_terminal*Vg_terminal_k(:,k)/obj.options.delta + V_terminal_k(:,k);
+			        LHS = obj.options.delta_terminal* obj.rho_diag + (obj.options.delta_terminal/obj.options.delta + 1 + ...
 			        			obj.options.delta_terminal*obj.p.deathrate.*speye(obj.states_per_income)) - obj.options.delta_terminal * Ak...
-			        			- obj.options.delta_terminal * sparse_diags(ez_adj(:,k,k), 0))...
-			                 	\ (obj.options.delta_terminal* (u_k(:,k) + Vk_stacked)...
-			                 		+ obj.options.delta_terminal*Vg_terminal_k(:,k)/obj.options.delta + V_terminal_k(:,k));
-		        	end
+			        			- obj.options.delta_terminal * inctrans;
+		        	V1_terminal_k(:,k) = LHS \ RHS;
 		    	end
 
     			dst = max(abs(V1_terminal_k(:)-V_terminal(:)));
@@ -293,30 +287,22 @@ classdef TransitionalDynSolver < handle
 			% V_at_shock is needed to find the value function an instant
 			% before the shock
 
+			interp_grids = {obj.grids.b.vec, obj.grids.a.vec,...
+				obj.grids.z.vec, obj.income.y.vec};
 			if (obj.p.ny > 1) && (obj.p.nz > 1)
-				interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.grids.z.vec,obj.income.y.vec};
+				inds = 1:4;
             elseif obj.p.ny > 1
-                interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.income.y.vec};
+                inds = [1, 2, 4];
             elseif obj.p.nz > 1
-                interp_grids = {obj.grids.b.vec,obj.grids.a.vec,obj.grids.z.vec};
+                inds = 1:3;
 			else
-				interp_grids = {obj.grids.b.vec,obj.grids.a.vec};
+				inds = 1:2;
 			end
-			Vinterp = griddedInterpolant(interp_grids,squeeze(KFE.Vn), 'linear');
 
-			if (obj.p.ny > 1) && (obj.p.nz > 1)
-				V_at_shock = Vinterp(obj.grids.b.matrix(:)+shock,...
-					obj.grids.a.matrix(:), obj.grids.z.matrix(:), obj.income.y.matrixKFE(:));
-            elseif obj.p.ny > 1
-                V_at_shock = Vinterp(obj.grids.b.matrix(:)+shock,...
-					obj.grids.a.matrix(:), obj.income.y.matrixKFE(:));
-            elseif obj.p.nz > 1
-                V_at_shock = Vinterp(obj.grids.b.matrix(:)+shock,...
-					obj.grids.a.matrix(:), obj.grids.z.matrix(:));
-			else
-				V_at_shock = Vinterp(obj.grids.b.matrix(:)+shock,...
-					obj.grids.a.matrix(:));
-			end
+			Vinterp = griddedInterpolant(interp_grids(inds),squeeze(KFE.Vn), 'linear');
+			points = {obj.grids.b.vec(:)+shock, obj.grids.a.vec(:),...
+					obj.grids.z.vec(:), obj.income.y.vec(:)};
+			V_at_shock = Vinterp(points(inds));
 		end
 
 		function iterateBackwards(obj, ishock)
@@ -344,6 +330,8 @@ classdef TransitionalDynSolver < handle
 
 			import HACTLib.computation.hjb_divisor
 			import HACTLib.aux.sparse_diags
+            import HACTLib.computation.feynman_kac_divisor
+            import HACTLib.computation.feynman_kac
 			
             shock = obj.p.mpc_shocks(ishock);
 			obj.cumcon = zeros(obj.n_states, 4);
@@ -356,7 +344,7 @@ classdef TransitionalDynSolver < handle
                 end
 
                 if obj.p.SDU
-                	ez_adj = obj.income.income_transitions_SDU(obj.p, obj.V)
+                	ez_adj = obj.income.income_transitions_SDU(obj.p, obj.V);
 			    end
                 
                 u_k = reshape(obj.KFEint.u,[],obj.p.ny);
@@ -371,18 +359,14 @@ classdef TransitionalDynSolver < handle
 
                     if ~obj.p.SDU
                     	inctrans = obj.income.ytrans(k,k) * speye(obj.states_per_income);
-                    	Bk = hjb_divisor(obj.MPCs_delta, obj.p.deathrate, k, obj.A_HJB, inctrans, obj.rho_diag);
 			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k), [obj.states_per_income 1]) ...
-	                            .* V_k(:,indx_k), 2);
-			    		V_k1(:,k) = Bk \ (obj.options.delta * (u_k(:,k) + Vk_stacked) + V_k(:,k));
+	                            		.* V_k(:,indx_k), 2);
 			    	else
 			    		inctrans = sparse_diags(ez_adj(:,k,k), 0);
-			    		Bk = hjb_divisor(obj.options.delta, obj.p.deathrate, k, obj.A_HJB, inctrans, obj.rho_diag);
 			    		Vk_stacked 	= sum(squeeze(ez_adj(:,k,indx_k)) .* V_k(:,indx_k),2);
-			    		V_k1(:,k) = Bk \ (obj.options.delta * (u_k(:,k) + Vk_stacked) + V_k(:,k));
 			    	end
-                        
-                    
+			    	Bk = hjb_divisor(obj.options.delta, obj.p.deathrate, k, obj.A_HJB, inctrans, obj.rho_diag);
+                    V_k1(:,k) = Bk \ (obj.options.delta * (u_k(:,k) + Vk_stacked) + V_k(:,k));
                 end
                 obj.V = reshape(V_k1, obj.state_dims);
 
@@ -393,7 +377,6 @@ classdef TransitionalDynSolver < handle
 		        obj.update_A_matrix();
 
 			    if obj.p.ComputeMPCS_news == 1
-			    	import HACTLib.computation.feynman_kac_divisor
 				    if (obj.p.sigma_r > 0) && (~obj.p.retrisk_KFE)
 	                    FKmats = feynman_kac_divisor(obj.p, obj.income,...
 	                    			obj.options.delta, obj.A_FK, true);
@@ -418,7 +401,6 @@ classdef TransitionalDynSolver < handle
 			    	index = find(obj.savedTimesUntilShock==timeUntilShock);
                     
                     obj.savePolicies(index,ishock);
-			    	
                 end
             end
 

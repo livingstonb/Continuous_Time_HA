@@ -5,11 +5,7 @@ function cumcon_update = feynman_kac(p, grids, income, cumcon_t, FKmats, c, step
 	% ----------
 	% cumcon_t_k : cumulative consumption for period t,
 	%	of shape (nb_KFE*na_KFE*nz, ny)
-	%
-	% Returns
-	% -------
-	% deathin_cc_k : death inflows multiplied by cumulative consumption
-
+	
 	cumcon_update = zeros(size(cumcon_t));
 	cumcon_t_k = reshape(cumcon_t, [], income.ny);
 	for k = 1:income.ny
