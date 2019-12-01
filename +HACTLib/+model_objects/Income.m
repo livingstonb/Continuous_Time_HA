@@ -172,7 +172,7 @@ classdef Income < handle
 		    %	for SDU and of shape (nb*na*nz*ny, nb*na*nz*ny).
 
 		    if ~p.SDU
-		    	inctrans = kron(obj.ytrans, p.nb)
+		    	inctrans = kron(obj.ytrans, speye(p.nb*p.na*p.nz));
 		    else
 			    sdu_adj = obj.income_transitions_SDU(p, V);
 

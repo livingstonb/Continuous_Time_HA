@@ -35,8 +35,21 @@ classdef HJBSolver < HACTLib.computation.HJBBase
 
 		function [inctrans, inctrans_k] = get_income_transitions(obj, k, varargin)
 			inctrans = obj.income.ytrans(k,k) * speye(obj.states_per_income);
-			inctrans_k = repmat(obj.income.trans(k,:), obj.states_per_income, 1);
+			inctrans_k = repmat(obj.income.ytrans(k,:), obj.states_per_income, 1);
 		end
+
+% 		function  Vn1 = solve_implicit_explicit(obj, A, u, V, varargin)
+% 			[Vn1_k, Bk_inv] = solve_implicit_explicit@HACTLib.computation.HJBBase(...
+% 				obj, A, u, V, varargin{:});
+% 
+% 			% Howard improvement step
+% 	        if (obj.current_iteration >= obj.options.HIS_start) && ~obj.p.SDU
+% 	        	u_k = reshape(u, [], obj.p.ny);
+% 	        	Vn1_k = reshape(Vn1_k, [], obj.p.ny);
+% 	            Vn1_k = obj.howard_improvement_step(Vn1_k, u_k, Bk_inv);
+% 	        end
+% 	        Vn1 = reshape(Vn1_k, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
+% 	    end
 
 		function Vn2_k = howard_improvement_step(obj, Vn1_k, u_k, Bik_all)
 		    % Technique to speed up convergence.

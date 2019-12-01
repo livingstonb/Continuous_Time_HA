@@ -1,4 +1,4 @@
-classdef HACT_Model < handle
+classdef Model < handle
 	properties
 		p;
 
@@ -14,7 +14,7 @@ classdef HACT_Model < handle
 	end
 
 	methods
-		function obj = HACT_Model(params, gridsHJB, gridsKFE, inc)
+		function obj = Model(params, gridsHJB, gridsKFE, inc)
 			obj.p = params;
 			obj.grids_HJB = gridsHJB;
 			obj.grids_KFE = gridsKFE;
@@ -22,6 +22,7 @@ classdef HACT_Model < handle
 		end
 
 		function initialize(obj)
+			import HACTLib.computation.TransitionMatrixConstructor
 			import HACTLib.computation.HJBSolver
 			import HACTLib.computation.HJBSolverSDU
 

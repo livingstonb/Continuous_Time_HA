@@ -20,7 +20,7 @@ classdef HJBSolverSDU < HACTLib.computation.HJBBase
 	methods (Access=protected)
 		function check_if_SDU(obj)
 			msg = [	"Model does not use stochastic differential utility, ",...
-					"this subclass should not be used."]
+					"this subclass should not be used."];
 			assert(obj.p.SDU, msg);
 		end
 

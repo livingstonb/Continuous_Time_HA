@@ -144,17 +144,20 @@ classdef (Abstract) HJBBase < handle
 		%%--------------------------------------------------------------
 	    % Implicit-Explicit Updating
 	    % --------------------------------------------------------------
-		function Vn1 = solve_implicit_explicit(obj, A, u, V, varargin)
+		function [Vn1, Bk_inv] = solve_implicit_explicit(obj, A, u, V, varargin)
 			import HACTLib.computation.hjb_divisor
 			obj.current_iteration = obj.current_iteration + 1;
 
-			if obj.p.SDU
-				% Use risk-adjusted income transitions
-				args = {obj.income.income_transitions_SDU(obj.p, V)};
+			if obj.p.SDU && (obj.p.sigma_r > 0)
+				sdu_adj = obj.income.income_transitions_SDU(obj.p, V);
+				args1 = {sdu_adj};
+				risk_adj_k = reshape(varargin{1}, [], obj.income.ny);
+				args2 = {risk_adj_k};
 			else
-				args = {};
+				args1 = {};
+				args2 = {};
 			end
-
+			
 			u_k = reshape(u, [], obj.income.ny);
 			Vn_k = reshape(V, [], obj.income.ny);
 
@@ -162,20 +165,16 @@ classdef (Abstract) HJBBase < handle
 			Bk_inv = cell(1, obj.income.ny);
 			for k = 1:obj.income.ny
 
-				[inctrans, inctrans_k] = obj.get_income_transitions(k, args{:});
+				[inctrans, inctrans_k] = obj.get_income_transitions(k, args1{:});
 
 				Bk = hjb_divisor(obj.options.delta, obj.p.deathrate, k,...
 					A, inctrans, obj.rho_mat);
             	Bk_inv{k} = inverse(Bk);
 
 	        	Vn1_k(:,k) = obj.update_Vk_implicit_explicit(...
-	        		Vn_k, u_k, k, Bk_inv{k}, inctrans_k, args{:}, varargin{:});
+	        		Vn_k, u_k, k, Bk_inv{k}, inctrans_k, args2{:}, varargin{:});
 	        end
 
-	        % Howard improvement step
-	        if (obj.current_iteration >= obj.options.HIS_start) && ~obj.p.SDU
-	            Vn1_k = obj.howard_improvement_step(Vn1_k, u_k, Bk_inv);
-	        end
 	        Vn1 = reshape(Vn1_k, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
 
@@ -185,13 +184,14 @@ classdef (Abstract) HJBBase < handle
         	indx_k = ~ismember(1:obj.income.ny, k);
 
             offdiag_inc_term = sum(...
-            	squeeze(inctrans_k(:,indx_k)) .* V_k(:, indx_k), 2);
+            	squeeze(inctrans_k(:,indx_k)) .* V_k(:,indx_k), 2);
 
-            RHSk = obj.options.delta * (u_k(:,k) + offdiag_inc_term);
-            		+ V_k(:,k) ;
-           	
-           	if numel(varargin) == 1
-           		RHSk = RHSk + obj.options.delta * varargin{1};
+            RHSk = obj.options.delta * (u_k(:,k) + offdiag_inc_term)...
+            		+ V_k(:,k);
+            
+            if obj.p.SDU && (obj.p.sigma_r > 0)
+            	risk_adj = varargin{1};
+           		RHSk = RHSk + obj.options.delta * risk_adj(:,k);
            	end
             
             Vn1_k = Bk_inv * RHSk;
