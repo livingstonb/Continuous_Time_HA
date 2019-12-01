@@ -1,7 +1,7 @@
 classdef Preferences < handle
 
 	properties
-		% Utility function
+		% Utility, u(c)
 		u;
 
 		% Marginal utility
@@ -18,6 +18,9 @@ classdef Preferences < handle
 
 		% Inverse of marginal labor disutility
 		hrs_u1inv;
+
+		% Utility, u(c, h)
+		u_total;
 	end
 
 	methods
@@ -29,10 +32,12 @@ classdef Preferences < handle
 			obj.u1inv = @(u) CRRA.u1inv(u, invies);
 		end
 
-		function set_sdu(obj, invies)
-			obj.u = @(c, rho) rho .* CRRA.utility(c, invies);
-			obj.u1 = @(c, rho) rho .* CRRA.marginal_utility(c, invies);
-			obj.u1inv = @(u, rho) CRRA.u1inv(u ./ rho, invies);
+		function set_frisch(obj, coeff, frisch)
+			import HACTLib.model_objects.Frisch
+
+			obj.hrs_u = @(h) Frisch.disutility(h, coeff, frisch);
+			obj.hrs_u1 = @(h) Frisch.marginal_disutility(h, coeff, frisch);
+			obj.hrs_u1inv = @(h) Frisch.inv_marginal_disutility(h, coeff, frisch);
 		end
 	end
 end

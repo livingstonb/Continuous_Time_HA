@@ -46,9 +46,15 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     prefs.set_crra(p.invies);
 
     if p.endogenous_labor
-        labordisutil = @(h) p.labor_disutility * (h .^ (1 + 1/p.frisch)) ./ (1 + 1/p.frisch);
-        labordisutil1 = @(h) p.labor_disutility * (h .^ (1./p.frisch));
-        labordisutil1inv = @(v) (v./p.labor_disutility) .^ p.frisch;
+    	prefs.set_frisch(p.labordisutil, p.frisch);
+    	if strcmp(grd.gtype, 'HJB')
+	        nety_mat = (1-p.wagetax) * income.y.matrix;
+	    else
+	        nety_mat = (1-p.wagetax) * income.y.matrixKFE;
+	    end
+	    hours_fn = {@(Vb) labordisutil1inv(nety_mat .* Vb)};
+	else
+		hours_fn = {};
     end
     
     %% --------------------------------------------------------------------
@@ -69,15 +75,6 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     Vb = fd_firstorder(Vn, grd.b.dB, grd.b.dF, 1);
     Vb.B(2:nb,:,:,:) = max(Vb.B(2:nb,:,:,:), Vbmin);
     Vb.F(1:nb-1,:,:,:) = max(Vb.F(1:nb-1,:,:,:), Vbmin);
-
-    if strcmp(grd.gtype, 'HJB')
-        nety_mat = (1-p.wagetax) * income.y.matrix;
-    else
-        nety_mat = (1-p.wagetax) * income.y.matrixKFE;
-    end
-    hours_fn = @(Vb) labordisutil1inv(nety_mat .* Vb);
-
-    import HACTLib.computation.upwind_consumption
     
     if strcmp(grd.gtype, 'HJB')
         net_income_liq = income.nety_HJB_liq;
@@ -85,18 +82,12 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
         net_income_liq = income.nety_KFE_liq;
     end
 
-    if p.endogenous_labor
-        upwindB = upwind_consumption(net_income_liq, Vb.B,...
-                    'B', prefs, hours_fn, labordisutil);
-        upwindF = upwind_consumption(net_income_liq, Vb.F,...
-                    'F', prefs, rho_mat_adj, hours_fn, labordisutil);
-    else
-        upwindB = upwind_consumption(net_income_liq, Vb.B, 'B',...
-                    prefs, rho_mat_adj);
-        upwindF = upwind_consumption(net_income_liq, Vb.F, 'F',...
-                    prefs, rho_mat_adj);
-    end
+    import HACTLib.computation.upwind_consumption
 
+    upwindB = upwind_consumption(net_income_liq, Vb.B,...
+                'B', prefs, rho_mat_adj, hours_fn{:});
+    upwindF = upwind_consumption(net_income_liq, Vb.F,...
+                'F', prefs, rho_mat_adj, hours_fn{:});
     HcB = upwindB.H;
     HcF = upwindF.H;
 
@@ -147,9 +138,11 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     % DERIVATIVE OF VALUE FUNCTION FOR SDU WITH RETURNS RISK
     % ---------------------------------------------------------------------
     if (p.sigma_r > 0) && (p.OneAsset == 1)
-        V_deriv_risky_asset_nodrift = prefs.u1(c);
+        V_deriv_risky_asset_nodrift = rho_mat_adj .* prefs.u1(c);
     elseif (p.sigma_r > 0) && (p.OneAsset == 0)
-        V_deriv_risky_asset_nodrift = prefs.u1(c) .* (1 + aux.AdjustmentCost.derivative(d, grd.a.matrix, p));
+        V_deriv_risky_asset_nodrift =rho_mat_adj .* prefs.u1(c)...
+        	.* (1 + aux.AdjustmentCost.derivative(d, grd.a.matrix, p));
     else
         V_deriv_risky_asset_nodrift = [];
     end
+end

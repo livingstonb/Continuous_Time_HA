@@ -28,9 +28,9 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
         rho_mat = repmat(rho_mat, [nb na 1 ny]);
         rho_mat = sparse_diags(rho_mat(:), 0);
     else
-        rho_mat = p.rho * speye(nb*na*nz);
+        rho_mat = p.rho * speye(nb*na*nz*ny);
     end
-    rho_mat = rho_mat + p.deathrate * speye(nb*na*nz);
+    rho_mat = rho_mat + p.deathrate * speye(nb*na*nz*ny);
 
 
     %% --------------------------------------------------------------------
