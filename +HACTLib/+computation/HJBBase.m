@@ -120,6 +120,83 @@ classdef (Abstract) HJBBase < handle
 	end
 
 	methods (Access=protected)
+		%%--------------------------------------------------------------
+	    % Implicit Updating
+	    % --------------------------------------------------------------
+		function Vn1 = solve_implicit(obj, A, u, V, varargin)
+			assert(obj.p.deathrate == 0,...
+				"Fully implicit updating does not support death.")
+
+			A_income = obj.income.full_income_transition_matrix(obj.p, V);
+
+			if obj.returns_risk && obj.p.SDU
+				risk_adj = reshape(vargin{1}, [], 1);
+		        RHS = obj.options.delta * (u(:) + risk_adj) + Vn(:);
+		    else
+		    	RHS = obj.options.delta * u(:) + Vn(:);
+		    end
+	        
+	        B = (obj.rho_mat - A - A_income) * obj.options.delta + speye(obj.n_states);
+	        Vn1 = B \ RHS;
+	        Vn1 = reshape(Vn1, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
+		end
+
+		%%--------------------------------------------------------------
+	    % Implicit-Explicit Updating
+	    % --------------------------------------------------------------
+		function Vn1 = solve_implicit_explicit(obj, A, u, V, varargin)
+			import HACTLib.computation.hjb_divisor
+			obj.current_iteration = obj.current_iteration + 1;
+
+			if obj.p.SDU
+				% Use risk-adjusted income transitions
+				args = {obj.income.income_transitions_SDU(obj.p, V)};
+			else
+				args = {};
+			end
+
+			u_k = reshape(u, [], obj.income.ny);
+			Vn_k = reshape(V, [], obj.income.ny);
+
+			Vn1_k = zeros(obj.states_per_income, obj.income.ny);
+			Bk_inv = cell(1, obj.income.ny);
+			for k = 1:obj.income.ny
+
+				[inctrans, inctrans_k] = obj.get_income_transitions(k, args{:});
+
+				Bk = hjb_divisor(obj.options.delta, obj.p.deathrate, k,...
+					A, inctrans, obj.rho_mat);
+            	Bk_inv{k} = inverse(Bk);
+
+	        	Vn1_k(:,k) = obj.update_Vk_implicit_explicit(...
+	        		Vn_k, u_k, k, Bk_inv{k}, inctrans_k, args{:}, varargin{:});
+	        end
+
+	        % Howard improvement step
+	        if (obj.current_iteration >= obj.options.HIS_start) && ~obj.p.SDU
+	            Vn1_k = obj.howard_improvement_step(Vn1_k, u_k, Bk_inv);
+	        end
+	        Vn1 = reshape(Vn1_k, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
+		end
+
+		function Vn1_k = update_Vk_implicit_explicit(...
+			obj, V_k, u_k, k, Bk_inv, inctrans_k, varargin)
+        	
+        	indx_k = ~ismember(1:obj.income.ny, k);
+
+            offdiag_inc_term = sum(...
+            	squeeze(inctrans_k(:,indx_k)) .* V_k(:, indx_k), 2);
+
+            RHSk = obj.options.delta * (u_k(:,k) + offdiag_inc_term);
+            		+ V_k(:,k) ;
+           	
+           	if numel(varargin) == 1
+           		RHSk = RHSk + obj.options.delta * varargin{1};
+           	end
+            
+            Vn1_k = Bk_inv * RHSk;
+        end
+
 		function options = parse_options(obj, varargin)
 			import HACTLib.computation.HJBBase
 			import HACTLib.aux.parse_keyvalue_pairs
@@ -167,30 +244,11 @@ classdef (Abstract) HJBBase < handle
 			Checks.has_shape(super_class, u, obj.shape);
 			Checks.has_shape(super_class, V, obj.shape);
 		end
-
-		function Vn1_k = update_Vk_implicit_explicit(...
-			obj, V_k, u_k, k, Bk_inv, inctrans_k, varargin)
-        	
-        	indx_k = ~ismember(1:obj.income.ny, k);
-
-            offdiag_inc_term = sum(...
-            	squeeze(inctrans_k(:, k, indx_k)) .* V_k(:, indx_k), 2);
-
-            RHSk = obj.options.delta * u_k(:,k)...
-            	+ V_k(:,k) + obj.options.delta * offdiag_inc_term;
-           	
-           	if numel(varargin) == 1
-           		RHSk = RHSk + obj.options.delta * varargin{1};
-           	end
-            
-            Vn1_k = Bk_inv * RHSk;
-        end
 	end
 
 	methods (Abstract, Access=protected)
 		check_if_SDU(obj);
-		Vn1 = solve_implicit(obj, A, u, V, varargin);
-		Vn1 = solve_implicit_explicit(obj, A, u, V, varargin);
+		[inctrans, inctrans_k] = get_income_transitions(obj, varargin);
 		check_parameters(obj, p);
 		check_income(obj, income);
 	end

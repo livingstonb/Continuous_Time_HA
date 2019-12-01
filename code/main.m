@@ -79,8 +79,8 @@ function [stats,p] = main(runopts, p)
     mpc_finder = MPCs(p, income, grdKFE, MPCoptions{:});
 
     shocks = [5,6];
-    import HACTLib.computation.TransitionalDynSolver
-    trans_dyn_solver = TransitionalDynSolver(p, income, grdKFE, shocks);
+    import HACTLib.computation.MPCsNews
+    trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')

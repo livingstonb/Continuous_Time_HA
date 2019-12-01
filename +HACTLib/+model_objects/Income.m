@@ -149,7 +149,7 @@ classdef Income < handle
         	end
         end
 
-        function inctrans = income_transition_matrix_SDU(obj, p, V)
+        function inctrans = full_income_transition_matrix(obj, p, V)
 		    % Generates a sparse, square matrix of income transition rates 
 		    % for solving the HJB when using stochastic differential
 		    % utility.
@@ -171,15 +171,19 @@ classdef Income < handle
 		    % inctrans : A sparse matrix of income transition rates, risk adjusted
 		    %	for SDU and of shape (nb*na*nz*ny, nb*na*nz*ny).
 
-		    ez_adj = obj.income_transitions_SDU(p, V);
+		    if ~p.SDU
+		    	inctrans = kron(obj.ytrans, p.nb)
+		    else
+			    sdu_adj = obj.income_transitions_SDU(p, V);
 
-	        ix = repmat((1:p.na*p.nb*p.nz*obj.ny)', obj.ny, 1);
-	        iy = repmat((1:p.na*p.nb*p.nz)', obj.ny*obj.ny, 1);
-	        iy = iy + kron((0:obj.ny-1)', p.nb*p.na*p.nz*ones(p.nb*p.na*p.nz*obj.ny,1));
-	        inctrans = sparse(ix, iy, ez_adj(:));
+		        ix = repmat((1:p.na*p.nb*p.nz*obj.ny)', obj.ny, 1);
+		        iy = repmat((1:p.na*p.nb*p.nz)', obj.ny*obj.ny, 1);
+		        iy = iy + kron((0:obj.ny-1)', p.nb*p.na*p.nz*ones(p.nb*p.na*p.nz*obj.ny,1));
+		        inctrans = sparse(ix, iy, sdu_adj(:));
+		    end
 		end
 
-		function ez_adj = income_transitions_SDU(obj, p, V)
+		function sdu_adj = income_transitions_SDU(obj, p, V)
 		    % Computes the risk-adjusted income transition rates
 		    % when households have stochastic differential utility.
 		    % Returns [] when utility is not SDU.
@@ -208,7 +212,7 @@ classdef Income < handle
 		    %	risk-adjusted income transitions, of shape (nb*na*nz, ny, ny)
 
 		    if ~p.SDU
-		        ez_adj = [];
+		        sdu_adj = [];
 		        return;
 		    end
 
@@ -230,11 +234,11 @@ classdef Income < handle
 		        ez_adj_1 = (exp(ez_adj_0) - 1) ./ (ez_adj_0);
 		    end
 		    
-		    ez_adj = ez_adj_1 .* shiftdim(obj.ytrans, -1);
+		    sdu_adj = ez_adj_1 .* shiftdim(obj.ytrans, -1);
 
 		    for kk = 1:obj.ny
 		        idx_k = ~ismember(1:ny, kk);
-		        ez_adj(:,kk,kk) = -sum(ez_adj(:, kk, idx_k), 3);
+		        sdu_adj(:,kk,kk) = -sum(sdu_adj(:, kk, idx_k), 3);
 		    end
 		end
 	end

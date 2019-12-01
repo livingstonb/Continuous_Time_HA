@@ -46,14 +46,8 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
         u = aux.u_fn(c_0, p.riskaver);
     end
 
-    if p.SDU
-        % risk-adjust income transitions
-        inctrans = income.income_transition_matrix_SDU(p, u);
-    else
-        inctrans = kron(income.ytrans, speye(nb*na*nz, nb*na*nz));
-    end
+    inctrans = income.full_income_transition_matrix(p, u);
     
-
     if p.sigma_r > 0
         % Vaa term
         deltas = grids.a.dB + grids.a.dF;
