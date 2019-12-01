@@ -37,15 +37,13 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
             rho_mat_adj = p.rho;
         end
         rho_mat_adj = rho_mat_adj + p.deathrate;
+    else
+    	rho_mat_adj = 1;
     end
 
     import HACTLib.model_objects.Preferences
     prefs = Preferences();
-    if ~p.SDU
-        prefs.set_crra(p.invies);
-    else
-        prefs.set_sdu(p.invies);
-    end
+    prefs.set_crra(p.invies);
 
     if p.endogenous_labor
         labordisutil = @(h) p.labor_disutility * (h .^ (1 + 1/p.frisch)) ./ (1 + 1/p.frisch);
@@ -91,12 +89,12 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
         upwindB = upwind_consumption(net_income_liq, Vb.B,...
                     'B', prefs, hours_fn, labordisutil);
         upwindF = upwind_consumption(net_income_liq, Vb.F,...
-                    'F', prefs, hours_fn, labordisutil);
+                    'F', prefs, rho_mat_adj, hours_fn, labordisutil);
     else
         upwindB = upwind_consumption(net_income_liq, Vb.B, 'B',...
-                    prefs);
+                    prefs, rho_mat_adj);
         upwindF = upwind_consumption(net_income_liq, Vb.F, 'F',...
-                    prefs);
+                    prefs, rho_mat_adj);
     end
 
     HcB = upwindB.H;
@@ -109,7 +107,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     c0 = net_income_liq;
     s0 = zeros(nb,na,nz,ny);
 
-    Hc0 = prefs.u(c0);
+    Hc0 = rho_mat_adj .* prefs.u(c0);
     validc0 = c0 > 0;
 
      % Upwinding direction: consumption
@@ -120,7 +118,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     c = IcF .* upwindF.c + IcB .* upwindB.c + Ic0 .* c0;
     s = IcF .* upwindF.s + IcB .* upwindB.s + Ic0 .* s0;
 
-    u = prefs.u(c);
+    u = rho_mat_adj .* prefs.u(c);
 
     %% --------------------------------------------------------------------
 	% UPWINDING FOR DEPOSITS
@@ -130,7 +128,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
 
     import HACTLib.computation.upwind_deposits
 
-    Vb.B(1,2:na,:,:) = prefs.u1(upwindB.c(1,2:na,:,:));
+    Vb.B(1,2:na,:,:) = rho_mat_adj .* prefs.u1(upwindB.c(1,2:na,:,:));
     [d, I_specialcase] = upwind_deposits(Vb, Va, adjcost, opt_d);
 
     %% --------------------------------------------------------------------

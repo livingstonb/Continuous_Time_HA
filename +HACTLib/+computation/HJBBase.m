@@ -167,6 +167,24 @@ classdef (Abstract) HJBBase < handle
 			Checks.has_shape(super_class, u, obj.shape);
 			Checks.has_shape(super_class, V, obj.shape);
 		end
+
+		function Vn1_k = update_Vk_implicit_explicit(...
+			obj, V_k, u_k, k, Bk_inv, inctrans_k, varargin)
+        	
+        	indx_k = ~ismember(1:obj.income.ny, k);
+
+            offdiag_inc_term = sum(...
+            	squeeze(inctrans_k(:, k, indx_k)) .* V_k(:, indx_k), 2);
+
+            RHSk = obj.options.delta * u_k(:,k)...
+            	+ V_k(:,k) + obj.options.delta * offdiag_inc_term;
+           	
+           	if numel(varargin) == 1
+           		RHSk = RHSk + obj.options.delta * varargin{1};
+           	end
+            
+            Vn1_k = Bk_inv * RHSk;
+        end
 	end
 
 	methods (Abstract, Access=protected)

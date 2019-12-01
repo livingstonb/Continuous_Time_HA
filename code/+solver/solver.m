@@ -30,7 +30,6 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
     import HACTLib.computation.HJBSolverSDU
 	import HACTLib.computation.KFESolver
 	import HACTLib.computation.TransitionMatrixConstructor
-	import HACTLib.computation.TransitionMatrixConstructorSDU
 
     % keep track of number of mean asset iterations
 	persistent iterAY
@@ -68,11 +67,12 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 
     if p.SDU
         hjb_solver = HJBSolverSDU(p, income, p.hjb_options);
-    	A_constructor = TransitionMatrixConstructorSDU(p, income, grd, returns_risk);
+%     	A_constructor = TransitionMatrixConstructorSDU(p, income, grd, returns_risk);
     else
          hjb_solver = HJBSolver(p, income, p.hjb_options);
-    	A_constructor = TransitionMatrixConstructor(p, income, grd, returns_risk);
+    	
     end
+    A_constructor = TransitionMatrixConstructor(p, income, grd, returns_risk);
 
     fprintf('    --- Iterating over HJB ---\n')
     dst = 1e5;

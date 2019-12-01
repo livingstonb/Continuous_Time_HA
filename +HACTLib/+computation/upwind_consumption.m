@@ -1,5 +1,5 @@
 function out = upwind_consumption(net_income_liq, Vb_fd, direction,...
-	prefs, hours_fn, labor_disutil)
+	prefs, rho_mat, hours_fn, labor_disutil)
 
 	endogenous_labor = (nargin > 5);
 
@@ -10,7 +10,7 @@ function out = upwind_consumption(net_income_liq, Vb_fd, direction,...
 
 	nb = size(Vb_fd, 1);
 
-	out.c = prefs.u1inv(Vb_fd);
+	out.c = prefs.u1inv(Vb_fd ./ rho_mat);
 
 	if strcmp(direction, 'B')
 		out.c(1,:,:,:) = net_income_liq(1,:,:,:);
@@ -34,7 +34,8 @@ function out = upwind_consumption(net_income_liq, Vb_fd, direction,...
     	out.s(nb,:,:,:) = 0;
     end
 
-    out.H = prefs.u(out.c) + Vb_fd .* out.s;
+
+    out.H = rho_mat .* prefs.u(out.c) + Vb_fd .* out.s;
 
     if strcmp(direction, 'F')
         out.H(nb,:,:,:) = -1e12;

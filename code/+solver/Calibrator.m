@@ -108,13 +108,15 @@ function x0 = ra_rho_initial(p, initial)
 	%	desired values, passed in 'initial'
 
     x0 = zeros(2, 1);
-    if initial(1) > 0
-        x0(1) = (initial(1) / 0.35) / (1 - initial(1)/0.35);
+   
+    x0(1) = ((initial(1)-p.r_b) / 0.25)...
+    	/ (1 - (initial(1)-p.r_b) / 0.25);
+
+     if initial(1) > 0
+        x0(2) = (initial(2) / 0.35) / (1 - initial(2)/0.35);
     else
-        x0(1) = (initial(1) / 0.35) / (1 + initial(1)/0.35);
+        x0(2) = (initial(2) / 0.35) / (1 + initial(2)/0.35);
     end
-    
-    x0(2) = ((initial(2)-p.r_b) / 0.15) / (1 - (initial(2)-p.r_b) / 0.15);
 end
 
 
@@ -138,8 +140,8 @@ function y = ra_rho_calibrator(x, runopts, p)
 	%	mean liquid wealth and mean wealth from their
 	%	targets
 
-	new_rho = 0.35 * abs(x(1)) / (1 + abs(x(1)));
-    new_ra = p.r_b + 0.15 * abs(x(2)) / (1 + abs(x(2)));
+    new_ra = p.r_b + 0.25 * abs(x(1)) / (1 + abs(x(1)));
+    new_rho = 0.35 * abs(x(2)) / (1 + abs(x(2)));
     
     % Set new discount rate
     p.set("rho", new_rho);

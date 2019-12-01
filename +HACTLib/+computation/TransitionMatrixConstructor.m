@@ -143,6 +143,11 @@ classdef TransitionMatrixConstructor < handle
             if obj.returns_risk
             	A = A + obj.compute_Vaa_terms();
             end  
+
+            if obj.p.SDU && obj.returns_risk
+            	[Arisk_Va, stationary] = obj.compute_Va_terms(drifts, V);
+            	A = A + Arisk_Va;
+            end
         end
     end
 
@@ -293,6 +298,76 @@ classdef TransitionMatrixConstructor < handle
 
             arr = [V_i_minus_1_term(:), V_i_term(:), V_i_plus_1_term(:)];
             Arisk_Vaa = HACTLib.aux.sparse_diags(arr, obj.offsets_for_rr);
+        end
+
+        function [Arisk_Va, stationary] = compute_Va_terms(obj, drifts, V)
+            % Computes the (1/2) * (a * sigma_r) ^ 2 * Va ^2 ... term when
+            % returns are risky. Only applies to SDU case.
+            %
+            % Parameters
+            % ----------
+            %
+            % V : the value function, of shape (nb, nz, nz, ny)
+            %
+            % driftB : the backward drift of the risky asset, where negative
+            %
+            % driftF : the forward drift of the risky asset, where positive
+            %
+            % Returns
+            % -------
+            % Arisk_Va : after multiplying by V, this is the component of the A matrix that
+            %   produces the Va ^ 2 term
+            %
+            % stationary : a boolean mask indicating states where drift in the
+            %   risky asset was neither backward nor forward. risk computations
+            %   for these states will be included outside the A matrix
+
+            assert(obj.p.SDU, "This term only applies to SDU")
+
+            import HACTLib.computation.fd_firstorder
+            if obj.p.OneAsset
+            	V1 = fd_firstorder(V, obj.grids.b.dB, obj.grids.b.dF, 1);
+            	driftB = drifts.b_B;
+            	driftF = drifts.b_F;
+            else
+            	V1 = fd_firstorder(V, obj.grids.a.dB, obj.grids.a.dF, 2);
+            	driftB = drifts.a_B;
+            	driftF = drifts.a_F;
+            end
+
+            % [V1B, V1F] = obj.first_diffs(V);
+            V1 = (driftB < 0) .* V1.B + (driftF > 0) .* V1.F;
+
+            % Now add zeta(a) * Va^2 term.
+            if obj.p.invies == 1
+                SDU_adj = obj.risk_term .* V1 * (1 - obj.p.riskaver);
+            else
+                SDU_adj = obj.risk_term .* V1 ./...
+                	V * (obj.p.invies - obj.p.riskaver) / (1 - obj.p.invies);
+            end
+
+            updiag = zeros(obj.shape);
+            lowdiag = zeros(obj.shape);
+
+            lowdiag(driftB < 0) = - SDU_adj(driftB < 0) ./ obj.asset_dB(driftB < 0);
+            updiag(driftF > 0) = SDU_adj(driftF > 0) ./ obj.asset_dF(driftF > 0);
+
+            if obj.p.OneAsset
+                lowdiag(1, :, :, :) = 0;
+                updiag(obj.nb, :, :, :) = 0;
+            else
+                lowdiag(:, 1, :, :) = 0;
+                updiag(:, obj.na, :, :) = 0;
+            end
+
+            centdiag = - lowdiag - updiag;
+            Arisk_Va = HACTLib.aux.sparse_diags(...
+                [lowdiag(:), centdiag(:), updiag(:)],...
+                obj.offsets_for_rr);
+
+            % Some states may have no drift, we will need to deal with them
+            % separately by adding directly to the right_hand_side of the HJB.
+            stationary = (driftB >= 0) & (driftF <= 0);
         end
     end
 end

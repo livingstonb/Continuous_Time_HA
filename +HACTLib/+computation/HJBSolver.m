@@ -68,6 +68,10 @@ classdef HJBSolver < HACTLib.computation.HJBBase
 				Bk = hjb_divisor(obj.options.delta, obj.p.deathrate, k,...
 					A, inctrans, obj.rho_mat);
             	Bk_inv{k} = inverse(Bk);
+
+            	indx_k = ~ismember(1:obj.income.ny, k);
+            	inctrans_k = repmat(obj.income.ytrans(k,indx_k),...
+            		obj.states_per_income, 1);
 	        	Vn1_k(:,k) = obj.update_Vk_implicit_explicit(...
 	        		Vn_k, u_k, k, Bk_inv{k}, varargin{:});
 	        end
@@ -79,20 +83,20 @@ classdef HJBSolver < HACTLib.computation.HJBBase
 	        Vn1 = reshape(Vn1_k, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
 
-		function Vn1_k = update_Vk_implicit_explicit(...
-			obj, V_k, u_k, k, Bk_inv, varargin)
+		% function Vn1_k = update_Vk_implicit_explicit(...
+		% 	obj, V_k, u_k, k, Bk_inv, varargin)
         	
-        	indx_k = ~ismember(1:obj.income.ny, k);
+  %       	indx_k = ~ismember(1:obj.income.ny, k);
 
-            offdiag_inc_term = sum(...
-            	repmat(obj.income.ytrans(k,indx_k), obj.states_per_income, 1)...
-                .* V_k(:,indx_k), 2);
+  %           offdiag_inc_term = sum(...
+  %           	repmat(obj.income.ytrans(k,indx_k), obj.states_per_income, 1)...
+  %               .* V_k(:,indx_k), 2);
 
-            RHSk = obj.options.delta * u_k(:,k)...
-            	+ V_k(:,k) + obj.options.delta * offdiag_inc_term;
+  %           RHSk = obj.options.delta * u_k(:,k)...
+  %           	+ V_k(:,k) + obj.options.delta * offdiag_inc_term;
             
-            Vn1_k = Bk_inv * RHSk;
-	    end
+  %           Vn1_k = Bk_inv * RHSk;
+	 %    end
 
 		function Vn2_k = howard_improvement_step(obj, Vn1_k, u_k, Bik_all)
 		    % Technique to speed up convergence.

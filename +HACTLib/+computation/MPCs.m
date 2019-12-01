@@ -234,7 +234,6 @@ classdef MPCs < handle
 	        interp_grids = {obj.grids.b.vec};
             interp_grids{end+1} = obj.grids.a.vec;
 
-
 	        if obj.p.nz > 1
 	        	interp_grids{end+1} = obj.grids.z.vec;
 	        end
