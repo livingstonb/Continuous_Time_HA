@@ -227,20 +227,24 @@ classdef MPCs < handle
 	            bgrid_mpc_vec(below_bgrid) = obj.grids.b.vec(1);
 	        end
 
-	        dim = obj.p.na_KFE*obj.income.ny*obj.p.nz;
-	        bgrid_mpc = repmat(bgrid_mpc_vec,dim,1);
-
 	        % grids for interpolation
-	        interp_grids = {obj.grids.b.vec};
-            interp_grids{end+1} = obj.grids.a.vec;
+	        interp_grids = {obj.grids.b.vec, obj.grids.a.vec,...
+	        	obj.grids.z.vec, obj.income.y.vec};
+	       	value_grids = {bgrid_mpc_vec, obj.grids.a.vec,...
+	       		obj.grids.z.vec, obj.income.y.vec};
 
-	        if obj.p.nz > 1
-	        	interp_grids{end+1} = obj.grids.z.vec;
-	        end
+        	if (obj.income.ny > 1) && (obj.p.nz > 1)
+                inds = 1:4;
+            elseif (obj.income.ny==1) && (obj.p.nz > 1)
+                inds = 1:3;
+            elseif obj.income.ny > 1
+                inds = [1, 2, 4];
+            else
+                inds = [1, 2];
+            end
 
-	        if obj.income.ny > 1
-	        	interp_grids{end+1} = obj.income.y.vec;
-	        end
+            interp_grids = interp_grids(inds);
+            value_grids = value_grids(inds);
 
 			reshape_vec = [obj.p.nb_KFE obj.p.na_KFE obj.p.nz obj.income.ny];
 			for period = 1:4
@@ -248,15 +252,7 @@ classdef MPCs < handle
 	            con_period = reshape(obj.cum_con_baseline(:,period),reshape_vec);
 	            mpcinterp = griddedInterpolant(interp_grids,squeeze(con_period),'linear');
 
-	            if (obj.income.ny > 1) && (obj.p.nz > 1)
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:),obj.grids.z.matrix(:),obj.income.y.matrixKFE(:));
-	            elseif (obj.income.ny==1) && (obj.p.nz > 1)
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:),obj.grids.z.matrix(:));
-	            elseif obj.income.ny > 1
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:),obj.income.y.matrixKFE(:));
-	            else
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:));
-	            end
+	            obj.cum_con_shock{ishock}(:,period) = reshape(mpcinterp(value_grids), [], 1);
 
 	            if (shock < 0) && (sum(below_bgrid)>0) && (period==1)
 	                temp = reshape(obj.cum_con_shock{ishock}(:,period),reshape_vec);

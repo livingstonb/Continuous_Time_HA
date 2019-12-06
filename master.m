@@ -31,7 +31,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 % -------------------------------------------------------------------------
 
 runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
-runopts.fast = 0; % use small grid for debugging
+runopts.fast = 1; % use small grid for debugging
 runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = 0;
 runopts.SimulateMPCS = 0; % also estimate MPCs by simulation
@@ -44,10 +44,10 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 18;
+runopts.param_index = 2;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/Users/brian-laptop/Documents/GitHub/Continuous_Time_HA/';
+runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 
 %% ------------------------------------------------------------------------
@@ -646,10 +646,10 @@ p.print();
 % calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
 
 
-% r_a, rho calibration
-calibrator = solver.Calibrator(runopts, p, "r_a, rho");
-x0 = calibrator.create_initial_condition([0.066513, 0.142622]);
-fsolve(calibrator.objective, x0);
+% % r_a, rho calibration
+% calibrator = solver.Calibrator(runopts, p, "r_a, rho");
+% x0 = calibrator.create_initial_condition([0.066513, 0.142622]);
+% fsolve(calibrator.objective, x0);
 
 % % rho calibration
 % calibrator = solver.Calibrator(runopts, p, "rho");
