@@ -27,7 +27,6 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 	%	(nb_KFE*na_KFE*nz*ny, nb_KFE*na_KFE*nz*ny)
 
 	import HACTLib.computation.HJBSolver
-    import HACTLib.computation.HJBSolverSDU
 	import HACTLib.computation.KFESolver
 	import HACTLib.computation.TransitionMatrixConstructor
 
@@ -66,13 +65,7 @@ function [HJB, KFE, Au] = solver(runopts, p, income, grd, grdKFE)
 
     returns_risk = (p.sigma_r > 0);
 
-    if p.SDU
-        hjb_solver = HJBSolverSDU(p, income, p.hjb_options);
-%     	A_constructor = TransitionMatrixConstructorSDU(p, income, grd, returns_risk);
-    else
-         hjb_solver = HJBSolver(p, income, p.hjb_options);
-    	
-    end
+    hjb_solver = HJBSolver(p, income, p.hjb_options);
     A_constructor = TransitionMatrixConstructor(p, income, grd, returns_risk);
 
     fprintf('    --- Iterating over HJB ---\n')

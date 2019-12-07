@@ -6,18 +6,21 @@ function outparams = SDU_tests(runopts)
     % rho for calibration based on riskaver = 5, sigma_r = 0.1: 0.114248
 
     %% calibrated rho's
-    % adj cost original, calibrated to RA = 1
-    rho_ies1_chi1_015 = 0.03394;
-    rho_ies1_5_chi1_015 = 0.026993; % not correct
-%   
+%     % adj cost original, calibrated to RA = 1
+%     rho_ies1_chi1_015 = 0.03394;
+%     rho_ies1_5_chi1_015 = 0.026993; % not correct
 
-    % new adj cost, calibrated to IES = 1
-    rho_ies1_chi1_high = 0.031219; % (r_a = 0.22612)
-    rho_ies1_5_chi1_high = 0.025568;
+%     % new adj cost, calibrated to IES = 1
+%     rho_ies1_chi1_high = 0.031219; % (r_a = 0.22612)
+%     rho_ies1_5_chi1_high = 0.025568;
 
     % adj cost original, calibrated to RA = 5, sigma_r = 0.1
-%     rho_ies1 = 0.274541;
-%     rho_ies1_5 = 0.223813;
+    rho_ies1_chi1_015 = 0.114310;
+    rho_ies1_5_chi1_015 = 0.095630;
+
+%     adj cost new, calibrated to RA = 5, sigma_r = 0.1
+    rho_ies1_chi1_high = 0.108251;
+    rho_ies1_5_chi1_high = 0.090342;
 
     %%--------------------------------------------------------------
     % BASELINE
