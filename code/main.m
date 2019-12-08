@@ -55,7 +55,10 @@ function [stats,p] = main(runopts, p)
     end
     
     runopts.RunMode = 'Final';
-	[HJB, KFE, Au] = solver.solver(runopts, p, income, grd, grdKFE);
+    model = HACTLib.model_objects.Model(p, grd, grdKFE, income);
+    model.initialize();
+    [HJB, KFE, Au] = model.solve();
+	% [HJB, KFE, Au] = solver.solver(runopts, p, income, grd, grdKFE);
 
     if p.NoRisk == 1
         runopts.RunMode = 'NoRisk';

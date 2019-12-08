@@ -10,7 +10,9 @@ classdef Model < handle
 
 		hjb_solver;
 
-		A_constructor;
+		kfe_solver;
+
+		A_constructor_HJB;
 	end
 
 	methods
@@ -24,24 +26,21 @@ classdef Model < handle
 		function initialize(obj)
 			import HACTLib.computation.TransitionMatrixConstructor
 			import HACTLib.computation.HJBSolver
-			import HACTLib.computation.HJBSolverSDU
+			import HACTLib.computation.KFESolver
 
-			if obj.p.SDU
-		        obj.hjb_solver = HJBSolverSDU(obj.p, obj.income, obj.p.hjb_options);
-		    else
-		        obj.hjb_solver = HJBSolver(obj.p, obj.income, obj.p.hjb_options);
-			end
+			obj.hjb_solver = HJBSolver(obj.p, obj.income, obj.p.hjb_options);
 
 			returns_risk = obj.p.sigma_r > 0;
 			obj.A_constructor_HJB = TransitionMatrixConstructor(obj.p, obj.income,...
 				obj.grids_HJB, returns_risk);
 
-			obj.kfe_solver = KFESolver(p, income, grdKFE, p.kfe_options);
+			obj.kfe_solver = KFESolver(obj.p, obj.income,...
+				obj.grids_KFE, obj.p.kfe_options);
 		end
 
 		function [HJB, KFE, Au] = solve(obj)
 			HJB = obj.solve_HJB();
-			[KFE, Au] = obj.solve_KFE();
+			[KFE, Au] = obj.solve_KFE(HJB);
 		    
 			%% --------------------------------------------------------------------
 			% COMPUTE WEALTH
@@ -54,23 +53,23 @@ classdef Model < handle
 	methods (Access=protected)
 		function HJB = solve_HJB(obj)
 			import HACTLib.computation.make_initial_guess
-			import HACTLib.computation.find_policies
 
-			[Vguess, gguess] = make_initial_guess(p, obj.grids_HJB,...
+			[Vn, gguess] = make_initial_guess(obj.p, obj.grids_HJB,...
 					obj.grids_KFE, obj.income);
 
 			fprintf('    --- Iterating over HJB ---\n')
 		    dst = 1e5;
 			for nn	= 1:obj.p.HJB_maxiters
-				[HJB, V_deriv_risky_asset_nodrift] = find_policies(...
-					p, income, grd, Vn);
+				[HJB, V_deriv_risky_asset_nodrift] = solver.find_policies(...
+					obj.p, obj.income, obj.grids_HJB, Vn);
 
 			    % Construct transition matrix 
-		        [A, stationary] = A_constructor_HJB.construct(HJB, Vn);
+		        [A, stationary] = obj.A_constructor_HJB.construct(HJB, Vn);
 
 		        if obj.p.SDU
 			    	risk_adj = {compute_risk_adjustment_for_nodrift_case(...
-			    		p, grd, V_deriv_risky_asset_nodrift, stationary, Vn)};
+			    		obj.p, obj.grids_HJB, V_deriv_risky_asset_nodrift,...
+			    		stationary, Vn)};
 			    else
 			    	risk_adj = {};
 			    end
@@ -93,7 +92,7 @@ classdef Model < handle
 				check_if_not_converging(dst, nn);
 		    end
 
-		    if (nn >= p.HJB_maxiters)
+		    if (nn >= obj.p.HJB_maxiters)
 		        error("HJB didn't converge");
 		    end
 		    
@@ -105,19 +104,25 @@ classdef Model < handle
 	    % SOLVE KFE
 		% ---------------------------------------------------------------------
 		function [KFE, Au] = solve_KFE(obj, HJB)
-			KFE.Vn = reshape(interp_decision * HJB.Vn(:),...
-		    	[obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
-		    KFE = find_policies(obj.p, obj.income, obj.grids_KFE, KFE.Vn);
+			interp_decision = HACTLib.aux.interp_2d(obj.grids_KFE.b.vec,...
+				obj.grids_KFE.a.vec, obj.grids_HJB.b.vec, obj.grids_HJB.a.vec);
+			interp_decision = kron(speye(obj.income.ny*obj.p.nz), interp_decision);
 
-			import HACTLib.computations.TransitionMatrixConstructor
+			Vn = reshape(interp_decision * HJB.Vn(:),...
+		    	[obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
+		    KFE = solver.find_policies(obj.p, obj.income, obj.grids_KFE, Vn);
+		    KFE.Vn = Vn;
+
+			import HACTLib.computation.TransitionMatrixConstructor
 
 			% True if returns should be treated as risky in the KFE
-			returns_risk = (p.sigma_r > 0) && (p.retrisk_KFE == 1);
-		    A_constructor_kfe = TransitionMatrixConstructor(p, income, grdKFE, returns_risk);
+			returns_risk = (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 1);
+		    A_constructor_kfe = TransitionMatrixConstructor(obj.p,...
+		    	obj.income, obj.grids_KFE, returns_risk);
 		    Au = A_constructor_kfe.construct(KFE, KFE.Vn);
 		    
 		    
-		    KFE.g = kfe_solver.solve(Au);
+		    KFE.g = obj.kfe_solver.solve(Au);
 		end
 	end
 end
@@ -174,4 +179,10 @@ function check_if_not_converging(dst, nn)
 	    HJBException = MException(msgID,msg);
 	    throw(HJBException)
 	end
+end
+
+function wealth = compute_wealth(g, grdKFE)
+	iwealth= (g(:) .* grdKFE.trapezoidal.matrix(:))' * grdKFE.a.matrix(:);
+	lwealth = (g(:) .* grdKFE.trapezoidal.matrix(:))' * grdKFE.b.matrix(:);
+	wealth = iwealth + lwealth;
 end

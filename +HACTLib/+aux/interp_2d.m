@@ -49,15 +49,15 @@ n_x = length(x_knot);
 
 i = repmat(ind_fine',4,1);
 
-j_SW = loc_x,n_x*(loc_y-1));
-j_SE = loc_x+1+n_x*(loc_y-1));
+j_SW = loc_x+n_x*(loc_y-1);
+j_SE = loc_x+1+n_x*(loc_y-1);
 j_NW = loc_x+n_x*(loc_y);
 j_NE = loc_x+1+n_x*(loc_y);
 
-v_SW = (1-t_x)*(1-t_y);
-v_SE = (t_x)*(1-t_y);
-v_NW = (1-t_x)*(t_y));
-v_NE = (t_x)*(t_y);
+v_SW = (1-t_x) .* (1-t_y);
+v_SE = (t_x) .* (1-t_y);
+v_NW = (1-t_x) .* (t_y);
+v_NE = (t_x) .* (t_y);
 
 j = [j_SW(:);j_SE(:);j_NW(:);j_NE(:)];
 v = [v_SW(:);v_SE(:);v_NW(:);v_NE(:)];
