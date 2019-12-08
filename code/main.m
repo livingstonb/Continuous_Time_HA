@@ -23,7 +23,7 @@ function [stats,p] = main(runopts, p)
 	income_path = fullfile(runopts.direc, 'input', p.income_dir);
 
     % Main income process
-	income = Income(income_path, p,false);
+	income = Income(income_path, p, false);
 
     % Turn off income risk (set y equal to the mean)
     income_norisk = Income(runopts.direc, p, true);
@@ -113,7 +113,7 @@ function [stats,p] = main(runopts, p)
     shocks = [4,5,6];
     shockperiod = 0;
     mpc_simulator = HACTLib.computation.MPCSimulator(...
-    	p,income, grdKFE, KFE, shocks, shockperiod);
+    	p, income, grdKFE, KFE, shocks, shockperiod);
 
     if p.SimulateMPCS == 1
         fprintf('\nSimulating MPCs...\n')
@@ -168,7 +168,8 @@ function [stats,p] = main(runopts, p)
 	end
     
     if p.SaveResults == 1
-        save([runopts.savedir 'output_' runopts.suffix '.mat'],'stats','grd','grdKFE','p','KFE','income')
+    	spath = fullfile(runopts.savedir, ['output_' runopts.suffix '.mat']);
+        save(spath,'stats','grd','grdKFE','p','KFE','income')
     end
     clear solver.two_asset.solver
     fprintf('\nCode finished for the parameterization: \n\t%s\n\n',p.name)

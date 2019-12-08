@@ -32,7 +32,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 
 runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
-runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
+runopts.mode = 'get_params'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = 0;
 runopts.SimulateMPCS = 1; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = 0; % MPCs out of news, requires ComputeMPCS = 1
@@ -47,7 +47,7 @@ runopts.DealWithSpecialCase = 0;
 runopts.param_index = 2;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
+runopts.localdir = '/Users/brian-laptop/Documents/GitHub/Continuous_Time_HA/';
 
 
 %% ------------------------------------------------------------------------
@@ -120,18 +120,18 @@ p.print();
 % end
 
 
-% rho calibrated to RA = 5
-if p.chi1 == 0.15
-	[r_b_0, r_a_0] = setup.initial_returns_orig_adjcosts_ra5_calibration(p);
-else
-	[r_b_0, r_a_0] = setup.initial_returns_new_adjcosts_ra5_calibration(p);
-end
-
-% start iteration
-calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
-x0 = calibrator.create_initial_condition([r_b_0, r_a_0]);
-
-opts = optimoptions('fsolve', 'MaxFunctionEvaluations', 400, 'MaxIterations', 600);
+% % rho calibrated to RA = 5
+% if p.chi1 == 0.15
+% 	[r_b_0, r_a_0] = setup.initial_returns_orig_adjcosts_ra5_calibration(p);
+% else
+% 	[r_b_0, r_a_0] = setup.initial_returns_new_adjcosts_ra5_calibration(p);
+% end
+% 
+% % start iteration
+% calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
+% x0 = calibrator.create_initial_condition([r_b_0, r_a_0]);
+% 
+% opts = optimoptions('fsolve', 'MaxFunctionEvaluations', 400, 'MaxIterations', 600);
 % fsolve(calibrator.objective, x0, opts);
 
 

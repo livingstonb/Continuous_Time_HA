@@ -7,7 +7,7 @@ classdef Grid < handle
 	end
 
 	methods
-		function obj = Grid(varargin)
+		function obj = Grid(min_val, max_val, n, varargin)
 		end
 
 		function auto_construct_all(min_val, max_val, n, varargin)

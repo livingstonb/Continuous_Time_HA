@@ -396,11 +396,11 @@ classdef MPCsNews < handle
 			        end
                 end
 
-			    if (obj.p.SimulateMPCS_news==1) && ismember(timeUntilShock,obj.savedTimesUntilShock)
+			    if (obj.p.SimulateMPCS_news==1) && ismember(timeUntilShock, obj.savedTimesUntilShock)
 			    	% save policy function
 			    	index = find(obj.savedTimesUntilShock==timeUntilShock);
                     
-                    obj.savePolicies(index,ishock);
+                    obj.savePolicies(index, ishock);
                 end
             end
 
@@ -455,15 +455,16 @@ classdef MPCsNews < handle
             obj.mpcs(ishock).avg_4_annual = sum(obj.mpcs(ishock).avg_4_quarterly);
 		end
 
-		function savePolicies(obj,index,ishock)
+		function savePolicies(obj, index, ishock)
 			% saves the policy functions for MPC simulation
 			
         	c = obj.KFEint.c;
         	s = obj.KFEint.s;
         	d = obj.KFEint.d;
 
-	    	name = sprintf('policy%ishock%i.mat',index,ishock);
-	    	save([obj.p.tempdirec name],'c','s','d')
+	    	name = sprintf('policy%ishock%i.mat', index, ishock);
+	    	spath = fullfile(obj.p.tempdirec, name);
+	    	save(spath, 'c', 's', 'd')
         end
 	end
 

@@ -30,6 +30,8 @@ classdef MPCSimulator < handle
         yrep;
 		bsim;
 		yinds;
+		zinds;
+		zindsrep;
         
         cum_ytrans;
 
@@ -43,6 +45,8 @@ classdef MPCSimulator < handle
 
         % grids used to interpolate policy functions
 		interp_grids;
+
+		interp_grid_indices;
 
 		% policy function interpolants
 		dinterp;
@@ -97,21 +101,21 @@ classdef MPCSimulator < handle
 
 
 			interp_grids = {obj.grids.b.vec, obj.grids.a.vec,...
-				obj.grids.z.vec, obj.income.y.vec};
+				obj.grids.z.vec, (1:obj.income.ny)'};
 			if (income.ny > 1) && (p.nz > 1)
-                interp_grid_indices = 1:4;
+                obj.interp_grid_indices = 1:4;
             elseif p.nz > 1
-            	interp_grid_indices = 1:3;
+            	obj.interp_grid_indices = 1:3;
             elseif income.ny > 1
-                interp_grid_indices = [1, 2, 4];
+                obj.interp_grid_indices = [1, 2, 4];
             else
-                interp_grid_indices = 1:2;
+                obj.interp_grid_indices = 1:2;
             end
 
-            interp_grids = interp_grids(interp_grid_indices);
-            obj.dinterp = griddedInterpolant(interp_grids, squeeze(policies.d), 'linear');
-			obj.cinterp = griddedInterpolant(interp_grids, squeeze(policies.c), 'linear');
-			obj.sinterp = griddedInterpolant(interp_grids, squeeze(policies.s), 'linear');
+            obj.interp_grids = interp_grids(obj.interp_grid_indices);
+            obj.dinterp{1} = griddedInterpolant(obj.interp_grids, squeeze(policies.d), 'linear');
+			obj.cinterp{1} = griddedInterpolant(obj.interp_grids, squeeze(policies.c), 'linear');
+			obj.sinterp{1} = griddedInterpolant(obj.interp_grids, squeeze(policies.s), 'linear');
 		end
 
 		%% ---------------------------------------------------
@@ -136,7 +140,7 @@ classdef MPCSimulator < handle
             
             % discretize transition matrix
             disc_ytrans = eye(obj.income.ny) + obj.mpc_delta * obj.income.ytrans;
-            obj.cum_ytrans = cumsum(disc_ytrans,2);
+            obj.cum_ytrans = cumsum(disc_ytrans, 2);
 
 	    	obj.draw_from_stationary_dist(pmf);
 	    	obj.run_simulations();
@@ -151,7 +155,7 @@ classdef MPCSimulator < handle
 		%% ---------------------------------------------------
 	    % INITIAL DRAW FROM STATIONARY DISTRIBUTION
 	    % ----------------------------------------------------
-		function index = draw_from_stationary_dist(obj,pmf)
+		function index = draw_from_stationary_dist(obj, pmf)
 			% this function draws from the stationary distribution
 			% 'pmf'
 			%
@@ -181,13 +185,13 @@ classdef MPCSimulator < handle
 			% initial income
 			ygrid_flat = obj.income.y.matrixKFE(:);
 			obj.ysim = ygrid_flat(index);
-            obj.yrep = repmat(obj.ysim,obj.nshocks+1,1);
-			yind_trans = kron((1:obj.income.ny)',ones(obj.p.nb_KFE*obj.p.na_KFE,1));
+            obj.yrep = repmat(obj.ysim,obj.nshocks+1, 1);
+			yind_trans = kron((1:obj.income.ny)', ones(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz, 1));
 			obj.yinds = yind_trans(index);
 
 			% initial assets
 			bgrid_flat = obj.grids.b.matrix(:);
-			obj.bsim = repmat(bgrid_flat(index),1,obj.nshocks+1);
+			obj.bsim = repmat(bgrid_flat(index), 1, obj.nshocks+1);
 			obj.b0 = obj.bsim;
             
             if obj.shockperiod == 0
@@ -198,15 +202,13 @@ classdef MPCSimulator < handle
             end
 
             % initial z-heterogeneity
-            if obj.p.nz > 1
-            	zgrid_flat = obj.grids.z.matrix(:);
-            	obj.zinds = zgrid_flat(index);
-            	obj.zindsrep = repmat(obj.zinds,obj.nshocks+1,1)
-            end
+        	zgrid_flat = obj.grids.z.matrix(:);
+        	obj.zinds = zgrid_flat(index);
+        	obj.zindsrep = repmat(obj.zinds, obj.nshocks+1, 1);
 
             % initial illiquid assets
 			agrid_flat = obj.grids.a.matrix(:);
-			obj.asim = repmat(agrid_flat(index),1,obj.nshocks+1);
+			obj.asim = repmat(agrid_flat(index), 1, obj.nshocks+1);
 
 		    % record households pushed below grid, and bring them
 		    % up to bottom of grid
@@ -223,7 +225,7 @@ classdef MPCSimulator < handle
 
 	    	for period = 1:obj.nperiods
 	    		fprintf('\tSimulating quarter %i\n',period)
-                obj.cum_con = zeros(obj.p.n_mpcsim,obj.nshocks+1);
+                obj.cum_con = zeros(obj.p.n_mpcsim, obj.nshocks+1);
 		    	for subperiod = 1:obj.p.T_mpcsim
 		    		% time elapsed starting from zero
 		    		actualTime = (period-1) + (subperiod-1) / obj.p.T_mpcsim;
@@ -263,16 +265,19 @@ classdef MPCSimulator < handle
 	    end
 
 	    function simulate_consumption_one_period(obj)
-	    	if (obj.income.ny > 1) && (obj.p.nz > 1)
-	    		c = obj.cinterp(obj.bsim(:),obj.asim(:),obj.zindsrep,obj.yrep);
-	    	elseif obj.p.nz > 1
-	    		c = obj.cinterp(obj.bsim(:),obj.asim(:),obj.zindsrep);
-	    	elseif obj.income.ny > 1
-	    		c = obj.cinterp(obj.bsim(:),obj.asim(:),obj.yrep);
-	    	else
-	    		c = obj.cinterp(obj.bsim(:),obj.asim(:));
+	    	c = zeros(obj.p.n_mpcsim, obj.nshocks+1);
+	    	for k = 1:obj.nshocks+1
+	    		if obj.shockperiod == 0
+	    			interp_num = 1;
+	    		else
+	    			interp_num = k;
+	    		end
+
+	    		vals = {obj.bsim(:,k), obj.asim(:,k),...
+	    			obj.zinds(:), obj.yinds(:)};
+	    		vals = vals(obj.interp_grid_indices);
+	    		c(:,k) = obj.cinterp{interp_num}(vals{:});
 	    	end
-	    	c = reshape(c,[],obj.nshocks+1);
 
 	    	obj.cum_con = obj.cum_con + c * obj.mpc_delta;
 	    end
@@ -282,22 +287,21 @@ classdef MPCSimulator < handle
 	    	% delta
 
 	    	% interpolate to find decisions
-	    	if (obj.income.ny > 1) && (obj.p.nz > 1)
-	    		s = obj.sinterp(obj.bsim(:), obj.asim(:), obj.zindsrep, obj.yrep);
-		    	d = obj.dinterp(obj.bsim(:), obj.asim(:), obj.zindsrep, obj.yrep);
-		    elseif obj.p.nz > 1
-		    	s = obj.sinterp(obj.bsim(:), obj.asim(:), obj.zindsrep);
-		    	d = obj.dinterp(obj.bsim(:), obj.asim(:), obj.zindsrep);
-    		elseif obj.income.ny > 1
-		    	s = obj.sinterp(obj.bsim(:), obj.asim(:), obj.yrep);
-		    	d = obj.dinterp(obj.bsim(:), obj.asim(:), obj.yrep);
-		    else
-		    	s = obj.sinterp(obj.bsim(:), obj.asim(:));
-		    	d = obj.dinterp(obj.bsim(:), obj.asim(:));
-		    end
+	    	s = zeros(obj.p.n_mpcsim, obj.nshocks+1);
+	    	d = zeros(obj.p.n_mpcsim, obj.nshocks+1);
+	    	for k = 1:obj.nshocks+1
+	    		if obj.shockperiod == 0
+	    			interp_num = 1;
+	    		else
+	    			interp_num = k;
+	    		end
 
-	    	s = reshape(s, [], obj.nshocks+1);
-	    	d = reshape(d, [], obj.nshocks+1);
+	    		vals = {obj.bsim(:,k), obj.asim(:,k),...
+	    			obj.zinds(:), obj.yinds(:)};
+	    		vals = vals(obj.interp_grid_indices);
+	    		s(:,k) = obj.sinterp{interp_num}(vals{:});
+	    		d(:,k) = obj.dinterp{interp_num}(vals{:});
+	    	end
 
 	    	% update liquid assets
 	    	obj.bsim = obj.bsim + obj.mpc_delta ...
@@ -320,15 +324,15 @@ classdef MPCSimulator < handle
 			chunksize = 5e2;
 			finished = false;
 			i1 = 1;
-			i2 = min(chunksize,obj.p.n_mpcsim);
+			i2 = min(chunksize, obj.p.n_mpcsim);
 			while ~finished
 		        [~,obj.yinds(i1:i2)] = max(draws(i1:i2,1)...
-		        	<=obj.cum_ytrans(obj.yinds(i1:i2),:), [], 2);
+		        	<= obj.cum_ytrans(obj.yinds(i1:i2),:), [], 2);
 
 		        if obj.p.Bequests == 0
 		        	lived = draws(i1:i2,2) > obj.deathrateSubperiod;
-		        	obj.bsim(i1:i2) = lived .* obj.bsim(i1:i2)';
-		        	obj.asim(i1:i2) = lived .* obj.asim(i1:i2)';
+		        	obj.bsim(i1:i2,:) = lived .* obj.bsim(i1:i2,:);
+		        	obj.asim(i1:i2,:) = lived .* obj.asim(i1:i2,:);
 		        end
 		        
 		        i1 = i2 + 1;
@@ -343,14 +347,14 @@ classdef MPCSimulator < handle
             obj.yrep = repmat(obj.ysim, obj.nshocks+1, 1);
 	    end
 
-    	function compute_mpcs(obj,period)
+    	function compute_mpcs(obj, period)
 		    for is = 1:obj.nshocks
 		    	ishock = obj.shocks(is); % index of shock in parameters
 		    	shock = obj.p.mpc_shocks(ishock);
 
 		    	con_diff = obj.shock_cum_con{ishock} - obj.baseline_cum_con;
             
-            	if (shock > 0) || ismember(obj.shockperiod,[0,1])
+            	if (shock > 0) || ismember(obj.shockperiod, [0,1])
 	            	obj.sim_mpcs(ishock).avg_quarterly(period) = mean(con_diff(:,period)) / shock;
 	            end
 
@@ -361,7 +365,23 @@ classdef MPCSimulator < handle
         end
         
         function update_interpolants(obj, actualTime)
-            % by default, do not update
+        	if obj.shockperiod <= actualTime
+            	return
+            end
+
+            timeUntilShock = obj.shockperiod - actualTime;
+            index = find(obj.savedTimes == timeUntilShock);
+
+            for k = 1:obj.nshocks
+            	ishock = obj.shocks(k);
+            	sprintf('policy%ishock%i.mat', index, ishock);
+            	lpath = fullfile(obj.p.tempdirec, name);
+            	policies = load(lpath);
+
+	            obj.dinterp{k+1} = griddedInterpolant(obj.interp_grids, squeeze(policies.d), 'linear');
+				obj.cinterp{k+1} = griddedInterpolant(obj.interp_grids, squeeze(policies.c), 'linear');
+				obj.sinterp{k+1} = griddedInterpolant(obj.interp_grids, squeeze(policies.s), 'linear');
+			end
         end
 	end
 end

@@ -212,7 +212,7 @@ classdef KFESolver
 
 		function death_inflows  = compute_death_inflows(obj, gg_tilde, iy)
 	    	if obj.p.Bequests
-                death_inflows = obj.p.deathrate * gg_tilde(1+(iy-1)*(obj.nb_KFE*obj.na_KFE*obj.nz):iy*(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz));
+                death_inflows = obj.p.deathrate * gg_tilde(1+(iy-1)*(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz):iy*(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz));
             else
                 death_inflows = sparse(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz,1);
                 death_inflows(obj.grdKFE.loc0b0a:obj.p.nb_KFE*obj.p.na_KFE:end) = obj.p.deathrate * obj.income.ydist(iy) * (1/obj.p.nz);
