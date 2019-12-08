@@ -1,7 +1,6 @@
 classdef MPCSimulator < handle
-	% This superclass provides properties and methods 
-	% for MPC simulation, common to both the two-asset
-	% and the consumption adjustment cost models.
+	% Simulator for MPCs out of an immediate shock or out
+	% of news.
 	%
 	% Once the solve() method is called, results are
 	% stored in the 'sim_mpcs' property. If simulations are not
@@ -9,8 +8,7 @@ classdef MPCSimulator < handle
 	%
 	% MPCs out of news are simulated as ordinary MPCs, except
 	% that the policy function interpolants are loaded
-	% from .mat files saved by subclasses of the
-	% TransitionalDynSolver class.
+	% from .mat files saved by the MPCsNews class.
 	%
 	% Simulated variables are indexed by household in the row
 	% dimension and shock size in the column dimension, with the
