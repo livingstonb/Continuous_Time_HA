@@ -39,9 +39,9 @@ classdef Model < handle
 			obj.kfe_solver = KFESolver(p, income, grdKFE, p.kfe_options);
 		end
 
-		function solve(obj)
+		function [HJB, KFE, Au] = solve(obj)
 			HJB = obj.solve_HJB();
-			KFE = obj.solve_KFE();
+			[KFE, Au] = obj.solve_KFE();
 		    
 			%% --------------------------------------------------------------------
 			% COMPUTE WEALTH
@@ -104,7 +104,7 @@ classdef Model < handle
 		%% --------------------------------------------------------------------
 	    % SOLVE KFE
 		% ---------------------------------------------------------------------
-		function solve_KFE(obj, HJB)
+		function [KFE, Au] = solve_KFE(obj, HJB)
 			KFE.Vn = reshape(interp_decision * HJB.Vn(:),...
 		    	[obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
 		    KFE = find_policies(obj.p, obj.income, obj.grids_KFE, KFE.Vn);

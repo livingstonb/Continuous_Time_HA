@@ -78,13 +78,13 @@ function [stats,p] = main(runopts, p)
     MPCoptions = {'delta', p.MPCs_delta,'interp_method', 'linear'};
     mpc_finder = MPCs(p, income, grdKFE, MPCoptions{:});
 
-    shocks = [5,6];
+    shocks = [5];
     import HACTLib.computation.MPCsNews
     trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')
-        mpc_finder.solve(KFE,stats.pmf,Au);
+        mpc_finder.solve(KFE, stats.pmf, Au);
     end
     for ishock = 1:6
         stats.mpcs(ishock).avg_0_quarterly = mpc_finder.mpcs(ishock).quarterly;
@@ -122,6 +122,26 @@ function [stats,p] = main(runopts, p)
     for ii = 1:6
         stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator.sim_mpcs(ii).avg_quarterly;
         stats.sim_mpcs(ii).avg_0_annual = mpc_simulator.sim_mpcs(ii).avg_annual;
+    end
+
+    clear mpc_simulator
+
+     %% ----------------------------------------------------------------
+    % SIMULATE MPCs OUT OF NEWS
+    % -----------------------------------------------------------------
+    stats.sim_mpcs = struct();
+    shocks = [5];
+    shockperiod = 0;
+    mpc_simulator = HACTLib.computation.MPCSimulator(...
+        p, income, grdKFE, KFE, shocks, 1, trans_dyn_solver.savedTimesUntilShock);
+
+    if p.SimulateMPCS_news == 1
+        fprintf('\nSimulating MPCs...\n')
+        mpc_simulator.solve(stats.pmf);
+    end
+    for ii = 1:6
+        stats.sim_mpcs(ii).avg_1_quarterly = mpc_simulator.sim_mpcs(ii).avg_quarterly;
+        stats.sim_mpcs(ii).avg_1_annual = mpc_simulator.sim_mpcs(ii).avg_annual;
     end
 
     clear mpc_simulator

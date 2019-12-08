@@ -340,7 +340,7 @@ classdef MPCsNews < handle
 				timeUntilShock = obj.options.delta + 4 - it;
                 timeUntilShock = round(timeUntilShock * 40) / 40;
 				if mod(it,0.5) == 0
-		            fprintf('\tUpdating cumulative consumption given news, quarter=%0.2f\n',it)
+		            fprintf('\tUpdating policy functions given news, quarter=%0.2f\n',it)
                 end
 
                 if obj.p.SDU
@@ -463,7 +463,7 @@ classdef MPCsNews < handle
         	d = obj.KFEint.d;
 
 	    	name = sprintf('policy%ishock%i.mat', index, ishock);
-	    	spath = fullfile(obj.p.tempdirec, name);
+	    	spath = fullfile(obj.p.temp_dir, name);
 	    	save(spath, 'c', 's', 'd')
         end
 	end

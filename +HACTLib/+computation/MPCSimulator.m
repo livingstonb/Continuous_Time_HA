@@ -68,6 +68,8 @@ classdef MPCSimulator < handle
 		sim_mpcs = struct();
 
 		simulationComplete = false;
+
+		savedTimes;
 	end
 
 	methods
@@ -75,7 +77,7 @@ classdef MPCSimulator < handle
 	    % CLASS GENERATOR
 	    % ----------------------------------------------------
 		function obj = MPCSimulator(p, income, grids, policies,...
-			shocks, shockperiod)
+			shocks, shockperiod, savedTimes)
 
 			obj.p = p;
 			obj.income = income;
@@ -99,6 +101,9 @@ classdef MPCSimulator < handle
 				obj.sim_mpcs(ishock).avg_annual = NaN;
 			end
 
+			if nargin == 7
+				obj.savedTimes = savedTimes;
+			end
 
 			interp_grids = {obj.grids.b.vec, obj.grids.a.vec,...
 				obj.grids.z.vec, (1:obj.income.ny)'};
@@ -358,7 +363,7 @@ classdef MPCSimulator < handle
 	            	obj.sim_mpcs(ishock).avg_quarterly(period) = mean(con_diff(:,period)) / shock;
 	            end
 
-	            if (shock > 0) || (obj.shockperiod == 4)
+	            if ((shock > 0) || (obj.shockperiod == 4)) && (obj.nperiods >= 4)
                     obj.sim_mpcs(ishock).avg_annual = mean(sum(con_diff,2) / shock);
                 end
 		    end
@@ -370,17 +375,51 @@ classdef MPCSimulator < handle
             end
 
             timeUntilShock = obj.shockperiod - actualTime;
-            index = find(obj.savedTimes == timeUntilShock);
+            [~, closest1] = min(abs(obj.savedTimes-timeUntilShock));
+            if obj.savedTimes(closest1) < timeUntilShock
+            	closest1 = closest1 - 1;
+            end
+            closest2 = closest1 + 1;
+
+            % index = find(obj.savedTimes == timeUntilShock);
 
             for k = 1:obj.nshocks
             	ishock = obj.shocks(k);
-            	sprintf('policy%ishock%i.mat', index, ishock);
-            	lpath = fullfile(obj.p.tempdirec, name);
-            	policies = load(lpath);
+            	name1 = sprintf('policy%ishock%i.mat', closest1, ishock);
+            	lpath1 = fullfile(obj.p.temp_dir, name1);
+            	policies1 = load(lpath1);
 
-	            obj.dinterp{k+1} = griddedInterpolant(obj.interp_grids, squeeze(policies.d), 'linear');
-				obj.cinterp{k+1} = griddedInterpolant(obj.interp_grids, squeeze(policies.c), 'linear');
-				obj.sinterp{k+1} = griddedInterpolant(obj.interp_grids, squeeze(policies.s), 'linear');
+            	if closest2 <= numel(obj.savedTimes)
+            		name2 = sprintf('policy%ishock%i.mat', closest2, ishock);
+            		lpath2 = fullfile(obj.p.temp_dir, name2);
+            		policies2 = load(lpath2);
+
+	            	weight1 = (obj.savedTimes(closest1) - timeUntilShock)...
+							/ (obj.savedTimes(closest2) - obj.savedTimes(closest1));
+				else
+					weight1 = 1;
+				end
+				weight2 = 1 - weight1;
+
+				weight1 = max(min(weight1, 1), 0);
+				weight2 = max(min(weight2, 1), 0);
+
+				if closest2 <= numel(obj.savedTimes)
+					d = weight1 * policies1.d + weight2 * policies2.d;
+					c = weight1 * policies1.c + weight2 * policies2.c;
+					s = weight1 * policies1.s + weight2 * policies2.s;
+				else
+					d = policies1.d;
+					c = policies1.c;
+					s = policies1.s;
+				end
+
+	            obj.dinterp{k+1} = griddedInterpolant(obj.interp_grids,...
+	            	squeeze(d), 'linear');
+				obj.cinterp{k+1} = griddedInterpolant(obj.interp_grids,...
+					squeeze(c), 'linear');
+				obj.sinterp{k+1} = griddedInterpolant(obj.interp_grids,...
+					squeeze(s), 'linear');
 			end
         end
 	end
