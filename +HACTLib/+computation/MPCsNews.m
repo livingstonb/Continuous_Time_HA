@@ -1,5 +1,5 @@
 classdef MPCsNews < handle
-	% this class provides properties and methods 
+	% This class provides properties and methods 
 	% for solving for policy functions given a future shock
 	% by iterating backward on the dynamic HJB.
 	%
@@ -7,8 +7,8 @@ classdef MPCsNews < handle
 	% by iterating over the Feynman-Kac equation while
 	% iterating over the dynamic HJB.
 	%
-	% this class allows for saving the policy functions
-	% so they can be used to simulate MPCs out of news as well
+	% Allows for saving the policy functions 's', 'c', and
+	% 'd' at given time steps for simulating MPCs out of news.
 
 	properties (Constant)
 		% Default option values.
@@ -239,14 +239,13 @@ classdef MPCsNews < handle
 			    	ind2 = obj.states_per_income * k;
 		    		Ak = A_terminal(ind1:ind2, ind1:ind2);
                     
-                    ez_adj = obj.income.income_transitions_SDU(obj.p, V_terminal);
-   
-		    		indx_k = ~ismember(1:obj.p.ny,k);
+					indx_k = ~ismember(1:obj.p.ny,k);
 		    		if ~obj.p.SDU
 			    		Vk_stacked 	= sum(repmat(obj.income.ytrans(k,indx_k), obj.states_per_income, 1) ...
 	                            .* V_terminal_k(:,indx_k),2);
 			    		inctrans = obj.income.ytrans(k,k) * speye(obj.states_per_income);
 			    	else
+			    		ez_adj = obj.income.income_transitions_SDU(obj.p, V_terminal);
 			    		Vk_stacked = sum(squeeze(ez_adj(:,k,indx_k)) .* V_terminal_k(:,indx_k), 2);
 			    		inctrans = sparse_diags(ez_adj(:,k,k), 0);
 			    	end

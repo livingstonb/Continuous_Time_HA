@@ -21,52 +21,91 @@ classdef MPCSimulator < handle
 		income;
 		grids;
 
-		% state variables
+		% Illiquid assets
 		asim;
-		csim;
-		ysim;
-        yrep;
+
+		% Liquid assets
 		bsim;
+
+		% Consumption
+		csim;
+
+		% Income
+		ysim;
+
+		% Income index
 		yinds;
+
+		% Index of z-dimension
 		zinds;
-		zindsrep;
         
+        % Approximate cumulative transition matrix
+        % for the income process
         cum_ytrans;
 
-		% initial assets
+		% Initial liquid assets
 		b0;
         
-        % indicator equal to one if a negative MPC shock
+        % Indicator equal to one if a negative MPC shock
         % pushed the household below the bottom of the
         % asset grid
         below_bgrid;
 
-        % grids used to interpolate policy functions
+        % Grids used to interpolate policy functions
 		interp_grids;
 
+		% Indices of which grids to use
 		interp_grid_indices;
 
-		% policy function interpolants
+		% Interpolant for deposits
 		dinterp;
+
+		% Interpolant for saving
 		sinterp;
+
+		% Interpolant for consumption
 		cinterp;
 
-		% cumulative consumption functions
+		% Cumulative consumption function
 		cum_con;
-		baseline_cum_con; % final baseline cumcon
+
+		% Cumulative consumption for the baseline,
+		% indexed by observation and period.
+		baseline_cum_con;
+
+		% Cell array containing cumulative consumption
+		% for each of the cases with MPC shocks. Each
+		% entry in the cell array is indexed by
+		% observation and period.
 		shock_cum_con; % final shocked cumcon
 
-		mpc_delta; % time delta
-		shocks; % selected shocks from the parameters, e.g. [4,5]
-		nshocks; % numel(shocks)
-		nperiods; % number of quarters to iterate over
+		% Time step size
+		mpc_delta;
+
+		% Selected shock indices from the parameters, e.g. [4,5]
+		shocks; 
+
+		% Number of shocks
+		nshocks;
+
+		% Number of quarters to iterate over
+		nperiods;
+
+		% Period in which the shock hits (zero for an immediate shock)
 		shockperiod;
+
+		% The poisson rate of death corresponding to the time
+		% step size
         deathrateSubperiod;
 
+        % Results
 		sim_mpcs = struct();
 
 		simulationComplete = false;
 
+		% Vector containing values that indicate the time until the
+		% shock for each set of saved policy functions. This is used
+		% when simulating MPCs out of news.
 		savedTimes;
 	end
 
@@ -188,7 +227,6 @@ classdef MPCSimulator < handle
 			% initial income
 			ygrid_flat = obj.income.y.matrixKFE(:);
 			obj.ysim = ygrid_flat(index);
-            obj.yrep = repmat(obj.ysim,obj.nshocks+1, 1);
 			yind_trans = kron((1:obj.income.ny)', ones(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz, 1));
 			obj.yinds = yind_trans(index);
 
@@ -207,7 +245,6 @@ classdef MPCSimulator < handle
             % initial z-heterogeneity
         	zgrid_flat = obj.grids.z.matrix(:);
         	obj.zinds = zgrid_flat(index);
-        	obj.zindsrep = repmat(obj.zinds, obj.nshocks+1, 1);
 
             % initial illiquid assets
 			agrid_flat = obj.grids.a.matrix(:);
@@ -347,7 +384,6 @@ classdef MPCSimulator < handle
 			end
 
 	        obj.ysim = obj.income.y.vec(obj.yinds);
-            obj.yrep = repmat(obj.ysim, obj.nshocks+1, 1);
 	    end
 
     	function compute_mpcs(obj, period)
@@ -392,8 +428,8 @@ classdef MPCSimulator < handle
             		lpath2 = fullfile(obj.p.temp_dir, name2);
             		policies2 = load(lpath2);
 
-	            	weight1 = (obj.savedTimes(closest1) - timeUntilShock)...
-							/ (obj.savedTimes(closest2) - obj.savedTimes(closest1));
+	            	weight1 = (timeUntilShock - obj.savedTimes(closest2))...
+							/ (obj.savedTimes(closest1) - obj.savedTimes(closest2));
 				else
 					weight1 = 1;
 				end

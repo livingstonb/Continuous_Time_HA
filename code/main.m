@@ -132,19 +132,18 @@ function [stats,p] = main(runopts, p)
      %% ----------------------------------------------------------------
     % SIMULATE MPCs OUT OF NEWS
     % -----------------------------------------------------------------
-    stats.sim_mpcs = struct();
     shocks = [5];
-    shockperiod = 0;
+    shockperiod = 4;
     mpc_simulator = HACTLib.computation.MPCSimulator(...
-        p, income, grdKFE, KFE, shocks, 1, trans_dyn_solver.savedTimesUntilShock);
+        p, income, grdKFE, KFE, shocks, shockperiod, trans_dyn_solver.savedTimesUntilShock);
 
     if p.SimulateMPCS_news == 1
         fprintf('\nSimulating MPCs...\n')
         mpc_simulator.solve(stats.pmf);
     end
     for ii = 1:6
-        stats.sim_mpcs(ii).avg_1_quarterly = mpc_simulator.sim_mpcs(ii).avg_quarterly;
-        stats.sim_mpcs(ii).avg_1_annual = mpc_simulator.sim_mpcs(ii).avg_annual;
+        stats.sim_mpcs(ii).avg_4_quarterly = mpc_simulator.sim_mpcs(ii).avg_quarterly;
+        stats.sim_mpcs(ii).avg_4_annual = mpc_simulator.sim_mpcs(ii).avg_annual;
     end
 
     clear mpc_simulator

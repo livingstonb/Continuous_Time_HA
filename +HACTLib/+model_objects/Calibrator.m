@@ -9,6 +9,7 @@ classdef Calibrator
 	% function to get initial conditions for fsolve
 	create_initial_condition;
 	end
+	
 	methods
 		function obj = Calibrator(runopts, p, method)
 			% Parameters
