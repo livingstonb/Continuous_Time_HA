@@ -111,9 +111,9 @@ function [stats,p] = main(runopts, p)
     % -----------------------------------------------------------------
     stats.sim_mpcs = struct();
     shocks = [4,5,6];
-    nperiods = 1;
-    mpc_simulator = statistics.MPCSimulatorTwoAsset(...
-    	p,income,grdKFE,KFE,shocks,nperiods);
+    shockperiod = 0;
+    mpc_simulator = HACTLib.computation.MPCSimulator(...
+    	p,income, grdKFE, KFE, shocks, shockperiod);
 
     if p.SimulateMPCS == 1
         fprintf('\nSimulating MPCs...\n')

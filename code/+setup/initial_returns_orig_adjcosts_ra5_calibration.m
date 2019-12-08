@@ -26,8 +26,8 @@ function [r_b_0, r_a_0] = initial_returns_orig_adjcosts_ra5_calibration(p)
 	        case 2
 	            switch p.sigma_r
 	                case 0
-	                    r_b_0 = 0.04288;
-	                    r_a_0 = 0.0589;
+	                    r_b_0 = 0.045451;
+	                    r_a_0 = 0.059339;
 	                case 0.01
 	                    r_b_0 = -0.009856;
 	                    r_a_0 = 0.019937;
