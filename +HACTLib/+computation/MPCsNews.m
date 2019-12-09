@@ -156,7 +156,7 @@ classdef MPCsNews < handle
 			% modifies other class properties.
             
             if obj.p.SimulateMPCS_news == 1
-				savedTimesUntilShock = [4:-0.1:0.1 obj.options.delta];
+				savedTimesUntilShock = [4:-0.025:0.05 obj.options.delta];
 				obj.savedTimesUntilShock = round(savedTimesUntilShock*40)/40;
             end
             

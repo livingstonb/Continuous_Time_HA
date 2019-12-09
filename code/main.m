@@ -81,7 +81,7 @@ function [stats,p] = main(runopts, p)
     MPCoptions = {'delta', p.MPCs_delta,'interp_method', 'linear'};
     mpc_finder = MPCs(p, income, grdKFE, MPCoptions{:});
 
-    shocks = [5];
+    shocks = [4,5,6];
     import HACTLib.computation.MPCsNews
     trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks);
     
@@ -132,7 +132,7 @@ function [stats,p] = main(runopts, p)
      %% ----------------------------------------------------------------
     % SIMULATE MPCs OUT OF NEWS
     % -----------------------------------------------------------------
-    shocks = [5];
+    shocks = [4,5,6];
     shockperiod = 4;
     mpc_simulator = HACTLib.computation.MPCSimulator(...
         p, income, grdKFE, KFE, shocks, shockperiod, trans_dyn_solver.savedTimesUntilShock);

@@ -20,6 +20,10 @@ function outparams = table_tests(runopts)
         params(ii).a_lb = 0.25;
         params(ii).rho = 0.015440584992491;
         params(ii).r_a = ra;
+        params(ii).nb_KFE = 50;
+        params(ii).na_KFE = 50;
+        params(ii).nb = 50;
+        params(ii).na = 50;
         
         ii = ii + 1;
     end

@@ -155,15 +155,15 @@ classdef MPCSimulator < handle
             end
 
             obj.interp_grids = interp_grids(obj.interp_grid_indices);
-            obj.dinterp{1} = griddedInterpolant(obj.interp_grids, squeeze(policies.d), 'linear');
-			obj.cinterp{1} = griddedInterpolant(obj.interp_grids, squeeze(policies.c), 'linear');
-			obj.sinterp{1} = griddedInterpolant(obj.interp_grids, squeeze(policies.s), 'linear');
+            obj.dinterp{1} = griddedInterpolant(obj.interp_grids, squeeze(policies.d), 'makima');
+			obj.cinterp{1} = griddedInterpolant(obj.interp_grids, squeeze(policies.c), 'makima');
+			obj.sinterp{1} = griddedInterpolant(obj.interp_grids, squeeze(policies.s), 'makima');
 		end
 
 		%% ---------------------------------------------------
 	    % RUN SIMULATION
 	    % ----------------------------------------------------
-	    function solve(obj,pmf)
+	    function solve(obj, pmf)
 	    	% solve() calls functions to draw from the stationary
 	    	% distribution, run simulations, and compute MPCs
 
@@ -278,11 +278,11 @@ classdef MPCSimulator < handle
                         tmod100 = 100;
                     end
             
-            		current_csim = obj.csim;
             		obj.update_interpolants(actualTime);
 		    		obj.simulate_consumption_one_period();
 		    		obj.simulate_assets_one_period();
-		    		obj.simulate_income_and_death_one_period(inc_rand_draws(:,tmod100,:));
+		    		obj.simulate_income_and_death_one_period(...
+		    			squeeze(inc_rand_draws(:,tmod100,:)));
                 end
                 
                 % finished with this period
@@ -292,7 +292,7 @@ classdef MPCSimulator < handle
                     ishock = obj.shocks(i);
                     obj.shock_cum_con{ishock}(:,period) = obj.cum_con(:,i+1);
 
-                    if period == 1
+                    if (period == 1) && (obj.p.mpc_shocks(ishock) < 0)
                     	% adjustment for states that were pushed below bottom
                     	% of asset grid
 	                	obj.shock_cum_con{ishock}(obj.below_bgrid) = ...
@@ -352,7 +352,7 @@ classdef MPCSimulator < handle
 			% update illiquid assets
 	    	obj.asim = obj.asim + obj.mpc_delta ...
 	            * (d + (obj.p.r_a+obj.p.deathrate*obj.p.perfectannuities) * obj.asim ...
-				+ obj.p.directdeposit*obj.ysim);
+				+ obj.p.directdeposit * obj.ysim);
 	        obj.asim = max(obj.asim, obj.grids.a.vec(1));
 	        obj.asim = min(obj.asim, obj.grids.a.vec(end));
 	    end
@@ -415,8 +415,6 @@ classdef MPCSimulator < handle
             end
             closest2 = closest1 + 1;
 
-            % index = find(obj.savedTimes == timeUntilShock);
-
             for k = 1:obj.nshocks
             	ishock = obj.shocks(k);
             	name1 = sprintf('policy%ishock%i.mat', closest1, ishock);
@@ -433,10 +431,8 @@ classdef MPCSimulator < handle
 				else
 					weight1 = 1;
 				end
-				weight2 = 1 - weight1;
-
 				weight1 = max(min(weight1, 1), 0);
-				weight2 = max(min(weight2, 1), 0);
+				weight2 = 1 - weight1;
 
 				if closest2 <= numel(obj.savedTimes)
 					d = weight1 * policies1.d + weight2 * policies2.d;
@@ -449,11 +445,11 @@ classdef MPCSimulator < handle
 				end
 
 	            obj.dinterp{k+1} = griddedInterpolant(obj.interp_grids,...
-	            	squeeze(d), 'linear');
+	            	squeeze(d), 'makima');
 				obj.cinterp{k+1} = griddedInterpolant(obj.interp_grids,...
-					squeeze(c), 'linear');
+					squeeze(c), 'makima');
 				obj.sinterp{k+1} = griddedInterpolant(obj.interp_grids,...
-					squeeze(s), 'linear');
+					squeeze(s), 'makima');
 			end
         end
 	end

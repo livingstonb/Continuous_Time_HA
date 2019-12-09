@@ -210,8 +210,8 @@ classdef ParamsDefaults < handle
         mpc_shocks = [-1e-5 -0.01 -0.1 1e-5 0.01 0.1];
         decomp_thresholds = [0 0.01 0.05];
         
-        T_mpcsim = 500;
-        n_mpcsim = 1e5;
+        T_mpcsim = 100;
+        n_mpcsim = 5e4;
 
         % ----------- adjustment costs -----------------------------------
         chi0 = 0.070046;
