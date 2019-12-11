@@ -30,7 +30,7 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
 				'HIS_tol', obj.HIS_tol,...
 				'HIS_start', obj.HIS_start);
 
-            obj.mpc_options = struct(
+            obj.mpc_options = struct(...
             	'delta', obj.MPC_delta,...
             	'interp_method', obj.MPC_interp_method);
 
@@ -93,8 +93,8 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
                     obj.na_KFE = 13;
                 end
                 
-                obj.n_mpcsim = 100;
-                obj.T_mpcsim = 1e3;
+                obj.MPCSim_T = 100;
+                obj.MPCSim_n = 1e3;
             end
 
             % Set default grid sizes

@@ -39,8 +39,36 @@ classdef Model < handle
 		end
 
 		function [HJB, KFE, Au] = solve(obj)
-			HJB = obj.solve_HJB();
-			[KFE, Au] = obj.solve_KFE(HJB);
+			if obj.p.endogenous_labor
+				% Find hours policy function at bmin over wage values.
+				import HACTLib.model_objects.CRRA
+				import HACTLib.model_objects.Frisch
+
+				hours_bc = 0.5 * ones(obj.income.ny, 1);
+				for ih = 1:obj.p.HOURS_maxiters
+					con = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities)...
+						* obj.grids_HJB.b.vec(1) + (1-obj.p.directdeposit-obj.p.wagetax)...
+						* hours_bc .* obj.income.y.vec + obj.p.transfer;
+					u1 = CRRA.marginal_utility(con, obj.p.invies);
+					v1 = (1-obj.p.directdeposit-obj.p.wagetax)...
+						* hours_bc .* obj.income.y.vec .* u1;
+					hours_bc = Frisch.inv_marginal_disutility(v1,...
+						obj.p.labor_disutility, obj.p.frisch);
+					hours_bc = min(hours_bc, 1);
+				end
+				hours_bc = reshape(hours_bc, [1, 1, 1, obj.income.ny]);
+				hours_bc_HJB = repmat(hours_bc, [1, obj.p.na, obj.p.nz, 1]);
+				hours_bc_KFE = repmat(hours_bc, [1, obj.p.na_KFE, obj.p.nz, 1]);
+			else
+				hours_bc_HJB = [];
+				hours_bc_KFE = [];
+			end
+
+			%% --------------------------------------------------------------------
+			% SOLVE
+			% ---------------------------------------------------------------------
+			HJB = obj.solve_HJB(hours_bc_HJB);
+			[KFE, Au] = obj.solve_KFE(HJB, hours_bc_KFE);
 		    
 			%% --------------------------------------------------------------------
 			% COMPUTE WEALTH
@@ -51,7 +79,7 @@ classdef Model < handle
 	end
 
 	methods (Access=protected)
-		function HJB = solve_HJB(obj)
+		function HJB = solve_HJB(obj, hours_bc)
 			import HACTLib.computation.make_initial_guess
 
 			[Vn, gguess] = make_initial_guess(obj.p, obj.grids_HJB,...
@@ -61,7 +89,7 @@ classdef Model < handle
 		    dst = 1e5;
 			for nn	= 1:obj.p.HJB_maxiters
 				[HJB, V_deriv_risky_asset_nodrift] = solver.find_policies(...
-					obj.p, obj.income, obj.grids_HJB, Vn);
+					obj.p, obj.income, obj.grids_HJB, Vn, hours_bc);
 
 			    % Construct transition matrix 
 		        [A, stationary] = obj.A_constructor_HJB.construct(HJB, Vn);
@@ -103,14 +131,14 @@ classdef Model < handle
 		%% --------------------------------------------------------------------
 	    % SOLVE KFE
 		% ---------------------------------------------------------------------
-		function [KFE, Au] = solve_KFE(obj, HJB)
+		function [KFE, Au] = solve_KFE(obj, HJB, hours_bc)
 			interp_decision = HACTLib.aux.interp_2d(obj.grids_KFE.b.vec,...
 				obj.grids_KFE.a.vec, obj.grids_HJB.b.vec, obj.grids_HJB.a.vec);
 			interp_decision = kron(speye(obj.income.ny*obj.p.nz), interp_decision);
 
 			Vn = reshape(interp_decision * HJB.Vn(:),...
 		    	[obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
-		    KFE = solver.find_policies(obj.p, obj.income, obj.grids_KFE, Vn);
+		    KFE = solver.find_policies(obj.p, obj.income, obj.grids_KFE, Vn, hours_bc);
 		    KFE.Vn = Vn;
 
 			import HACTLib.computation.TransitionMatrixConstructor

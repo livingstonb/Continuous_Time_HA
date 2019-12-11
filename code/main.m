@@ -78,8 +78,7 @@ function [stats,p] = main(runopts, p)
     stats.mpcs = struct();
 
     import HACTLib.computation.MPCs
-    MPCoptions = {'delta', p.MPCs_delta,'interp_method', 'linear'};
-    mpc_finder = MPCs(p, income, grdKFE, MPCoptions{:});
+    mpc_finder = MPCs(p, income, grdKFE, p.mpc_options);
 
     shocks = [4,5,6];
     import HACTLib.computation.MPCsNews

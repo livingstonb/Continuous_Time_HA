@@ -1,4 +1,5 @@
-function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd, Vn)
+function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
+    p, income, grd, Vn, hours_bc)
     % computes policy functions on either the HJB or KFE grid
 
     % Parameters
@@ -10,6 +11,9 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     % grd : a Grid object
     %
     % Vn : the value function, shape (nb, na, nz, ny)
+    %
+    % hours_bc : Policy function for hours at the budget
+    %   constraint, defined over the income grid.
     %
     % Returns
     % -------
@@ -52,7 +56,8 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
 	    else
 	        nety_mat = (1-p.wagetax) * income.y.matrixKFE;
 	    end
-	    hours_fn = {@(Vb) labordisutil1inv(nety_mat .* Vb)};
+        hours_fn = @(Vb) hours_u1inv_bc_adjusted(Vb, prefs,...
+            nety_mat, hours_bc);
 	else
 		hours_fn = {};
     end
@@ -145,4 +150,9 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(p, income, grd,
     else
         V_deriv_risky_asset_nodrift = [];
     end
+end
+
+function hours = hours_u1inv_bc_adjusted(Vb, prefs, nety_mat, hours_bc)
+    hours = prefs.hours_u1inv(nety_mat .* Vb);
+    hours(1,:,:,:) = hours_bc;
 end

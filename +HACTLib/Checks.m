@@ -133,7 +133,7 @@ classdef Checks
 		function me = HACTexception(msg, varargin)
 			msgId = "HACTLib";
 			for k = 1:nargin-1
-				msgId = cat(msgId, ":", varargin{k});
+				msgId = strcat(msgId, ":", varargin{k});
 			end
 
 			me = MException(msgId, msg);
@@ -144,7 +144,7 @@ end
 function me = gen_exception(msg, varargin)
 	msgId = "HACTLib";
 	for k = 1:nargin-1
-		msgId = cat(msgId, ":", varargin{k});
+		msgId = strcat(msgId, ":", varargin{k});
 	end
 
 	me = MException(msgId, msg);

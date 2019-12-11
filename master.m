@@ -33,10 +33,10 @@ warning('off','MATLAB:nearlySingularMatrix')
 runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'SDU_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
-runopts.ComputeMPCS = 1;
-runopts.SimulateMPCS = 1; % also estimate MPCs by simulation
-runopts.ComputeMPCS_news = 1; % MPCs out of news, requires ComputeMPCS = 1
-runopts.SimulateMPCS_news = 1; % NOT CODED
+runopts.ComputeMPCS = true;
+runopts.SimulateMPCS = true; % also estimate MPCs by simulation
+runopts.ComputeMPCS_news = true; % MPCs out of news, requires ComputeMPCS = 1
+runopts.SimulateMPCS_news = true; % NOT CODED
 
 % whether or not to account for b = bmin, a > 0 case where household
 % withdraws only enough to consume

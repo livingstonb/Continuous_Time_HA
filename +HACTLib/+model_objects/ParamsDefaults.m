@@ -1,15 +1,15 @@
 classdef ParamsDefaults < handle
 	properties (SetAccess=protected)
         % Run options
-        ComputeMPCS;
-        SimulateMPCS;
-        ComputeMPCS_news;
-        SimulateMPCS_news;
+        ComputeMPCS = false;
+        SimulateMPCS = false;
+        ComputeMPCS_news = false;
+        SimulateMPCS_news = false;
         Bequests = false;
-        SaveResults = 1;
-        OneAsset = 1;
+        SaveResults = true;
+        OneAsset = true;
         DealWithSpecialCase;
-        NoRisk = 1;
+        NoRisk = true;
         
         % Name for the parameterization
         name = 'unnamed';
@@ -210,7 +210,8 @@ classdef ParamsDefaults < handle
         MPCSim_interp_method = "makima";
         mpcsim_options;
 
-        % marginal product of labor/capital
+        % Endogenous labor parameters
+        HOURS_maxiters = 1e3;
         endogenous_labor = false;
         labor_disutility = 1;
         frisch = 0.5;
