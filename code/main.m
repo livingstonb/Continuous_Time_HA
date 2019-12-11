@@ -83,7 +83,7 @@ function [stats,p] = main(runopts, p)
 
     shocks = [4,5,6];
     import HACTLib.computation.MPCsNews
-    trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks);
+    trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks, 'delta', 0.005);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')

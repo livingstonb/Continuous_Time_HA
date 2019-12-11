@@ -195,7 +195,7 @@ classdef ParamsDefaults < handle
     	crit_AY = 1e-7; % critical value
 
         % Step-size for Feynman-Kac formula
-        MPCs_delta = 0.025;
+        MPCs_delta = 0.005;
 
         % marginal product of labor/capital
         endogenous_labor = false;
@@ -210,7 +210,7 @@ classdef ParamsDefaults < handle
         mpc_shocks = [-1e-5 -0.01 -0.1 1e-5 0.01 0.1];
         decomp_thresholds = [0 0.01 0.05];
         
-        T_mpcsim = 100;
+        T_mpcsim = 200;
         n_mpcsim = 5e4;
 
         % ----------- adjustment costs -----------------------------------

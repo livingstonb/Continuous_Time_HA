@@ -156,8 +156,8 @@ classdef MPCsNews < handle
 			% modifies other class properties.
             
             if obj.p.SimulateMPCS_news == 1
-				savedTimesUntilShock = [4:-0.025:0.05 obj.options.delta];
-				obj.savedTimesUntilShock = round(savedTimesUntilShock*40)/40;
+				savedTimesUntilShock = [4:-0.005:obj.options.delta];
+				obj.savedTimesUntilShock = round(savedTimesUntilShock*200)/200;
             end
             
             % loop over shocks
@@ -337,7 +337,7 @@ classdef MPCsNews < handle
 
 			for it = 4:-obj.options.delta:obj.options.delta
 				timeUntilShock = obj.options.delta + 4 - it;
-                timeUntilShock = round(timeUntilShock * 40) / 40;
+                timeUntilShock = round(timeUntilShock * 200) / 200;
 				if mod(it,0.5) == 0
 		            fprintf('\tUpdating policy functions given news, quarter=%0.2f\n',it)
                 end
