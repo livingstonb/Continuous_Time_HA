@@ -16,6 +16,15 @@ classdef MPCSimulator < handle
 	% remaining columns corresponding the shock sizes indexed
 	% by 'shocks.'
 
+	properties (Constant)
+		% Default option values.
+		defaults = struct(...
+					'T', 100,...
+					'n', 1e4,...
+					'interp_method', 'makima'...
+					);
+	end
+
 	properties (SetAccess = protected)
 		p;
 		income;
@@ -79,8 +88,8 @@ classdef MPCSimulator < handle
 		% observation and period.
 		shock_cum_con; % final shocked cumcon
 
-		% Time step size
-		mpc_delta;
+		% Options used internally by MPCSimulator.
+		options;
 
 		% Selected shock indices from the parameters, e.g. [4,5]
 		shocks; 
@@ -114,14 +123,16 @@ classdef MPCSimulator < handle
 	    % CLASS GENERATOR
 	    % ----------------------------------------------------
 		function obj = MPCSimulator(p, income, grids, policies,...
-			shocks, shockperiod, savedTimes)
+			shocks, shockperiod, savedTimes, varargin)
+
+			obj.options = parse_options(varargin{:});
 
 			obj.p = p;
 			obj.income = income;
 			obj.grids = grids;
-			obj.deathrateSubperiod = 1 - (1-obj.p.deathrate) ^ (1/p.T_mpcsim);
+			obj.deathrateSubperiod = 1 - (1-obj.p.deathrate) ^ (1/obj.options.T);
 
-			obj.mpc_delta = 1 / p.T_mpcsim;
+			obj.options.delta = 1 / obj.options.T;
 			obj.shocks = shocks;
 			obj.nshocks = numel(shocks);
 			obj.shockperiod = shockperiod;
@@ -181,7 +192,7 @@ classdef MPCSimulator < handle
             end
             
             % discretize transition matrix
-            disc_ytrans = eye(obj.income.ny) + obj.mpc_delta * obj.income.ytrans;
+            disc_ytrans = eye(obj.income.ny) + obj.options.delta * obj.income.ytrans;
             obj.cum_ytrans = cumsum(disc_ytrans, 2);
 
 	    	obj.draw_from_stationary_dist(pmf);
@@ -206,20 +217,20 @@ classdef MPCSimulator < handle
 
 			fprintf('\tDrawing from stationary distribution\n')
 			cumdist = cumsum(pmf(:));
-			draws = rand(obj.p.n_mpcsim,1,'single');
+			draws = rand(obj.options.n,1,'single');
 
-			index = zeros(obj.p.n_mpcsim,1);
+			index = zeros(obj.options.n,1);
 			chunksize = 5e2;
 			finished = false;
 			i1 = 1;
-			i2 = min(chunksize,obj.p.n_mpcsim);
+			i2 = min(chunksize,obj.options.n);
 			while ~finished
 		        [~,index(i1:i2)] = max(draws(i1:i2)<=cumdist',[],2);
 		        
 		        i1 = i2 + 1;
-		        i2 = min(i1+chunksize,obj.p.n_mpcsim);
+		        i2 = min(i1+chunksize,obj.options.n);
 		        
-		        if i1 > obj.p.n_mpcsim
+		        if i1 > obj.options.n
 		            finished = true;
 		        end
 			end
@@ -260,20 +271,20 @@ classdef MPCSimulator < handle
 	    % PERFORM MAIN SIMULATIONS
 	    % ----------------------------------------------------
 	    function run_simulations(obj)
-	    	obj.baseline_cum_con = zeros(obj.p.n_mpcsim,obj.nperiods);
+	    	obj.baseline_cum_con = zeros(obj.options.n,obj.nperiods);
 	    	obj.shock_cum_con = cell(1,6);
 
 	    	for period = 1:obj.nperiods
 	    		fprintf('\tSimulating quarter %i\n',period)
-                obj.cum_con = zeros(obj.p.n_mpcsim, obj.nshocks+1);
-		    	for subperiod = 1:obj.p.T_mpcsim
+                obj.cum_con = zeros(obj.options.n, obj.nshocks+1);
+		    	for subperiod = 1:obj.options.T
 		    		% time elapsed starting from zero
-		    		actualTime = (period-1) + (subperiod-1) / obj.p.T_mpcsim;
+		    		actualTime = (period-1) + (subperiod-1) / obj.options.T;
                     
                     % redraw random numbers for income in chunks of 100 periods
                     tmod100 = mod(subperiod,100);
                     if tmod100 == 1
-                        inc_rand_draws = rand(obj.p.n_mpcsim,100,2,'single');
+                        inc_rand_draws = rand(obj.options.n,100,2,'single');
                     elseif tmod100 == 0
                         tmod100 = 100;
                     end
@@ -305,7 +316,7 @@ classdef MPCSimulator < handle
 	    end
 
 	    function simulate_consumption_one_period(obj)
-	    	c = zeros(obj.p.n_mpcsim, obj.nshocks+1);
+	    	c = zeros(obj.options.n, obj.nshocks+1);
 	    	for k = 1:obj.nshocks+1
 	    		if obj.shockperiod == 0
 	    			interp_num = 1;
@@ -319,7 +330,7 @@ classdef MPCSimulator < handle
 	    		c(:,k) = obj.cinterp{interp_num}(vals{:});
 	    	end
 
-	    	obj.cum_con = obj.cum_con + c * obj.mpc_delta;
+	    	obj.cum_con = obj.cum_con + c * obj.options.delta;
 	    end
 
 	    function simulate_assets_one_period(obj,~)
@@ -327,8 +338,8 @@ classdef MPCSimulator < handle
 	    	% delta
 
 	    	% interpolate to find decisions
-	    	s = zeros(obj.p.n_mpcsim, obj.nshocks+1);
-	    	d = zeros(obj.p.n_mpcsim, obj.nshocks+1);
+	    	s = zeros(obj.options.n, obj.nshocks+1);
+	    	d = zeros(obj.options.n, obj.nshocks+1);
 	    	for k = 1:obj.nshocks+1
 	    		if obj.shockperiod == 0
 	    			interp_num = 1;
@@ -344,13 +355,13 @@ classdef MPCSimulator < handle
 	    	end
 
 	    	% update liquid assets
-	    	obj.bsim = obj.bsim + obj.mpc_delta ...
+	    	obj.bsim = obj.bsim + obj.options.delta ...
 				* (s - d - aux.AdjustmentCost.cost(d, obj.asim, obj.p));
 			obj.bsim = max(obj.bsim, obj.grids.b.vec(1));
 			obj.bsim = min(obj.bsim, obj.grids.b.vec(end));
 
 			% update illiquid assets
-	    	obj.asim = obj.asim + obj.mpc_delta ...
+	    	obj.asim = obj.asim + obj.options.delta ...
 	            * (d + (obj.p.r_a+obj.p.deathrate*obj.p.perfectannuities) * obj.asim ...
 				+ obj.p.directdeposit * obj.ysim);
 	        obj.asim = max(obj.asim, obj.grids.a.vec(1));
@@ -364,7 +375,7 @@ classdef MPCSimulator < handle
 			chunksize = 5e2;
 			finished = false;
 			i1 = 1;
-			i2 = min(chunksize, obj.p.n_mpcsim);
+			i2 = min(chunksize, obj.options.n);
 			while ~finished
 		        [~,obj.yinds(i1:i2)] = max(draws(i1:i2,1)...
 		        	<= obj.cum_ytrans(obj.yinds(i1:i2),:), [], 2);
@@ -376,9 +387,9 @@ classdef MPCSimulator < handle
 		        end
 		        
 		        i1 = i2 + 1;
-		        i2 = min(i1+chunksize, obj.p.n_mpcsim);
+		        i2 = min(i1+chunksize, obj.options.n);
 		        
-		        if i1 > obj.p.n_mpcsim
+		        if i1 > obj.options.n
 		            finished = true;
 		        end
 			end
@@ -452,5 +463,25 @@ classdef MPCSimulator < handle
 					squeeze(s), 'makima');
 			end
         end
+	end
+end
+
+function options = parse_options(varargin)
+	import HACTLib.computation.MPCSimulator
+	import HACTLib.aux.parse_keyvalue_pairs
+	import HACTLib.Checks
+
+	defaults = MPCSimulator.defaults;
+	options = parse_keyvalue_pairs(defaults, varargin{:});
+
+	mustBePositive(options.T);
+	mustBePositive(options.n);
+	Checks.is_integer(options.T, "MPCSimulator");
+	Checks.is_integer(options.n, "MPCSimulator");
+	if ~ismember(options.interp_method, {'linear', 'nearest',...
+		'next', 'previous', 'pchip', 'cubic', 'spline', 'makima'})
+		error("HACTLib:MPCs:InvalidArgument",...
+			strcat("Invalid interpolation method entered.",...
+				"Check griddedInterpolant documentation."))
 	end
 end

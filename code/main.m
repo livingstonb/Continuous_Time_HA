@@ -83,7 +83,7 @@ function [stats,p] = main(runopts, p)
 
     shocks = [4,5,6];
     import HACTLib.computation.MPCsNews
-    trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks, 'delta', 0.005);
+    trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks, p.mpcs_news_options);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')
@@ -116,7 +116,7 @@ function [stats,p] = main(runopts, p)
     shocks = [4,5,6];
     shockperiod = 0;
     mpc_simulator = HACTLib.computation.MPCSimulator(...
-    	p, income, grdKFE, KFE, shocks, shockperiod);
+    	p, income, grdKFE, KFE, shocks, shockperiod, p.mpcsim_options);
 
     if p.SimulateMPCS == 1
         fprintf('\nSimulating MPCs...\n')
@@ -135,7 +135,8 @@ function [stats,p] = main(runopts, p)
     shocks = [4,5,6];
     shockperiod = 4;
     mpc_simulator = HACTLib.computation.MPCSimulator(...
-        p, income, grdKFE, KFE, shocks, shockperiod, trans_dyn_solver.savedTimesUntilShock);
+        p, income, grdKFE, KFE, shocks, shockperiod,...
+        trans_dyn_solver.savedTimesUntilShock, p.mpcsim_options);
 
     if p.SimulateMPCS_news == 1
         fprintf('\nSimulating MPCs...\n')

@@ -194,8 +194,21 @@ classdef ParamsDefaults < handle
     	maxit_AY = 100; % maximal allowable number of loops over capital-labor ratio
     	crit_AY = 1e-7; % critical value
 
-        % Step-size for Feynman-Kac formula
-        MPCs_delta = 0.005;
+        % Options for MPC computations
+        MPC_delta = 0.005;
+        MPC_interp_method = "linear";
+        mpc_options;
+
+        % Options for MPCs out of news
+        MPCS_News_delta_terminal = 1e-3;
+        MPCS_News_compute_mpcs;
+        mpcs_news_options;
+
+        % Options for MPC simulations
+        MPCSim_T = 200;
+        MPCSim_n = 5e4;
+        MPCSim_interp_method = "makima";
+        mpcsim_options;
 
         % marginal product of labor/capital
         endogenous_labor = false;
@@ -209,9 +222,6 @@ classdef ParamsDefaults < handle
         wpercentiles = [10 25 50 90 99 99.9];
         mpc_shocks = [-1e-5 -0.01 -0.1 1e-5 0.01 0.1];
         decomp_thresholds = [0 0.01 0.05];
-        
-        T_mpcsim = 200;
-        n_mpcsim = 5e4;
 
         % ----------- adjustment costs -----------------------------------
         chi0 = 0.070046;

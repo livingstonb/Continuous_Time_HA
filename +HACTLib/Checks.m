@@ -129,18 +129,15 @@ classdef Checks
 				end
 			end
 		end
-	end
-end
 
-function err_struct = create_error_struct(caller, errortype, msg)
-	err_struct.identifier = strcat('HACTLib:', caller, ':', errortype);
-	err_struct.message = msg;
-end
+		function me = HACTexception(msg, varargin)
+			msgId = "HACTLib";
+			for k = 1:nargin-1
+				msgId = cat(msgId, ":", varargin{k});
+			end
 
-function msgId = gen_msgId(caller, varargin)
-	msgId = "HACTLib";
-	for k = 1:nargin-1
-		msgId = cat(msgId, ":", varargin{k});
+			me = MException(msgId, msg);
+		end
 	end
 end
 

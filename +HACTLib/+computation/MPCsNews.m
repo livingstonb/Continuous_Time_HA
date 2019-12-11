@@ -15,7 +15,8 @@ classdef MPCsNews < handle
 		defaults = struct(...
 					'delta', 0.025,...
 					'delta_terminal', 1e-3,...
-					'save_policies', false...
+					'save_policies', false,...
+					'compute_mpcs', true...
 					);
 	end
 
@@ -26,21 +27,45 @@ classdef MPCsNews < handle
 		income;
 		grids;
 
-		% intermediate values of V, A, policy fns, cumcon
+		% Value function at given instant in time.
 		V;
+
+		% Transition matrix constructor.
 		A_constructor_HJB;
+
+		% Transition matrix constructor, for A
+		% without returns risk (only used if returns risk
+		% is on but turned off for the KFE).
 		A_constructor_FK;
+
+		% Transition matrix at given instant in time.
 		A_HJB;
+
+		% Transition matrix at given instant in time,
+		% without returns risk (only used if returns risk
+		% is on but turned off for the KFE).
 		A_FK;
+
+		% Structure containing the policy functions at
+		% given instance in time.
 		KFEint;
         
+        % Row vector containing the shock indices to be
+        % used.
         shocks;
+
+        % Vector containing the "time until shock" values
+        % at which point the policy functions are to be saved.
+        % Only used if simulating MPCs out of news.
         savedTimesUntilShock;
 
+        % Cumulative consumption over states.
 		cumcon;
+
+		% Income transitions with the diagonal removed.
 		ytrans_offdiag;
 
-		% Cumulative consumption for the q1, q4 shock
+		% Cumulative consumption for the q1, q4 shock.
 		cum_con_q1 = cell(1,6);
 		cum_con_q4 = cell(1,6);
 
@@ -155,9 +180,10 @@ classdef MPCsNews < handle
 			% This method calls various other class methods and so indirectly
 			% modifies other class properties.
             
-            if obj.p.SimulateMPCS_news == 1
-				savedTimesUntilShock = [4:-0.005:obj.options.delta];
-				obj.savedTimesUntilShock = round(savedTimesUntilShock*200)/200;
+            if obj.options.save_policies
+				savedTimesUntilShock = [4:-obj.options.delta:obj.options.delta];
+				round_factor = 1 / obj.options.delta;
+				obj.savedTimesUntilShock = round(savedTimesUntilShock*round_factor)/round_factor;
             end
             
             % loop over shocks
@@ -169,7 +195,7 @@ classdef MPCsNews < handle
 				end
 				obj.iterateBackwards(ishock);
 
-				if obj.p.ComputeMPCS_news == 1
+				if obj.options.compute_mpcs
 					obj.computeMPCs(pmf,ishock,cum_con_baseline);
 				end
             end
@@ -337,7 +363,8 @@ classdef MPCsNews < handle
 
 			for it = 4:-obj.options.delta:obj.options.delta
 				timeUntilShock = obj.options.delta + 4 - it;
-                timeUntilShock = round(timeUntilShock * 200) / 200;
+				round_factor = 1 / obj.options.delta;
+                timeUntilShock = round(timeUntilShock * round_factor) / round_factor;
 				if mod(it,0.5) == 0
 		            fprintf('\tUpdating policy functions given news, quarter=%0.2f\n',it)
                 end
@@ -375,7 +402,7 @@ classdef MPCsNews < handle
 		        % Find A matrix a fraction of a period back
 		        obj.update_A_matrix();
 
-			    if obj.p.ComputeMPCS_news == 1
+			    if obj.options.compute_mpcs
 				    if (obj.p.sigma_r > 0) && (~obj.p.retrisk_KFE)
 	                    FKmats = feynman_kac_divisor(obj.p, obj.income,...
 	                    			obj.options.delta, obj.A_FK, true);
@@ -395,7 +422,7 @@ classdef MPCsNews < handle
 			        end
                 end
 
-			    if (obj.p.SimulateMPCS_news==1) && ismember(timeUntilShock, obj.savedTimesUntilShock)
+			    if obj.options.save_policies && ismember(timeUntilShock, obj.savedTimesUntilShock)
 			    	% save policy function
 			    	index = find(obj.savedTimesUntilShock==timeUntilShock);
                     
@@ -403,7 +430,7 @@ classdef MPCsNews < handle
                 end
             end
 
-            if obj.p.ComputeMPCS_news == 1
+            if obj.options.compute_mpcs
 	            obj.cum_con_q4{ishock}(:,1) = obj.cumcon(:,1);
 	            for period = 2:4
 	                obj.cum_con_q4{ishock}(:,period) =...
@@ -478,6 +505,11 @@ function options = parse_options(varargin)
 	options = parse_keyvalue_pairs(defaults, varargin{:});
 
 	mustBePositive(options.delta);
+	if 1/options.delta ~= round(1/options.delta)
+		msg = "delta must be chosen so that 1/delta is an integer";
+		Checks.HACTexception(msg, "MPCsNews", "InvalidEntry");
+	end
+
 	mustBePositive(options.delta_terminal);
 	Checks.is_logical("MPCsNews", options.save_policies);
 end

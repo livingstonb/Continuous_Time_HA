@@ -8,6 +8,14 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
         function obj = Params(runopts, varargin)
             
         	obj.set_from_structure(varargin{:});
+
+        	obj.param_index = runopts.param_index;
+            obj.ComputeMPCS = runopts.ComputeMPCS;
+            obj.SimulateMPCS = runopts.SimulateMPCS;
+            obj.ComputeMPCS_news = runopts.ComputeMPCS_news;
+            obj.SimulateMPCS_news = runopts.SimulateMPCS_news;
+            obj.main_dir = runopts.direc;
+            obj.temp_dir = runopts.temp;
             
             obj.kfe_options = struct(...
 				'maxiters', obj.KFE_maxiters,...
@@ -22,20 +30,27 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
 				'HIS_tol', obj.HIS_tol,...
 				'HIS_start', obj.HIS_start);
 
+            obj.mpc_options = struct(
+            	'delta', obj.MPC_delta,...
+            	'interp_method', obj.MPC_interp_method);
+
+            obj.mpcs_news_options = struct(...
+				'delta', obj.MPC_delta,...
+				'delta_terminal', obj.MPCS_News_delta_terminal,...
+				'save_policies', obj.SimulateMPCS_news,...
+				'compute_mpcs', obj.ComputeMPCS_news);
+
+            obj.mpcsim_options = struct(...
+            	'T', obj.MPCSim_T,...
+            	'n', obj.MPCSim_n,...
+            	'interp_method', obj.MPCSim_interp_method);
+
             % Check for other heterogeneity
             if (numel(obj.rho_grid)>1) && (numel(obj.riskaver)>1)
             	error('Cannot have both rho and riskaver heterogeneity')
             else
                 obj.nz = max(numel(obj.rho_grid),numel(obj.riskaver));
             end
-            
-            obj.param_index = runopts.param_index;
-            obj.ComputeMPCS = runopts.ComputeMPCS;
-            obj.SimulateMPCS = runopts.SimulateMPCS;
-            obj.ComputeMPCS_news = runopts.ComputeMPCS_news;
-            obj.SimulateMPCS_news = runopts.SimulateMPCS_news;
-            obj.main_dir = runopts.direc;
-            obj.temp_dir = runopts.temp;
 
             obj.rhos = obj.rho + obj.rho_grid;
             obj.riskaver_fulldim = reshape(obj.riskaver,[1 1 numel(obj.riskaver) 1]);
