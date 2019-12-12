@@ -1,5 +1,5 @@
 function out = upwind_consumption(net_income_liq, Vb_fd, direction,...
-	prefs, rho_mat, hours_fn, labor_disutil)
+	prefs, rho_mat, hours_fn)
 
 	endogenous_labor = (nargin > 5);
 
@@ -43,6 +43,6 @@ function out = upwind_consumption(net_income_liq, Vb_fd, direction,...
     end
 
     if endogenous_labor
-        out.H = out.H - labor_disutil(out.hours);
+        out.H = out.H - prefs.hrs_u(out.hours);
     end
 end

@@ -24,6 +24,7 @@ function outparams = endog_labor_tests(runopts)
     params(ii).Bequests = 0;
     params(ii).deathrate = 0;
     params(ii).endogenous_labor = true;
+    params(ii).labor_disutility = 0.1;
     params(ii).nb = 50;
     params(ii).nb_KFE = 50;
     params(ii).MPL = 1/3;
@@ -46,6 +47,10 @@ function outparams = endog_labor_tests(runopts)
     params(ii).nb_KFE = 50;
     params(ii).na = 50;
     params(ii).na_KFE = 50;
+    params(ii).endogenous_labor = true;
+    params(ii).labor_disutility = 0.1;
+    params(ii).MPL = 1/3;
+    params(ii).transfer = 0.0081 * 2;
     ii = ii + 1;
 
 

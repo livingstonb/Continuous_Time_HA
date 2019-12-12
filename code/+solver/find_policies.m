@@ -56,12 +56,10 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
 	    else
 	        nety_mat = (1-p.wagetax) * income.y.matrixKFE;
 	    end
-        hours_fn1 = @(Vb) hours_u1inv_bc_adjusted(Vb, prefs,...
-            nety_mat, hours_bc);
-        hours_fn2 = prefs.hrs_u;
-        hours_fns = {hours_fn1, hours_fn2};
+        hours_fn = {@(Vb) hours_u1inv_bc_adjusted(Vb, prefs,...
+            nety_mat, hours_bc)};
 	else
-		hours_fns = {};
+		hours_fn = {};
     end
     
     %% --------------------------------------------------------------------
@@ -92,9 +90,13 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     import HACTLib.computation.upwind_consumption
 
     upwindB = upwind_consumption(net_income_liq, Vb.B,...
-                'B', prefs, rho_mat_adj, hours_fns{:});
+                'B', prefs, rho_mat_adj, hours_fn{:});
+
+    if p.endogenous_labor
+    	hours_fn = {@(Vb) prefs.hrs_u1inv(nety_mat .* Vb)};
+    end
     upwindF = upwind_consumption(net_income_liq, Vb.F,...
-                'F', prefs, rho_mat_adj, hours_fns{:});
+                'F', prefs, rho_mat_adj, hours_fn{:});
     HcB = upwindB.H;
     HcF = upwindF.H;
 
@@ -103,13 +105,15 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
 
     % no drift
     if p.endogenous_labor
-        c0 = net_income_liq(1);
+        c0 = net_income_liq(hours_bc);
+        Hc0 = rho_mat_adj .* prefs.u(c0) - prefs.hrs_u(hours_bc);
     else
         c0 = net_income_liq;
+        Hc0 = rho_mat_adj .* prefs.u(c0);
     end
     s0 = zeros(nb,na,nz,ny);
 
-    Hc0 = rho_mat_adj .* prefs.u(c0);
+    
     validc0 = c0 > 0;
 
      % Upwinding direction: consumption
@@ -160,5 +164,5 @@ end
 
 function hours = hours_u1inv_bc_adjusted(Vb, prefs, nety_mat, hours_bc)
     hours = prefs.hrs_u1inv(nety_mat .* Vb);
-    hours(1,:,:,:) = hours_bc;
+    hours(1,:,:,:) = hours_bc(1,:,:,:);
 end

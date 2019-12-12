@@ -44,24 +44,38 @@ classdef Model < handle
 				import HACTLib.model_objects.CRRA
 				import HACTLib.model_objects.Frisch
 
-				hours_bc = 0.5 * ones(obj.income.ny, 1);
+				inc_mat = reshape(obj.income.y.vec, [1, 1, 1, obj.income.ny]);
+				hours_bc_HJB = 0.5 * ones(obj.p.nb, 1, 1, obj.income.ny);
+				hours_bc_KFE = 0.5 * ones(obj.p.nb_KFE, 1, 1, obj.income.ny);
+
 				% hours_bc_last = hours_bc;
 				for ih = 1:obj.p.HOURS_maxiters
-					con = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities)...
-						* obj.grids_HJB.b.vec(1) + (1-obj.p.directdeposit-obj.p.wagetax)...
-						* hours_bc .* obj.income.y.vec + obj.p.transfer;
-					u1 = CRRA.marginal_utility(con, obj.p.invies);
-					v1 = (1-obj.p.directdeposit-obj.p.wagetax)...
-						* hours_bc .* obj.income.y.vec .* u1;
-					hours_bc = Frisch.inv_marginal_disutility(v1,...
+					con_HJB = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities)...
+						* obj.grids_HJB.b.vec + (1-obj.p.directdeposit-obj.p.wagetax)...
+						* hours_bc_HJB .* inc_mat + obj.p.transfer;
+					con_KFE = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities)...
+						* obj.grids_KFE.b.vec + (1-obj.p.directdeposit-obj.p.wagetax)...
+						* hours_bc_KFE .* inc_mat + obj.p.transfer;
+
+					u1_HJB = CRRA.marginal_utility(con_HJB, obj.p.invies);
+					u1_KFE = CRRA.marginal_utility(con_KFE, obj.p.invies);
+
+					v1_HJB = (1-obj.p.directdeposit-obj.p.wagetax)...
+						* hours_bc_HJB .* inc_mat .* u1_HJB;
+					v1_KFE = (1-obj.p.directdeposit-obj.p.wagetax)...
+						* hours_bc_KFE .* inc_mat .* u1_KFE;
+
+					hours_bc_HJB = Frisch.inv_marginal_disutility(v1_HJB,...
 						obj.p.labor_disutility, obj.p.frisch);
-					% hours_bc = min(hours_bc, 1);
+					hours_bc_KFE = Frisch.inv_marginal_disutility(v1_KFE,...
+						obj.p.labor_disutility, obj.p.frisch);
+					hours_bc_HJB = min(hours_bc_HJB, 1);
+					hours_bc_KFE = min(hours_bc_KFE, 1);
 					% max(abs(hours_bc(:)-hours_bc_last(:)))
 					% hours_bc_last = hours_bc;
 				end
-				hours_bc = reshape(hours_bc, [1, 1, 1, obj.income.ny]);
-				hours_bc_HJB = repmat(hours_bc, [1, obj.p.na, obj.p.nz, 1]);
-				hours_bc_KFE = repmat(hours_bc, [1, obj.p.na_KFE, obj.p.nz, 1]);
+				hours_bc_HJB = repmat(hours_bc_HJB, [1, obj.p.na, obj.p.nz, 1]);
+				hours_bc_KFE = repmat(hours_bc_KFE, [1, obj.p.na_KFE, obj.p.nz, 1]);
 			else
 				hours_bc_HJB = [];
 				hours_bc_KFE = [];
