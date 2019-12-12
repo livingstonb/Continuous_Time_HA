@@ -50,19 +50,15 @@ classdef Model < handle
 
 				% hours_bc_last = hours_bc;
 				for ih = 1:obj.p.HOURS_maxiters
-					con_HJB = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities)...
-						* obj.grids_HJB.b.vec + (1-obj.p.directdeposit-obj.p.wagetax)...
-						* hours_bc_HJB .* inc_mat + obj.p.transfer;
-					con_KFE = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities)...
-						* obj.grids_KFE.b.vec + (1-obj.p.directdeposit-obj.p.wagetax)...
-						* hours_bc_KFE .* inc_mat + obj.p.transfer;
+					con_HJB = obj.income.nety_HJB_liq_hourly(hours_bc_HJB);
+					con_KFE = obj.income.nety_KFE_liq_hourly(hours_bc_KFE);
 
 					u1_HJB = CRRA.marginal_utility(con_HJB, obj.p.invies);
 					u1_KFE = CRRA.marginal_utility(con_KFE, obj.p.invies);
 
-					v1_HJB = (1-obj.p.directdeposit-obj.p.wagetax)...
+					v1_HJB = (1-obj.p.directdeposit) * (1-obj.p.wagetax)...
 						* hours_bc_HJB .* inc_mat .* u1_HJB;
-					v1_KFE = (1-obj.p.directdeposit-obj.p.wagetax)...
+					v1_KFE = (1-obj.p.directdeposit) * (1-obj.p.wagetax)...
 						* hours_bc_KFE .* inc_mat .* u1_KFE;
 
 					hours_bc_HJB = Frisch.inv_marginal_disutility(v1_HJB,...
@@ -74,11 +70,9 @@ classdef Model < handle
 					% max(abs(hours_bc(:)-hours_bc_last(:)))
 					% hours_bc_last = hours_bc;
 				end
-				hours_bc_HJB = repmat(hours_bc_HJB, [1, obj.p.na, obj.p.nz, 1]);
-				hours_bc_KFE = repmat(hours_bc_KFE, [1, obj.p.na_KFE, obj.p.nz, 1]);
 			else
-				hours_bc_HJB = [];
-				hours_bc_KFE = [];
+				hours_bc_HJB = 1;
+				hours_bc_KFE = 1;
 			end
 
 			%% --------------------------------------------------------------------

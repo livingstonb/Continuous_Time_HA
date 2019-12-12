@@ -52,13 +52,14 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     if p.endogenous_labor
     	prefs.set_frisch(p.labor_disutility, p.frisch);
     	if strcmp(grd.gtype, 'HJB')
-	        nety_mat = (1-p.wagetax) * income.y.matrix;
+	        nety_mat_liq = (1-p.directdeposit) * (1-p.wagetax) * income.y.matrix;
 	    else
-	        nety_mat = (1-p.wagetax) * income.y.matrixKFE;
+	        nety_mat_liq = (1-p.directdeposit) * (1-p.wagetax) * income.y.matrixKFE;
 	    end
         hours_fn = {@(Vb) hours_u1inv_bc_adjusted(Vb, prefs,...
-            nety_mat, hours_bc)};
+            nety_mat_liq, hours_bc)};
 	else
+		prefs.set_no_labor_disutility();
 		hours_fn = {};
     end
     
@@ -82,20 +83,20 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     Vb.F(1:nb-1,:,:,:) = max(Vb.F(1:nb-1,:,:,:), Vbmin);
     
     if strcmp(grd.gtype, 'HJB')
-        net_income_liq = income.nety_HJB_liq;
+        net_income_liq_hourly = income.nety_HJB_liq_hourly;
     else
-        net_income_liq = income.nety_KFE_liq;
+        net_income_liq_hourly = income.nety_KFE_liq_hourly;
     end
 
     import HACTLib.computation.upwind_consumption
 
-    upwindB = upwind_consumption(net_income_liq, Vb.B,...
+    upwindB = upwind_consumption(net_income_liq_hourly, Vb.B,...
                 'B', prefs, rho_mat_adj, hours_fn{:});
 
     if p.endogenous_labor
-    	hours_fn = {@(Vb) prefs.hrs_u1inv(nety_mat .* Vb)};
+    	hours_fn = {@(Vb) prefs.hrs_u1inv(nety_mat_liq .* Vb)};
     end
-    upwindF = upwind_consumption(net_income_liq, Vb.F,...
+    upwindF = upwind_consumption(net_income_liq_hourly, Vb.F,...
                 'F', prefs, rho_mat_adj, hours_fn{:});
     HcB = upwindB.H;
     HcF = upwindF.H;
@@ -104,11 +105,10 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     validcB = upwindB.c > 0;
 
     % no drift
+    c0 = net_income_liq_hourly(hours_bc);
     if p.endogenous_labor
-        c0 = net_income_liq(hours_bc);
         Hc0 = rho_mat_adj .* prefs.u(c0) - prefs.hrs_u(hours_bc);
     else
-        c0 = net_income_liq;
         Hc0 = rho_mat_adj .* prefs.u(c0);
     end
     s0 = zeros(nb,na,nz,ny);
@@ -124,7 +124,10 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     c = IcF .* upwindF.c + IcB .* upwindB.c + Ic0 .* c0;
     s = IcF .* upwindF.s + IcB .* upwindB.s + Ic0 .* s0;
 
-    u = rho_mat_adj .* prefs.u(c);
+    if p.endogenous_labor
+    	h = IcF .* upwindF.hours + IcB .* upwindB.hours + Ic0 .* hours_bc;
+    	u = rho_mat_adj .* prefs.u(c) - prefs.hrs_u(h);
+    end
 
     %% --------------------------------------------------------------------
 	% UPWINDING FOR DEPOSITS
@@ -143,11 +146,16 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     policies.c = c;
     policies.s = s;
     policies.d = d;
+    policies.h = h;
     policies.u = u;
     policies.bmin_consume_withdrawals = I_specialcase;
     policies.bdot = s - adjcost(d);
-    policies.adot = (p.r_a + p.deathrate*p.perfectannuities) * grd.a.matrix...
-        + p.directdeposit .* y_mat + d;
+
+   	if strcmp(grd.gtype, 'HJB')
+	    policies.adot = income.nety_HJB_illiq_hourly(h) + d;
+	else
+		policies.adot = income.nety_KFE_illiq_hourly(h) + d;
+	end
 
     %% --------------------------------------------------------------------
     % DERIVATIVE OF VALUE FUNCTION FOR SDU WITH RETURNS RISK
@@ -155,7 +163,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     if (p.sigma_r > 0) && (p.OneAsset == 1)
         V_deriv_risky_asset_nodrift = rho_mat_adj .* prefs.u1(c);
     elseif (p.sigma_r > 0) && (p.OneAsset == 0)
-        V_deriv_risky_asset_nodrift =rho_mat_adj .* prefs.u1(c)...
+        V_deriv_risky_asset_nodrift = rho_mat_adj .* prefs.u1(c)...
         	.* (1 + aux.AdjustmentCost.derivative(d, grd.a.matrix, p));
     else
         V_deriv_risky_asset_nodrift = [];

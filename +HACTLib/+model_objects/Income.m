@@ -25,10 +25,16 @@ classdef Income < handle
         fully_initialized = false;
 
         % Net income accruing to the liquid asset, over the HJB grids.
-        nety_HJB_liq;
+        nety_HJB_liq_hourly;
 
         % Net income accruing to the liquid asset, over the KFE grids.
-        nety_KFE_liq;
+        nety_KFE_liq_hourly;
+
+        % Net income accruing to the illiquid asset, over the HJB grids.
+        nety_HJB_illiq_hourly;
+
+        % Net income accruing to the illiquid asset, over the KFE grids.
+        nety_KFE_illiq_hourly;
 	end
 
 	methods
@@ -134,19 +140,17 @@ classdef Income < handle
         	r_b_HJB = p.r_b .* (gridsHJB.b.matrix>=0) +  p.r_b_borr .* (gridsHJB.b.matrix<0);
         	r_b_KFE = p.r_b .* (gridsKFE.b.matrix>=0) +  p.r_b_borr .* (gridsKFE.b.matrix<0);
 
-        	if p.endogenous_labor
-	        	obj.nety_HJB_liq = @(h) (1-p.directdeposit - p.wagetax) * obj.y.matrix .* h ...
-		            + (r_b_HJB + p.deathrate*p.perfectannuities) .* gridsHJB.b.matrix + p.transfer;
+			% Income to liquid asset
+			obj.nety_HJB_liq_hourly = @(h) (1-p.directdeposit) * (1-p.wagetax) * obj.y.matrix .* h ...
+		        + (r_b_HJB + p.deathrate*p.perfectannuities) .* gridsHJB.b.matrix + p.transfer;
+            obj.nety_KFE_liq_hourly = @(h) (1-p.directdeposit) * (1-p.wagetax) * obj.y.matrixKFE .* h ...
+		        + (r_b_KFE + p.deathrate*p.perfectannuities) .* gridsKFE.b.matrix + p.transfer;
 
-	            obj.nety_KFE_liq = @(h) (1-p.directdeposit - p.wagetax) * obj.y.matrixKFE .* h ...
-		            + (r_b_KFE + p.deathrate*p.perfectannuities) .* gridsKFE.b.matrix + p.transfer;
-	        else
-	        	obj.nety_HJB_liq = (1-p.directdeposit - p.wagetax) * obj.y.matrix ...
-		            + (r_b_HJB + p.deathrate*p.perfectannuities) .* gridsHJB.b.matrix + p.transfer;
-
-	            obj.nety_KFE_liq = (1-p.directdeposit - p.wagetax) * obj.y.matrixKFE ...
-		            + (r_b_KFE + p.deathrate*p.perfectannuities) .* gridsKFE.b.matrix + p.transfer;
-        	end
+		    % Income to illiquid asset
+		    obj.nety_HJB_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.matrix .* h ...
+		    	+ (p.r_a + p.deathrate*p.perfectannuities) * gridsHJB.a.matrix;
+		    obj.nety_KFE_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.matrixKFE .* h ...
+		    	+ (p.r_a + p.deathrate*p.perfectannuities) * gridsKFE.a.matrix;
         end
 
         function inctrans = full_income_transition_matrix(obj, p, V)

@@ -39,5 +39,11 @@ classdef Preferences < handle
 			obj.hrs_u1 = @(h) Frisch.marginal_disutility(h, coeff, frisch);
 			obj.hrs_u1inv = @(h) Frisch.inv_marginal_disutility(h, coeff, frisch);
 		end
+
+		function set_no_labor_disutility(obj)
+			obj.hrs_u = @(h) 0;
+			obj.hrs_u1 = @(h) 0;
+			obj.hrs_u1inv = @(h) 0;
+		end
 	end
 end
