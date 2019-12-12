@@ -36,6 +36,8 @@ classdef TransitionMatrixConstructor < handle
     	%		  substitution.
     	p;
 
+    	income;
+
     	% A Grid object.
         grids;
 
@@ -99,6 +101,7 @@ classdef TransitionMatrixConstructor < handle
             obj.gridtype = grids.gtype;
             obj.grids = grids;
             obj.p = p;
+            obj.income = income;
 
             obj.returns_risk = returns_risk;
 
@@ -160,12 +163,9 @@ classdef TransitionMatrixConstructor < handle
         	% The input variable 'model' must contain the policy
         	% functions 's' and 'd'.
 
-        	illiq_income = obj.grids.a.matrix ...
-        		* (obj.p.r_a + obj.p.deathrate*obj.p.perfectannuities)...
-                + obj.p.directdeposit * obj.y_mat;
             adj_cost = aux.AdjustmentCost.cost(model.d, obj.grids.a.matrix, obj.p);
             if strcmp(obj.gridtype,'KFE')
-            	adrift = model.d + illiq_income;
+            	adrift = model.d + obj.income.nety_KFE_illiq_hourly(model.h);
                 drifts.a_B = min(adrift, 0);
                 drifts.a_F = max(adrift, 0);
 
@@ -173,7 +173,7 @@ classdef TransitionMatrixConstructor < handle
                 drifts.b_B = min(bdrift, 0);
                 drifts.b_F = max(bdrift, 0);
             elseif strcmp(obj.gridtype, 'HJB')
-            	adrift = illiq_income;
+            	adrift = obj.income.nety_HJB_illiq_hourly(model.h);
                 drifts.a_B = min(model.d, 0) + min(adrift, 0);
                 drifts.a_F = max(model.d, 0) + max(adrift, 0);
 
