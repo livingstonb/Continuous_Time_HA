@@ -213,7 +213,7 @@ classdef ParamsDefaults < handle
         % Endogenous labor parameters
         HOURS_maxiters = 1e3;
         endogenous_labor = false;
-        labor_disutility = 1;
+        labor_disutility = 0.5;
         frisch = 0.5;
         MPL = 1;
         MPK = 1;

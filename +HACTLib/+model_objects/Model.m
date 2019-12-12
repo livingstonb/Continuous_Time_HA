@@ -45,6 +45,7 @@ classdef Model < handle
 				import HACTLib.model_objects.Frisch
 
 				hours_bc = 0.5 * ones(obj.income.ny, 1);
+				% hours_bc_last = hours_bc;
 				for ih = 1:obj.p.HOURS_maxiters
 					con = (obj.p.r_b+obj.p.deathrate*obj.p.perfectannuities)...
 						* obj.grids_HJB.b.vec(1) + (1-obj.p.directdeposit-obj.p.wagetax)...
@@ -54,7 +55,9 @@ classdef Model < handle
 						* hours_bc .* obj.income.y.vec .* u1;
 					hours_bc = Frisch.inv_marginal_disutility(v1,...
 						obj.p.labor_disutility, obj.p.frisch);
-					hours_bc = min(hours_bc, 1);
+					% hours_bc = min(hours_bc, 1);
+					% max(abs(hours_bc(:)-hours_bc_last(:)))
+					% hours_bc_last = hours_bc;
 				end
 				hours_bc = reshape(hours_bc, [1, 1, 1, obj.income.ny]);
 				hours_bc_HJB = repmat(hours_bc, [1, obj.p.na, obj.p.nz, 1]);

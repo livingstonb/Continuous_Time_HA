@@ -10,6 +10,14 @@ function out = upwind_consumption(net_income_liq, Vb_fd, direction,...
 
 	nb = size(Vb_fd, 1);
 
+    % Hours worked
+    if endogenous_labor
+        out.hours = hours_fn(Vb_fd);
+        out.hours = min(out.hours, 1);
+
+        net_income_liq = net_income_liq(out.hours);
+    end
+
 	out.c = prefs.u1inv(Vb_fd ./ rho_mat);
 
 	if strcmp(direction, 'B')
@@ -18,14 +26,7 @@ function out = upwind_consumption(net_income_liq, Vb_fd, direction,...
     	out.c(nb,:,:,:) = 0;
     end
 
-    % Hours worked
-    if endogenous_labor
-        out.hours = hours_fn(Vb_fd);
-        out.hours = min(out.hours, 1);
-        out.s = net_income_liq(out.hours) - out.c;
-    else
-        out.s = net_income_liq - out.c;
-    end
+    out.s = net_income_liq - out.c;
 
     % Impose a state constraint to improve stability
     if strcmp(direction, 'B')

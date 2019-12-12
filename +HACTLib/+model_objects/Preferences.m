@@ -35,7 +35,7 @@ classdef Preferences < handle
 		function set_frisch(obj, coeff, frisch)
 			import HACTLib.model_objects.Frisch
 
-			obj.hrs_u = @(h) Frisch.disutility(h, coeff, frisch);
+			obj.hrs_u = @(h) Frisch.labor_disutility(h, coeff, frisch);
 			obj.hrs_u1 = @(h) Frisch.marginal_disutility(h, coeff, frisch);
 			obj.hrs_u1inv = @(h) Frisch.inv_marginal_disutility(h, coeff, frisch);
 		end
