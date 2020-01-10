@@ -1,17 +1,24 @@
 classdef Model < handle
 	properties
+		% Parameters of the model.
 		p;
 
+		% Asset grids for the HJB.
 		grids_HJB;
 
+		% Asset grids for the KFE.
 		grids_KFE;
 
+		% The income process.
 		income;
 
+		% Instance of HJBSolver class.
 		hjb_solver;
 
+		% Instance of KFESolver class.
 		kfe_solver;
 
+		% Instance of TransitionMatrixConstructor class.
 		A_constructor_HJB;
 	end
 
