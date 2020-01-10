@@ -8,9 +8,9 @@
 % either the server or the local directory, depending on whether
 % runopts.Server = 0 or 1
 %
-% (2) Modify the parameters script 'get_params.m' and make sure that 
+% (2) Modify the parameters script 'code/+setup/+params/get_params.m' and make sure that 
 % runopts.mode is equal to 'get_params'. Note that all parameter defaults
-% are set in the class file code/+setup/Params.m, and get_params.m overrides
+% are set in the file HACTLib/+model_objects/ParamsDefaults.m, and get_params.m overrides
 % these defaults. Any parameters not in get_params.m are set to their
 % defaults. See the attributes of Params.m for a list of all
 % parameters.
