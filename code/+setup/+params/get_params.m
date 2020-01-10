@@ -3,7 +3,7 @@ function outparams = get_params(runopts)
     % of the structure in the 'index' entry, i.e. 1,2,3,...
     
     % Any parameters not set here will take on their default values as in
-    % Classes/Params.m
+    % HACTLib/+model_objects/ParamsDefaults.m
     
     % An example for parameterization 1 is:
     % params(1).name = 'Parameterization 1';

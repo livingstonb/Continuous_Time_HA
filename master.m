@@ -78,7 +78,7 @@ runopts.savedir = fullfile(runopts.direc, 'output');
 runopts.temp = fullfile(runopts.direc, 'temp');
 
 addpath(fullfile(runopts.direc, 'code'));
-addpath(fullfile(runopts.direc, 'code', 'factorization_lib'));
+addpath(fullfile(runopts.direc, 'factorization_lib'));
 
 mkdir(runopts.temp);
 mkdir(runopts.savedir);
@@ -115,16 +115,16 @@ p.print();
 
 %% r_b, r_a calibration
 % rho calibrated to RA = 1
-if p.chi1 == 0.15
-	[r_b_0, r_a_0] = setup.initial_returns_orig_adjcosts_ra1_calibration(p);
-else
-	[r_b_0, r_a_0] = setup.initial_returns_new_adjcosts_ra1_calibration(p);
-end
-p.set("r_b", r_b_0);
-p.set("r_a", r_a_0);
+% if p.chi1 == 0.15
+% 	[r_b_0, r_a_0] = setup.initial_returns_orig_adjcosts_ra1_calibration(p);
+% else
+% 	[r_b_0, r_a_0] = setup.initial_returns_new_adjcosts_ra1_calibration(p);
+% end
+% p.set("r_b", r_b_0);
+% p.set("r_a", r_a_0);
 
 
-% % rho calibrated to RA = 5
+%% returns risk, rho calibrated to RA = 5
 % if p.chi1 == 0.15
 % 	[r_b_0, r_a_0] = setup.initial_returns_orig_adjcosts_ra5_calibration(p);
 % else
@@ -132,28 +132,33 @@ p.set("r_a", r_a_0);
 % end
 % 
 % % start iteration
-% calibrator = solver.Calibrator(runopts, p, "r_b, r_a");
+% calibrator = HACTLib.computation.Calibrator(runopts, p, "r_b, r_a");
 % x0 = calibrator.create_initial_condition([r_b_0, r_a_0]);
 % 
 % opts = optimoptions('fsolve', 'MaxFunctionEvaluations', 400, 'MaxIterations', 600);
 % fsolve(calibrator.objective, x0, opts);
+% p.set("NoRisk", 1);
+% p.set("ComputeMPCS", 1);
+% p.set("SaveResults", 1);
 
 
-% % r_a, rho calibration
-% calibrator = solver.Calibrator(runopts, p, "r_a, rho");
+%% r_a, rho calibration
+% calibrator = HACTLib.computation.Calibrator(runopts, p, "r_a, rho");
 % x0 = calibrator.create_initial_condition([0.066513, 0.142622]);
 % fsolve(calibrator.objective, x0);
+% p.set("NoRisk", 1);
+% p.set("ComputeMPCS", 1);
+% p.set("SaveResults", 1);
 
-% % rho calibration
-% calibrator = solver.Calibrator(runopts, p, "rho");
+%% rho calibration
+% calibrator = HACTLib.computation.Calibrator(runopts, p, "rho");
 % x0 = calibrator.create_initial_condition(0.035);
 % fsolve(calibrator.objective, x0);
+% p.set("NoRisk", 1);
+% p.set("ComputeMPCS", 1);
+% p.set("SaveResults", 1);
 
 % final run
-p.set("NoRisk", 1);
-p.set("ComputeMPCS", 1);
-% p.set("ComputeMPCS_news", 1);
-p.set("SaveResults", 1);
 tic
 stats = main(runopts, p);
 toc
