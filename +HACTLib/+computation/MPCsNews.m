@@ -255,7 +255,8 @@ classdef MPCsNews < handle
 		    hours = 1; % endog labor not coded for MPCs out of news
             
 		    for ii = 1:5000
-		    	KFE_terminal = solver.find_policies(obj.p, obj.income, obj.grids, V_terminal, hours);
+		    	KFE_terminal = HACTLib.computation.find_policies(...
+		    		obj.p, obj.income, obj.grids, V_terminal, hours);
 		    	A_terminal = obj.A_constructor_HJB.construct(KFE_terminal);
 
 		    	u_k = reshape(KFE_terminal.u, [], obj.income.ny);

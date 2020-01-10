@@ -99,7 +99,7 @@ classdef Model < handle
 			fprintf('    --- Iterating over HJB ---\n')
 		    dst = 1e5;
 			for nn	= 1:obj.p.HJB_maxiters
-				[HJB, V_deriv_risky_asset_nodrift] = solver.find_policies(...
+				[HJB, V_deriv_risky_asset_nodrift] = HACTLib.computation.find_policies(...
 					obj.p, obj.income, obj.grids_HJB, Vn, hours_bc);
 
 			    % Construct transition matrix 
@@ -149,7 +149,7 @@ classdef Model < handle
 
 			Vn = reshape(interp_decision * HJB.Vn(:),...
 		    	[obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
-		    KFE = solver.find_policies(obj.p, obj.income, obj.grids_KFE, Vn, hours_bc);
+		    KFE = HACTLib.computation.find_policies(obj.p, obj.income, obj.grids_KFE, Vn, hours_bc);
 		    KFE.Vn = Vn;
 
 			import HACTLib.computation.TransitionMatrixConstructor
