@@ -1,5 +1,8 @@
 function stats = statistics(p,income,grd,grdKFE,KFE)
 	% computes various statistics after solving the model
+
+    import HACTLib.aux.compute_pct
+    import HACTLib.aux.find_constrained
 	
     %% --------------------------------------------------------------------
     % Consumption by hand-to-mouth status
@@ -25,10 +28,9 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
     %% --------------------------------------------------------------------
     % WEALTH PERCENTILES
     % ---------------------------------------------------------------------
-
-    stats.wpercentile = aux.compute_pct(wealth_mat,stats.pmf,p.wpercentiles/100);
-    stats.lwpercentile = aux.compute_pct(grdKFE.b.matrix,stats.pmf,p.wpercentiles/100);
-    stats.iwpercentile = aux.compute_pct(grdKFE.a.matrix,stats.pmf,p.wpercentiles/100);
+    stats.wpercentile = compute_pct(wealth_mat,stats.pmf,p.wpercentiles/100);
+    stats.lwpercentile = compute_pct(grdKFE.b.matrix,stats.pmf,p.wpercentiles/100);
+    stats.iwpercentile = compute_pct(grdKFE.a.matrix,stats.pmf,p.wpercentiles/100);
 
     % top wealth shares
     wsort = sortrows([wealth_mat(:) stats.pmf(:)]);
@@ -61,11 +63,11 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
 
     % wealth < epsilon
     stats.constrained(2:numel(p.epsilon_HtM)) = ...
-    	aux.find_constrained(wealth_mat,stats.pmf,p.epsilon_HtM(2:end));
+    	find_constrained(wealth_mat,stats.pmf,p.epsilon_HtM(2:end));
 
     % liquid wealth < epsilon
     stats.constrained_liq(2:numel(p.epsilon_HtM)) = ...
-    	aux.find_constrained(grdKFE.b.matrix,stats.pmf,p.epsilon_HtM(2:end));
+    	find_constrained(grdKFE.b.matrix,stats.pmf,p.epsilon_HtM(2:end));
 
     %% --------------------------------------------------------------------
     % CONSTRAINED BY OWN QUARTERLY INCOME
@@ -77,14 +79,14 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
     lwi_ratio = grdKFE.b.matrix ./ income.y.matrixKFE;
 
     % fraction with total wealth < own quarterly income / 6
-    stats.HtM_one_sixth_Q_twealth = aux.find_constrained(wi_ratio,stats.pmf,1/6);
+    stats.HtM_one_sixth_Q_twealth = find_constrained(wi_ratio,stats.pmf,1/6);
     % fraction with total wealth < own quarterly income / 12
-    stats.HtM_one_twelfth_Q_twealth = aux.find_constrained(wi_ratio,stats.pmf,1/12);
+    stats.HtM_one_twelfth_Q_twealth = find_constrained(wi_ratio,stats.pmf,1/12);
 
     % fraction with liquid wealth < own quarterly income / 12
-    stats.HtM_one_sixth_Q_lwealth = aux.find_constrained(lwi_ratio,stats.pmf,1/6);
+    stats.HtM_one_sixth_Q_lwealth = find_constrained(lwi_ratio,stats.pmf,1/6);
     % fraction with liquid wealth < own quarterly income / 12
-    stats.HtM_one_twelfth_Q_lwealth = aux.find_constrained(lwi_ratio,stats.pmf,1/12);
+    stats.HtM_one_twelfth_Q_lwealth = find_constrained(lwi_ratio,stats.pmf,1/12);
 
     stats.ratio_WHtM_HtM_sixth = 1 -  stats.HtM_one_sixth_Q_twealth / stats.HtM_one_sixth_Q_lwealth;
     stats.ratio_WHtM_HtM_twelfth = 1 -  stats.HtM_one_twelfth_Q_twealth / stats.HtM_one_twelfth_Q_lwealth;
@@ -92,7 +94,7 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
     %% --------------------------------------------------------------------
     % GINI COEFFICIENTS
     % ---------------------------------------------------------------------
-    stats.wgini = aux.direct_gini(wealth_mat,stats.pmf);
+    stats.wgini = direct_gini(wealth_mat,stats.pmf);
 
     %% --------------------------------------------------------------------
     % OUTPUT FOR HISTOGRAMS
@@ -116,10 +118,10 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
         stats.adjcosts.mean_d_div_a = d_div_a' * stats.pmf(:);
 
         % median abs(d)/a
-        stats.adjcosts.median_d_div_a = aux.compute_pct(d_div_a,stats.pmf,0.5);
+        stats.adjcosts.median_d_div_a = compute_pct(d_div_a,stats.pmf,0.5);
 
         % mean chi/abs(d) for |d| > 0
-        chii = aux.AdjustmentCost.cost(KFE.d(:),grdKFE.a.matrix(:),p);
+        chii = HACTLib.aux.AdjustmentCost.cost(KFE.d(:),grdKFE.a.matrix(:),p);
         chii_div_d = chii ./ abs(KFE.d(:));
         pmf_valid = stats.pmf(:);
         pmf_valid = pmf_valid(abs(KFE.d(:))>0) ./ sum(pmf_valid(abs(KFE.d(:))>0));

@@ -25,7 +25,7 @@ function V = interp_2d(x_fine,y_fine,x_knot,y_knot)
 %    x_knot = linspace(0,1,10)';
 %    y_knot = linspace(0,1,10)';
 %
-%    V = interpTwoD(x_fine,y_fine,x_knot,y_knot);
+%    V = interp_2d(x_fine,y_fine,x_knot,y_knot);
 %
 %    z = bsxfun(@plus,x_knot.^3+exp(-x_knot),(y_knot'-0.5).^2);
 %    surf(x_fine,y_fine,reshape(V*z(:),80,100)');

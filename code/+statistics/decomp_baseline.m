@@ -55,10 +55,11 @@ function decomp = decomp_baseline(s0,s1)
 
     % get interpolant from assets to int_0^{epsilon}
     if p0.OneAsset == 1
-	    m0g0interp = aux.interpolate_integral(assets0, m0, pmf0);
-	    m1g0interp = aux.interpolate_integral(assets0, m1, pmf0);
-	    m0g1interp = aux.interpolate_integral(assets0, m0, pmf1);
-	    m1g1interp = aux.interpolate_integral(assets0, m1, pmf1);
+        import HACTLib.aux.interpolate_integral
+	    m0g0interp = interpolate_integral(assets0, m0, pmf0);
+	    m1g0interp = interpolate_integral(assets0, m1, pmf0);
+	    m0g1interp = interpolate_integral(assets0, m0, pmf1);
+	    m1g1interp = interpolate_integral(assets0, m1, pmf1);
 	end
 
     % Decomposition of distribution effect

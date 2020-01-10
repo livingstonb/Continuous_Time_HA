@@ -74,7 +74,7 @@ classdef Income < handle
 		            
 		            obj.ydist = load(fullfile(income_path, 'ydist_combined.txt'));
 		            obj.ytrans = load(fullfile(income_path, 'ymarkov_combined.txt'));
-		            obj.ydist = aux.stat_dist(obj.ytrans');
+		            obj.ydist = HACTLib.aux.stat_dist(obj.ytrans');
 		            
 					% normalize
 					obj.y.vec = y ./ (y' * obj.ydist * 4);

@@ -171,10 +171,11 @@ function [stats,p] = main(runopts, p)
     %% ----------------------------------------------------------------
     % HOUSEKEEPING
     % -----------------------------------------------------------------
-    grd = aux.to_structure(grd);
-    grdKFE = aux.to_structure(grdKFE);
-    p = aux.to_structure(p);
-    income = aux.to_structure(income);
+    import HACTLib.aux.to_structure
+    grd = to_structure(grd);
+    grdKFE = to_structure(grdKFE);
+    p = to_structure(p);
+    income = to_structure(income);
     
     % empty some variables to reduce file size
     if ~strcmp(p.name,'baseline')

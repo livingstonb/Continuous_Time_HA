@@ -48,9 +48,9 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
             + (r_b_mat_adj + p.deathrate*p.perfectannuities) .* grids.b.matrix + p.transfer;
 
     if p.SDU == 1
-        u = p.rho * aux.u_fn(c_0, p.invies);
+        u = p.rho * HACTLib.aux.u_fn(c_0, p.invies);
     else
-        u = aux.u_fn(c_0, p.riskaver);
+        u = HACTLib.aux.u_fn(c_0, p.riskaver);
     end
 
     inctrans = income.full_income_transition_matrix(p, u);

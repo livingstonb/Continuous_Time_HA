@@ -137,8 +137,8 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     %% --------------------------------------------------------------------
 	% UPWINDING FOR DEPOSITS
 	% ---------------------------------------------------------------------
-	adjcost = @(x) aux.AdjustmentCost.cost(x, grd.a.matrix, p);
-	opt_d = @(x, y) aux.opt_deposits(x, y, grd.a.matrix, p);
+	adjcost = @(x) HACTLib.aux.AdjustmentCost.cost(x, grd.a.matrix, p);
+	opt_d = @(x, y) HACTLib.aux.opt_deposits(x, y, grd.a.matrix, p);
 
     import HACTLib.computation.upwind_deposits
 
@@ -169,7 +169,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
         V_deriv_risky_asset_nodrift = rho_mat_adj .* prefs.u1(c);
     elseif (p.sigma_r > 0) && (p.OneAsset == 0)
         V_deriv_risky_asset_nodrift = rho_mat_adj .* prefs.u1(c)...
-        	.* (1 + aux.AdjustmentCost.derivative(d, grd.a.matrix, p));
+        	.* (1 + HACTLib.aux.AdjustmentCost.derivative(d, grd.a.matrix, p));
     else
         V_deriv_risky_asset_nodrift = [];
     end
