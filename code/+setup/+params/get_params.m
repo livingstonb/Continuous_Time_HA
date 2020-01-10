@@ -19,7 +19,7 @@ function outparams = get_params(runopts)
     for target = [0.25]
         params(i).name = 'baseline_cont_a'; 
         params(i).OneAsset = 1;
-        params(i).DirIncomeProcess = 'input/IncomeGrids/continuous_a';
+        params(i).income_dir = 'continuous_a';
         params(i).targetAY = target;
         params(i).Bequests = 1;
         params(i).rho = 0.008;
@@ -28,7 +28,7 @@ function outparams = get_params(runopts)
 
         params(i).name = 'continuous_b';
         params(i).OneAsset = 1;
-        params(i).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+        params(i).income_dir = 'continuous_b';
         params(i).targetAY = target;
         params(i).Bequests = 1;
         params(i).n_mpcsim = 1e5;
@@ -39,7 +39,7 @@ function outparams = get_params(runopts)
     i = 101;
     params(i).name = 'two_asset';
     params(i).OneAsset = 0;
-    params(i).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+    params(i).income_dir = 'continuous_b';
     params(i).Bequests = 0;
     params(i).chi0 = 0;
     params(i).chi1 = 0.15;
@@ -60,7 +60,7 @@ function outparams = get_params(runopts)
     i = 201;
     params(i).name = 'two_asset_rho_heterogeneity';
     params(i).OneAsset = 0;
-    params(i).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+    params(i).income_dir = 'continuous_b';
     params(i).Bequests = 0;
     params(i).chi0 = 0;
     params(i).chi1 = 0.15;
@@ -79,7 +79,7 @@ function outparams = get_params(runopts)
     i = 202;
     params(i).name = 'two_asset_no_rho_heterogeneity';
     params(i).OneAsset = 0;
-    params(i).DirIncomeProcess = 'input/IncomeGrids/continuous_b';
+    params(i).income_dir = 'continuous_b';
     params(i).Bequests = 0;
     params(i).chi0 = 0;
     params(i).chi1 = 0.15;
@@ -105,6 +105,6 @@ function outparams = get_params(runopts)
     chosen_param = params(runopts.param_index);
 
     % Create Params object
-    outparams = setup.Params(runopts,chosen_param);
+    outparams = HACTLib.model_objects.Params(runopts,chosen_param);
 
 end

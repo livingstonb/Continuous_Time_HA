@@ -1,4 +1,4 @@
-classdef MPCFinder < handle
+classdef MPCs < handle
 	% This class contains methods that compute MPCs
 	% over certain time periods. Baseline expected
 	% consumption is found, and then this quantity--via
@@ -9,14 +9,50 @@ classdef MPCFinder < handle
 	% is populated with NaN's. Calling solve() will compute
 	% the MPCs.
 
-	properties (SetAccess=private)
-		p; % parameters
-		income;
-		grids;
-        
-        ResetIncomeUponDeath;
+	properties (Constant)
+		% Update this array when the required parameters change.
+		required_parameters = {'nb_KFE', 'na_KFE', 'nz', 'deathrate'};
 
-		FKmat; % Feynman-Kac divisor matrix
+		% Update this array when the required income variables
+		% change.
+		required_income_vars = {'ny', 'ytrans'};
+
+		% Default option values.
+		defaults = struct(...
+					'delta', 0.01,...
+					'interp_method', 'linear'...
+					);
+    end
+    
+	properties (SetAccess=protected)
+
+		% An object with at least the following attributes:
+		%
+		%	deathrate
+		%	- The Poisson rate of death.
+		%
+		%	nb_KFE, na_KFE, nz
+		%	- Number of points on each grid.
+		p;
+
+		% An object with at least the following attributes:
+		%
+		%	ytrans
+		%	- The square income transition matrix, rows should
+		%	  sum to zero.
+		%
+		%	ny
+		%	- The number of income states.
+		income;
+
+		% A Grid object defined on the KFE grids.
+		grids;
+
+		% Options used internally by this class.
+		options;
+
+		% Feynman-Kac divisor matrix
+		FKmat; 
 
 		% cumulative consumption
 		cumcon; % current state
@@ -33,27 +69,37 @@ classdef MPCFinder < handle
 	end
 
 	methods
-		function obj = MPCFinder(p, income, grids)
+		function obj = MPCs(p, income, grids, varargin)
 			% class constructor
 
-			% Parameters
-			% ----------
-			% p : a Params object
-			% 
-			% income : an Income object
+			% Required Inputs
+			% ---------------
+			% p : An object that satisfies the requirements
+			%	laid out by the class properties.
+			%	
+			% income : An object that satisfies the requirements
+			%	laid out by the class properties.
 			%
-			% grids : a Grid object, providing the asset grids
-			%	for the KFE
+			% grids : A Grid object on the KFE grid.
+			%
+			% Optional Key-Value Inputs
+			% -------------------------
+			% delta : Step size used while iterating over the
+			%	Feynman-Kac equation, default = 0.02.
+			%
+			% interp_method : Interpolation method passed to
+			%	griddedInterpolant, default = 'linear'. See
+			%	the MATLAB documentation for griddedInterpolant.
 			%
 			% Returns
 			% -------
-			% obj : an MPCFinder object
+			% obj : an MPCs object	
+
+			obj.options = parse_options(varargin{:});
 
 			obj.p = p;
 			obj.income = income;
 			obj.grids = grids;
-
-			obj.ResetIncomeUponDeath = p.ResetIncomeUponDeath;
 
 			obj.ytrans_offdiag = income.ytrans - diag(diag(income.ytrans));
 
@@ -89,9 +135,10 @@ classdef MPCFinder < handle
 
 			if obj.solved
 				error('Already solved, create another instance')
-			end
+            end
 
-			obj.create_FK_matrices(A);
+			obj.FKmat = HACTLib.computation.feynman_kac_divisor(...
+                obj.p, obj.income, obj.options.delta, A, true);
 			obj.iterate_backward(KFE);
 
 			for ishock = 1:6
@@ -101,36 +148,15 @@ classdef MPCFinder < handle
 
 			obj.solved = true;
 		end
+	end
 
-		function create_FK_matrices(obj, A)
-			% finds the matrix divisor for the Feynman-Kac formula
-
-			% Parameters
-			% ----------
-			% A : the KFE transition matrix
-			%
-			% Modifies
-			% --------
-			% obj.FKmat: a cell array containing the FK matrix divisors
-			%	for each income block, shape (1, ny)
-
-			obj.FKmat = cell(1,obj.income.ny);
-		    for k = 1:obj.income.ny
-		    	ind1 = 1+obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*(k-1);
-		    	ind2 = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*k;
-
-		        obj.FKmat{k} = speye(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz)*(1/obj.p.delta_mpc ...
-		        					+ obj.p.deathrate - obj.income.ytrans(k,k))...
-		                		- A(ind1:ind2,ind1:ind2);
-		        obj.FKmat{k} = inverse(obj.FKmat{k});
-		    end
-		end
+	methods (Access=private)
 
 		function iterate_backward(obj, KFE)
 			% iterates backward four quarters on the Feynman-Kac equation
 			% to compute cum_con_baseline
 			%
-			% each quarter is split into 1/delta_mpc subperiods, which
+			% each quarter is split into 1/delta subperiods, which
 			% are then iterated over
 
 			% Parameters
@@ -149,9 +175,11 @@ classdef MPCFinder < handle
 			% This method also modifies other class properties
 			% via other methods.
 
+			import HACTLib.computation.feynman_kac
+
 			dim = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*obj.income.ny;
 			obj.cumcon = zeros(dim,4);
-			for it = 4:-obj.p.delta_mpc:obj.p.delta_mpc
+			for it = 4:-obj.options.delta:obj.options.delta
 				if mod(it*4,1) == 0
 					fprintf('\tUpdating baseline cumulative consumption, quarter=%0.2f\n',it)
 				end
@@ -159,7 +187,8 @@ classdef MPCFinder < handle
 				for period = ceil(it):4
 					% when 'it' falls to 'period', start updating
 					% that 'period'
-					obj.update_cumcon(KFE,period)
+					obj.cumcon(:,period) = feynman_kac(obj.p, obj.grids,...
+						obj.income, obj.cumcon(:,period), obj.FKmat, KFE.c, obj.options.delta);
 				end
 			end
 
@@ -170,58 +199,7 @@ classdef MPCFinder < handle
 					- obj.cumcon(:,period-1);
 			end
 
-			reshape_vec = [obj.p.nb_KFE,obj.p.na_KFE,obj.p.nz,obj.income.ny,4];
 		    obj.cum_con_baseline = reshape(obj.cum_con_baseline,[],4);
-		end
-
-		function update_cumcon(obj, KFE, period)
-			% update cumulative consumption in the baseline case by
-			% iterating on the Feynman-Kac equation
-
-			% Parameters
-			% ----------
-			% KFE : a structure containing the policy functions and the
-			%	value function, on the KFE grid
-			%
-			% period : the current period, integer
-			%
-			% Modifies
-			% --------
-			% obj.cumcon : cumulative consumption, modified for the given
-			%	period, and has shape (nb_KFE*na_KFE*nz*ny, num_periods)
-
-			cumcon_t = obj.cumcon(:,period);
-			cumcon_t_k = reshape(cumcon_t,[],obj.income.ny);
-
-            reshape_vec = [obj.p.nb_KFE*obj.p.na_KFE obj.p.nz obj.income.ny];
-            cumcon_t_z_k = reshape(cumcon_t_k,reshape_vec);
-                
-			for k = 1:obj.income.ny
-				ytrans_cc_k = sum(obj.ytrans_offdiag(k,:) .* cumcon_t_k,2);
-  
-                if (obj.p.Bequests == 1) && (obj.ResetIncomeUponDeath == 1)
-                	deathin_cc_k = obj.p.deathrate * sum(obj.income.ydist' .* cumcon_t_k,2);
-                    if nz > 1
-                        error('not correctly coded for nz > 1')
-                    end
-                elseif (obj.p.Bequests == 1) && (obj.ResetIncomeUponDeath == 0)
-                	deathin_cc_k = obj.p.deathrate * cumcon_t_k(:,k);
-                elseif (obj.p.Bequests == 0) && (obj.ResetIncomeUponDeath == 1)
-                	deathin_cc_k = obj.p.deathrate * sum(obj.income.ydist' .* cumcon_t_k(1,:),2);
-                    if nz > 1
-                        error('not correctly coded for nz > 1')
-                    end
-                elseif (obj.p.Bequests == 0) && (obj.ResetIncomeUponDeath == 0)
-                    deathin_cc_k = obj.p.deathrate * cumcon_t_z_k(obj.grids.loc0b0a,:,k)';
-                    deathin_cc_k = kron(deathin_cc_k,ones(obj.p.nb_KFE*obj.p.na_KFE,1));
-                end
-
-                ind1 = 1+obj.p.na_KFE*obj.p.nb_KFE*obj.p.nz*(k-1);
-                ind2 = obj.p.na_KFE*obj.p.nb_KFE*obj.p.nz*k;
-                RHS = reshape(KFE.c(:,:,:,k),[],1) + ytrans_cc_k + deathin_cc_k ...
-                            + cumcon_t_k(:,k)/obj.p.delta_mpc;
-                obj.cumcon(ind1:ind2,period) = obj.FKmat{k}*RHS;
-			end
 		end
 
 		function cumulative_consumption_with_shock(obj, ishock)
@@ -249,21 +227,24 @@ classdef MPCFinder < handle
 	            bgrid_mpc_vec(below_bgrid) = obj.grids.b.vec(1);
 	        end
 
-	        dim = obj.p.na_KFE*obj.income.ny*obj.p.nz;
-	        bgrid_mpc = repmat(bgrid_mpc_vec,dim,1);
-
 	        % grids for interpolation
-	        interp_grids = {obj.grids.b.vec};
-            interp_grids{end+1} = obj.grids.a.vec;
+	        interp_grids = {obj.grids.b.vec, obj.grids.a.vec,...
+	        	obj.grids.z.vec, obj.income.y.vec};
+	       	value_grids = {bgrid_mpc_vec, obj.grids.a.vec,...
+	       		obj.grids.z.vec, obj.income.y.vec};
 
+        	if (obj.income.ny > 1) && (obj.p.nz > 1)
+                inds = 1:4;
+            elseif (obj.income.ny==1) && (obj.p.nz > 1)
+                inds = 1:3;
+            elseif obj.income.ny > 1
+                inds = [1, 2, 4];
+            else
+                inds = [1, 2];
+            end
 
-	        if obj.p.nz > 1
-	        	interp_grids{end+1} = obj.grids.z.vec;
-	        end
-
-	        if obj.income.ny > 1
-	        	interp_grids{end+1} = obj.income.y.vec;
-	        end
+            interp_grids = interp_grids(inds);
+            value_grids = value_grids(inds);
 
 			reshape_vec = [obj.p.nb_KFE obj.p.na_KFE obj.p.nz obj.income.ny];
 			for period = 1:4
@@ -271,19 +252,12 @@ classdef MPCFinder < handle
 	            con_period = reshape(obj.cum_con_baseline(:,period),reshape_vec);
 	            mpcinterp = griddedInterpolant(interp_grids,squeeze(con_period),'linear');
 
-	            if (obj.income.ny > 1) && (obj.p.nz > 1)
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:),obj.grids.z.matrix(:),obj.income.y.matrixKFE(:));
-	            elseif (obj.income.ny==1) && (obj.p.nz > 1)
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:),obj.grids.z.matrix(:));
-	            elseif obj.income.ny > 1
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:),obj.income.y.matrixKFE(:));
-	            else
-	                obj.cum_con_shock{ishock}(:,period) = mpcinterp(bgrid_mpc,obj.grids.a.matrix(:));
-	            end
+	            obj.cum_con_shock{ishock}(:,period) = reshape(mpcinterp(value_grids), [], 1);
 
 	            if (shock < 0) && (sum(below_bgrid)>0) && (period==1)
 	                temp = reshape(obj.cum_con_shock{ishock}(:,period),reshape_vec);
-	                temp(below_bgrid,:,:,:) = con_period(1,:,:,:) + shock + obj.grids.b.vec(below_bgrid) - obj.grids.b.vec(1);
+	                temp(below_bgrid,:,:,:) = con_period(1,:,:,:) + shock...
+	                	+ obj.grids.b.vec(below_bgrid) - obj.grids.b.vec(1);
 	                obj.cum_con_shock{ishock}(:,period) = temp(:);                      
 	            end
 	        end
@@ -317,5 +291,37 @@ classdef MPCFinder < handle
 			obj.mpcs(ishock).quarterly = mpcs' * pmf(:);
 			obj.mpcs(ishock).annual = sum(mpcs,2)' * pmf(:);
 		end
+
+		function check_income(obj, income)
+			HACTLib.Checks.has_attributes('MPCs',...
+				income, obj.required_income_vars);
+			assert(ismatrix(income.ytrans), "Income transition matrix must be a matrix");
+			assert(size(income.ytrans, 1) == income.ny,...
+				"Income transition matrix has different size than (ny, ny)");
+			assert(numel(income.ydist(:)) == income.ny,...
+				"Income distribution has does not have ny elements");
+			assert(income.ny > 0, "Must have ny >= 1");
+		end
+
+		function check_parameters(obj, p)
+			HACTLib.Checks.has_attributes('MPCs',...
+				p, obj.required_parameters);
+		end
+	end
+end
+
+function options = parse_options(varargin)
+	import HACTLib.computation.MPCs
+	import HACTLib.aux.parse_keyvalue_pairs
+
+	defaults = MPCs.defaults;
+	options = parse_keyvalue_pairs(defaults, varargin{:});
+
+	mustBePositive(options.delta);
+	if ~ismember(options.interp_method, {'linear', 'nearest',...
+		'next', 'previous', 'pchip', 'cubic', 'spline', 'makima'})
+		error("HACTLib:MPCs:InvalidArgument",...
+			strcat("Invalid interpolation method entered.",...
+				"Check griddedInterpolant documentation."))
 	end
 end

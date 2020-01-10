@@ -1,30 +1,36 @@
-function interpolant = interpolate_integral(gridValues, integrandValues, pmf)
-	% creates an interpolant that approximates the value of the integral
-	% int_0^{epsilon} values(a)g(a)da for a given epsilon
-
+function interpolant = interpolate_integral(grid_values, integrand_values, pmf)
+	% Creates an interpolant that approximates the value of the integral
+	% int_0^{epsilon} values(a)g(a)da for a given epsilon.
+	%
 	% Parameters
 	% ----------
-	% gridValues : values at which the integrand is evaluated
+	% gridValues : Values at which the integrand is evaluated.
 	%
-	% integrandValues : values of the integrand
+	% integrand_values : Values of the integrand.
 	%
-	% pmf : the probability mass function over states
+	% pmf : The probability mass function over states.
 	%
 	% Results
 	% -------
-	% interpolant : a griddedInterpolant object such that interpolant(x)
-	%	is the approximated value of the integral from 0 to x
+	% interpolant : A griddedInterpolant object such that interpolant(x)
+	%	is the approximated value of the integral from 0 to x.
 
-	sortedInputs = sortrows([gridValues(:) integrandValues(:) pmf(:)]);
-	gridSorted = sortedInputs(:,1);
-	integrandSorted = sortedInputs(:,2);
-	pmfSorted = sortedInputs(:,3);
+	validate_inputs(grid_values, integrand_values, pmf);
 
-	integralValues = cumsum(integrandSorted .* pmfSorted);
+	sorted_inputs = sortrows([grid_values(:) integrand_values(:) pmf(:)]);
+	grid_sorted = sorted_inputs(:,1);
+	integrand_sorted = sorted_inputs(:,2);
+	pmf_sorted = sorted_inputs(:,3);
 
-	[gridUnique,uniqueInds] = unique(gridSorted,'last');
-	integralUnique = integralValues(uniqueInds);
+	integral_values = cumsum(integrand_sorted .* pmf_sorted);
 
-	interpolant = griddedInterpolant(gridUnique,integralUnique,'linear');
+	[grid_unique, unique_inds] = unique(grid_sorted,'last');
+	integral_unique = integral_values(unique_inds);
 
+	interpolant = griddedInterpolant(...
+		grid_unique, integral_unique, 'linear');
+end
+
+function validate_inputs(grid_values, integrand_values, pmf)
+	
 end

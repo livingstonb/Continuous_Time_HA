@@ -1,5 +1,5 @@
 classdef AdjustmentCost
-	% static methods for the adjustment cost function and related functions
+	% static methods for the adjustment cost function and related functions.
 
 	methods(Static)
 		function adj_cost = cost(d, a_grid, p)

@@ -60,6 +60,6 @@ function outparams = grid_test_params(runopts)
     chosen_param = params(runopts.param_index);
 
     % Create Params object
-    outparams = setup.Params(runopts,chosen_param);
+    outparams = HACTLib.model_objects.Params(runopts,chosen_param);
 
 end

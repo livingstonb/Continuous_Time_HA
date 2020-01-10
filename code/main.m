@@ -1,7 +1,7 @@
 function [stats,p] = main(runopts, p)
-    % instantiates necessary classes and calls functions to solve the
+    % Instantiates necessary classes and calls functions to solve the
     % model and compute statistics
-
+    %
     % Parameters
     % ----------
     % runopts : a structure containing run options
@@ -14,20 +14,26 @@ function [stats,p] = main(runopts, p)
     %
     % p : the Params object used to solve the model
 
+    import HACTLib.model_objects.Grid
+    import HACTLib.model_objects.Income
+
     %% --------------------------------------------------------------------
     % CREATE GRID, INCOME OBJECTS
     % ---------------------------------------------------------------------
-	dimsHJB = [p.nb p.na p.nz];
-	dimsKFE = [p.nb_KFE p.na_KFE p.nz];
-	income = setup.Income(runopts.direc,p,dimsHJB,dimsKFE,false);
-    income_norisk = setup.Income(runopts.direc,p,dimsHJB,dimsKFE,true);
+	income_path = fullfile(runopts.direc, 'input', p.income_dir);
 
-    p.set("ny", income.ny);
+    % Main income process
+	income = Income(income_path, p, false);
 
-	grd = setup.Grid(p,income.ny,'HJB'); % grid for HJB
-    grd_norisk = setup.Grid(p,1,'HJB');
-	grdKFE = setup.Grid(p,income.ny,'KFE');% grid for KFE
-    grdKFE_norisk = setup.Grid(p,1,'KFE');
+    % Turn off income risk (set y equal to the mean)
+    income_norisk = Income(runopts.direc, p, true);
+
+    p.set("ny", income.ny, true);
+
+	grd = Grid(p,income.ny,'HJB').auto_construct(); % grid for HJB
+    grd_norisk = Grid(p,1,'HJB').auto_construct();
+	grdKFE = Grid(p,income.ny,'KFE').auto_construct();% grid for KFE
+    grdKFE_norisk = Grid(p,1,'KFE').auto_construct();
 
     if numel(p.rhos) > 1
     	grd.add_zgrid(p.rhos',p.na);
@@ -35,6 +41,10 @@ function [stats,p] = main(runopts, p)
     	grdKFE.add_zgrid(p.rhos',p.na_KFE);
     	grdKFE_norisk.add_zgrid(p.rhos',p.na_KFE);
     end
+
+    % Add net income variables
+    income.set_net_income(p, grd, grdKFE);
+    income_norisk.set_net_income(p, grd_norisk, grdKFE_norisk);
     
     if p.bmin < 0
         % check that borrowing limit does not violate NBL
@@ -45,12 +55,16 @@ function [stats,p] = main(runopts, p)
     end
     
     runopts.RunMode = 'Final';
-	[HJB, KFE, Au] = solver.solver(runopts,p,income,grd,grdKFE);
+    model = HACTLib.model_objects.Model(p, grd, grdKFE, income);
+    model.initialize();
+    [HJB, KFE, Au] = model.solve();
 
     if p.NoRisk == 1
         runopts.RunMode = 'NoRisk';
-        [HJB_nr, KFE_nr, Au_nr] = solver.solver(runopts,p,income_norisk,...
-                                            grd_norisk,grdKFE_norisk);
+        model_nr = HACTLib.model_objects.Model(...
+            p, grd_norisk, grdKFE_norisk, income_norisk);
+        model_nr.initialize();
+        [HJB_nr, KFE_nr, Au_nr] = model_nr.solve();
     end
 
     %% ----------------------------------------------------------------
@@ -64,19 +78,16 @@ function [stats,p] = main(runopts, p)
     % -----------------------------------------------------------------
     stats.mpcs = struct();
 
-    if p.SDU == 1
-        ez_adj = income.SDU_income_risk_adjustment(p, KFE.Vn);
-        mpc_finder = statistics.MPCFinder(p,income,grdKFE);
-    else
-        mpc_finder = statistics.MPCFinder(p,income,grdKFE);
-    end
+    import HACTLib.computation.MPCs
+    mpc_finder = MPCs(p, income, grdKFE, p.mpc_options);
 
     shocks = [4,5,6];
-    trans_dyn_solver = solver.TransitionalDynSolver(p,income,grdKFE,shocks);
+    import HACTLib.computation.MPCsNews
+    trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks, p.mpcs_news_options);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs out of an immediate shock...\n')
-        mpc_finder.solve(KFE,stats.pmf,Au);
+        mpc_finder.solve(KFE, stats.pmf, Au);
     end
     for ishock = 1:6
         stats.mpcs(ishock).avg_0_quarterly = mpc_finder.mpcs(ishock).quarterly;
@@ -103,9 +114,9 @@ function [stats,p] = main(runopts, p)
     % -----------------------------------------------------------------
     stats.sim_mpcs = struct();
     shocks = [4,5,6];
-    nperiods = 1;
-    mpc_simulator = statistics.MPCSimulatorTwoAsset(...
-    	p,income,grdKFE,KFE,shocks,nperiods);
+    shockperiod = 0;
+    mpc_simulator = HACTLib.computation.MPCSimulator(...
+    	p, income, grdKFE, KFE, shocks, shockperiod, p.mpcsim_options);
 
     if p.SimulateMPCS == 1
         fprintf('\nSimulating MPCs...\n')
@@ -117,11 +128,31 @@ function [stats,p] = main(runopts, p)
     end
 
     clear mpc_simulator
+
+     %% ----------------------------------------------------------------
+    % SIMULATE MPCs OUT OF NEWS
+    % -----------------------------------------------------------------
+    shocks = [4,5,6];
+    shockperiod = 4;
+    mpc_simulator = HACTLib.computation.MPCSimulator(...
+        p, income, grdKFE, KFE, shocks, shockperiod,...
+        trans_dyn_solver.savedTimesUntilShock, p.mpcsim_options);
+
+    if p.SimulateMPCS_news == 1
+        fprintf('\nSimulating MPCs...\n')
+        mpc_simulator.solve(stats.pmf);
+    end
+    for ii = 1:6
+        stats.sim_mpcs(ii).avg_4_quarterly = mpc_simulator.sim_mpcs(ii).avg_quarterly;
+        stats.sim_mpcs(ii).avg_4_annual = mpc_simulator.sim_mpcs(ii).avg_annual;
+    end
+
+    clear mpc_simulator
     
     %% ----------------------------------------------------------------
     % MPCs WITHOUT INCOME RISK
     % -----------------------------------------------------------------
-    mpc_finder_norisk = statistics.MPCFinder(...
+    mpc_finder_norisk = HACTLib.computation.MPCs(...
     	p,income_norisk,grdKFE_norisk);
     
     if p.ComputeMPCS == 1
@@ -160,7 +191,8 @@ function [stats,p] = main(runopts, p)
 	end
     
     if p.SaveResults == 1
-        save([runopts.savedir 'output_' runopts.suffix '.mat'],'stats','grd','grdKFE','p','KFE','income')
+    	spath = fullfile(runopts.savedir, ['output_' runopts.suffix '.mat']);
+        save(spath,'stats','grd','grdKFE','p','KFE','income')
     end
     clear solver.two_asset.solver
     fprintf('\nCode finished for the parameterization: \n\t%s\n\n',p.name)
