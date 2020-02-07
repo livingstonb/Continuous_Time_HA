@@ -95,7 +95,20 @@ function outparams = get_params(runopts)
     params(i).nb_KFE = 45;
     params(i).nb_pos_KFE = 45;
 
-
+    %% baseline one-asset with loose borrowing constraint
+    i = 301;
+    params(i).name = 'baseline_no_bc';
+    params(i).OneAsset = 1;
+    params(i).income_dir = 'continuous_b';
+    params(i).targetAY = 3.5;
+    params(i).Bequests = 1;
+    params(i).n_mpcsim = 5e5;
+    params(i).nb_pos = 500;
+    params(i).nb_pos_KFE = 400;
+    params(i).nb = 600;
+    params(i).nb_KFE = 500;
+    params(i).bmin = -1e10;
+    i = i + 1;
 
     %% --------------------------------------------------------------------
     % HOUSEKEEPING, DO NOT CHANGE

@@ -30,30 +30,34 @@ function [stats,p] = main(runopts, p)
 
     p.set("ny", income.ny, true);
 
-	grd = Grid(p,income.ny,'HJB').auto_construct(); % grid for HJB
-    grd_norisk = Grid(p,1,'HJB').auto_construct();
-	grdKFE = Grid(p,income.ny,'KFE').auto_construct();% grid for KFE
-    grdKFE_norisk = Grid(p,1,'KFE').auto_construct();
+    % Natural borrowing limit
+    NBL = - min((1-p.wagetax-p.directdeposit)*income.y.vec+p.transfer) ...
+            / (p.r_b_borr + p.deathrate*p.perfectannuities);
+    if p.bmin <= -1e10
+        % Set "loose" borrowing limit
+        p.set("bmin", 0.9 * NBL, true);
+    elseif p.bmin < 0
+        % Check that borrowing limit does not violate NBL
+        msg = sprintf('bmin < natural borrowing limit (%f)', NBL);
+        assert(p.bmin > NBL, msg);
+    end
+
+	grd = Grid(p, income.ny, 'HJB').auto_construct(); % grid for HJB
+    grd_norisk = Grid(p, 1, 'HJB').auto_construct();
+	grdKFE = Grid(p, income.ny, 'KFE').auto_construct();% grid for KFE
+    grdKFE_norisk = Grid(p, 1, 'KFE').auto_construct();
 
     if numel(p.rhos) > 1
-    	grd.add_zgrid(p.rhos',p.na);
-    	grd_norisk.add_zgrid(p.rhos',p.na);
-    	grdKFE.add_zgrid(p.rhos',p.na_KFE);
-    	grdKFE_norisk.add_zgrid(p.rhos',p.na_KFE);
+    	grd.add_zgrid(p.rhos', p.na);
+    	grd_norisk.add_zgrid(p.rhos', p.na);
+    	grdKFE.add_zgrid(p.rhos', p.na_KFE);
+    	grdKFE_norisk.add_zgrid(p.rhos', p.na_KFE);
     end
 
     % Add net income variables
     income.set_net_income(p, grd, grdKFE);
     income_norisk.set_net_income(p, grd_norisk, grdKFE_norisk);
-    
-    if p.bmin < 0
-        % check that borrowing limit does not violate NBL
-        NBL = - min((1-p.wagetax-p.directdeposit)*income.y.vec+p.transfer) ...
-            / (p.r_b_borr + p.deathrate*p.perfectannuities);
-        msg = sprintf('bmin < natural borrowing limit (%f)',NBL);
-        assert(p.bmin > NBL,msg);
-    end
-    
+
     runopts.RunMode = 'Final';
     model = HACTLib.model_objects.Model(p, grd, grdKFE, income);
     model.initialize();
