@@ -1,4 +1,4 @@
-function decomp = decomp_wrt_norisk(p, grdKFE, stats, income)
+function decomp = decomp_nobc_norisk(p, grdKFE, stats, income, stats_nobc)
     % Decomposition w.r.t. the no-risk model
 
     assets = grdKFE.a.matrix + grdKFE.b.matrix;

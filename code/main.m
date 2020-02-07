@@ -157,11 +157,11 @@ function [stats,p] = main(runopts, p)
     % MPCs WITHOUT INCOME RISK
     % -----------------------------------------------------------------
     mpc_finder_norisk = HACTLib.computation.MPCs(...
-    	p,income_norisk,grdKFE_norisk);
+    	p, income_norisk, grdKFE_norisk);
     
     if p.ComputeMPCS == 1
     	fprintf('\nComputing MPCs for model without income risk...\n')
-    	mpc_finder_norisk.solve(KFE_nr,stats.pmf_norisk,Au_nr);
+    	mpc_finder_norisk.solve(KFE_nr, stats.pmf_norisk, Au_nr);
     end
     stats.mpcs_nr = mpc_finder_norisk.mpcs;
     
@@ -169,8 +169,8 @@ function [stats,p] = main(runopts, p)
     % DECOMPOSITIONS
     % -----------------------------------------------------------------
     fprintf('\nPerforming decompositions (if applicable)...\n')
-    stats.decomp_norisk = statistics.decomp_wrt_norisk(p,grdKFE,stats,income);
-    stats.decompRA = statistics.decompRA(p,grdKFE,stats);
+    stats.decomp_norisk = statistics.decomp_wrt_norisk(p, grdKFE, stats, income);
+    stats.decompRA = statistics.decompRA(p, grdKFE, stats);
     
     %% ----------------------------------------------------------------
     % HOUSEKEEPING
