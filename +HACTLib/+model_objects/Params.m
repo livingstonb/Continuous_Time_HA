@@ -69,8 +69,6 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
             if obj.OneAsset == 1
                 obj.na = 2;
                 obj.na_KFE = 2;
-                obj.nb = 500;
-                obj.nb_KFE = 400;
                 obj.b_gcurv_pos = 0.2;
                 obj.b_gcurv_neg = 0.2;
                 obj.a_gcurv = 0.2;
@@ -186,7 +184,7 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
         end
 
         function print(obj)
-            fprintf('\n\nSelected parameterization %i:\n',num2str(obj.param_index)) 
+            fprintf('\n\nSelected parameterization %d:\n',obj.param_index) 
             fprintf('%s\n\n',obj.name)
 
             fprintf('Chosen parameters were...\n\n')

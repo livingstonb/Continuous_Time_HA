@@ -24,6 +24,8 @@ function outparams = get_params(runopts)
         params(i).Bequests = 1;
         params(i).rho = 0.008;
         params(i).n_mpcsim = 5e5;
+        params(i).nb = 500;
+        params(i).nb_KFE = 400;
         i = i + 1;
 
         params(i).name = 'continuous_b';
@@ -32,6 +34,8 @@ function outparams = get_params(runopts)
         params(i).targetAY = target;
         params(i).Bequests = 1;
         params(i).n_mpcsim = 1e5;
+        params(i).nb = 500;
+        params(i).nb_KFE = 400;
         i = i + 1;
     end
 
@@ -95,12 +99,25 @@ function outparams = get_params(runopts)
     params(i).nb_KFE = 45;
     params(i).nb_pos_KFE = 45;
 
-    %% baseline one-asset with loose borrowing constraint
+    %% baseline one-asset with and without borrowing constraint
     i = 301;
+    params(i).name = 'baseline';
+    params(i).OneAsset = 1;
+    params(i).income_dir = 'continuous_a';
+    params(i).targetAY = 3.5;
+    params(i).rho = 0.00390272872757238;
+    params(i).Bequests = 1;
+    params(i).n_mpcsim = 5e5;
+    params(i).nb = 500;
+    params(i).nb_KFE = 400;
+    params(i).bmin = 0;
+    i = i + 1;
+
     params(i).name = 'baseline_no_bc';
     params(i).OneAsset = 1;
-    params(i).income_dir = 'continuous_b';
+    params(i).income_dir = 'continuous_a';
     params(i).targetAY = 3.5;
+    params(i).rho = 0.00390272872757238;
     params(i).Bequests = 1;
     params(i).n_mpcsim = 5e5;
     params(i).nb_pos = 500;
@@ -108,6 +125,7 @@ function outparams = get_params(runopts)
     params(i).nb = 600;
     params(i).nb_KFE = 500;
     params(i).bmin = -1e10;
+    params(i).borrwedge = 0;
     i = i + 1;
 
     %% --------------------------------------------------------------------
@@ -118,6 +136,6 @@ function outparams = get_params(runopts)
     chosen_param = params(runopts.param_index);
 
     % Create Params object
-    outparams = HACTLib.model_objects.Params(runopts,chosen_param);
+    outparams = HACTLib.model_objects.Params(runopts, chosen_param);
 
 end

@@ -337,6 +337,8 @@ classdef MPCSimulator < handle
 	    	% this function simulates assets over the next time
 	    	% delta
 
+	    	import HACTLib.aux.AdjustmentCost
+
 	    	% interpolate to find decisions
 	    	s = zeros(obj.options.n, obj.nshocks+1);
 	    	d = zeros(obj.options.n, obj.nshocks+1);
@@ -356,7 +358,7 @@ classdef MPCSimulator < handle
 
 	    	% update liquid assets
 	    	obj.bsim = obj.bsim + obj.options.delta ...
-				* (s - d - aux.AdjustmentCost.cost(d, obj.asim, obj.p));
+				* (s - d - AdjustmentCost.cost(d, obj.asim, obj.p));
 			obj.bsim = max(obj.bsim, obj.grids.b.vec(1));
 			obj.bsim = min(obj.bsim, obj.grids.b.vec(end));
 
@@ -476,8 +478,8 @@ function options = parse_options(varargin)
 
 	mustBePositive(options.T);
 	mustBePositive(options.n);
-	Checks.is_integer(options.T, "MPCSimulator");
-	Checks.is_integer(options.n, "MPCSimulator");
+	Checks.is_integer("MPCSimulator", options.T);
+	Checks.is_integer("MPCSimulator", options.n);
 	if ~ismember(options.interp_method, {'linear', 'nearest',...
 		'next', 'previous', 'pchip', 'cubic', 'spline', 'makima'})
 		error("HACTLib:MPCs:InvalidArgument",...

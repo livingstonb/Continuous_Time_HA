@@ -3,6 +3,7 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
 
     import HACTLib.aux.compute_pct
     import HACTLib.aux.find_constrained
+    import HACTLib.aux.direct_gini
 	
     %% --------------------------------------------------------------------
     % Consumption by hand-to-mouth status

@@ -1,6 +1,8 @@
 function decomp = decomp_wrt_norisk(p, grdKFE, stats, income)
     % Decomposition w.r.t. the no-risk model
 
+    import HACTLib.aux.interpolate_integral
+
     assets = grdKFE.a.matrix + grdKFE.b.matrix;
     assets = reshape(assets,p.nb_KFE*p.na_KFE,income.ny*p.nz);
     assets = assets(:,1);
@@ -50,10 +52,10 @@ function decomp = decomp_wrt_norisk(p, grdKFE, stats, income)
     cumg1interp = griddedInterpolant(assetVals,cumg1(uniqueInds),'linear');
 
     % interpolant for m1g1
-    m1g1interp = aux.interpolate_integral(assets, m1_ab, g1);
+    m1g1interp = interpolate_integral(assets, m1_ab, g1);
 
     % interpolant for no risk model over g1
-    mbcg1interp = aux.interpolate_integral(assets, mbc, g1);
+    mbcg1interp = interpolate_integral(assets, mbc, g1);
     
     for ia = 1:numel(p.decomp_thresholds)
     	abar = p.decomp_thresholds(ia);

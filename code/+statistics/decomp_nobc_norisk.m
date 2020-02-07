@@ -1,75 +1,163 @@
-function decomp = decomp_nobc_norisk(p, grdKFE, stats, income, stats_nobc)
-    % Decomposition w.r.t. the no-risk model
+function decomp = decomp_nobc_norisk(baseline, no_bc)
+    % Decomposition w.r.t. the no-risk model and the no-bc model
+
+    import HACTLib.aux.interpolate_integral
+
+    grdKFE = baseline.grdKFE;
+    p = baseline.p;
+    income = baseline.income;
 
     assets = grdKFE.a.matrix + grdKFE.b.matrix;
-    assets = reshape(assets,p.nb_KFE*p.na_KFE,income.ny*p.nz);
+
+    n_assets = p.nb_KFE * p.na_KFE;
+    n_other = income.ny * p.nz;
+    assets = reshape(assets, n_assets, n_other);
     assets = assets(:,1);
 
-    % initialize to NaN
+    % Initialize to NaN
     for ia = 1:numel(p.decomp_thresholds)
         decomp.term1(ia) = NaN;
         decomp.term2(ia) = NaN;
         decomp.term3(ia) = NaN;
         decomp.term4(ia) = NaN;
+        decomp.term5(ia) = NaN;
     end
 
-    % check if required MPCs are available
-    if (p.ComputeMPCS == 0) || (p.OneAsset == 0) || (p.NoRisk == 0)
+    % Check if required MPCs are available
+    mpcs_available = (p.ComputeMPCS == 1) && (p.OneAsset == 1) && (p.NoRisk == 1);
+    if ~mpcs_available
         return
     end
     
-    m_ra = (p.rho + p.deathrate - p.deathrate*p.perfectannuities - p.r_b) / p.riskaver + p.r_b;
-    Em1 = stats.mpcs(5).avg_0_quarterly(1);
-    m1 = stats.mpcs(5).mpcs(:,1);
-    g1 = reshape(stats.pmf,[],income.ny*p.nz);
+    %% --------------------------------------------------------------------
+    % RA model WITHOUT borrowing constraint
+    % ---------------------------------------------------------------------
+    RA = struct();
+    tmp = p.rho + p.deathrate - p.deathrate*p.perfectannuities - p.r_b;
+    RA.mpc = p.r_b + tmp / p.riskaver;
 
-    % P(a & b)
-    Pab = sum(reshape(g1,[],income.ny*p.nz),2);
+    %% --------------------------------------------------------------------
+    % RA model WITH borrowing constraint
+    % ---------------------------------------------------------------------
+    RA_with_BC = struct();
 
-    m1_wide = reshape(m1,[],income.ny*p.nz);
-    m1_ab = m1_wide .* g1 ./ Pab;
-    m1_ab = sum(m1_ab,2);
-    % use arithmetic mean when denom < 1e-9
-    Pab_small = Pab < 1e-9;
-    m1_ab(Pab_small) = mean(m1_wide(Pab_small,:),2);
+    mpcs = baseline.stats.mpcs_nr(5).mpcs(:,1);
+    mpcs = reshape(mpcs, [], p.nz);
+    RA_with_BC.mpcs = repmat(mpcs, 1, income.ny);
 
-    % norisk model
-    mbc = stats.mpcs_nr(5).mpcs(:,1);
-    if sum(isnan(mbc(:))) + sum(isnan(m1(:))) > 0
-        % contains NaNs
-        return
+    %% --------------------------------------------------------------------
+    % HA model WITH borrowing constraint (baseline)
+    % ---------------------------------------------------------------------
+    HA_with_BC = struct();
+
+    HA_with_BC.Empc = baseline.stats.mpcs(5).avg_0_quarterly(1);
+    HA_with_BC.mpcs = reshape(...
+        baseline.stats.mpcs(5).mpcs(:,1), [], income.ny*p.nz);
+    HA_with_BC.pmf = reshape(baseline.stats.pmf, [], income.ny*p.nz);
+
+    % % Marginal pmf over assets, p(b)
+    % HA_with_BC.pmf_b = sum(HA_with_BC.pmf, 2);
+
+    % % Compute m(b) = E[mpc(b,y,z) | b]
+    % pmf_condl = HA_with_BC.pmf ./ HA_with_BC.pmf_b;
+    % HA_with_BC.mpcs_b = sum(HA_with_BC.mpcs .* pmf_condl, 2);
+
+    % % Use arithmetic mean if/when denom < 1e-9
+    % p_small = HA_with_BC.pmf_b < 1e-9;
+    % HA_with_BC.mpcs_b(p_small) = mean(HA_with_BC.mpcs(p_small,:), 2);
+
+    % Interpolant for cdf
+    HA_with_BC.cdf_interp = cell(income.ny*p.nz, 1);
+    for ii = 1:income.ny*p.nz
+        sortedAssetDistribution = sortrows([assets(:) HA_with_BC.pmf(:,ii)]);
+        [assetVals, uniqueInds] = unique(sortedAssetDistribution(:,1), 'last');
+        cumg = cumsum(sortedAssetDistribution(:,2));
+        HA_with_BC.cdf_interp{ii} = griddedInterpolant(assetVals, cumg(uniqueInds), 'linear');
     end
 
-    % sum over income
-    g1 = sum(g1,2);
+    %% --------------------------------------------------------------------
+    % HA model WITHOUT borrowing constraint (loose borrowing constraint)
+    % ---------------------------------------------------------------------
+    HA = struct();
 
-    % interpolant for cumulative distribution of g1
-    sortedAssetDistribution = sortrows([assets(:) g1(:)]);
-    [assetVals,uniqueInds] = unique(sortedAssetDistribution(:,1),'last');
-    cumg1 = cumsum(sortedAssetDistribution(:,2));
-    cumg1interp = griddedInterpolant(assetVals,cumg1(uniqueInds),'linear');
+    mpcs = reshape(...
+        no_bc.stats.mpcs(5).mpcs(:,1), no_bc.p.nb_KFE, no_bc.p.na_KFE, income.ny*p.nz);
 
-    % interpolant for m1g1
-    m1g1interp = aux.interpolate_integral(assets, m1_ab, g1);
+    non_negative_pts = no_bc.p.nb_neg_KFE+1:no_bc.p.nb_KFE;
+    mpcs = mpcs(non_negative_pts, :, :);
+    HA.mpcs = reshape(mpcs, [], income.ny*p.nz);
 
-    % interpolant for no risk model over g1
-    mbcg1interp = aux.interpolate_integral(assets, mbc, g1);
-    
+    %% --------------------------------------------------------------------
+    % Prepare interpolants for integrals over MPCs from zero to eps
+    % ---------------------------------------------------------------------
+    % For integral over mpcs for HA model with budget constraint
+    HA_with_BC.mpc_integral_interp = cell(income.ny*p.nz, 1);
+    for ii = 1:income.ny*p.nz
+        HA_with_BC.mpc_integral_interp{ii} = interpolate_integral(...
+            assets, HA_with_BC.mpcs(:,ii), HA_with_BC.pmf(:,ii));
+    end
+
+    % For integral over mpcs for HA model without budget constraint
+    HA.mpc_integral_interp = cell(income.ny*p.nz, 1);
+    for ii = 1:income.ny*p.nz
+        HA.mpc_integral_interp{ii} = interpolate_integral(...
+            assets, HA.mpcs(:,ii), HA_with_BC.pmf(:,ii));
+    end
+
+    % For integral over mpcs for RA model with budget constraint
+    RA_with_BC.mpc_integral_interp = cell(income.ny*p.nz, 1);
+    for ii = 1:income.ny*p.nz
+        RA_with_BC.mpc_integral_interp{ii} = interpolate_integral(...
+            assets, RA_with_BC.mpcs(:,ii), HA_with_BC.pmf(:,ii));
+    end
+
+    %% --------------------------------------------------------------------
+    % Compute expectations taken wrt stationary distribution of baseline
+    % ---------------------------------------------------------------------
+    RA_with_BC.Empc =  HA_with_BC.pmf(:)' * RA_with_BC.mpcs(:);
+    HA.Empc = HA_with_BC.pmf(:)' * HA.mpcs(:);
+
+    %% --------------------------------------------------------------------
+    % Decomposition
+    % ---------------------------------------------------------------------
     for ia = 1:numel(p.decomp_thresholds)
-    	abar = p.decomp_thresholds(ia);
-        zidx = assets <= abar;
-        
-        if abar == 0
-	        decomp.term1(ia) = m_ra;
-	        decomp.term2(ia) = (m1_ab(zidx) - m_ra)' * g1(zidx);
-	        decomp.term3(ia) = (mbc(~zidx) - m_ra)' * g1(~zidx);
-	        decomp.term4(ia) = (m1_ab(~zidx) - mbc(~zidx))' * g1(~zidx);
-	    else
-	        decomp.term1(ia) = m_ra;
-	        decomp.term2(ia) = m1g1interp(abar) - m_ra * cumg1interp(abar);
-	        decomp.term3(ia) = (mbc(:)' * g1(:) - mbcg1interp(abar)) - m_ra * (1-cumg1interp(abar));
-	        decomp.term4(ia) = (Em1 - m1g1interp(abar)) - (mbc(:)' * g1(:) - mbcg1interp(abar));
-	    end
-    
+        threshold = p.decomp_thresholds(ia);
+
+        % Precompute P(b<threshold)
+        p_htm = 0;
+        for ii = 1:income.ny*p.nz
+            p_htm = p_htm + HA_with_BC.cdf_interp{ii}(threshold);
+        end
+
+        % Term 1: RA MPC
+        decomp.term1(ia) = RA.mpc;
+
+        % Term 2: HtM effect
+        mpc_integral = 0;
+        for ii = 1:income.ny*p.nz
+            mpc_integral = mpc_integral...
+                + HA_with_BC.mpc_integral_interp{ii}(threshold);
+        end
+        decomp.term2(ia) = mpc_integral - RA.mpc * p_htm;
+
+        % Term 3: Borrowing constraint effect
+        mpc_integral = RA_with_BC.Empc;
+        for ii = 1:income.ny*p.nz
+            mpc_integral = mpc_integral...
+                - RA_with_BC.mpc_integral_interp{ii}(threshold);
+        end
+        decomp.term3(ia) = mpc_integral - RA.mpc * (1-p_htm);
+
+        % Term 4: Income risk effect
+        mpc_integral = HA.Empc;
+        for ii = 1:income.ny*p.nz
+            mpc_integral = mpc_integral...
+                - HA.mpc_integral_interp{ii}(threshold);
+        end
+        decomp.term4(ia) = mpc_integral - RA.mpc * (1-p_htm);
+
+        % Term 5: Interaction
+        decomp.term5(ia) = HA_with_BC.Empc - decomp.term1(ia)...
+            - decomp.term2(ia) - decomp.term3(ia) - decomp.term4(ia);
     end
 end

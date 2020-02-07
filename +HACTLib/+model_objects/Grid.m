@@ -258,7 +258,7 @@ classdef Grid < handle
 
 					% part of grid close to borrowing limit
 					bgridneg1 = linspace(0, 1, nb_neg1)';
-					bgridneg1 = bgridneg1.^(1/obj.p.gcurv_neg);
+					bgridneg1 = bgridneg1.^(1/obj.p.b_gcurv_neg);
 					bgridneg1 = obj.p.bmin + ...
 						(mid_neg - obj.p.bmin) * bgridneg1;
 			        

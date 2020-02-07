@@ -35,7 +35,7 @@ function [stats,p] = main(runopts, p)
             / (p.r_b_borr + p.deathrate*p.perfectannuities);
     if p.bmin <= -1e10
         % Set "loose" borrowing limit
-        p.set("bmin", 0.9 * NBL, true);
+        p.set("bmin", 0.95 * NBL, true);
     elseif p.bmin < 0
         % Check that borrowing limit does not violate NBL
         msg = sprintf('bmin < natural borrowing limit (%f)', NBL);
