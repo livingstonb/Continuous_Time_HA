@@ -55,17 +55,6 @@ function decomp = decomp_nobc_norisk(baseline, no_bc)
         baseline.stats.mpcs(5).mpcs(:,1), [], income.ny*p.nz);
     HA_with_BC.pmf = reshape(baseline.stats.pmf, [], income.ny*p.nz);
 
-    % % Marginal pmf over assets, p(b)
-    % HA_with_BC.pmf_b = sum(HA_with_BC.pmf, 2);
-
-    % % Compute m(b) = E[mpc(b,y,z) | b]
-    % pmf_condl = HA_with_BC.pmf ./ HA_with_BC.pmf_b;
-    % HA_with_BC.mpcs_b = sum(HA_with_BC.mpcs .* pmf_condl, 2);
-
-    % % Use arithmetic mean if/when denom < 1e-9
-    % p_small = HA_with_BC.pmf_b < 1e-9;
-    % HA_with_BC.mpcs_b(p_small) = mean(HA_with_BC.mpcs(p_small,:), 2);
-
     % Interpolant for cdf
     HA_with_BC.cdf_interp = cell(income.ny*p.nz, 1);
     for ii = 1:income.ny*p.nz

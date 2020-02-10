@@ -1,23 +1,25 @@
 clearvars -except stats p
 
 %% This script is used to combine one or more variablesX.mat files. Produces a table.
+addpath('/home/brian/Documents/GitHub/Continuous_Time_HA')
+addpath('/home/brian/Documents/GitHub/Continuous_Time_HA/code')
 
 %% Set FROM_MATFILE = false if running right after model, true if running from .mat file
 FROM_MATFILE = true;
 
 %% Select directories
-matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/';
+matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/';
 % matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/';
 % matdir = '/media/hdd/Other/midway2_output/continuous_time';
 % matdir = '/Users/brianlivingston/Documents/midway2_output/';
 % matdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/output/';
 
-codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/code/';
+codedir = '/home/brian/Documents/GitHub/Continuous_Time_HA/code/';
 % codedir = '/home/brian/Documents/GitHub/Continuous_Time_HA/code/';
 
 % matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/';
 % codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-xlxpath = '/home/livingstonb/GitHub/Continuous_Time_HA/output/';
+xlxpath = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/';
 xlxpath1 = [xlxpath 'detailedResults.xlsx'];
 xlxpath2 = [xlxpath 'decomposition.xlsx'];
 
@@ -50,7 +52,11 @@ if FROM_MATFILE
             end
 
             % perform Empc1 - Empc0 decomposition
-            decomp_base(ind) = statistics.decomp_baseline(s(1),s(ind));    
+            if isequal(s(ind).grdKFE.b.vec, s(1).grdKFE.b.vec)
+                decomp_base(ind) = statistics.decomp_baseline(s(1),s(ind));
+            else
+                decomp_base(ind) = statistics.decomp_baseline(s(1),s(1));
+            end
 
             % perform decomp wrt one-asset model
             decomp_oneasset(ind) = statistics.decomp_twoasset_oneasset(oneasset,s(ind));
