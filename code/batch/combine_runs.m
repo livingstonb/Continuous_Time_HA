@@ -254,7 +254,7 @@ decompTable = [	{'Name'}, get_all_values(s,'p',1,'name')
 TdetailedResults = cell2table(detailedResults(:,2:n+1),'RowNames',detailedResults(:,1));
 TdecompTable = cell2table(decompTable(:,2:n+1),'RowNames',decompTable(:,1));
 
-if ~isempty(xlxpath)
+if ~isempty(matdir)
 	writetable(TdetailedResults,xlxpath1,'WriteRowNames',true)
 	writetable(TdecompTable,xlxpath2,'WriteRowNames',true)
 end

@@ -32,7 +32,7 @@ warning('off','MATLAB:nearlySingularMatrix')
 
 runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
-runopts.mode = 'params_one_asset'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
+runopts.mode = 'params_adj_cost_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = true;
 runopts.SimulateMPCS = false; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = false; % MPCs out of news, requires ComputeMPCS = 1
@@ -44,7 +44,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 1;
+runopts.param_index = 15;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -108,6 +108,8 @@ elseif strcmp(runopts.mode, 'endog_labor_tests')
 	p = setup.params.endog_labor_tests(runopts);
 elseif strcmp(runopts.mode, 'params_one_asset')
 	p = setup.params.params_one_asset(runopts);
+elseif strcmp(runopts.mode, 'params_adj_cost_tests')
+	p = setup.params.params_adj_cost_tests(runopts);
 end
 p.print();
 
@@ -119,18 +121,11 @@ n_calibrations = 0;
 
 % Vary (rho, r_a) to match median(a+b) = 1.6, median(b) = 0.1
 param_name = {'rho', 'r_a'};
-
-if runopts.param_index == 1
-	stat_name = {'median_totw', 'median_liqw'};
-	stat_target = [1.6, 0.1];
-	inits = [p.rho, p.r_a];
-else
-	stat_name = {'totw', 'median_liqw'};
-	stat_target = [3.5, 0.1];
-	inits = [p.rho, p.r_a];
-end
-
+stat_name = {'median_totw', 'median_liqw'};
+stat_target = [1.6, 0.1];
+inits = [p.rho, p.r_a];
 n_calibrations = n_calibrations + 1;
+
 if p.OneAsset
 	param_name = param_name(1);
 	stat_name = stat_name(1);
@@ -138,8 +133,8 @@ if p.OneAsset
 	inits = inits(1);
 end
 
-rho_bounds = [0.002, 0.2];
-ra_bounds = [p.r_b+1e-4, 0.2];
+rho_bounds = [0.002, 0.4];
+ra_bounds = [p.r_b+1e-4, 0.3];
 
 if n_calibrations == 1
     calibrator = AltCalibrator(p, runopts, param_name,...
