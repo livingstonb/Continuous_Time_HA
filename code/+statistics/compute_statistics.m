@@ -107,6 +107,10 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
         stats.wpercentile(ii) = winterp(pct_val);
     end
 
+    stats.median_liqw = lwinterp(0.5);
+    stats.median_illliqw = iwinterp(0.5);
+    stats.median_totw = winterp(0.5);
+
     % Top shares
     % Amount of total assets that reside in each pt on sorted asset space
     totassets = stats.pmf_wealth_support .* stats.wealth_support;
@@ -188,7 +192,7 @@ function stats = statistics(p,income,grd,grdKFE,KFE)
     %% --------------------------------------------------------------------
     % GINI COEFFICIENTS
     % ---------------------------------------------------------------------
-    stats.wgini = direct_gini(wealth_mat,stats.pmf);
+    stats.wgini = direct_gini(stats.wealth_support, stats.pmf_wealth_support);
 
     %% --------------------------------------------------------------------
     % OUTPUT FOR HISTOGRAMS

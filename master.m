@@ -30,10 +30,10 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
-runopts.mode = 'get_params'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
-runopts.ComputeMPCS = false;
+runopts.mode = 'params_one_asset'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
+runopts.ComputeMPCS = true;
 runopts.SimulateMPCS = false; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = false; % MPCs out of news, requires ComputeMPCS = 1
 runopts.SimulateMPCS_news = false; % NOT CODED?
@@ -106,8 +106,58 @@ elseif strcmp(runopts.mode, 'SDU_tests')
     p = setup.params.SDU_tests(runopts);
 elseif strcmp(runopts.mode, 'endog_labor_tests')
 	p = setup.params.endog_labor_tests(runopts);
+elseif strcmp(runopts.mode, 'params_one_asset')
+	p = setup.params.params_one_asset(runopts);
 end
 p.print();
+
+%% ------------------------------------------------------------------------
+% CALIBRATING WITH FSOLVE
+% -------------------------------------------------------------------------
+import HACTLib.model_objects.AltCalibrator
+n_calibrations = 0;
+
+% Vary (rho, r_a) to match median(a+b) = 1.6, median(b) = 0.1
+param_name = {'rho', 'r_a'};
+
+if runopts.param_index == 1
+	stat_name = {'median_totw', 'median_liqw'};
+	stat_target = [1.6, 0.1];
+	inits = [p.rho, p.r_a];
+else
+	stat_name = {'totw', 'median_liqw'};
+	stat_target = [3.5, 0.1];
+	inits = [p.rho, p.r_a];
+end
+
+n_calibrations = n_calibrations + 1;
+if p.OneAsset
+	param_name = param_name(1);
+	stat_name = stat_name(1);
+	stat_target = stat_target(1);
+	inits = inits(1);
+end
+
+rho_bounds = [0.002, 0.2];
+ra_bounds = [p.r_b+1e-4, 0.2];
+
+if n_calibrations == 1
+    calibrator = AltCalibrator(p, runopts, param_name,...
+        stat_name, stat_target);
+
+    calibrator.set_param_bounds(1, rho_bounds);
+    if ~p.OneAsset
+    	calibrator.set_param_bounds(2, ra_bounds);
+    end
+
+    for ii = 1:numel(inits)
+    	z_inits(ii) = calibrator.convert_to_solver_input(inits(ii), ii);
+    end
+
+    calibrated_params = fsolve(@(x) calibrator.fn_handle(x, p), z_inits(:));
+elseif n_calibrations > 1
+    error("Ensure that a max of one calibration is selected")
+end
 
 %% ------------------------------------------------------------------------
 % CALL MAIN FUNCTION FILE

@@ -187,7 +187,7 @@ function [stats,p] = main(runopts, p)
         grd.b.matrix = [];
     end
     
-    if runopts.ComputeMPCS == 1
+    if p.ComputeMPCS
 	    stats.mpcs(1).mpcs_0_t = [];
 	    stats.mpcs(2).mpcs_0_t = [];
 	    stats.mpcs(3).mpcs_0_t = [];

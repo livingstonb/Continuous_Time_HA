@@ -1,33 +1,28 @@
 clearvars -except stats p
 
+server = true;
+
 %% This script is used to combine one or more variablesX.mat files. Produces a table.
-addpath('/home/brian/Documents/GitHub/Continuous_Time_HA')
-addpath('/home/brian/Documents/GitHub/Continuous_Time_HA/code')
+maindir = '/home/brian/Documents/GitHub/Continuous_Time_HA';
 
 %% Set FROM_MATFILE = false if running right after model, true if running from .mat file
 FROM_MATFILE = true;
 
-%% Select directories
-matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/';
-% matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/';
-% matdir = '/media/hdd/Other/midway2_output/continuous_time';
-% matdir = '/Users/brianlivingston/Documents/midway2_output/';
-% matdir = '/Users/Brian-laptop/Documents/GitHub/Continuous_Time_HA/output/';
+if server
+    maindir = '/home/livingstonb/GitHub/Continuous_Time_HA';
+end
 
-codedir = '/home/brian/Documents/GitHub/Continuous_Time_HA/code/';
-% codedir = '/home/brian/Documents/GitHub/Continuous_Time_HA/code/';
+codedir = fullfile(maindir, 'code');
+matdir = fullfile(maindir, 'output');
+xlxpath1 = fullfile(matdir, 'detailedResults.xlsx');
+xlxpath2 = fullfile(matdir, 'decomposition.xlsx');
 
-% matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output/';
-% codedir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-xlxpath = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/';
-xlxpath1 = [xlxpath 'detailedResults.xlsx'];
-xlxpath2 = [xlxpath 'decomposition.xlsx'];
-
+addpath(maindir);
 addpath(codedir);
 
 %% read baseline one-asset for decomposition
-fpath = [matdir,'output_oneasset.mat'];
-if exist(fpath,'file')
+fpath = fullfile(matdir, 'output_oneasset.mat');
+if exist(fpath, 'file')
     oneasset = load(fpath);
 else
     disp('no one asset baseline found')
@@ -37,9 +32,9 @@ end
 %% Read .mat files into a cell array
 if FROM_MATFILE
     ind = 0;
-    for run = 1:999
-        runstr = num2str(run);
-        fpath = [matdir,'output_',runstr,'.mat'];
+    for irun = 1:999
+        fname = sprintf('output_%d.mat', irun);
+        fpath = fullfile(matdir, fname);
         if exist(fpath,'file')
             ind = ind+1;
 
