@@ -163,6 +163,16 @@ classdef ParamsDefaults < handle
     	% Grid to accomodate rho heterogeneity
     	rho_grid;
 
+        %% -------------------------------------------
+        % CALIBRATION
+        % --------------------------------------------
+
+        % Function handle for fsolve
+        calibrator;
+
+        % Initial values for fsolve
+        x0_calibration;
+
     	% ------------ taxes ------------------------------
     	transfer = 0; % transfer to households 
     	wagetax = 0; % tax rate on wage income

@@ -44,7 +44,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 15;
+runopts.param_index = 6;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -116,43 +116,50 @@ p.print();
 %% ------------------------------------------------------------------------
 % CALIBRATING WITH FSOLVE
 % -------------------------------------------------------------------------
-import HACTLib.model_objects.AltCalibrator
-n_calibrations = 0;
-
-% Vary (rho, r_a) to match median(a+b) = 1.6, median(b) = 0.1
-param_name = {'rho', 'r_a'};
-stat_name = {'median_totw', 'median_liqw'};
-stat_target = [1.6, 0.1];
-inits = [p.rho, p.r_a];
-n_calibrations = n_calibrations + 1;
-
-if p.OneAsset
-	param_name = param_name(1);
-	stat_name = stat_name(1);
-	stat_target = stat_target(1);
-	inits = inits(1);
+if ~isempty(p.calibrator)
+    calibrated_params = fsolve(p.calibrator, p.x0_calibration);
 end
 
-rho_bounds = [0.002, 0.4];
-ra_bounds = [p.r_b+1e-4, 0.3];
+% %% ------------------------------------------------------------------------
+% % CALIBRATING WITH FSOLVE
+% % -------------------------------------------------------------------------
+% import HACTLib.model_objects.AltCalibrator
+% n_calibrations = 0;
 
-if n_calibrations == 1
-    calibrator = AltCalibrator(p, runopts, param_name,...
-        stat_name, stat_target);
+% % Vary (rho, r_a) to match median(a+b) = 1.6, median(b) = 0.1
+% param_name = {'rho', 'r_a'};
+% stat_name = {'median_totw', 'median_liqw'};
+% stat_target = [1.6, 0.1];
+% inits = [p.rho, p.r_a];
+% n_calibrations = n_calibrations + 1;
 
-    calibrator.set_param_bounds(1, rho_bounds);
-    if ~p.OneAsset
-    	calibrator.set_param_bounds(2, ra_bounds);
-    end
+% if p.OneAsset
+% 	param_name = param_name(1);
+% 	stat_name = stat_name(1);
+% 	stat_target = stat_target(1);
+% 	inits = inits(1);
+% end
 
-    for ii = 1:numel(inits)
-    	z_inits(ii) = calibrator.convert_to_solver_input(inits(ii), ii);
-    end
+% rho_bounds = [0.002, 0.4];
+% ra_bounds = [p.r_b+1e-4, 0.3];
 
-    calibrated_params = fsolve(@(x) calibrator.fn_handle(x, p), z_inits(:));
-elseif n_calibrations > 1
-    error("Ensure that a max of one calibration is selected")
-end
+% if n_calibrations == 1
+%     calibrator = AltCalibrator(p, runopts, param_name,...
+%         stat_name, stat_target);
+
+%     calibrator.set_param_bounds(1, rho_bounds);
+%     if ~p.OneAsset
+%     	calibrator.set_param_bounds(2, ra_bounds);
+%     end
+
+%     for ii = 1:numel(inits)
+%     	z_inits(ii) = calibrator.convert_to_solver_input(inits(ii), ii);
+%     end
+
+%     calibrated_params = fsolve(@(x) calibrator.fn_handle(x, p), z_inits(:));
+% elseif n_calibrations > 1
+%     error("Ensure that a max of one calibration is selected")
+% end
 
 %% ------------------------------------------------------------------------
 % CALL MAIN FUNCTION FILE
