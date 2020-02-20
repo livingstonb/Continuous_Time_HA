@@ -14,6 +14,7 @@ function decomp = decomp_wrt_norisk(p, grdKFE, stats, income)
         decomp.term3(ia) = NaN;
         decomp.term4(ia) = NaN;
     end
+    decomp.completed = false;
 
     % check if required MPCs are available
     if (p.ComputeMPCS == 0) || (p.OneAsset == 0) || (p.NoRisk == 0)
@@ -74,4 +75,6 @@ function decomp = decomp_wrt_norisk(p, grdKFE, stats, income)
 	    end
     
     end
+
+    decomp.completed = true;
 end

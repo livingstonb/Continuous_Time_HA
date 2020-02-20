@@ -3,12 +3,12 @@ classdef TableGenerator < handle
 		mpcs_present = false;
 		mpcs_news_present = false;
 		include_two_asset_stats = false;
+		decomp_norisk_present = false;
 
 		n_cols;
 	end
 
 	properties
-		decomp_incrisk;
 		decomp_repagent;
 		decomp_incrisk_alt;
 	end
@@ -19,7 +19,7 @@ classdef TableGenerator < handle
 			obj.n_cols = numel(cases);
 			[params, stats] = create_structures(cases);
 
-			obj.set_options(params);
+			obj.set_options(params, stats);
 
 			output_table = table();
 			for ip = 1:numel(cases)
@@ -46,14 +46,29 @@ classdef TableGenerator < handle
 				tmp = obj.wealth_pct_table(stats);
 				new_column = [new_column; tmp];
 
+				if obj.mpcs_present
+					for ishock = 1:numel(p.mpc_shocks)
+						tmp = mpcs_table(p, stats, ishock);
+						new_column = [new_column; tmp];
+					end
+				end
+
+				if obj.decomp_norisk_present
+					for ithresh = 1:numel(p.decomp_thresholds)
+						tmp = decomp_norisk_table(p, stats, ithresh);
+						new_column = [new_column; tmp];
+					end
+				end
+
 				output_table = [output_table, new_column];
 			end
 		end
 
-		function set_options(obj, params)
+		function set_options(obj, params, stats)
 			obj.mpcs_present = any([params.ComputeMPCS]);
 			obj.mpcs_news_present = any([params.ComputeMPCS_news]);
 			obj.include_two_asset_stats = any(~[params.OneAsset]);
+			obj.decomp_norisk_present = any([stats.decomp_norisk.completed]);
 		end
 
 		function out = intro_stats_table(obj, p, stats)
@@ -197,9 +212,57 @@ function output_table = illiq_adj_table(p, stats)
 					'Median chi/|d|, given |d|>0', stats.adjcosts.median_chi_div_d
 					'Mean chi', stats.adjcosts.mean_chi
 					'Fraction with d == 0', stats.adjcosts.d0
-				};
+		};
 
 	output_table = append_to_table(output_table, new_entries);
 end
 
+function output_table = mpcs_table(p, stats, ishock)
 
+	if ~isempty(p.mpc_shocks_dollars)
+		tmp = p.mpc_shocks_dollars(ishock);
+		if tmp < 0
+			shock_size = sprintf('-$%g', abs(tmp));
+		else
+			shock_size = sprintf('$%g', tmp);
+		end
+	else
+		tmp = p.mpc_shocks(ishock);
+		shock_size = sprintf('%g', tmp);
+	end
+
+	header_name = sprintf('AVG MPC, SHOCK = %s', shock_size);
+	output_table = new_table_with_header(header_name);
+
+	mean_mpcs = stats.mpcs(ishock).avg_0_quarterly;
+
+	label = @(ii) sprintf('QUARTER %d MPC, shock = %s', ii, shock_size);
+	cum_label = sprintf('ANNUAL MPC, shock = %s', shock_size);
+	new_entries = {	label(1), mean_mpcs(1)
+					label(2), mean_mpcs(2)
+					label(3), mean_mpcs(3)
+					label(4), mean_mpcs(4)
+					cum_label, stats.mpcs(ishock).avg_0_annual
+		};
+
+	output_table = append_to_table(output_table, new_entries);
+end
+
+function output_table = decomp_norisk_table(p, stats, ithresh)
+	threshold = p.decomp_thresholds(ithresh);
+	header_name = sprintf('DECOMP OF E[mpc] AROUND %g', threshold);
+	output_table = new_table_with_header(header_name);
+
+	lab_prefix = sprintf("Decomp around %g, ", threshold);
+	full_lab = @(postf) char(strcat(lab_prefix, postf));
+
+	vals = stats.decomp_norisk;
+
+	new_entries = {	full_lab("RA MPC"), vals.term1(ithresh)
+					full_lab("HtM Effect"), vals.term2(ithresh)
+					full_lab("Non-HtM, constraint"), vals.term3(ithresh)
+					full_lab("Non-HtM, inc risk"), vals.term4(ithresh)
+		};
+
+	output_table = append_to_table(output_table, new_entries);
+end
