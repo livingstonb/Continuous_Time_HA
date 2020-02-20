@@ -38,7 +38,13 @@ classdef TableGenerator < handle
 				if obj.include_two_asset_stats
 					tmp = wconstraint_stats_table(p, stats, 'total');
 					new_column = [new_column; tmp];
+
+					tmp = illiq_adj_table(p, stats);
+					new_column = [new_column; tmp];
 				end
+
+				tmp = obj.wealth_pct_table(stats);
+				new_column = [new_column; tmp];
 
 				output_table = [output_table, new_column];
 			end
@@ -68,6 +74,31 @@ classdef TableGenerator < handle
 							'Wealth, Top 1% Share', stats.top1share, false
 							'Gini (total assets)', stats.wgini, false
 							's = 0', stats.sav0, false
+				};
+
+			if ~obj.include_two_asset_stats
+				new_entries([new_entries{:,3}],:) = [];
+			end
+
+			out = append_to_table(out, new_entries);
+		end
+
+		function out = wealth_pct_table(obj, stats)
+			header_name = 'WEALTH PERCENTILES';
+			out = new_table_with_header(header_name);
+
+			new_entries = {	'Liquid wealth, 10th', stats.lwpercentile(1), false
+							'Liquid wealth, 25th', stats.lwpercentile(2), false
+							'Liquid wealth, 50th', stats.lwpercentile(3), false
+							'Liquid wealth, 90th', stats.lwpercentile(4), false
+							'Liquid wealth, 99th', stats.lwpercentile(5), false
+							'Liquid wealth, 99.9th', stats.lwpercentile(6), false
+							'Total wealth, 10th', stats.wpercentile(1), true
+							'Total wealth, 25th', stats.wpercentile(2), true
+							'Total wealth, 50th', stats.wpercentile(3), true
+							'Total wealth, 90th', stats.wpercentile(4), true
+							'Total wealth, 99th', stats.wpercentile(5), true
+							'Total wealth, 99.9th', stats.wpercentile(6), false
 				};
 
 			if ~obj.include_two_asset_stats
@@ -155,3 +186,20 @@ function output_table = wconstraint_stats_table(p, stats, asset)
 
 	output_table = append_to_table(output_table, new_entries);
 end
+
+function output_table = illiq_adj_table(p, stats)
+	header_name = 'ILLIQUID ASSETS ADJUSTMENT';
+	output_table = new_table_with_header(header_name);
+
+	new_entries = {	'Mean |d|/max(a,a_lb)', stats.adjcosts.mean_d_div_a
+					'Median |d|/max(a,a_lb)', stats.adjcosts.median_d_div_a
+					'Mean chi/|d|, given |d|>0', stats.adjcosts.mean_chi_div_d
+					'Median chi/|d|, given |d|>0', stats.adjcosts.median_chi_div_d
+					'Mean chi', stats.adjcosts.mean_chi
+					'Fraction with d == 0', stats.adjcosts.d0
+				};
+
+	output_table = append_to_table(output_table, new_entries);
+end
+
+
