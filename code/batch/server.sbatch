@@ -3,7 +3,7 @@
 #SBATCH --output=/home/livingstonb/GitHub/Continuous_Time_HA/output/run%a.out
 #SBATCH --error=/home/livingstonb/GitHub/Continuous_Time_HA/output/run%a.err
 #SBATCH --partition=broadwl
-#SBATCH --array=1-16
+#SBATCH --array=1-122
 #SBATCH --time=20:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1

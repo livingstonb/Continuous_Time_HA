@@ -30,10 +30,10 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.calibrate = false;
-runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
-runopts.fast = 1; % use small grid for debugging
-runopts.mode = 'get_params'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
+runopts.calibrate = true;
+runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.fast = 0; % use small grid for debugging
+runopts.mode = 'params_adj_cost_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = true;
 runopts.SimulateMPCS = false; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = false; % MPCs out of news, requires ComputeMPCS = 1
@@ -219,4 +219,4 @@ toc
 experiment.p = p;
 experiment.stats = stats;
 table_gen = HACTLib.model_objects.TableGenerator();
-table_gen.create(experiment)
+results_table = table_gen.create(experiment)

@@ -10,4 +10,4 @@
 
 module load matlab
 
-matlab -nodisplay < /home/livingstonb/GitHub/Continuous_Time_HA/code/batch/combine_runs.m
+matlab -nodisplay < /home/livingstonb/GitHub/Continuous_Time_HA/code/batch/combine_runs_new.m
