@@ -30,8 +30,9 @@ warning('off','MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.Server = 1; % sets IterateRho=1,fast=0,param_index=slurm env var
-runopts.fast = 0; % use small grid for debugging
+runopts.calibrate = false;
+runopts.Server = 0; % sets IterateRho=1,fast=0,param_index=slurm env var
+runopts.fast = 1; % use small grid for debugging
 runopts.mode = 'params_adj_cost_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = true;
 runopts.SimulateMPCS = false; % also estimate MPCs by simulation
@@ -47,7 +48,7 @@ runopts.DealWithSpecialCase = 0;
 runopts.param_index = 1;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
+runopts.localdir = '/Users/brianlivingston/Documents/GitHub/Continuous_Time_HA/';
 
 
 %% ------------------------------------------------------------------------
@@ -214,3 +215,8 @@ end
 tic
 stats = main(runopts, p);
 toc
+
+experiment.p = p;
+experiment.stats = stats;
+table_gen = HACTLib.model_objects.TableGenerator();
+table_gen.create(experiment)

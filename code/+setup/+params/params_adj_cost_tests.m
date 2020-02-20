@@ -10,7 +10,9 @@ function outparams = params_adj_cost_tests(runopts)
     shared_params.nb_KFE = 40;
     shared_params.na = 40;
     shared_params.na_KFE = 40;
-    % shared_params.min_grid_spacing = -1e10;
+    shared_params.min_grid_spacing = -1e10;
+    shared_params.mpc_shocks_dollars = [-1, -500, -5000, 1, 500, 5000];
+    shared_params.mpc_shocks = shared_params.mpc_shocks_dollars ./ 72000;
     shared_params.bmax = 20;
     shared_params.amax = 50;
     shared_params.b_gcurv_pos = 0.3;
@@ -54,14 +56,16 @@ function outparams = params_adj_cost_tests(runopts)
     outparams = HACTLib.model_objects.Params(runopts, chosen_param);
 
     %% ATTACH CALIBRATOR
-    if strcmp(outparams.name, 'baseline')
-    	[fn_handle, x0] = mean_wealth_calibrator(outparams, runopts);
-    else
-	    [fn_handle, x0] = median_wealth_calibrator(outparams, runopts);
-	end
+    if runopts.calibrate
+        if strcmp(outparams.name, 'baseline')
+        	[fn_handle, x0] = mean_wealth_calibrator(outparams, runopts);
+        else
+    	    [fn_handle, x0] = median_wealth_calibrator(outparams, runopts);
+    	end
 
-	outparams.set("calibrator", fn_handle, true);
-    outparams.set("x0_calibration", x0, true);
+    	outparams.set("calibrator", fn_handle, true);
+        outparams.set("x0_calibration", x0, true);
+    end
 end
 
 function [fn_handle, x0] = mean_wealth_calibrator(p, runopts)
@@ -94,7 +98,7 @@ function [fn_handle, x0] = median_wealth_calibrator(p, runopts)
 	% Vary (rho, r_a) to match median(a+b) = 1.6, median(b) = 0.1
 	param_name = {'rho', 'r_a'};
 	stat_name = {'median_totw', 'median_liqw'};
-	stat_target = [1.6, 0.1];
+	stat_target = [1.7, 0.1];
 	inits = [p.rho, p.r_a];
 
 	rho_bounds = [0.002, 0.4];
