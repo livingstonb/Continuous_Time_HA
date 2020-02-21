@@ -122,7 +122,7 @@ classdef TableGenerator < handle
 							'Total wealth, 50th', stats.wpercentile(3), true
 							'Total wealth, 90th', stats.wpercentile(4), true
 							'Total wealth, 99th', stats.wpercentile(5), true
-							'Total wealth, 99.9th', stats.wpercentile(6), false
+							'Total wealth, 99.9th', stats.wpercentile(6), true
 				};
 
 			if ~obj.include_two_asset_stats
