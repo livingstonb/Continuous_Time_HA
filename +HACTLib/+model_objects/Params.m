@@ -11,6 +11,7 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
 
         	obj.param_index = runopts.param_index;
             obj.ComputeMPCS = runopts.ComputeMPCS;
+            obj.ComputeMPCS_illiquid = runopts.ComputeMPCS_illiquid;
             obj.SimulateMPCS = runopts.SimulateMPCS;
             obj.ComputeMPCS_news = runopts.ComputeMPCS_news;
             obj.SimulateMPCS_news = runopts.SimulateMPCS_news;
@@ -32,7 +33,11 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
 
             obj.mpc_options = struct(...
             	'delta', obj.MPC_delta,...
-            	'interp_method', obj.MPC_interp_method);
+            	'interp_method', obj.MPC_interp_method,...
+                'liquid_mpc', true);
+
+            obj.mpc_options_illiquid = obj.mpc_options;
+            obj.mpc_options_illiquid.liquid_mpc = false;
 
             obj.mpcs_news_options = struct(...
 				'delta', obj.MPC_delta,...

@@ -20,8 +20,8 @@ classdef MPCs < handle
 		% Default option values.
 		defaults = struct(...
 					'delta', 0.01,...
-					'interp_method', 'linear'...
-					);
+					'interp_method', 'linear',...
+					'liquid_mpc', true);
     end
     
 	properties (SetAccess=protected)
@@ -199,7 +199,7 @@ classdef MPCs < handle
 					- obj.cumcon(:,period-1);
 			end
 
-		    obj.cum_con_baseline = reshape(obj.cum_con_baseline,[],4);
+		    obj.cum_con_baseline = reshape(obj.cum_con_baseline, [], 4);
 		end
 
 		function cumulative_consumption_with_shock(obj, ishock)
@@ -220,17 +220,29 @@ classdef MPCs < handle
 			%	cell contains an array of shape (nb_KFE*na_KFE*nz*ny, num_periods)
 
 			shock = obj.p.mpc_shocks(ishock);
-			bgrid_mpc_vec = obj.grids.b.vec + shock;
 
-			if shock < 0
+			if obj.options.liquid_mpc
+				bgrid_mpc_vec = obj.grids.b.vec + shock;
+				agrid_mpc_vec = obj.grids.a.vec;
+			else
+				bgrid_mpc_vec = obj.grids.b.vec;
+				agrid_mpc_vec = obj.grids.a.vec + shock;
+			end
+
+			if (shock < 0) && obj.options.liquid_mpc
 	            below_bgrid = bgrid_mpc_vec < obj.grids.b.vec(1);
 	            bgrid_mpc_vec(below_bgrid) = obj.grids.b.vec(1);
+	            some_below = any(below_bgrid);
+	        elseif shock < 0
+	        	below_agrid = agrid_mpc_vec < obj.grids.a.vec(1);
+	            agrid_mpc_vec(below_agrid) = obj.grids.a.vec(1);
+	            some_below = any(below_agrid);
 	        end
 
 	        % grids for interpolation
 	        interp_grids = {obj.grids.b.vec, obj.grids.a.vec,...
 	        	obj.grids.z.vec, obj.income.y.vec};
-	       	value_grids = {bgrid_mpc_vec, obj.grids.a.vec,...
+	       	value_grids = {bgrid_mpc_vec, agrid_mpc_vec,...
 	       		obj.grids.z.vec, obj.income.y.vec};
 
         	if (obj.income.ny > 1) && (obj.p.nz > 1)
@@ -249,15 +261,28 @@ classdef MPCs < handle
 			reshape_vec = [obj.p.nb_KFE obj.p.na_KFE obj.p.nz obj.income.ny];
 			for period = 1:4
 				% cumulative consumption in 'period'
-	            con_period = reshape(obj.cum_con_baseline(:,period),reshape_vec);
-	            mpcinterp = griddedInterpolant(interp_grids,squeeze(con_period),'linear');
+	            con_period = reshape(obj.cum_con_baseline(:,period), reshape_vec);
+	            mpcinterp = griddedInterpolant(interp_grids, squeeze(con_period), 'linear');
 
 	            obj.cum_con_shock{ishock}(:,period) = reshape(mpcinterp(value_grids), [], 1);
 
-	            if (shock < 0) && (sum(below_bgrid)>0) && (period==1)
-	                temp = reshape(obj.cum_con_shock{ishock}(:,period),reshape_vec);
-	                temp(below_bgrid,:,:,:) = con_period(1,:,:,:) + shock...
-	                	+ obj.grids.b.vec(below_bgrid) - obj.grids.b.vec(1);
+	            if (shock < 0) && some_below && (period==1)
+	                temp = reshape(obj.cum_con_shock{ishock}(:,period), reshape_vec);
+
+	                reshape_bottom = reshape_vec;
+	                if obj.options.liquid_mpc
+	                	reshape_bottom(1) = 1;
+	                	con_bottom = reshape(con_period(1,:,:,:), reshape_bottom);
+		                temp(below_bgrid,:,:,:) = con_bottom + shock...
+		                	+ obj.grids.b.vec(below_bgrid) - obj.grids.b.vec(1);
+		            else
+		            	reshape_bottom(2) = 1;
+	                	con_bottom = reshape(con_period(:,1,:,:), reshape_bottom);
+	                	a_bottom = obj.grids.a.vec(below_agrid);
+	                	a_bottom = reshape(a_bottom, 1, []);
+		            	temp(:,below_agrid,:,:) = con_bottom + shock...
+		                	+ a_bottom - obj.grids.a.vec(1);
+	            	end
 	                obj.cum_con_shock{ishock}(:,period) = temp(:);                      
 	            end
 	        end

@@ -1,6 +1,7 @@
 classdef TableGenerator < handle
 	properties (SetAccess = private)
 		mpcs_present = false;
+		illiquid_mpcs_present = false;
 		mpcs_news_present = false;
 		include_two_asset_stats = false;
 		decomp_norisk_present = false;
@@ -48,8 +49,15 @@ classdef TableGenerator < handle
 
 				if obj.mpcs_present
 					for ishock = 1:numel(p.mpc_shocks)
-						tmp = mpcs_table(p, stats, ishock);
+						tmp = mpcs_table(p, stats, ishock, true);
 						new_column = [new_column; tmp];
+					end
+
+					if obj.illiquid_mpcs_present
+						for ishock = 1:numel(p.mpc_shocks)
+							tmp = mpcs_table(p, stats, ishock, false);
+							new_column = [new_column; tmp];
+						end
 					end
 				end
 
@@ -66,6 +74,7 @@ classdef TableGenerator < handle
 
 		function set_options(obj, params, stats)
 			obj.mpcs_present = any([params.ComputeMPCS]);
+			obj.illiquid_mpcs_present = any([params.ComputeMPCS_illiquid]);
 			obj.mpcs_news_present = any([params.ComputeMPCS_news]);
 			obj.include_two_asset_stats = any(~[params.OneAsset]);
 			obj.decomp_norisk_present = any([stats.decomp_norisk.completed]);
@@ -217,7 +226,7 @@ function output_table = illiq_adj_table(p, stats)
 	output_table = append_to_table(output_table, new_entries);
 end
 
-function output_table = mpcs_table(p, stats, ishock)
+function output_table = mpcs_table(p, stats, ishock, liquid_mpcs)
 
 	if ~isempty(p.mpc_shocks_dollars)
 		tmp = p.mpc_shocks_dollars(ishock);
@@ -231,18 +240,26 @@ function output_table = mpcs_table(p, stats, ishock)
 		shock_size = sprintf('%g', tmp);
 	end
 
-	header_name = sprintf('AVG MPC, SHOCK = %s', shock_size);
+	if liquid_mpcs
+		mean_mpcs = stats.mpcs(ishock).avg_0_quarterly;
+		ann_mpc = stats.mpcs(ishock).avg_0_annual;
+		mpc_type = 'MEAN MPC';
+	else
+		mean_mpcs = stats.mpcs_illiquid(ishock).avg_0_quarterly;
+		ann_mpc = stats.mpcs_illiquid(ishock).avg_0_annual;
+		mpc_type = 'MEAN ILLIQUID MPC';
+	end
+
+	header_name = sprintf('%s, SHOCK = %s', mpc_type, shock_size);
 	output_table = new_table_with_header(header_name);
 
-	mean_mpcs = stats.mpcs(ishock).avg_0_quarterly;
-
-	label = @(ii) sprintf('QUARTER %d MPC, shock = %s', ii, shock_size);
-	cum_label = sprintf('ANNUAL MPC, shock = %s', shock_size);
+	label = @(ii) sprintf('QUARTER %d %s, shock = %s', ii, mpc_type, shock_size);
+	cum_label = sprintf('ANNUAL %s, shock = %s', mpc_type, shock_size);
 	new_entries = {	label(1), mean_mpcs(1)
 					label(2), mean_mpcs(2)
 					label(3), mean_mpcs(3)
 					label(4), mean_mpcs(4)
-					cum_label, stats.mpcs(ishock).avg_0_annual
+					cum_label, ann_mpc
 		};
 
 	output_table = append_to_table(output_table, new_entries);

@@ -2,6 +2,7 @@ classdef ParamsDefaults < handle
 	properties (SetAccess=protected)
         % Run options
         ComputeMPCS = false;
+        ComputeMPCS_illiquid = false;
         SimulateMPCS = false;
         ComputeMPCS_news = false;
         SimulateMPCS_news = false;
@@ -208,6 +209,7 @@ classdef ParamsDefaults < handle
         MPC_delta = 0.005;
         MPC_interp_method = "linear";
         mpc_options;
+        mpc_options_illiquid;
 
         % Options for MPCs out of news
         MPCS_News_delta_terminal = 1e-3;

@@ -17,6 +17,10 @@ function [stats,p] = main(runopts, p)
     import HACTLib.model_objects.Grid
     import HACTLib.model_objects.Income
 
+    if p.OneAsset
+        p.set("ComputeMPCS_illiquid", false, true)
+    end
+
     %% --------------------------------------------------------------------
     % CREATE GRID, INCOME OBJECTS
     % ---------------------------------------------------------------------
@@ -75,7 +79,7 @@ function [stats,p] = main(runopts, p)
     % COMPUTE STATISTICS
     % -----------------------------------------------------------------
     fprintf('\nComputing statistics\n')
-    stats = statistics.compute_statistics(p,income,grd,grdKFE,KFE);
+    stats = statistics.compute_statistics(p, income, grd, grdKFE, KFE);
 
     %% ----------------------------------------------------------------
     % COMPUTE MPCs
@@ -83,7 +87,9 @@ function [stats,p] = main(runopts, p)
     stats.mpcs = struct();
 
     import HACTLib.computation.MPCs
+
     mpc_finder = MPCs(p, income, grdKFE, p.mpc_options);
+    mpc_finder_illiquid = MPCs(p, income, grdKFE, p.mpc_options_illiquid);
 
     shocks = [4,5,6];
     import HACTLib.computation.MPCsNews
@@ -93,10 +99,23 @@ function [stats,p] = main(runopts, p)
     	fprintf('\nComputing MPCs out of an immediate shock...\n')
         mpc_finder.solve(KFE, stats.pmf, Au);
     end
+
+    if p.ComputeMPCS_illiquid
+        fprintf('\nComputing illiquid MPCs out of an immediate shock...\n')
+        mpc_finder_illiquid.solve(KFE, stats.pmf, Au);
+    end
+
     for ishock = 1:6
         stats.mpcs(ishock).avg_0_quarterly = mpc_finder.mpcs(ishock).quarterly;
         stats.mpcs(ishock).avg_0_annual = mpc_finder.mpcs(ishock).annual;
         stats.mpcs(ishock).mpcs = mpc_finder.mpcs(ishock).mpcs;
+
+        stats.mpcs_illiquid(ishock).avg_0_quarterly...
+            = mpc_finder_illiquid.mpcs(ishock).quarterly;
+        stats.mpcs_illiquid(ishock).avg_0_annual...
+            = mpc_finder_illiquid.mpcs(ishock).annual;
+        stats.mpcs_illiquid(ishock).mpcs...
+            = mpc_finder_illiquid.mpcs(ishock).mpcs;
     end
     
     if p.ComputeMPCS_news == 1
@@ -187,13 +206,12 @@ function [stats,p] = main(runopts, p)
         grd.b.matrix = [];
     end
     
-    if p.ComputeMPCS
-	    stats.mpcs(1).mpcs_0_t = [];
-	    stats.mpcs(2).mpcs_0_t = [];
-	    stats.mpcs(3).mpcs_0_t = [];
-	    stats.mpcs(4).mpcs_0_t = [];
-	    stats.mpcs(6).mpcs_0_t = [];
-	end
+    for ii = 1:6
+        if ii ~= 5
+	       stats.mpcs(ii).mpcs = [];
+        end
+        stats.mpcs_illiquid(ii).mpcs = [];
+    end
     
     if p.SaveResults == 1
     	spath = fullfile(runopts.savedir, ['output_' runopts.suffix '.mat']);
