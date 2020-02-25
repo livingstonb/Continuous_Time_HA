@@ -4,8 +4,8 @@ function outparams = params_adj_cost_tests(runopts)
 	% chi1s = [0.01, 0.05, 0.1, 0.15, 0.2];
  %    chi2s = [0.1, 0.25, 0.5];
 
-    chi1s = [0.01:0.1:1.01];
-    chi2s = [0.01:0.05:0.51];
+    chi1s = [0.05 0.1 0.2:0.2:1];
+    chi2s = [0.01:0.01:0.05 0.1:0.1:0.5];
     ii = 1;
 
     shared_params.nb = 40;
@@ -23,6 +23,8 @@ function outparams = params_adj_cost_tests(runopts)
     shared_params.income_dir = 'continuous_b';
     shared_params.chi0 = 0;
     shared_params.a_lb = 0.25;
+
+    
 
     %% --------------------------------------------------------------------
     % BASELINE
@@ -48,8 +50,9 @@ function outparams = params_adj_cost_tests(runopts)
 		    params(ii).name = sprintf('chi1=%g, chi2=%g',chi1, chi2);
 		    params(ii).chi1 = chi1;
 		    params(ii).chi2 = chi2;
-		    params(ii).rho = 0.015440584992491;
-		    params(ii).r_a = 0.02;
+		    params(ii).rho = 0.01;
+		    params(ii).r_a = 0.015;
+            params(ii).r_b = 0;
 		    ii = ii + 1;
 		end
 	end
@@ -84,8 +87,8 @@ function [fn_handle, x0] = mean_wealth_calibrator(p, runopts)
 	stat_target = [3.5, 0.5];
 	inits = [p.rho, p.r_a];
 
-	rho_bounds = [0.002, 0.4];
-	ra_bounds = [p.r_b+1e-4, 0.3];
+	rho_bounds = [0.002, 0.2];
+	ra_bounds = [p.r_b+1e-3, 0.1];
 
 	calibrator = AltCalibrator(p, runopts, param_name,...
         stat_name, stat_target);
@@ -109,8 +112,8 @@ function [fn_handle, x0] = median_wealth_calibrator(p, runopts)
 	stat_target = [1.7, 0.1];
 	inits = [p.rho, p.r_a];
 
-	rho_bounds = [0.002, 0.4];
-	ra_bounds = [p.r_b+1e-4, 0.3];
+	rho_bounds = [0.002, 0.2];
+    ra_bounds = [p.r_b+1e-3, 0.1];
 
 	calibrator = AltCalibrator(p, runopts, param_name,...
         stat_name, stat_target);
