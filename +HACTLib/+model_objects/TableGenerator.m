@@ -24,50 +24,52 @@ classdef TableGenerator < handle
 
 			output_table = table();
 			for ip = 1:numel(cases)
-				p = params(ip);
-				sts = stats(ip);
-				new_column = obj.intro_stats_table(p, sts);
+				p_ip = params(ip);
+				stats_ip = stats(ip);
+				new_column = obj.intro_stats_table(p_ip, stats_ip);
 
 				if obj.include_two_asset_stats
-					tmp = htm_stats_table(p, stats);
+					tmp = htm_stats_table(p_ip, stats_ip);
 					new_column = [new_column; tmp];
 				end
 
-				tmp = wconstraint_stats_table(p, stats, 'liquid');
+				tmp = wconstraint_stats_table(p_ip, stats_ip, 'liquid');
 				new_column = [new_column; tmp];
 
 				if obj.include_two_asset_stats
-					tmp = wconstraint_stats_table(p, stats, 'total');
+					tmp = wconstraint_stats_table(p_ip, stats_ip, 'total');
 					new_column = [new_column; tmp];
 
-					tmp = illiq_adj_table(p, stats);
+					tmp = illiq_adj_table(p_ip, stats_ip);
 					new_column = [new_column; tmp];
 				end
 
-				tmp = obj.wealth_pct_table(stats);
+				tmp = obj.wealth_pct_table(stats_ip);
 				new_column = [new_column; tmp];
 
 				if obj.mpcs_present
-					for ishock = 1:numel(p.mpc_shocks)
-						tmp = mpcs_table(p, stats, ishock, true);
+					for ishock = 1:numel(p_ip.mpc_shocks)
+						tmp = mpcs_table(p_ip, stats_ip, ishock, true);
 						new_column = [new_column; tmp];
 					end
 
 					if obj.illiquid_mpcs_present
-						for ishock = 1:numel(p.mpc_shocks)
-							tmp = mpcs_table(p, stats, ishock, false);
+						for ishock = 1:numel(p_ip.mpc_shocks)
+							tmp = mpcs_table(p_ip, stats_ip, ishock, false);
 							new_column = [new_column; tmp];
 						end
 					end
 				end
 
 				if obj.decomp_norisk_present
-					for ithresh = 1:numel(p.decomp_thresholds)
-						tmp = decomp_norisk_table(p, stats, ithresh);
+					for ithresh = 1:numel(p_ip.decomp_thresholds)
+						tmp = decomp_norisk_table(p_ip, stats_ip, ithresh);
 						new_column = [new_column; tmp];
 					end
 				end
 
+				column_label = sprintf('Specification%d', p.param_index);
+				new_column.Properties.VariableNames = {column_label};
 				output_table = [output_table, new_column];
 			end
 		end
@@ -77,7 +79,9 @@ classdef TableGenerator < handle
 			obj.illiquid_mpcs_present = any([params.ComputeMPCS_illiquid]);
 			obj.mpcs_news_present = any([params.ComputeMPCS_news]);
 			obj.include_two_asset_stats = any(~[params.OneAsset]);
-			obj.decomp_norisk_present = any([stats.decomp_norisk.completed]);
+
+			tmp = [stats.decomp_norisk];
+			obj.decomp_norisk_present = any([tmp.completed]);
 		end
 
 		function out = intro_stats_table(obj, p, stats)
