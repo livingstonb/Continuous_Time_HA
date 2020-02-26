@@ -4,8 +4,8 @@ function outparams = params_adj_cost_tests(runopts)
 	% chi1s = [0.01, 0.05, 0.1, 0.15, 0.2];
  %    chi2s = [0.1, 0.25, 0.5];
 
-    chi1s = [0.05 0.1 0.2:0.2:1];
-    chi2s = [0.01:0.01:0.05 0.1:0.1:0.5];
+    % chi1s = [0.05 0.1 0.2:0.2:1];
+    % chi2s = [0.01:0.01:0.05 0.1:0.1:0.5];
     ii = 1;
 
     shared_params.nb = 40;
@@ -21,15 +21,14 @@ function outparams = params_adj_cost_tests(runopts)
     shared_params.a_gcurv = 0.3;
     shared_params.OneAsset = 0;
     shared_params.income_dir = 'continuous_b';
-    shared_params.chi0 = 0;
-    shared_params.a_lb = 0.25;
-
     
 
     %% --------------------------------------------------------------------
     % BASELINE
     % ---------------------------------------------------------------------
     params(ii).name = 'baseline';
+    params(ii).chi0 = 0;
+    params(ii).a_lb = 0.25;
     params(ii).chi1 = 0.15;
     params(ii).chi2 = 0.25;
     params(ii).rho = 0.014314321222056;
@@ -45,17 +44,29 @@ function outparams = params_adj_cost_tests(runopts)
     % Need P(b <= 1/6 quarterly inc) ~= 1/3
     % Need Wealthy HtM / Total HtM ~= 2/3
 
-    for chi1 = chi1s
-    	for chi2 = chi2s
-		    params(ii).name = sprintf('chi1=%g, chi2=%g',chi1, chi2);
-		    params(ii).chi1 = chi1;
-		    params(ii).chi2 = chi2;
-		    params(ii).rho = 0.01;
-		    params(ii).r_a = 0.015;
-            params(ii).r_b = 0;
-		    ii = ii + 1;
-		end
-	end
+    chi1s = [0.1 0.5 1];
+    chi2s = [0.05 0.1 0.5];
+    chi0s = [0 0.1 1];
+    a_lbs = [0.1 0.25 0.5];
+
+    for chi0 = chi0s
+        for a_lb = a_lbs
+            for chi1 = chi1s
+            	for chi2 = chi2s
+        		    params(ii).name = sprintf('chi0=%g, a_lb=%g, chi1=%g, chi2=%g',...
+                        chi0, a_lb, chi1, chi2);
+                    params(ii).a_lb = a_lb;
+                    params(ii).chi0 = chi0;
+        		    params(ii).chi1 = chi1;
+        		    params(ii).chi2 = chi2;
+        		    params(ii).rho = 0.005;
+        		    params(ii).r_a = 0.015;
+                    params(ii).r_b = 0.005;
+        		    ii = ii + 1;
+        		end
+        	end
+        end
+    end
 
 	params = set_shared_fields(params, shared_params);
 
@@ -87,7 +98,7 @@ function [fn_handle, x0] = mean_wealth_calibrator(p, runopts)
 	stat_target = [3.5, 0.5];
 	inits = [p.rho, p.r_a];
 
-	rho_bounds = [0.002, 0.2];
+	rho_bounds = [0.001, 0.05];
 	ra_bounds = [p.r_b+1e-3, 0.1];
 
 	calibrator = AltCalibrator(p, runopts, param_name,...
