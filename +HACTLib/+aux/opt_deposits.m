@@ -1,6 +1,6 @@
 function d = opt_deposits(Va, Vb, a_grid, p)
 	% computes the optimal deposit rate
-
+	%
 	% Parameters
 	% ----------
 	% Va : finite-difference approximation of the derivative of

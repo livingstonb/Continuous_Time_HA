@@ -37,7 +37,10 @@ classdef AdjustmentCost
 			% chi_prime : the derivative, same shape as d
 
 			d_scaled = d ./ max(a_grid, p.a_lb);
-			chi_prime = p.chi0 + sign(d) .* p.chi1 ^(-p.chi2) .* abs(d_scaled) .^ p.chi2;
+
+			linear_term = sign(d) * p.chi0;
+			power_term = sign(d) .* (abs(d_scaled) / p.chi1) .^ p.chi2;
+			chi_prime = linear_term + power_term;
 		end
 
 		function d = derivative_inverse(y, a_grid, p)

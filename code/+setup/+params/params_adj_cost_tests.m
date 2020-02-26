@@ -32,8 +32,8 @@ function outparams = params_adj_cost_tests(runopts)
     params(ii).name = 'baseline';
     params(ii).chi1 = 0.15;
     params(ii).chi2 = 0.25;
-    params(ii).rho = 0.015440584992491;
-    params(ii).r_a = 0.0190643216;
+    params(ii).rho = 0.014314321222056;
+    params(ii).r_a = 0.019580182844625;
     ii = ii + 1;
 
     %% --------------------------------------------------------------------

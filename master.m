@@ -24,25 +24,25 @@
 % are stored in the Output directory
 
 clear all
-warning('off','MATLAB:nearlySingularMatrix')
+warning('off', 'MATLAB:nearlySingularMatrix')
 
 %% ------------------------------------------------------------------------
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.calibrate = true;
-runopts.Server = 1; % sets fast=0, param_index=slurm env var
+runopts.calibrate = false;
+runopts.Server = 0; % sets fast=0, param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'params_adj_cost_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
-runopts.ComputeMPCS = true;
-runopts.ComputeMPCS_illiquid = true;
+runopts.ComputeMPCS = false;
+runopts.ComputeMPCS_illiquid = false;
 runopts.SimulateMPCS = false; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = false; % MPCs out of news, requires ComputeMPCS = 1
 runopts.SimulateMPCS_news = false; % NOT CODED?
 
 % whether or not to account for b = bmin, a > 0 case where household
 % withdraws only enough to consume
-runopts.DealWithSpecialCase = 0;  
+runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
