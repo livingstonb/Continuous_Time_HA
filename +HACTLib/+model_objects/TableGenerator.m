@@ -68,7 +68,7 @@ classdef TableGenerator < handle
 					end
 				end
 
-				column_label = sprintf('Specification%d', p.param_index);
+				column_label = sprintf('Specification%d', p_ip.param_index);
 				new_column.Properties.VariableNames = {column_label};
 				output_table = [output_table, new_column];
 			end
