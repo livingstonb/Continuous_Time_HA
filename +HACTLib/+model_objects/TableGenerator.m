@@ -89,7 +89,10 @@ classdef TableGenerator < handle
 				'VariableNames', {'results'},...
 				'RowNames', {'Model'});
 
-			new_entries = {	'chi1', p.chi1, true
+			new_entries = {
+							'a_lb', p.a_lb, true
+							'chi0', p.chi0, true
+							'chi1', p.chi1, true
 							'chi2', p.chi2, true
 							'chi1^(-chi2)/(1+chi2)', stats.adjcosts.chivar, true
 							'rho', p.rho, false
@@ -98,6 +101,8 @@ classdef TableGenerator < handle
 							'Mean Illiq Assets', stats.illiqw, true
 							'Mean Liq Assets', stats.liqw, false
 							'Mean Total Assets', stats.totw, true
+							'Median Liq Assets', stats.median_liqw, false
+							'Median Total Assets', stats.median_totw, true
 							'Wealth, Top 10% Share', stats.top10share, false
 							'Wealth, Top 1% Share', stats.top1share, false
 							'Gini (total assets)', stats.wgini, false
