@@ -25,6 +25,7 @@ classdef AltCalibrator < handle
 			obj.options.SimulateMPCS = params.SimulateMPCS;
 			obj.options.ComputeMPCS_news = params.ComputeMPCS_news;
 			obj.options.SimulateMPCS_news = params.SimulateMPCS_news;
+			obj.options.SaveResults = params.SaveResults;
 
 			obj.variables = variables;
 

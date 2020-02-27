@@ -33,9 +33,9 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 runopts.calibrate = true;
 runopts.Server = 1; % sets fast=0, param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
-runopts.mode = 'params_adj_cost_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
-runopts.ComputeMPCS = true;
-runopts.ComputeMPCS_illiquid = true;
+runopts.mode = 'SDU_tests_new'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
+runopts.ComputeMPCS = false;
+runopts.ComputeMPCS_illiquid = false;
 runopts.SimulateMPCS = false; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = false; % MPCs out of news, requires ComputeMPCS = 1
 runopts.SimulateMPCS_news = false; % NOT CODED?
@@ -46,7 +46,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 1;
+runopts.param_index = 9;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -106,6 +106,8 @@ elseif strcmp(runopts.mode,'get_params')
 	p = setup.params.get_params(runopts);
 elseif strcmp(runopts.mode, 'SDU_tests')
     p = setup.params.SDU_tests(runopts);
+elseif strcmp(runopts.mode, 'SDU_tests_new')
+    p = setup.params.SDU_tests_new(runopts);
 elseif strcmp(runopts.mode, 'endog_labor_tests')
 	p = setup.params.endog_labor_tests(runopts);
 elseif strcmp(runopts.mode, 'params_one_asset')
