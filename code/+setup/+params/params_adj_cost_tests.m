@@ -46,7 +46,7 @@ function outparams = params_adj_cost_tests(runopts)
 
     chi1s = [0.1 0.5 1];
     chi2s = [0.05 0.1 0.5];
-    chi0s = [0 0.0.01 0.1];
+    chi0s = [0 0.01 0.1];
     a_lbs = [0.1 0.25 0.5];
 
     for chi0 = chi0s
