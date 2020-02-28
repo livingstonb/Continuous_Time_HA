@@ -46,7 +46,7 @@ function outparams = params_adj_cost_tests(runopts)
 
     chi1s = [0.1 0.5 1];
     chi2s = [0.05 0.1 0.5];
-    chi0s = [0 0.1 1];
+    chi0s = [0 0.0.01 0.1];
     a_lbs = [0.1 0.25 0.5];
 
     for chi0 = chi0s
@@ -62,6 +62,10 @@ function outparams = params_adj_cost_tests(runopts)
         		    params(ii).rho = 0.005;
         		    params(ii).r_a = 0.015;
                     params(ii).r_b = 0.005;
+                    % params(ii).Bequests = true;
+                    params(ii).dieprob = 0;
+
+                    params(ii).KFE_maxiters = 1e5;
         		    ii = ii + 1;
         		end
         	end
@@ -80,23 +84,22 @@ function outparams = params_adj_cost_tests(runopts)
     %% ATTACH CALIBRATOR
     if runopts.calibrate
         if strcmp(outparams.name, 'baseline')
-        	[fn_handle, x0] = mean_wealth_calibrator(outparams, runopts);
+        	calibrator = mean_wealth_calibrator(outparams, runopts);
         else
-    	    [fn_handle, x0] = median_wealth_calibrator(outparams, runopts);
+    	    calibrator = median_wealth_calibrator(outparams, runopts);
     	end
 
-    	outparams.set("calibrator", fn_handle, true);
-        outparams.set("x0_calibration", x0, true);
+        calibrator.set_handle(outparams);
+    	outparams.set("calibrator", calibrator, true);
     end
 end
 
-function [fn_handle, x0] = mean_wealth_calibrator(p, runopts)
+function calibrator = mean_wealth_calibrator(p, runopts)
 	import HACTLib.model_objects.AltCalibrator
 
 	param_name = {'rho', 'r_a'};
 	stat_name = {'totw', 'liqw'};
 	stat_target = [3.5, 0.5];
-	inits = [p.rho, p.r_a];
 
 	rho_bounds = [0.001, 0.05];
 	ra_bounds = [p.r_b+1e-3, 0.1];
@@ -106,24 +109,17 @@ function [fn_handle, x0] = mean_wealth_calibrator(p, runopts)
 
     calibrator.set_param_bounds(1, rho_bounds);
 	calibrator.set_param_bounds(2, ra_bounds);
-
-    for ii = 1:numel(inits)
-    	x0(ii) = calibrator.convert_to_solver_input(inits(ii), ii);
-    end
-
-    fn_handle = @(x) calibrator.fn_handle(x, p);
 end
 
-function [fn_handle, x0] = median_wealth_calibrator(p, runopts)
+function calibrator = median_wealth_calibrator(p, runopts)
 	import HACTLib.model_objects.AltCalibrator
 
 	% Vary (rho, r_a) to match median(a+b) = 1.6, median(b) = 0.1
 	param_name = {'rho', 'r_a'};
 	stat_name = {'median_totw', 'median_liqw'};
 	stat_target = [1.7, 0.1];
-	inits = [p.rho, p.r_a];
 
-	rho_bounds = [0.002, 0.2];
+	rho_bounds = [0.001, 0.05];
     ra_bounds = [p.r_b+1e-3, 0.1];
 
 	calibrator = AltCalibrator(p, runopts, param_name,...
@@ -131,12 +127,6 @@ function [fn_handle, x0] = median_wealth_calibrator(p, runopts)
 
     calibrator.set_param_bounds(1, rho_bounds);
 	calibrator.set_param_bounds(2, ra_bounds);
-
-    for ii = 1:numel(inits)
-    	x0(ii) = calibrator.convert_to_solver_input(inits(ii), ii);
-    end
-
-    fn_handle = @(x) calibrator.fn_handle(x, p);
 end
 
 % function [fn_handle, x0] = four_stat_calibrator(p, runopts)

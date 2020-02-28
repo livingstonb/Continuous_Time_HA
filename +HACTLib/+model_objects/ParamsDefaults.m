@@ -168,11 +168,8 @@ classdef ParamsDefaults < handle
         % CALIBRATION
         % --------------------------------------------
 
-        % Function handle for fsolve
+        % Function handle for ls
         calibrator;
-
-        % Initial values for fsolve
-        x0_calibration;
 
     	% ------------ taxes ------------------------------
     	transfer = 0; % transfer to households 

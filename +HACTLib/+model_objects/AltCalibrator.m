@@ -12,6 +12,10 @@ classdef AltCalibrator < handle
 
 		lbounds;
 		ubounds;
+
+		x0;
+
+		solver_handle;
 	end
 
 	methods
@@ -25,6 +29,7 @@ classdef AltCalibrator < handle
 			obj.options.SimulateMPCS = params.SimulateMPCS;
 			obj.options.ComputeMPCS_news = params.ComputeMPCS_news;
 			obj.options.SimulateMPCS_news = params.SimulateMPCS_news;
+			obj.options.NoRisk = params.NoRisk;
 			obj.options.SaveResults = params.SaveResults;
 
 			obj.variables = variables;
@@ -35,6 +40,10 @@ classdef AltCalibrator < handle
 			obj.nvars = numel(variables);
 			obj.lbounds = NaN(obj.nvars, 1);
 			obj.ubounds = NaN(obj.nvars, 1);
+
+			for i_var = 1:obj.nvars
+				obj.x0(i_var) = params.(obj.variables{i_var});
+			end
 		end
 
 		function set_param_bounds(obj, i_var, bounds)
@@ -42,18 +51,15 @@ classdef AltCalibrator < handle
 			obj.ubounds(i_var) = bounds(2);
 		end
 
+		function set_handle(obj, p)
+			obj.solver_handle = @(x) obj.fn_handle(x, p);
+		end
+
 		function dv = fn_handle(obj, x, current_params)
 			obj.turn_off_param_options(current_params);
 
 			for i_var = 1:obj.nvars
-				if ~isnan(obj.lbounds(i_var))
-					new_value(i_var) = obj.convert_to_param_value(...
-						x(i_var), i_var);
-				else
-					new_value(i_var) = x(i_var);
-				end
-
-				current_params.set(obj.variables{i_var}, new_value(i_var));
+				current_params.set(obj.variables{i_var}, x(i_var));
 			end
 			stats = main(obj.runopts, current_params);
 
@@ -64,7 +70,7 @@ classdef AltCalibrator < handle
 			fprintf('\n\n---- For ')
 			for i_var = 1:obj.nvars
 				v(i_var) = stats.(obj.target_names{i_var});
-				fprintf('%s = %g', obj.variables{i_var}, new_value(i_var))
+				fprintf('%s = %g', obj.variables{i_var}, x(i_var))
 				if i_var < obj.nvars
 					fprintf(", ")
 				else
@@ -100,20 +106,6 @@ classdef AltCalibrator < handle
 			for ip = 1:numel(props)
 				params.set(props{ip}, obj.options.(props{ip}), quiet);
 			end
-		end
-
-		function val = convert_to_param_value(obj, z, i_var)
-			lb = obj.lbounds(i_var);
-			ub = obj.ubounds(i_var);
-			tmp = abs(z) / (1 + abs(z));
-			val = lb + tmp * (ub - lb);
-		end
-
-		function z = convert_to_solver_input(obj, param_value, i_var)
-			lb = obj.lbounds(i_var);
-			ub = obj.ubounds(i_var);
-			tmp = (param_value - lb) / (ub - lb);
-			z = tmp / (1 - tmp);
 		end
 	end
 end

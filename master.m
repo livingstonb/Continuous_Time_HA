@@ -33,9 +33,9 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 runopts.calibrate = true;
 runopts.Server = 1; % sets fast=0, param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
-runopts.mode = 'SDU_tests_new'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
-runopts.ComputeMPCS = false;
-runopts.ComputeMPCS_illiquid = false;
+runopts.mode = 'params_adj_cost_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
+runopts.ComputeMPCS = true;
+runopts.ComputeMPCS_illiquid = true;
 runopts.SimulateMPCS = false; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = false; % MPCs out of news, requires ComputeMPCS = 1
 runopts.SimulateMPCS_news = false; % NOT CODED?
@@ -46,7 +46,7 @@ runopts.DealWithSpecialCase = 0;
 
 % Select which parameterization to run from parameters file
 % (ignored when runops.Server = 1)
-runopts.param_index = 9;
+runopts.param_index = 1;
 
 runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -118,10 +118,14 @@ end
 p.print();
 
 %% ------------------------------------------------------------------------
-% CALIBRATING WITH FSOLVE
+% CALIBRATING WITH LS
 % -------------------------------------------------------------------------
 if ~isempty(p.calibrator)
-    calibrated_params = fsolve(p.calibrator, p.x0_calibration);
+	lbounds = p.calibrator.lbounds;
+	ubounds = p.calibrator.ubounds;
+    x0 = p.calibrator.x0;
+    calibrated_params = lsqnonlin(p.calibrator.solver_handle,...
+    	x0, lbounds, ubounds);
 end
 
 % %% ------------------------------------------------------------------------

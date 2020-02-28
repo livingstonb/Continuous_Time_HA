@@ -264,7 +264,7 @@ function [fn_handle, x0] = rho_calibrator(p, runopts)
     ra_bounds = [p.r_b+1e-3, 0.1];
 
     calibrator = AltCalibrator(p, runopts, param_name,...
-        stat_name, stat_target);
+        stat_name, stat_target, true);
 
     calibrator.set_param_bounds(1, rho_bounds);
     calibrator.set_param_bounds(2, ra_bounds);
@@ -288,7 +288,7 @@ function [fn_handle, x0] = returns_calibrator(p, runopts)
     ra_bounds = [0.001, 0.1];
 
     calibrator = AltCalibrator(p, runopts, param_name,...
-        stat_name, stat_target);
+        stat_name, stat_target, true);
 
     calibrator.set_param_bounds(1, rb_bounds);
     calibrator.set_param_bounds(2, ra_bounds);
