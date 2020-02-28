@@ -31,7 +31,7 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % -------------------------------------------------------------------------
 
 runopts.calibrate = true;
-runopts.Server = 1; % sets fast=0, param_index=slurm env var
+runopts.Server = 0; % sets fast=0, param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
 runopts.mode = 'params_adj_cost_tests'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = true;
@@ -92,33 +92,11 @@ cd(runopts.direc)
 %% --------------------------------------------------------------------
 % GET PARAMETERS
 % ---------------------------------------------------------------------
-if strcmp(runopts.mode,'grid_test')
-	p = setup.params.grid_test_params(runopts);
-elseif strcmp(runopts.mode,'chi0_tests')
-    p = setup.params.chi0_tests(runopts);
-elseif strcmp(runopts.mode,'chi1_chi2_tests')
-    p = setup.params.chi1_chi2_tests(runopts);
-elseif strcmp(runopts.mode,'table_tests')
-    p = setup.params.table_tests(runopts);
-elseif strcmp(runopts.mode,'table_tests_bequests')
-    p = setup.params.table_tests_bequests(runopts);
-elseif strcmp(runopts.mode,'get_params')
-	p = setup.params.get_params(runopts);
-elseif strcmp(runopts.mode, 'SDU_tests')
-    p = setup.params.SDU_tests(runopts);
-elseif strcmp(runopts.mode, 'SDU_tests_new')
-    p = setup.params.SDU_tests_new(runopts);
-elseif strcmp(runopts.mode, 'endog_labor_tests')
-	p = setup.params.endog_labor_tests(runopts);
-elseif strcmp(runopts.mode, 'params_one_asset')
-	p = setup.params.params_one_asset(runopts);
-elseif strcmp(runopts.mode, 'params_adj_cost_tests')
-	p = setup.params.params_adj_cost_tests(runopts);
-end
+p = setup.params.(runopts.mode)(runopts);
 p.print();
 
 %% ------------------------------------------------------------------------
-% CALIBRATING WITH LS
+% CALIBRATING WITH SOLVER
 % -------------------------------------------------------------------------
 if ~isempty(p.calibrator)
 	lbounds = p.calibrator.lbounds;
@@ -127,47 +105,6 @@ if ~isempty(p.calibrator)
     calibrated_params = lsqnonlin(p.calibrator.solver_handle,...
     	x0, lbounds, ubounds);
 end
-
-% %% ------------------------------------------------------------------------
-% % CALIBRATING WITH FSOLVE
-% % -------------------------------------------------------------------------
-% import HACTLib.model_objects.AltCalibrator
-% n_calibrations = 0;
-
-% % Vary (rho, r_a) to match median(a+b) = 1.6, median(b) = 0.1
-% param_name = {'rho', 'r_a'};
-% stat_name = {'median_totw', 'median_liqw'};
-% stat_target = [1.6, 0.1];
-% inits = [p.rho, p.r_a];
-% n_calibrations = n_calibrations + 1;
-
-% if p.OneAsset
-% 	param_name = param_name(1);
-% 	stat_name = stat_name(1);
-% 	stat_target = stat_target(1);
-% 	inits = inits(1);
-% end
-
-% rho_bounds = [0.002, 0.4];
-% ra_bounds = [p.r_b+1e-4, 0.3];
-
-% if n_calibrations == 1
-%     calibrator = AltCalibrator(p, runopts, param_name,...
-%         stat_name, stat_target);
-
-%     calibrator.set_param_bounds(1, rho_bounds);
-%     if ~p.OneAsset
-%     	calibrator.set_param_bounds(2, ra_bounds);
-%     end
-
-%     for ii = 1:numel(inits)
-%     	z_inits(ii) = calibrator.convert_to_solver_input(inits(ii), ii);
-%     end
-
-%     calibrated_params = fsolve(@(x) calibrator.fn_handle(x, p), z_inits(:));
-% elseif n_calibrations > 1
-%     error("Ensure that a max of one calibration is selected")
-% end
 
 %% ------------------------------------------------------------------------
 % CALL MAIN FUNCTION FILE
@@ -190,33 +127,7 @@ end
 % else
 % 	[r_b_0, r_a_0] = setup.initial_returns_new_adjcosts_ra5_calibration(p);
 % end
-% 
-% % start iteration
-% calibrator = HACTLib.computation.Calibrator(runopts, p, "r_b, r_a");
-% x0 = calibrator.create_initial_condition([r_b_0, r_a_0]);
-% 
-% opts = optimoptions('fsolve', 'MaxFunctionEvaluations', 400, 'MaxIterations', 600);
-% fsolve(calibrator.objective, x0, opts);
-% p.set("NoRisk", 1);
-% p.set("ComputeMPCS", 1);
-% p.set("SaveResults", 1);
 
-
-%% r_a, rho calibration
-% calibrator = HACTLib.computation.Calibrator(runopts, p, "r_a, rho");
-% x0 = calibrator.create_initial_condition([0.066513, 0.142622]);
-% fsolve(calibrator.objective, x0);
-% p.set("NoRisk", 1);
-% p.set("ComputeMPCS", 1);
-% p.set("SaveResults", 1);
-
-%% rho calibration
-% calibrator = HACTLib.computation.Calibrator(runopts, p, "rho");
-% x0 = calibrator.create_initial_condition(0.035);
-% fsolve(calibrator.objective, x0);
-% p.set("NoRisk", 1);
-% p.set("ComputeMPCS", 1);
-% p.set("SaveResults", 1);
 
 % final run
 tic

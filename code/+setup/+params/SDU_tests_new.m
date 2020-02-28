@@ -241,15 +241,14 @@ function outparams = SDU_tests(runopts)
     %% ATTACH CALIBRATOR
     if runopts.calibrate
         if strcmp(outparams.name, 'baseline')
-            [fn_handle, x0] = rho_calibrator(outparams, runopts);
+            calibrator = rho_calibrator(outparams, runopts);
         else
-            [fn_handle, x0] = returns_calibrator(outparams, runopts);
+            calibrator = returns_calibrator(outparams, runopts);
         end
 
-        outparams.set("calibrator", fn_handle, true);
-        outparams.set("x0_calibration", x0, true);
+        calibrator.set_handle(outparams);
+        outparams.set("calibrator", calibrator, true);
     end
-
 end
 
 function [fn_handle, x0] = rho_calibrator(p, runopts)
@@ -258,22 +257,15 @@ function [fn_handle, x0] = rho_calibrator(p, runopts)
     param_name = {'rho', 'r_a'};
     stat_name = {'totw', 'liqw'};
     stat_target = [3.5, 0.5];
-    inits = [p.rho, p.r_a];
 
     rho_bounds = [0.001, 0.05];
     ra_bounds = [p.r_b+1e-3, 0.1];
 
     calibrator = AltCalibrator(p, runopts, param_name,...
-        stat_name, stat_target, true);
+        stat_name, stat_target);
 
     calibrator.set_param_bounds(1, rho_bounds);
     calibrator.set_param_bounds(2, ra_bounds);
-
-    for ii = 1:numel(inits)
-        x0(ii) = calibrator.convert_to_solver_input(inits(ii), ii);
-    end
-
-    fn_handle = @(x) calibrator.fn_handle(x, p);
 end
 
 function [fn_handle, x0] = returns_calibrator(p, runopts)
@@ -282,20 +274,13 @@ function [fn_handle, x0] = returns_calibrator(p, runopts)
     param_name = {'r_b', 'r_a'};
     stat_name = {'totw', 'liqw'};
     stat_target = [3.5, 0.5];
-    inits = [p.r_b, p.r_a];
 
     rb_bounds = [-0.2, 0.02];
     ra_bounds = [0.001, 0.1];
 
     calibrator = AltCalibrator(p, runopts, param_name,...
-        stat_name, stat_target, true);
+        stat_name, stat_target);
 
     calibrator.set_param_bounds(1, rb_bounds);
     calibrator.set_param_bounds(2, ra_bounds);
-
-    for ii = 1:numel(inits)
-        x0(ii) = calibrator.convert_to_solver_input(inits(ii), ii);
-    end
-
-    fn_handle = @(x) calibrator.fn_handle(x, p);
 end
