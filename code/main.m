@@ -178,7 +178,7 @@ function [stats,p] = main(runopts, p)
     mpc_finder_norisk = HACTLib.computation.MPCs(...
     	p, income_norisk, grdKFE_norisk);
     
-    if p.ComputeMPCS == 1
+    if (p.ComputeMPCS == 1) && (p.NoRisk == 1)
     	fprintf('\nComputing MPCs for model without income risk...\n')
     	mpc_finder_norisk.solve(KFE_nr, stats.pmf_norisk, Au_nr);
     end
