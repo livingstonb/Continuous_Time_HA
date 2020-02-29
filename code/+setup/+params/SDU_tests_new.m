@@ -251,7 +251,7 @@ function outparams = SDU_tests(runopts)
     end
 end
 
-function [fn_handle, x0] = rho_calibrator(p, runopts)
+function calibrator = rho_calibrator(p, runopts)
     import HACTLib.model_objects.AltCalibrator
 
     param_name = {'rho', 'r_a'};
@@ -268,7 +268,7 @@ function [fn_handle, x0] = rho_calibrator(p, runopts)
     calibrator.set_param_bounds(2, ra_bounds);
 end
 
-function [fn_handle, x0] = returns_calibrator(p, runopts)
+function calibrator = returns_calibrator(p, runopts)
     import HACTLib.model_objects.AltCalibrator
 
     param_name = {'r_b', 'r_a'};
