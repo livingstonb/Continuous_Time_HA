@@ -35,6 +35,9 @@ classdef Grid < handle
 		% The illiquid asset grids.
 		a = struct();
 
+		% Total wealth.
+		w = struct();
+
 		% Dimension for preference/other heterogeneity.
 		z = struct();
 
@@ -316,6 +319,11 @@ classdef Grid < handle
 			obj.b.matrix = repmat(obj.b.vec, [1 obj.na obj.nz obj.ny]);
 		    assert(all(diff(obj.b.vec)>0), 'bgrid not strictly increasing')
 	    end
+
+	    % function create_wgrids(obj)
+	    % 	obj.w.matrix = obj.b.matrix = obj.a.matrix;
+
+	    % end
 
 	    function obj = set(obj, varname, value)
 	    	obj.(varname) = value;

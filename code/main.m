@@ -187,9 +187,16 @@ function [stats,p] = main(runopts, p)
     %% ----------------------------------------------------------------
     % DECOMPOSITIONS
     % -----------------------------------------------------------------
-    fprintf('\nPerforming decompositions (if applicable)...\n')
-    stats.decomp_norisk = statistics.decomp_wrt_norisk(p, grdKFE, stats, income);
-    stats.decompRA = statistics.decompRA(p, grdKFE, stats);
+    import HACTLib.computation.Decomp
+    decomp_obj = Decomp(p, grdKFE.b.vec, stats, income);
+
+    if (p.ComputeMPCS == 1) && (p.OneAsset == 1)
+        fprintf('\nPerforming decompositions...\n')
+        decomp_obj.compute();
+    end
+
+    stats.decomp_norisk = decomp_obj.results_norisk;
+    stats.decompRA = decomp_obj.results_RA;
     
     %% ----------------------------------------------------------------
     % HOUSEKEEPING

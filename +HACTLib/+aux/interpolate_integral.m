@@ -1,4 +1,4 @@
-function interpolant = interpolate_integral(grid_values, integrand_values, pmf)
+function interpolant = interpolate_integral(grid_values, integrand_values, pmf, varargin)
 	% Creates an interpolant that approximates the value of the integral
 	% int_0^{epsilon} values(a)g(a)da for a given epsilon.
 	%
@@ -15,22 +15,41 @@ function interpolant = interpolate_integral(grid_values, integrand_values, pmf)
 	% interpolant : A griddedInterpolant object such that interpolant(x)
 	%	is the approximated value of the integral from 0 to x.
 
-	validate_inputs(grid_values, integrand_values, pmf);
+	is_sorted = validate_inputs(...
+		grid_values, integrand_values, pmf, varargin{:});
 
-	sorted_inputs = sortrows([grid_values(:) integrand_values(:) pmf(:)]);
-	grid_sorted = sorted_inputs(:,1);
-	integrand_sorted = sorted_inputs(:,2);
-	pmf_sorted = sorted_inputs(:,3);
+	if ~is_sorted
+		sorted_inputs = sortrows([grid_values(:) integrand_values(:) pmf(:)]);
+		grid_values = sorted_inputs(:,1);
+		integrand_values = sorted_inputs(:,2);
+		pmf = sorted_inputs(:,3);
+	end
 
-	integral_values = cumsum(integrand_sorted .* pmf_sorted);
+	integral_values = cumsum(integrand_values .* pmf);
 
-	[grid_unique, unique_inds] = unique(grid_sorted,'last');
+	dsupport = pmf > 1e-6;
+	integral_values = integral_values(dsupport);
+	grid_values = grid_values(dsupport);
+
+	[grid_unique, unique_inds] = unique(grid_values,'last');
 	integral_unique = integral_values(unique_inds);
 
 	interpolant = griddedInterpolant(...
 		grid_unique, integral_unique, 'linear');
 end
 
-function validate_inputs(grid_values, integrand_values, pmf)
-	
+function is_sorted = validate_inputs(grid_values, integrand_values, pmf , varargin)
+	assert(numel(grid_values(:)) == numel(integrand_values(:)),...
+		"Inputs have inconsistent shapes");
+	assert(numel(grid_values(:)) == numel(pmf(:)),...
+		"Inputs have inconsistent shapes");
+	assert(~(isempty(grid_values) || isempty(integrand_values) || isempty(pmf)),...
+		"One or more imputs is empty");
+
+	is_sorted = false;
+	if ~isempty(varargin)
+		if islogical(varargin{1})
+			is_sorted = varargin{1};
+		end
+	end
 end

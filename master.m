@@ -30,12 +30,12 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.calibrate = true;
-runopts.Server = 1; % sets fast=0, param_index=slurm env var
+runopts.calibrate = false;
+runopts.Server = 0; % sets fast=0, param_index=slurm env var
 runopts.fast = 0; % use small grid for debugging
-runopts.mode = 'SDU_tests_new'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
+runopts.mode = 'get_params'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
 runopts.ComputeMPCS = true;
-runopts.ComputeMPCS_illiquid = true;
+runopts.ComputeMPCS_illiquid = false;
 runopts.SimulateMPCS = false; % also estimate MPCs by simulation
 runopts.ComputeMPCS_news = false; % MPCs out of news, requires ComputeMPCS = 1
 runopts.SimulateMPCS_news = false; % NOT CODED?
