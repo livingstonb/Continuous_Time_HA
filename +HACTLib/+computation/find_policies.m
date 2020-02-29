@@ -30,7 +30,6 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     nb = numel(grd.b.vec);
     nz = p.nz;
     ny = numel(income.y.vec);
-    y_mat = repmat(reshape(income.y.vec,[1 1 1 ny]),[nb na nz 1]);
 
     % Returns grid
     r_b_mat = p.r_b .* (grd.b.matrix>=0) +  p.r_b_borr .* (grd.b.matrix<0);

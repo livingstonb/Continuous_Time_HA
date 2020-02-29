@@ -35,7 +35,7 @@ function [stats,p] = main(runopts, p)
     p.set("ny", income.ny, true);
 
     % Natural borrowing limit
-    NBL = - min((1-p.wagetax-p.directdeposit)*income.y.vec+p.transfer) ...
+    NBL = - min(income.y.vec+p.transfer) ...
             / (p.r_b_borr + p.deathrate*p.perfectannuities);
     if p.bmin <= -1e10
         % Set "loose" borrowing limit

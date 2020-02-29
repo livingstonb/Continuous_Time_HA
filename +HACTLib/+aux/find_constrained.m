@@ -5,6 +5,10 @@ function fraction_below = find_constrained(values,pmf,thresholds)
 	values_sorted = sorted_by_values(:,1);
 	cdf_sorted = cumsum(sorted_by_values(:,2));
 
+	pmf_support = sorted_by_values(:,2) > 1e-5;
+	values_sorted = values_sorted(pmf_support);
+	cdf_sorted = cdf_sorted(pmf_support);
+
 	[values_unique,unique_indices] = unique(values_sorted,'last');
 	cdf_unique = cdf_sorted(unique_indices);
 

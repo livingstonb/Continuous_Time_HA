@@ -114,7 +114,7 @@ function outparams = SDU_tests(runopts)
                             case 1
                                 params(ii).r_b = 0.005;
                             case 2
-                                params(ii).r_b = 0;
+                                params(ii).r_b = -0.01;
                             case 5
                                 params(ii).r_b = -0.02;
                             case 10

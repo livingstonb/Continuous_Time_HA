@@ -1,4 +1,4 @@
-function stats = statistics(p,income,grd,grdKFE,KFE)
+function stats = statistics(p, income, grd, grdKFE, KFE)
 	% computes various statistics after solving the model
 
     import HACTLib.aux.compute_pct

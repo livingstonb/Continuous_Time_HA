@@ -67,9 +67,6 @@ classdef TransitionMatrixConstructor < handle
         % Offsets from the diagonal for risky returns.
         offsets_for_rr;
 
-        % Matrix of income values.
-        y_mat;
-
         % 'HJB' or 'KFE' grid
         gridtype;
     end
@@ -104,12 +101,6 @@ classdef TransitionMatrixConstructor < handle
             obj.income = income;
 
             obj.returns_risk = returns_risk;
-
-            if strcmp(obj.gridtype, 'KFE')
-                obj.y_mat = income.y.matrixKFE;
-            elseif strcmp(obj.gridtype, 'HJB')
-                obj.y_mat = income.y.matrix;
-            end
 
             if p.sigma_r > 0
                 obj.perform_returns_risk_computations();
