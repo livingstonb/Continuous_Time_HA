@@ -1,11 +1,9 @@
-function [stats,p] = main(runopts, p)
+function [stats,p] = main(p)
     % Instantiates necessary classes and calls functions to solve the
     % model and compute statistics
     %
     % Parameters
     % ----------
-    % runopts : a structure containing run options
-    %
     % p : a Params object containing model parameters
     %
     % Returns
@@ -24,13 +22,13 @@ function [stats,p] = main(runopts, p)
     %% --------------------------------------------------------------------
     % CREATE GRID, INCOME OBJECTS
     % ---------------------------------------------------------------------
-	income_path = fullfile(runopts.direc, 'input', p.income_dir);
+	income_path = fullfile(p.direc, 'input', p.income_dir);
 
     % Main income process
 	income = Income(income_path, p, false);
 
     % Turn off income risk (set y equal to the mean)
-    income_norisk = Income(runopts.direc, p, true);
+    income_norisk = Income(p.direc, p, true);
 
     p.set("ny", income.ny, true);
 
@@ -62,13 +60,11 @@ function [stats,p] = main(runopts, p)
     income.set_net_income(p, grd, grdKFE);
     income_norisk.set_net_income(p, grd_norisk, grdKFE_norisk);
 
-    runopts.RunMode = 'Final';
     model = HACTLib.model_objects.Model(p, grd, grdKFE, income);
     model.initialize();
     [HJB, KFE, Au] = model.solve();
 
     if p.NoRisk == 1
-        runopts.RunMode = 'NoRisk';
         model_nr = HACTLib.model_objects.Model(...
             p, grd_norisk, grdKFE_norisk, income_norisk);
         model_nr.initialize();
@@ -221,8 +217,7 @@ function [stats,p] = main(runopts, p)
     end
     
     if p.SaveResults == 1
-    	spath = fullfile(runopts.savedir, ['output_' runopts.suffix '.mat']);
-        save(spath,'stats','grd','grdKFE','p','KFE','income')
+        save(p.save_path,'stats','grd','grdKFE','p','KFE','income')
     end
     clear solver.two_asset.solver
     fprintf('\nCode finished for the parameterization: \n\t%s\n\n',p.name)

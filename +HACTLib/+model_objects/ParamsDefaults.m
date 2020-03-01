@@ -11,6 +11,7 @@ classdef ParamsDefaults < handle
         OneAsset = true;
         DealWithSpecialCase;
         NoRisk = true;
+        fast = false;
         
         % Name for the parameterization
         name = 'unnamed';
@@ -26,6 +27,10 @@ classdef ParamsDefaults < handle
 
         % Path to the temp directory
         temp_dir;
+
+        save_path;
+
+        direc;
 
         %% -------------------------------------------
     	% Liquid Asset Grid Parameters
@@ -168,15 +173,17 @@ classdef ParamsDefaults < handle
         % CALIBRATION
         % --------------------------------------------
 
-        % Function handle for ls
-        calibrator;
-
-    	% ------------ taxes ------------------------------
-    	transfer = 0; % transfer to households 
-    	wagetax = 0; % tax rate on wage income
-
     	% ------------ targets ----------------------------
-    	targetAY = 3.5; % target for mean assets / mean annual income
+        calibrate;
+        calibrator;
+    	calibration_vars;
+        calibration_stats;
+        calibration_targets;
+        calibration_bounds;
+
+        % ------------ taxes ------------------------------
+        transfer = 0; % transfer to households 
+        wagetax = 0; % tax rate on wage income
 
     	% ------------ approximation parameters -----------
     	% HJB loop

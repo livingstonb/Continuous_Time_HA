@@ -6,16 +6,16 @@
 %
 % (1) Set options in the section below. Directory only needs to be set for
 % either the server or the local directory, depending on whether
-% runopts.Server = 0 or 1
+% run_opts.Server = 0 or 1
 %
 % (2) Modify the parameters script 'code/+setup/+params/get_params.m' and make sure that 
-% runopts.mode is equal to 'get_params'. Note that all parameter defaults
+% run_opts.mode is equal to 'get_params'. Note that all parameter defaults
 % are set in the file HACTLib/+model_objects/ParamsDefaults.m, and get_params.m overrides
 % these defaults. Any parameters not in get_params.m are set to their
 % defaults. See the attributes of Params.m for a list of all
 % parameters.
 %
-% (3) Set runopts.param_index equal to the index of the parameterization
+% (3) Set run_opts.param_index equal to the index of the parameterization
 % you would like to run in the parameters file (1,2,...).
 %
 % RUNNING ON THE SERVER: To run in batch on the server, use 
@@ -30,69 +30,66 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-runopts.calibrate = false;
-runopts.Server = 0; % sets fast=0, param_index=slurm env var
-runopts.fast = 0; % use small grid for debugging
-runopts.mode = 'get_params'; % 'get_params', 'grid_tests', 'chi0_tests', 'chi1_chi2_tests', 'table_tests', 'SDU_tests'
-runopts.ComputeMPCS = true;
-runopts.ComputeMPCS_illiquid = false;
-runopts.SimulateMPCS = false; % also estimate MPCs by simulation
-runopts.ComputeMPCS_news = false; % MPCs out of news, requires ComputeMPCS = 1
-runopts.SimulateMPCS_news = false; % NOT CODED?
+param_opts.calibrate = true;
+param_opts.fast = true; % use small grid for debugging
+param_opts.ComputeMPCS = false;
+param_opts.ComputeMPCS_illiquid = false;
+param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
+param_opts.ComputeMPCS_news = false;
+param_opts.SimulateMPCS_news = false;
+param_opts.DealWithSpecialCase = false;
 
-% whether or not to account for b = bmin, a > 0 case where household
-% withdraws only enough to consume
-runopts.DealWithSpecialCase = 0;
-
-% Select which parameterization to run from parameters file
-% (ignored when runops.Server = 1)
-runopts.param_index = 1;
-
-runopts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-runopts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
-
+run_opts.Server = false;
+run_opts.param_index = 2;
+run_opts.param_script = 'SDU_tests_new';
+run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
+run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE
 % -------------------------------------------------------------------------
 
-if runopts.Server == 0
-	runopts.direc = runopts.localdir;
+if run_opts.Server == 0
+	param_opts.direc = run_opts.localdir;
 else
-	runopts.direc = runopts.serverdir;
-	runopts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));
+	param_opts.direc = run_opts.serverdir;
+	run_opts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));
     
-	runopts.fast = 0;
+	param_opts.fast = false;
 end
 
 % check that specified directories exist
-if ~exist(runopts.direc,'dir')
-    error([runopts.direc ' does not exist'])
+if ~exist(param_opts.direc, 'dir')
+    error(strcat(param_opts.direc, ' does not exist'))
 end
-    
-% for saving
-runopts.suffix = num2str(runopts.param_index);
 
 % directory to save output, and temp directory
-runopts.savedir = fullfile(runopts.direc, 'output');
+run_opts.save_dir = fullfile(param_opts.direc, 'output');
+
+% xlx path
+fname = sprintf('output_table_%d.xlsx', run_opts.param_index);
+run_opts.xlx_path = fullfile(run_opts.save_dir, fname);
+
+fname = sprintf('output_%d.mat', run_opts.param_index);
+param_opts.save_path = fullfile(run_opts.save_dir, fname);
 
 % temp directory
-runopts.temp = fullfile(runopts.direc, 'temp');
+param_opts.temp_dir = fullfile(param_opts.direc, 'temp');
 
-addpath(fullfile(runopts.direc, 'code'));
-addpath(fullfile(runopts.direc, 'factorization_lib'));
+addpath(fullfile(param_opts.direc, 'code'));
+addpath(fullfile(param_opts.direc, 'factorization_lib'));
 
-mkdir(runopts.temp);
-mkdir(runopts.savedir);
-addpath(runopts.temp);
-addpath(runopts.savedir);
+mkdir(param_opts.temp_dir);
+mkdir(run_opts.save_dir);
+addpath(param_opts.temp_dir);
+addpath(run_opts.save_dir);
 
-cd(runopts.direc)
+cd(param_opts.direc)
 
 %% --------------------------------------------------------------------
 % GET PARAMETERS
 % ---------------------------------------------------------------------
-p = setup.params.(runopts.mode)(runopts);
+p = setup.params.(run_opts.param_script)(param_opts, run_opts.param_index);
 p.print();
 
 %% ------------------------------------------------------------------------
@@ -135,10 +132,14 @@ end
 
 % final run
 tic
-stats = main(runopts, p);
+stats = main(p);
 toc
 
 experiment.p = p;
 experiment.stats = stats;
 table_gen = HACTLib.model_objects.TableGenerator();
 results_table = table_gen.create(experiment)
+
+if ~run_opts.Server
+    writetable(results_table, run_opts.xlx_path, 'WriteRowNames', true)
+end

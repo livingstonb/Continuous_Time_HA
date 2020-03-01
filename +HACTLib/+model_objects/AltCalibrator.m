@@ -19,9 +19,8 @@ classdef AltCalibrator < handle
 	end
 
 	methods
-		function obj = AltCalibrator(params, runopts, variables,...
+		function obj = AltCalibrator(params, variables,...
 			target_names, target_values)
-			obj.runopts = runopts;
 
 			obj.options = struct();
 			obj.options.ComputeMPCS = params.ComputeMPCS;
@@ -38,17 +37,32 @@ classdef AltCalibrator < handle
 			obj.target_values = target_values;
 
 			obj.nvars = numel(variables);
-			obj.lbounds = NaN(obj.nvars, 1);
-			obj.ubounds = NaN(obj.nvars, 1);
+			obj.lbounds = [];
+			obj.ubounds = [];
+
+			if obj.nvars ~= numel(obj.target_names)
+				error("Number of instruments and targets don't match")
+			elseif numel(obj.target_values) ~= numel(obj.target_names)
+				error("Too many/few values provided for targets")
+			end
 
 			for i_var = 1:obj.nvars
 				obj.x0(i_var) = params.(obj.variables{i_var});
 			end
 		end
 
-		function set_param_bounds(obj, i_var, bounds)
-			obj.lbounds(i_var) = bounds(1);
-			obj.ubounds(i_var) = bounds(2);
+		function set_param_bounds(obj, bounds)
+			if numel(bounds) ~= obj.nvars
+				error("Incorrect number of bounds provided")
+			end
+
+			for ii = 1:obj.nvars
+				bounds_ii = bounds{ii};
+				if ~isempty(bounds_ii)
+					obj.lbounds(ii) = bounds_ii(1);
+					obj.ubounds(ii) = bounds_ii(2);
+				end
+			end
 		end
 
 		function set_handle(obj, p)
@@ -61,11 +75,7 @@ classdef AltCalibrator < handle
 			for i_var = 1:obj.nvars
 				current_params.set(obj.variables{i_var}, x(i_var));
 			end
-			stats = main(obj.runopts, current_params);
-
-			for i_var = 1:obj.nvars
-				
-			end
+			stats = main(current_params);
 			
 			fprintf('\n\n---- For ')
 			for i_var = 1:obj.nvars

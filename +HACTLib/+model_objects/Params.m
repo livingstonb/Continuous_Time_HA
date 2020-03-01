@@ -5,18 +5,8 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
     % See the base class, ParamsDefaults, for default values.
 
     methods
-        function obj = Params(runopts, varargin)
-            
-        	obj.set_from_structure(varargin{:});
-
-        	obj.param_index = runopts.param_index;
-            obj.ComputeMPCS = runopts.ComputeMPCS;
-            obj.ComputeMPCS_illiquid = runopts.ComputeMPCS_illiquid;
-            obj.SimulateMPCS = runopts.SimulateMPCS;
-            obj.ComputeMPCS_news = runopts.ComputeMPCS_news;
-            obj.SimulateMPCS_news = runopts.SimulateMPCS_news;
-            obj.main_dir = runopts.direc;
-            obj.temp_dir = runopts.temp;
+        function obj = Params(varargin)
+            obj.set_from_structure(varargin{:});
             
             obj.kfe_options = struct(...
 				'maxiters', obj.KFE_maxiters,...
@@ -64,14 +54,11 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
                 obj.invies = obj.riskaver;
             end
 
-            obj.SimulateMPCS = runopts.SimulateMPCS;
-            obj.DealWithSpecialCase = runopts.DealWithSpecialCase;
-
             % adjust interest rates
             obj.r_b_borr = obj.r_b + obj.borrwedge;
 
             % adjust if oneasset is selected
-            if obj.OneAsset == 1
+            if obj.OneAsset
                 obj.na = 2;
                 obj.na_KFE = 2;
                 obj.b_gcurv_pos = 0.2;
@@ -82,7 +69,7 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
                 obj.r_a = obj.r_b;
             end
 
-            if runopts.fast == 1
+            if obj.fast
                 obj.nb = 16;
                 obj.nb_pos = 16;
                 obj.nb_neg = 0;
@@ -101,15 +88,19 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
             end
 
             % Set default grid sizes
-            if isempty(obj.nb_pos) == 1
+            if isempty(obj.nb_pos)
                 obj.nb_pos = obj.nb;
             end
-            if isempty(obj.nb_pos_KFE) == 1
+            if isempty(obj.nb_pos_KFE)
                 obj.nb_pos_KFE = obj.nb_KFE;
             end
             
             obj.nb_neg = obj.nb - obj.nb_pos;
             obj.nb_neg_KFE = obj.nb_KFE - obj.nb_pos_KFE;
+
+            if obj.calibrate
+                obj.set_calibrator();
+            end
         end
 
         function set_from_structure(obj, varargin)
@@ -186,6 +177,16 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
             if ~quiet
             	disp(strcat(field, sprintf(" has been reset to %.9f", new_val)));
             end
+        end
+
+        function set_calibrator(obj)
+            import HACTLib.model_objects.AltCalibrator
+
+            calibrator = AltCalibrator(obj, obj.calibration_vars,...
+                obj.calibration_stats, obj.calibration_targets);
+            calibrator.set_param_bounds(obj.calibration_bounds);
+            calibrator.set_handle(obj);
+            obj.calibrator = calibrator;
         end
 
         function print(obj)
