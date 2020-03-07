@@ -79,10 +79,8 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     % Top shares
     wealth_values = reshape(wealth_mat(:,:,1,1), [], 1);
     tmp = sort([wealth_values, stats.pmf_wealth(:)]);
-    % Amount of total assets that reside in each pt on sorted asset space
-    totassets = tmp(:,1) .* tmp(:,2);
-    % Fraction of total assets in each pt on asset space
-    cumassets = cumsum(totassets) / stats.totw;
+    % Cumulative faction of total assets in each pt on asset space
+    cumassets = cumsum(tmp(:,1) .* tmp(:,2)) / stats.totw;
     [cumassets, iu] = unique(cumassets, 'last');
     cdf_u = cumsum(tmp(:,2));
     cdf_u = cdf_u(iu);
@@ -95,10 +93,6 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     %% --------------------------------------------------------------------
     % CONSTRAINED HOUSEHOLDS
     % ---------------------------------------------------------------------
-    n_HtM = numel(p.epsilon_HtM);
-    stats.constrained = zeros(1, n_HtM);
-    stats.constrained_liq = zeros(1, n_HtM);
-
     % saving = 0
     temp = stats.pmf(KFE.s==0);
     stats.sav0 = sum(temp(:));
@@ -149,6 +143,15 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     [stats.b_hist.bins,stats.b_hist.values] = create_bins(1,grdKFE.b.matrix,dstr);
     [stats.a_hist.bins,stats.a_hist.values] = create_bins(1,grdKFE.a.matrix,dstr);
     [stats.w_hist.bins,stats.w_hist.values] = create_bins(1,wealth_mat,dstr);
+
+    import HACTLib.aux.smoothed_histogram
+    nbins = 100;
+    [stats.b_hist.bins, stats.b_hist.values] = smoothed_histogram(...
+        grdKFE.b.matrix(:), stats.pmf(:), nbins, 2);
+    [stats.a_hist.bins, stats.a_hist.values] = smoothed_histogram(...
+        grdKFE.a.matrix(:), stats.pmf(:), nbins, 5);
+    [stats.w_hist.bins, stats.w_hist.values] = smoothed_histogram(...
+        wealth_mat(:), stats.pmf(:), nbins, 10);
 
     %% --------------------------------------------------------------------
     % ADJUSTMENT COSTS
@@ -218,8 +221,8 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     
     bmin = grdKFE.b.matrix(:) == p.bmin;
     apos = grdKFE.a.matrix(:) > 0;
-    bdot0 = abs(KFE.bdot(:)) < 1e-6;
-    bdotpos = KFE.bdot(:) > 1e-6;
+    bdot0 = abs(KFE.bdot(:)) < 1e-7;
+    bdotpos = KFE.bdot(:) > 1e-7;
     adotpos = KFE.adot(:) > 0;
     adotneg = KFE.adot(:) < 0;
     dpos = KFE.d(:) > 0;
