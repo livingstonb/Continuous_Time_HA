@@ -111,31 +111,23 @@ classdef Decomp < handle
 		    for ia = 1:obj.nthresholds
 		    	abar = obj.p.decomp_thresholds(ia);
 		        
-		        if abar == min(obj.bgrid)
-		        	zidx = obj.bgrid <= abar;
-			        obj.results_norisk.term1(ia) = obj.m_ra;
-			        obj.results_norisk.term2(ia) = (obj.mpcs_b(1) - obj.m_ra)' * obj.pmf_b(1);
-			        obj.results_norisk.term3(ia) = (mpcs_b_nr(2:end) - obj.m_ra)' * obj.pmf_b(2:end);
-			        obj.results_norisk.term4(ia) = (obj.mpcs_b(2:end) - mpcs_b_nr(2:end))' * obj.pmf_b(2:end);
-			    else
-			    	pbelow = obj.cdf_b_interp(abar);
-			    	pabove = 1 - pbelow;
-			        obj.results_norisk.term1(ia) = obj.m_ra;
-			        obj.results_norisk.term2(ia) = obj.mpc_integral(abar) - obj.m_ra * pbelow ;
-			        obj.results_norisk.term3(ia) = (mpcs_b_nr(:)' * obj.pmf_b(:) - norisk_integ_interp(abar))...
-			        	- obj.m_ra * pabove;
-			        obj.results_norisk.term4(ia) = (obj.Empc - obj.mpc_integral(abar))...
-			        	- (mpcs_b_nr(:)' * obj.pmf_b(:) - norisk_integ_interp(abar));
-			    end
+		        pbelow = obj.cdf_b_interp(abar);
+		    	pabove = 1 - pbelow;
+		        obj.results_norisk.term1(ia) = obj.m_ra;
+		        obj.results_norisk.term2(ia) = obj.mpc_integral(abar) - obj.m_ra * pbelow ;
+		        obj.results_norisk.term3(ia) = (mpcs_b_nr(:)' * obj.pmf_b(:) - norisk_integ_interp(abar))...
+		        	- obj.m_ra * pabove;
+		        obj.results_norisk.term4(ia) = (obj.Empc - obj.mpc_integral(abar))...
+		        	- (mpcs_b_nr(:)' * obj.pmf_b(:) - norisk_integ_interp(abar));
 		    end
 		    obj.results_norisk.completed = true;
 		end
 
 		function decomp_RA(obj)
 			% Find E[mpc|a=3.5]
-			psmall = obj.pmf_b < 1e-8;
+			psmall = obj.pmf_b < 1e-9;
 			winterp = griddedInterpolant(obj.bgrid(~psmall),...
-				obj.mpcs_b(~psmall), 'linear');
+				obj.mpcs_b(~psmall), 'pchip', 'nearest');
 			mpc_atmean = winterp(obj.stats.liqw);
 
 			obj.results_RA.RAmpc = obj.m_ra;

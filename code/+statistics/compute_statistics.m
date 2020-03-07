@@ -64,13 +64,13 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
 
     [cdf_w_u, iu] = unique(stats.cdf_wealth, 'first');
     winterp = griddedInterpolant(...
-        cdf_w_u, stats.values_cdf_wealth(iu),..
+        cdf_w_u, stats.values_cdf_wealth(iu),...
         'pchip', 'nearest');
 
     pct_vals = p.wpercentiles / 100;
     stats.lwpercentile = lwinterp(pct_vals);
     stats.iwpercentile = iwinterp(pct_vals);
-    stats.wpercentile = zinterp(pct_vals);
+    stats.wpercentile = winterp(pct_vals);
 
     stats.median_liqw = lwinterp(0.5);
     stats.median_illliqw = iwinterp(0.5);
