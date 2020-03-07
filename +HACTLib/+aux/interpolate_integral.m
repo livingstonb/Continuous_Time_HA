@@ -26,16 +26,11 @@ function interpolant = interpolate_integral(grid_values, integrand_values, pmf, 
 	end
 
 	integral_values = cumsum(integrand_values .* pmf);
-
-	dsupport = pmf > 1e-6;
-	integral_values = integral_values(dsupport);
-	grid_values = grid_values(dsupport);
-
-	[grid_unique, unique_inds] = unique(grid_values,'last');
+	[grid_unique, unique_inds] = unique(grid_values, 'last');
 	integral_unique = integral_values(unique_inds);
 
 	interpolant = griddedInterpolant(...
-		grid_unique, integral_unique, 'linear');
+		grid_unique, integral_unique, 'pchip', 'nearest');
 end
 
 function is_sorted = validate_inputs(grid_values, integrand_values, pmf , varargin)

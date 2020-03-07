@@ -23,10 +23,11 @@ function percentiles_values = compute_pct(values, pmf, percentiles)
 	values_sorted = sorted_by_values(:,1);
 	cdf_sorted = cumsum(sorted_by_values(:,2));
 
-	[cdf_unique,unique_indices] = unique(cdf_sorted,'last');
+	[cdf_unique, unique_indices] = unique(cdf_sorted, 'first');
 	values_sorted_unique = values_sorted(unique_indices);
 
-	cdf_interp = griddedInterpolant(cdf_unique, values_sorted_unique, 'linear');
+	cdf_interp = griddedInterpolant(cdf_unique,...
+		values_sorted_unique, 'pchip', 'nearest');
 	percentiles_values = cdf_interp(percentiles(:));
 	percentiles_values = reshape(percentiles_values, size(percentiles));
 end

@@ -62,8 +62,9 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
         iwinterp = @(a) NaN;
     end
 
+    [cdf_w_u, iu] = unique(stats.cdf_wealth, 'first');
     winterp = griddedInterpolant(...
-        stats.values_cdf_wealth, stats.values_cdf_wealth,..
+        cdf_w_u, stats.values_cdf_wealth(iu),..
         'pchip', 'nearest');
 
     pct_vals = p.wpercentiles / 100;
@@ -76,15 +77,13 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     stats.median_totw = winterp(0.5);
 
     % Top shares
-
     wealth_values = reshape(wealth_mat(:,:,1,1), [], 1);
     tmp = sort([wealth_values, stats.pmf_wealth(:)]);
     % Amount of total assets that reside in each pt on sorted asset space
     totassets = tmp(:,1) .* tmp(:,2);
-
     % Fraction of total assets in each pt on asset space
     cumassets = cumsum(totassets) / stats.totw;
-    [cumassets, iu] = unique(cumassets);
+    [cumassets, iu] = unique(cumassets, 'last');
     cdf_u = cumsum(tmp(:,2));
     cdf_u = cdf_u(iu);
 
@@ -100,42 +99,19 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     stats.constrained = zeros(1, n_HtM);
     stats.constrained_liq = zeros(1, n_HtM);
 
-    % total wealth = 0
-    temp = stats.pmf(wealth_mat==0);
-    stats.constrained(1) = sum(temp(:));
-
-    % liquid wealth = 0
-    temp = stats.pmf(grdKFE.b.matrix==0);
-    stats.constrained_liq(1) = sum(temp(:));
-
     % saving = 0
     temp = stats.pmf(KFE.s==0);
     stats.sav0 = sum(temp(:));
 
     lw_constrained_interp = griddedInterpolant(...
-        stats.b_support,...
-        stats.cdf_b_support,...
-        'linear');
+        grdKFE.b.vec, stats.cdf_b, 'pchip', 'nearest');
 
     w_constrained_interp = griddedInterpolant(...
-        stats.wealth_support,...
-        stats.cdf_wealth_support,...
-        'linear');
+        stats.values_cdf_wealth,...
+        stats.cdf_wealth, 'pchip', 'nearest');
 
-    for ii = 1:n_HtM
-        threshold = p.epsilon_HtM(ii);
-
-        if threshold == 0
-            temp = stats.pmf(wealth_mat==0);
-            stats.constrained(ii) = sum(temp(:));
-
-            temp = stats.pmf(grdKFE.b.matrix==0);
-            stats.constrained_liq(ii) = sum(temp(:));
-        else
-            stats.constrained(ii) = w_constrained_interp(threshold);
-            stats.constrained_liq(ii) = lw_constrained_interp(threshold);
-        end
-    end
+    stats.constrained_liq = lw_constrained_interp(p.epsilon_HtM);
+    stats.constrained = w_constrained_interp(p.epsilon_HtM);
 
     %% --------------------------------------------------------------------
     % CONSTRAINED BY OWN QUARTERLY INCOME
@@ -147,17 +123,19 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     lwi_ratio = grdKFE.b.matrix ./ income.y.matrixKFE;
 
     % fraction with total wealth < own quarterly income / 6
-    stats.HtM_one_sixth_Q_twealth = find_constrained(wi_ratio,stats.pmf,1/6);
+    stats.HtM_one_sixth_Q_twealth = find_constrained(wi_ratio,stats.pmf, 1/6);
     % fraction with total wealth < own quarterly income / 12
-    stats.HtM_one_twelfth_Q_twealth = find_constrained(wi_ratio,stats.pmf,1/12);
+    stats.HtM_one_twelfth_Q_twealth = find_constrained(wi_ratio,stats.pmf, 1/12);
 
     % fraction with liquid wealth < own quarterly income / 12
-    stats.HtM_one_sixth_Q_lwealth = find_constrained(lwi_ratio,stats.pmf,1/6);
+    stats.HtM_one_sixth_Q_lwealth = find_constrained(lwi_ratio,stats.pmf, 1/6);
     % fraction with liquid wealth < own quarterly income / 12
-    stats.HtM_one_twelfth_Q_lwealth = find_constrained(lwi_ratio,stats.pmf,1/12);
+    stats.HtM_one_twelfth_Q_lwealth = find_constrained(lwi_ratio,stats.pmf, 1/12);
 
-    stats.ratio_WHtM_HtM_sixth = 1 -  stats.HtM_one_sixth_Q_twealth / stats.HtM_one_sixth_Q_lwealth;
-    stats.ratio_WHtM_HtM_twelfth = 1 -  stats.HtM_one_twelfth_Q_twealth / stats.HtM_one_twelfth_Q_lwealth;
+    stats.ratio_WHtM_HtM_sixth = 1 ...
+    	- stats.HtM_one_sixth_Q_twealth / stats.HtM_one_sixth_Q_lwealth;
+    stats.ratio_WHtM_HtM_twelfth = 1 ...
+    	-  stats.HtM_one_twelfth_Q_twealth / stats.HtM_one_twelfth_Q_lwealth;
     
     %% --------------------------------------------------------------------
     % GINI COEFFICIENTS
@@ -177,42 +155,47 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     % ---------------------------------------------------------------------
     stats.adjcosts = struct();
 
-    if p.OneAsset == 0
+    if ~p.OneAsset
         % derivative of adjustment costs?
         stats.adjcosts.chivar = p.chi1^(-p.chi2) / (1+p.chi2);
+
+        % adjustment cost paid
+        chii = HACTLib.aux.AdjustmentCost.cost(KFE.d(:),...
+	        	grdKFE.a.matrix(:), p);
         
         % mean abs(d)/a
         d_div_a = abs(KFE.d(:) ./ max(grdKFE.a.matrix(:),p.a_lb));
         stats.adjcosts.mean_d_div_a = d_div_a' * stats.pmf(:);
 
         % median abs(d)/a
-        stats.adjcosts.median_d_div_a = compute_pct(d_div_a,stats.pmf,0.5);
+        stats.adjcosts.median_d_div_a = compute_pct(d_div_a, stats.pmf, 0.5);
 
-        % mean chi/abs(d) for |d| > 0
-        chii = HACTLib.aux.AdjustmentCost.cost(KFE.d(:),grdKFE.a.matrix(:),p);
-        chii_div_d = chii ./ abs(KFE.d(:));
-        pmf_valid = stats.pmf(:);
-        pmf_valid = pmf_valid(abs(KFE.d(:))>0) ./ sum(pmf_valid(abs(KFE.d(:))>0));
-        stats.adjcosts.mean_chi_div_d = chii_div_d(abs(KFE.d(:))>0)' * pmf_valid;
+        % condition on |d| > 0
+        dvec = KFE.d(:);
+        dnon0 = abs(dvec)>0;
 
-        % median chi/abs(d) for d > 0 
-        chid_sort = sortrows([chii_div_d(abs(KFE.d(:))>0) pmf_valid]);
-        chid_values_sort = chid_sort(:,1);
-        chid_cdf = cumsum(chid_sort(:,2));
-        [chid_cdf_u,uind] = unique(chid_cdf,'last');
-        chid_values_u = chid_values_sort(uind);
-        try
-            chid_interp = griddedInterpolant(chid_cdf_u,chid_values_u,'linear');
-            stats.adjcosts.median_chi_div_d = chid_interp(0.5);
-        catch
-            stats.adjcosts.median_chi_div_d = NaN;
-        end
+        if sum(dnon0) > 0
+        	% mean chi/abs(d) for |d| > 0
+	        
+
+	        chii_div_d = chii(dnon0) ./ abs(dvec(dnon0));
+	        pmf_valid = stats.pmf(:);
+	        pmf_valid = pmf_valid(dnon0) ./ sum(pmf_valid(dnon0));
+	        stats.adjcosts.mean_chi_div_d = dot(chii_div_d, pmf_valid);
+
+	        % median chi/abs(d) for |d| > 0
+	        stats.adjcosts.median_chi_div_d = compute_pct(...
+	        	chii_div_d, pmf_valid, 0.5);
+	    else
+	    	stats.adjcosts.mean_chi_div_d = NaN;
+	    	stats.adjcosts.median_chi_div_d = NaN;
+    	end
 
         % mean chi
-        stats.adjcosts.mean_chi = chii' * stats.pmf(:);
+        stats.adjcosts.mean_chi = dot(chii, stats.pmf(:));
         
         % fraction with d = 0
-        stats.adjcosts.d0 = (KFE.d(:)==0)' * stats.pmf(:);
+        stats.adjcosts.d0 = dot(KFE.d(:)==0,  stats.pmf(:));
     else
         stats.adjcosts.chivar = NaN;
         stats.adjcosts.mean_d_div_a = NaN;
@@ -226,11 +209,12 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     %% --------------------------------------------------------------------
     % OTHER
     % ---------------------------------------------------------------------
-    stats.meanc = KFE.c(:)' * stats.pmf(:);
+    stats.meanc = dot(KFE.c(:), stats.pmf(:));
     
     % households that choose special case: to consume everything 
     % that's withdrawn
-    stats.bmin_apos_consume_withdrawals = KFE.bmin_consume_withdrawals(:)' * stats.pmf(:);
+    stats.bmin_apos_consume_withdrawals = dot(...
+    	KFE.bmin_consume_withdrawals(:), stats.pmf(:));
     
     bmin = grdKFE.b.matrix(:) == p.bmin;
     apos = grdKFE.a.matrix(:) > 0;
@@ -243,7 +227,7 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     d0 = KFE.d(:) == 0;
     
     % different possibilities for b = bmin, a > 0
-    stats.bmin_apos = (bmin & apos)' * stats.pmf(:);
+    stats.bmin_apos = dot((bmin & apos), stats.pmf(:));
     
     stats.bmin_apos_adotpos = (bmin & apos & adotpos)' * stats.pmf(:);
     stats.bmin_apos_adotneg = (bmin & apos & adotneg)' * stats.pmf(:);
@@ -284,13 +268,4 @@ function [bins,values] = create_bins(binwidth,vals,pdf1)
         values(ibin) = sum(pmf(idx));
         ibin = ibin + 1;
     end
-end
-
-function out = pct_interp(old_interpolant, qvals, gridmin)
-    adj = qvals < gridmin;
-    out(~adj) = old_interpolant(qvals(~adj));
-    out(adj) = valmin + qvals(adj) - gridmin;
-
-    out(adj) = min(out(adj), qvals(adj)-blim);
-    out = max(out, lb);
 end
