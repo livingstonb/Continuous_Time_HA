@@ -29,97 +29,67 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     %% --------------------------------------------------------------------
     % WEALTH PERCENTILES
     % ---------------------------------------------------------------------
-    % pmf(b)
+    % g(b)
     tmp = reshape(stats.pmf, p.nb_KFE, []);
     stats.pmf_b = sum(tmp, 2);
-
-    b_support = stats.pmf_b > 1e-9;
-    tmp = stats.pmf_b(b_support);
-    stats.pmf_b_support = tmp / sum(tmp);
-    stats.b_support = grdKFE.b.vec(b_support);
-
-    tmp = cumsum(stats.pmf_b);
-    stats.cdf_b_support = tmp(b_support);
+    stats.cdf_b = cumsum(stats.pmf_b);
     
-    % pmf(a)
+    % g(a)
     tmp = reshape(stats.pmf, p.nb_KFE, p.na_KFE, []);
-    stats.pmf_a = sum(sum(tmp, 3), 1);
-
-    a_support = stats.pmf_a > 1e-9;
-    tmp = stats.pmf_a(a_support);
-    stats.pmf_a_support = tmp / sum(tmp);
-    stats.a_support = grdKFE.a.vec(a_support);
-
-    tmp = cumsum(stats.pmf_a);
-    stats.cdf_a_support = tmp(a_support);
+    stats.pmf_a = squeeze(sum(sum(tmp, 3), 1));
+    stats.cdf_a = cumsum(stats.pmf_a);
     
     % pmf(wealth)
     tmp = reshape(stats.pmf, p.nb_KFE*p.na_KFE, []);
-    stats.pmf_wealth = sum(tmp, 2);
-    wealth_support = stats.pmf_wealth > 1e-9;
+    stats.pmf_wealth = reshape(sum(tmp, 2), [], p.na_KFE);
     wealth_values = reshape(wealth_mat(:,:,1,1), [], 1);
-    wealth_values_support = wealth_values(wealth_support);
 
-    tmp = sort(wealth_values_support);
-    unique_wealth_values = unique(tmp);
-    n_wealth_support = numel(unique_wealth_values);
-
-    stats.pmf_wealth_support = zeros(n_wealth_support, 1);
-    for ii = 1:n_wealth_support
-        wmask = (wealth_values == unique_wealth_values(ii));
-        pmf_wealth_filtered = stats.pmf_wealth(wmask);
-        stats.pmf_wealth_support(ii) = sum(pmf_wealth_filtered);
-    end
-    stats.pmf_wealth_support = stats.pmf_wealth_support...
-        / sum(stats.pmf_wealth_support);
-    stats.wealth_support = unique_wealth_values;
-
-    stats.cdf_wealth_support = cumsum(stats.pmf_wealth_support);
+    tmp = sort([wealth_values, stats.pmf_wealth(:)]);
+    [stats.values_cdf_wealth, iu] = unique(tmp(:,1), 'last');
+    stats.cdf_wealth = cumsum(tmp(:,2));
+    stats.cdf_wealth = stats.cdf_wealth(iu);
   
     % Interpolants for percentiles
+    [cdf_b_u, iu] = unique(stats.cdf_b, 'first');
     lwinterp = griddedInterpolant(...
-        stats.cdf_b_support,...
-        stats.b_support,...
-        'linear');
+        cdf_b_u, grdKFE.b.vec(iu), 'pchip', 'nearest');
 
-    if p.OneAsset == 0
-        iwinterp = griddedInterpolant(...
-            stats.cdf_a_support,...
-            stats.a_support,...
-            'linear');
+    if ~p.OneAsset
+        [cdf_a_u, iu] = unique(stats.cdf_a, 'first');
+        lwinterp = griddedInterpolant(...
+            cdf_a_u, grdKFE.a.vec(iu), 'pchip', 'nearest');
     else
         iwinterp = @(a) NaN;
     end
 
     winterp = griddedInterpolant(...
-        stats.cdf_wealth_support,...
-        stats.wealth_support,...
-        'linear');
+        stats.values_cdf_wealth, stats.values_cdf_wealth,..
+        'pchip', 'nearest');
 
-    n_pct = numel(p.wpercentiles);
-    stats.lwpercentile = zeros(1, n_pct);
-    stats.iwpercentile = zeros(1, n_pct);
-    stats.wpercentile = zeros(1, n_pct);
-    for ii = 1:numel(p.wpercentiles)
-        pct_val = p.wpercentiles(ii) / 100;
-        stats.lwpercentile(ii) = lwinterp(pct_val);
-        stats.iwpercentile(ii) = iwinterp(pct_val);
-        stats.wpercentile(ii) = winterp(pct_val);
-    end
+    pct_vals = p.wpercentiles / 100;
+    stats.lwpercentile = lwinterp(pct_vals);
+    stats.iwpercentile = iwinterp(pct_vals);
+    stats.wpercentile = zinterp(pct_vals);
 
     stats.median_liqw = lwinterp(0.5);
     stats.median_illliqw = iwinterp(0.5);
     stats.median_totw = winterp(0.5);
 
     % Top shares
+
+    wealth_values = reshape(wealth_mat(:,:,1,1), [], 1);
+    tmp = sort([wealth_values, stats.pmf_wealth(:)]);
     % Amount of total assets that reside in each pt on sorted asset space
-    totassets = stats.pmf_wealth_support .* stats.wealth_support;
+    totassets = tmp(:,1) .* tmp(:,2);
+
     % Fraction of total assets in each pt on asset space
     cumassets = cumsum(totassets) / stats.totw;
+    [cumassets, iu] = unique(cumassets);
+    cdf_u = cumsum(tmp(:,2));
+    cdf_u = cdf_u(iu);
+
     cumwealthshare_interp = griddedInterpolant(...
-        stats.cdf_wealth_support,...
-        cumassets,...
-        'linear');
+        cdf_u, cumassets, 'pchip', 'nearest');
     stats.top10share = 1 - cumwealthshare_interp(0.9);
     stats.top1share = 1 - cumwealthshare_interp(0.99);
 
@@ -314,4 +284,13 @@ function [bins,values] = create_bins(binwidth,vals,pdf1)
         values(ibin) = sum(pmf(idx));
         ibin = ibin + 1;
     end
+end
+
+function out = pct_interp(old_interpolant, qvals, gridmin)
+    adj = qvals < gridmin;
+    out(~adj) = old_interpolant(qvals(~adj));
+    out(adj) = valmin + qvals(adj) - gridmin;
+
+    out(adj) = min(out(adj), qvals(adj)-blim);
+    out = max(out, lb);
 end

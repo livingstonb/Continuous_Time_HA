@@ -30,9 +30,9 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-param_opts.calibrate = true;
-param_opts.fast = true; % use small grid for debugging
-param_opts.ComputeMPCS = false;
+param_opts.calibrate = false;
+param_opts.fast = false; % use small grid for debugging
+param_opts.ComputeMPCS = true;
 param_opts.ComputeMPCS_illiquid = false;
 param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
 param_opts.ComputeMPCS_news = false;
@@ -41,7 +41,7 @@ param_opts.DealWithSpecialCase = false;
 
 run_opts.Server = false;
 run_opts.param_index = 2;
-run_opts.param_script = 'SDU_tests_new';
+run_opts.param_script = 'params_one_asset';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
@@ -51,6 +51,7 @@ run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 if run_opts.Server == 0
 	param_opts.direc = run_opts.localdir;
+    param_opts.SaveResults = true;
 else
 	param_opts.direc = run_opts.serverdir;
 	run_opts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));

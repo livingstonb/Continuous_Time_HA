@@ -16,7 +16,7 @@ function [stats,p] = main(p)
     import HACTLib.model_objects.Income
 
     if p.OneAsset
-        p.set("ComputeMPCS_illiquid", false, true)
+        p.set("ComputeMPCS_illiquid", false, true);
     end
 
     %% --------------------------------------------------------------------
@@ -87,11 +87,11 @@ function [stats,p] = main(p)
     mpc_finder = MPCs(p, income, grdKFE, p.mpc_options);
     mpc_finder_illiquid = MPCs(p, income, grdKFE, p.mpc_options_illiquid);
 
-    shocks = [4,5,6];
+    shocks = [4, 5, 6];
     import HACTLib.computation.MPCsNews
     trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks, p.mpcs_news_options);
     
-    if p.ComputeMPCS == 1
+    if p.ComputeMPCS
     	fprintf('\nComputing MPCs out of an immediate shock...\n')
         mpc_finder.solve(KFE, stats.pmf, Au);
     end
@@ -216,7 +216,7 @@ function [stats,p] = main(p)
         stats.mpcs_illiquid(ii).mpcs = [];
     end
     
-    if p.SaveResults == 1
+    if p.SaveResults
         save(p.save_path,'stats','grd','grdKFE','p','KFE','income')
     end
     clear solver.two_asset.solver
