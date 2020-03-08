@@ -28,6 +28,9 @@ classdef ParamsDefaults < handle
         % Path to the temp directory
         temp_dir;
 
+        % Path to output directory
+        out_dir;
+
         save_path;
 
         direc;

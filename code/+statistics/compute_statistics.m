@@ -44,7 +44,7 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     stats.pmf_wealth = reshape(sum(tmp, 2), [], p.na_KFE);
     wealth_values = reshape(wealth_mat(:,:,1,1), [], 1);
 
-    tmp = sort([wealth_values, stats.pmf_wealth(:)]);
+    tmp = sortrows([wealth_values, stats.pmf_wealth(:)]);
     [stats.values_cdf_wealth, iu] = unique(tmp(:,1), 'last');
     stats.cdf_wealth = cumsum(tmp(:,2));
     stats.cdf_wealth = stats.cdf_wealth(iu);
@@ -78,7 +78,7 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
 
     % Top shares
     wealth_values = reshape(wealth_mat(:,:,1,1), [], 1);
-    tmp = sort([wealth_values, stats.pmf_wealth(:)]);
+    tmp = sortrows([wealth_values, stats.pmf_wealth(:)]);
     % Cumulative faction of total assets in each pt on asset space
     cumassets = cumsum(tmp(:,1) .* tmp(:,2)) / stats.totw;
     [cumassets, iu] = unique(cumassets, 'last');
@@ -134,16 +134,11 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     %% --------------------------------------------------------------------
     % GINI COEFFICIENTS
     % ---------------------------------------------------------------------
-    stats.wgini = direct_gini(stats.wealth_support, stats.pmf_wealth_support);
+    stats.wgini = direct_gini(wealth_mat, stats.pmf);
 
     %% --------------------------------------------------------------------
     % OUTPUT FOR HISTOGRAMS
     % ---------------------------------------------------------------------
-    dstr = stats.pmf(:);
-    [stats.b_hist.bins,stats.b_hist.values] = create_bins(1,grdKFE.b.matrix,dstr);
-    [stats.a_hist.bins,stats.a_hist.values] = create_bins(1,grdKFE.a.matrix,dstr);
-    [stats.w_hist.bins,stats.w_hist.values] = create_bins(1,wealth_mat,dstr);
-
     import HACTLib.aux.smoothed_histogram
     nbins = 100;
     [stats.b_hist.bins, stats.b_hist.values] = smoothed_histogram(...

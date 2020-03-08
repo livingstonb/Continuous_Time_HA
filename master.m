@@ -77,6 +77,9 @@ param_opts.save_path = fullfile(run_opts.save_dir, fname);
 % temp directory
 param_opts.temp_dir = fullfile(param_opts.direc, 'temp');
 
+% output directory
+param_opts.out_dir = fullfile(param_opts.direc, 'output');
+
 addpath(fullfile(param_opts.direc, 'code'));
 addpath(fullfile(param_opts.direc, 'factorization_lib'));
 
@@ -136,10 +139,8 @@ tic
 stats = main(p);
 toc
 
-experiment.p = p;
-experiment.stats = stats;
-table_gen = HACTLib.model_objects.TableGenerator();
-results_table = table_gen.create(experiment)
+table_gen = HACTLib.model_objects.TableGenDetailed(p, stats);
+results_table = table_gen.create(p, stats)
 
 if ~run_opts.Server
     writetable(results_table, run_opts.xlx_path, 'WriteRowNames', true)
