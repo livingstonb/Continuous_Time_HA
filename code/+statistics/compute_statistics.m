@@ -154,8 +154,10 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
     stats.adjcosts = struct();
 
     if ~p.OneAsset
-        % derivative of adjustment costs?
-        stats.adjcosts.chivar = p.chi1^(-p.chi2) / (1+p.chi2);
+        stats.adjcosts.kappa0 = p.chi0;
+        stats.adjcosts.kappa1 = p.chi1^(-p.chi2) / (1+p.chi2);
+        stats.adjcosts.kappa2 = 1 + chi2;
+        stats.adjcosts.kappa3 = p.a_lb;
 
         % adjustment cost paid
         chii = HACTLib.aux.AdjustmentCost.cost(KFE.d(:),...
@@ -195,7 +197,10 @@ function stats = statistics(p, income, grd, grdKFE, KFE)
         % fraction with d = 0
         stats.adjcosts.d0 = dot(KFE.d(:)==0,  stats.pmf(:));
     else
-        stats.adjcosts.chivar = NaN;
+        stats.adjcosts.kappa0 = NaN;
+        stats.adjcosts.kappa1 = NaN;
+        stats.adjcosts.kappa2 = NaN;
+        stats.adjcosts.kappa3 = NaN;
         stats.adjcosts.mean_d_div_a = NaN;
         stats.adjcosts.median_d_div_a = NaN;
         stats.adjcosts.mean_chi_div_d = NaN;

@@ -1,17 +1,18 @@
-classdef TableGenDetailed < HACTLib.model_objects.TableGen
+classdef TableGenDetailed < HACTLib.tables.TableGen
 	properties
-		default_fname = 'Detailed_Table.csv';
+		fname = 'Detailed_Table.csv';
+		included_groups;
 	end
 
 	methods
 		function obj = TableGenDetailed(params, stats)
-			obj = obj@HACTLib.model_objects.TableGen(params, stats);
+			obj = obj@HACTLib.tables.TableGen(params, stats);
 		end
 
 		function output_table = create(obj, params, stats)
 			
 			output_table = table();
-			for ip = 1:numel(obj.n_cols)
+			for ip = 1:obj.n_cols
 				p_ip = params(ip);
 				stats_ip = stats(ip);
 				new_column = obj.intro_stats_table(p_ip, stats_ip);
@@ -56,7 +57,7 @@ classdef TableGenDetailed < HACTLib.model_objects.TableGen
 					end
 				end
 
-				column_label = sprintf('Specification%d', p_ip.param_index);
+				column_label = sprintf('Specification%d', ip);
 				new_column.Properties.VariableNames = {column_label};
 				output_table = [output_table, new_column];
 			end
@@ -72,7 +73,7 @@ classdef TableGenDetailed < HACTLib.model_objects.TableGen
 							'chi0', p.chi0, true
 							'chi1', p.chi1, true
 							'chi2', p.chi2, true
-							'chi1^(-chi2)/(1+chi2)', stats.adjcosts.chivar, true
+							'chi1^(-chi2)/(1+chi2)', stats.adjcosts.kappa1, true
 							'rho', p.rho, false
 							'beta (annualized)', stats.beta_annualized, false
 							'r_a', p.r_a, true
@@ -91,12 +92,12 @@ classdef TableGenDetailed < HACTLib.model_objects.TableGen
 				new_entries([new_entries{:,3}],:) = [];
 			end
 
-			out = HACTLib.model_objects.TableGen.append_to_table(out, new_entries);
+			out = obj.append_to_table(out, new_entries);
 		end
 
 		function out = wealth_pct_table(obj, stats)
 			header_name = 'WEALTH PERCENTILES';
-			out = HACTLib.model_objects.TableGen.new_table_with_header(header_name);
+			out = HACTLib.tables.TableGen.new_table_with_header(header_name);
 
 			new_entries = {	'Liquid wealth, 10th', stats.lwpercentile(1), false
 							'Liquid wealth, 25th', stats.lwpercentile(2), false
@@ -116,7 +117,7 @@ classdef TableGenDetailed < HACTLib.model_objects.TableGen
 				new_entries([new_entries{:,3}],:) = [];
 			end
 
-			out = HACTLib.model_objects.TableGen.append_to_table(out, new_entries);
+			out = HACTLib.tables.TableGen.append_to_table(out, new_entries);
 		end
 	end
 end
@@ -130,29 +131,15 @@ function [params, stats] = create_structures(cases)
 	end
 end
 
-% function new_table = HACTLib.model_objects.TableGen.new_table_with_header(header_name)
-% 	header_formatted = strcat('____', header_name);
-% 	new_table = table({NaN},...
-% 		'VariableNames', {'results'},...
-% 		'RowNames', {header_formatted});
-% end
-
-% function output_table = HACTLib.model_objects.TableGen.append_to_table(input_table, new_entries)
-% 	table_to_append = table(new_entries(:,2),...
-% 		'VariableNames', {'results'},...
-% 		'RowNames', new_entries(:,1));
-% 	output_table = [input_table; table_to_append];
-% end
-
 function output_table = htm_stats_table(p, stats)
 	header_name = 'HtM STATISTICS';
-	output_table = HACTLib.model_objects.TableGen.new_table_with_header(header_name);
+	output_table = HACTLib.tables.TableGen.new_table_with_header(header_name);
 
 	new_entries = {	'Wealthy HtM / Total HtM (at 1/6 qincome)', stats.ratio_WHtM_HtM_sixth
 					'Wealthy HtM / Total HtM (at 1/12 qincome)', stats.ratio_WHtM_HtM_twelfth
 				};
 
-	output_table = HACTLib.model_objects.TableGen.append_to_table(output_table, new_entries);
+	output_table = HACTLib.tables.TableGen.append_to_table(output_table, new_entries);
 end
 
 function output_table = wconstraint_stats_table(p, stats, asset)
@@ -166,7 +153,7 @@ function output_table = wconstraint_stats_table(p, stats, asset)
 		avar = stats.constrained;
 	end
 	header_name = sprintf('CONSTRAINED IN %s WEALTH', header_label);
-	output_table = HACTLib.model_objects.TableGen.new_table_with_header(header_name);
+	output_table = HACTLib.tables.TableGen.new_table_with_header(header_name);
 
 	nconstraints = numel(avar);
 	new_entries = cell(nconstraints+2, 2);
@@ -195,12 +182,12 @@ function output_table = wconstraint_stats_table(p, stats, asset)
 		new_entries{nconstraints+2,2} = stats.HtM_one_twelfth_Q_twealth;
 	end
 
-	output_table = HACTLib.model_objects.TableGen.append_to_table(output_table, new_entries);
+	output_table = HACTLib.tables.TableGen.append_to_table(output_table, new_entries);
 end
 
 function output_table = illiq_adj_table(p, stats)
 	header_name = 'ILLIQUID ASSETS ADJUSTMENT';
-	output_table = HACTLib.model_objects.TableGen.new_table_with_header(header_name);
+	output_table = HACTLib.tables.TableGen.new_table_with_header(header_name);
 
 	new_entries = {	'Mean |d|/max(a,a_lb)', stats.adjcosts.mean_d_div_a
 					'Median |d|/max(a,a_lb)', stats.adjcosts.median_d_div_a
@@ -210,7 +197,7 @@ function output_table = illiq_adj_table(p, stats)
 					'Fraction with d == 0', stats.adjcosts.d0
 		};
 
-	output_table = HACTLib.model_objects.TableGen.append_to_table(output_table, new_entries);
+	output_table = HACTLib.tables.TableGen.append_to_table(output_table, new_entries);
 end
 
 function output_table = mpcs_table(p, stats, ishock, liquid_mpcs)
@@ -238,7 +225,7 @@ function output_table = mpcs_table(p, stats, ishock, liquid_mpcs)
 	end
 
 	header_name = sprintf('%s, SHOCK = %s', mpc_type, shock_size);
-	output_table = HACTLib.model_objects.TableGen.new_table_with_header(header_name);
+	output_table = HACTLib.tables.TableGen.new_table_with_header(header_name);
 
 	label = @(ii) sprintf('QUARTER %d %s, shock = %s', ii, mpc_type, shock_size);
 	cum_label = sprintf('ANNUAL %s, shock = %s', mpc_type, shock_size);
@@ -249,13 +236,13 @@ function output_table = mpcs_table(p, stats, ishock, liquid_mpcs)
 					cum_label, ann_mpc
 		};
 
-	output_table = HACTLib.model_objects.TableGen.append_to_table(output_table, new_entries);
+	output_table = HACTLib.tables.TableGen.append_to_table(output_table, new_entries);
 end
 
 function output_table = decomp_norisk_table(p, stats, ithresh)
 	threshold = p.decomp_thresholds(ithresh);
 	header_name = sprintf('DECOMP OF E[mpc] AROUND %g', threshold);
-	output_table = HACTLib.model_objects.TableGen.new_table_with_header(header_name);
+	output_table = HACTLib.tables.TableGen.new_table_with_header(header_name);
 
 	lab_prefix = sprintf("Decomp around %g, ", threshold);
 	full_lab = @(postf) char(strcat(lab_prefix, postf));
@@ -268,5 +255,5 @@ function output_table = decomp_norisk_table(p, stats, ithresh)
 					full_lab("Non-HtM, inc risk"), vals.term4(ithresh)
 		};
 
-	output_table = HACTLib.model_objects.TableGen.append_to_table(output_table, new_entries);
+	output_table = HACTLib.tables.TableGen.append_to_table(output_table, new_entries);
 end

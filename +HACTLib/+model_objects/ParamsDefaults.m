@@ -15,6 +15,8 @@ classdef ParamsDefaults < handle
         
         % Name for the parameterization
         name = 'unnamed';
+        group;
+        label;
 
         % Numeric identifier for the parameterization
         param_index;

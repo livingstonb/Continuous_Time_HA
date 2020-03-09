@@ -108,8 +108,9 @@ function outparams = get_params(runopts)
     params(i).rho = 0.00390272872757238;
     params(i).Bequests = 1;
     params(i).n_mpcsim = 5e5;
-    params(i).nb = 500;
-    params(i).nb_KFE = 400;
+    params(i).nb = 250;
+    params(i).nb_KFE = 250;
+    params(i).b_gcurv_pos = 0.3;
     params(i).bmin = 0;
     i = i + 1;
 

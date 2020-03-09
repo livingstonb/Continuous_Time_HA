@@ -1,6 +1,6 @@
 clear
 
-server = true;
+server = false;
 
 if ~server
     basedir = '/home/brian/Documents/GitHub/Continuous_Time_HA';
@@ -28,21 +28,26 @@ for irun = 1:999
             s(ind).grd = [];
             s(ind).KFE = [];
         end
+        
+        params(ind) = s(ind).p;
+        stats(ind) = s(ind).stats;
 
-        % % perform Empc1 - Empc0 decomposition
-        % if isequal(s(ind).grdKFE.b.vec, s(1).grdKFE.b.vec)
-        %     decomp_base(ind) = statistics.decomp_baseline(s(1),s(ind));
-        % else
-        %     decomp_base(ind) = statistics.decomp_baseline(s(1),s(1));
-        % end
+        % perform Empc1 - Empc0 decomposition
+%         if isequal(s(ind).grdKFE.b.vec, s(1).grdKFE.b.vec)
+%             decomp_base(ind) = statistics.decomp_baseline(s(1),s(ind));
+%         else
+%             decomp_base(ind) = statistics.decomp_baseline(s(1),s(1));
+%         end
+
+        decomp_base(ind) = statistics.decomp_baseline(s(1), s(ind));
 
         % perform decomp wrt one-asset model
         % decomp_oneasset(ind) = statistics.decomp_twoasset_oneasset(oneasset,s(ind));
     end
 end
 
-table_gen = HACTLib.model_objects.TableGenerator();
-output_table = table_gen.create(s);
+table_gen = HACTLib.tables.TableGenDetailed(params, stats);
+output_table = table_gen.create(params, stats);
 
-xlxpath = fullfile(xlxdir, 'output_table.xlsx');
-writetable(output_table, xlxpath, 'WriteRowNames', true);
+% xlxpath = fullfile(xlxdir, 'output_table.xlsx');
+% writetable(output_table, xlxpath, 'WriteRowNames', true);

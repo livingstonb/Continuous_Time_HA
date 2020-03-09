@@ -6,6 +6,7 @@ classdef TableGen < handle
 		mpcs_news_present = false;
 		include_two_asset_stats = false;
 		decomp_norisk_present = false;
+		selected_cases;
 
 		n_cols;
 	end
@@ -18,13 +19,21 @@ classdef TableGen < handle
 	end
 
 	properties (Abstract)
-		default_fname;
+		fname;
+		included_groups;
 	end
 
 	methods
-		function obj = TableGen(params, stats)
+		function obj = TableGen(params, stats, use_all)
 			obj.outdir = params(1).out_dir;
+
+			if nargin < 3
+				use_all = true;
+			end
+			obj.filter_experiments(params, use_all);
+
 			obj.set_options(params, stats);
+			obj.outdir = params(1).out_dir;
 		end
 
 		function set_options(obj, params, stats)
@@ -39,9 +48,25 @@ classdef TableGen < handle
 			obj.n_cols = numel(params);
 		end
 
+		function filter_experiments(obj, params, use_all)
+			if use_all || isempty(obj.included_groups)
+				obj.selected_cases = 1:numel(params);
+			else
+				all_names = {params.group};
+				inames = [];
+				for ii = 1:numel(all_names)
+					if ismember(obj.included_groups, all_names{ii})
+						inames = [inames, ii];
+					end
+				end
+
+				obj.selected_cases = unique(inames);
+			end
+		end
+
 		function save_table(obj, fname)
 			if nargin == 1
-				fpath = fullfile(obj.outdir, obj.default_fname);
+				fpath = fullfile(obj.outdir, obj.fname);
 			else
 				fpath = fullfile(obj.outdir, fname);
 			end
