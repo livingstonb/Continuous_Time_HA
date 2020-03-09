@@ -76,6 +76,9 @@ function [stats,p] = main(p)
     % -----------------------------------------------------------------
     fprintf('\nComputing statistics\n')
     stats = statistics.compute_statistics(p, income, grd, grdKFE, KFE);
+    
+    stats_new = HACTLib.model_objects.Statistics(p, income, grdKFE, KFE);
+    stats_new.compute_statistics();
 
     %% ----------------------------------------------------------------
     % COMPUTE MPCs
