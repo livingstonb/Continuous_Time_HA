@@ -371,8 +371,8 @@ classdef Grid < handle
 			d_tilde(1) = dF(1)/2;
 			d_tilde(end) = dB(end)/2;
 		    
-		    dF = repmat(dF,repvec);
-		    dB = repmat(dB,repvec);
+		    dF = repmat(dF, repvec);
+		    dB = repmat(dB, repvec);
 		    
 		    if strcmp(variable,'a')
 		    	obj.da_tilde = d_tilde;
@@ -388,7 +388,7 @@ classdef Grid < handle
 		function construct_trapezoidal_grid(obj)
 			% Constructs the grid of db * da.
 
-			obj.trapezoidal.vec = kron(obj.da_tilde,obj.db_tilde);
+			obj.trapezoidal.vec = kron(obj.da_tilde, obj.db_tilde);
 		    obj.trapezoidal.matrix = reshape(repmat(obj.trapezoidal.vec,obj.ny*obj.nz,1),...
 		    	obj.nb,obj.na,obj.nz,obj.ny);
 			obj.trapezoidal.diagm = spdiags(repmat(obj.trapezoidal.vec,obj.ny*obj.nz,1), 0,...

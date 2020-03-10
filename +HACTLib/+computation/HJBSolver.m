@@ -169,7 +169,6 @@ classdef HJBSolver < handle
 			Vn_k = reshape(V, [], obj.income.ny);
 
 			Vn1_k = zeros(obj.states_per_income, obj.income.ny);
-			Bk_inv = cell(1, obj.income.ny);
 			for k = 1:obj.income.ny
 
 				if obj.p.SDU
@@ -182,17 +181,16 @@ classdef HJBSolver < handle
 
 				Bk = hjb_divisor(obj.options.delta, obj.p.deathrate, k,...
 					A, inctrans, obj.rho_mat);
-            	Bk_inv{k} = inverse(Bk);
 
 	        	Vn1_k(:,k) = obj.update_Vk_implicit_explicit(...
-	        		Vn_k, u_k, k, Bk_inv{k}, inctrans_k, args2{:}, varargin{:});
+	        		Vn_k, u_k, k, Bk, inctrans_k, args2{:}, varargin{:});
 	        end
 
 	        Vn1 = reshape(Vn1_k, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
 		end
 
 		function Vn1_k = update_Vk_implicit_explicit(...
-			obj, V_k, u_k, k, Bk_inv, inctrans_k, varargin)
+			obj, V_k, u_k, k, Bk, inctrans_k, varargin)
         	
         	indx_k = ~ismember(1:obj.income.ny, k);
 
@@ -207,7 +205,7 @@ classdef HJBSolver < handle
            		RHSk = RHSk + obj.options.delta * risk_adj(:,k);
            	end
             
-            Vn1_k = Bk_inv * RHSk;
+            Vn1_k = Bk \ RHSk;
         end
 
 		function options = parse_options(obj, varargin)
@@ -240,7 +238,8 @@ classdef HJBSolver < handle
 		    else
 		    	if numel(obj.p.rhos) > 1
 			        rhocol = kron(obj.p.rhos(:), ones(obj.p.nb*obj.p.na,1));
-			        obj.rho_mat = spdiags(rhocol, obj.states_per_income, obj.states_per_income);
+			        obj.rho_mat = spdiags(rhocol, 0,...
+                        obj.states_per_income, obj.states_per_income);
 			    else
 			        obj.rho_mat = obj.p.rho * speye(obj.states_per_income);
 			    end

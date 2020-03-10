@@ -87,18 +87,18 @@ classdef ParamsDefaults < handle
     	amin = 0;
 
     	% Max value of illiquid assets
-        amax = 200;
+        amax = 100;
 
         % Number of points on the illiquid asset grid
-        na = 120;
+        na = 80;
         
         % Curvature of positive section of illiquid asset,
 		% lower value implies more curvature
-        a_gcurv = 0.2;
+        a_gcurv = 0.25;
 
         % Number of points on illiquid asset grid for
         % the KFE
-        na_KFE = 120;
+        na_KFE = 80;
 
         %% -------------------------------------------
     	% Other Parameters
@@ -111,7 +111,7 @@ classdef ParamsDefaults < handle
 
         % Minimum spacing of the asset grids close to the
         % constraints
-        min_grid_spacing = 0.001;
+        min_grid_spacing = 0.0001;
         
 	    %% -------------------------------------------
     	% Returns

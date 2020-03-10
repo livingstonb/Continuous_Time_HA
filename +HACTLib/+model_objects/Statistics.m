@@ -332,20 +332,20 @@ classdef Statistics < handle
 
 				tmp_b = sprintf('b, %gth pctile', pct_at);
 				obj.lwpercentiles{ip} = sfill(...
-					lw_pct(pct_at), tmp_b);
+					lw_pct(pct_at/100), tmp_b);
 
 				tmp_a = sprintf('a, %gth pctile', pct_at);
 				obj.iwpercentiles{ip} = sfill(...
-					iw_pct(pct_at), tmp_a, 2);
+					iw_pct(pct_at/100), tmp_a, 2);
 
 				tmp_w = sprintf('w, %gth pctile', pct_at);
 				obj.wpercentiles{ip} = sfill(...
-					w_pct(pct_at), tmp_w, 2);
+					w_pct(pct_at/100), tmp_w, 2);
 			end
 
-			obj.median_liqw = sfill(lw_pct(50), 'b, median');
-			obj.median_illiqw = sfill(iw_pct(50), 'a, median', 2);
-			obj.median_totw = sfill(w_pct(50), 'w, median', 2);
+			obj.median_liqw = sfill(lw_pct(0.5), 'b, median');
+			obj.median_illiqw = sfill(iw_pct(0.5), 'a, median', 2);
+			obj.median_totw = sfill(w_pct(0.5), 'w, median', 2);
 		end
 
 		function compute_inequality(obj)
@@ -565,12 +565,12 @@ function out = sfill(value, label, asset_indicator)
 end
 
 function interp_out = pct_interp(values, cdf_x)
-	[cdf_x_u, iu] = unique(cdf_x, 'first');
+	[cdf_x_u, iu] = unique(cdf_x(:), 'first');
 	values_u = values(iu);
 
 	if numel(cdf_x_u) >= 2
 		interp_out = griddedInterpolant(...
-			cdf_x_u * 100, values_u, 'pchip', 'nearest');
+			cdf_x_u, values_u, 'pchip', 'nearest');
 	else
 		interp_out = @(x) NaN;
 	end

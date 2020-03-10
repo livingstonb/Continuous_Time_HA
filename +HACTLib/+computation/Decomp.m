@@ -76,14 +76,9 @@ classdef Decomp < handle
 
 			% Interpolant for cdf(b)
 			cdf_b = cumsum(obj.pmf_b);
-			b_support = obj.pmf_b > 1e-8;
 
-		    tmp = griddedInterpolant(...
-		    	obj.bgrid(b_support), cdf_b(b_support), 'linear');
-
-		    bmin = min(obj.bgrid(b_support));
-		    bmax = max(obj.bgrid(b_support));
-		    obj.cdf_b_interp = @(b) adjusted_interpolant(tmp, b, bmin, bmax);
+		    obj.cdf_b_interp = griddedInterpolant(...
+		    	obj.bgrid, cdf_b, 'pchip', 'nearest');
 
 		    % Interpolant for mpc(b) * g(b)
 		    is_sorted = true;
@@ -146,10 +141,4 @@ classdef Decomp < handle
 			mpcs_b(pmf_b_small) = mean(mpcs_states(pmf_b_small,:), 2);
 		end
 	end
-end
-
-function val_adj = adjusted_interpolant(old_interp, b, bmin, bmax)
-	val_adj = old_interp(b);
-	val_adj(b < bmin) = 0;
-	val_adj(b > bmax) = 1;
 end

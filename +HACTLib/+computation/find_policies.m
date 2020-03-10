@@ -92,13 +92,13 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     import HACTLib.computation.upwind_consumption
 
     upwindB = upwind_consumption(net_income_liq_hourly, Vb.B,...
-                'B', prefs, rho_mat_adj, hours_fn{:});
+        'B', prefs, rho_mat_adj, hours_fn{:});
 
     if p.endogenous_labor
     	hours_fn = {@(Vb) prefs.hrs_u1inv(nety_mat_liq .* Vb)};
     end
     upwindF = upwind_consumption(net_income_liq_hourly, Vb.F,...
-                'F', prefs, rho_mat_adj, hours_fn{:});
+        'F', prefs, rho_mat_adj, hours_fn{:});
     HcB = upwindB.H;
     HcF = upwindF.H;
 

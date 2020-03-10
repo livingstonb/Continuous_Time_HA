@@ -44,7 +44,7 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
             if (numel(obj.rho_grid)>1) && (numel(obj.riskaver)>1)
             	error('Cannot have both rho and riskaver heterogeneity')
             else
-                obj.nz = max(numel(obj.rho_grid),numel(obj.riskaver));
+                obj.nz = max(numel(obj.rho_grid), numel(obj.riskaver));
             end
 
             obj.rhos = obj.rho + obj.rho_grid;

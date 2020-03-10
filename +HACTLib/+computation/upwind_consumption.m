@@ -36,7 +36,6 @@ function out = upwind_consumption(net_income_liq_hourly, Vb_fd, direction,...
     	out.s(nb,:,:,:) = 0;
     end
 
-
     out.H = rho_mat .* prefs.u(out.c) + Vb_fd .* out.s;
 
     if strcmp(direction, 'F')

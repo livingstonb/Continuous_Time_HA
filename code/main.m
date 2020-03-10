@@ -49,13 +49,6 @@ function [stats, p] = main(p)
 	grdKFE = Grid(p, income.ny, 'KFE').auto_construct();% grid for KFE
     grdKFE_norisk = Grid(p, 1, 'KFE').auto_construct();
 
-    if numel(p.rhos) > 1
-    	grd.add_zgrid(p.rhos', p.na);
-    	grd_norisk.add_zgrid(p.rhos', p.na);
-    	grdKFE.add_zgrid(p.rhos', p.na_KFE);
-    	grdKFE_norisk.add_zgrid(p.rhos', p.na_KFE);
-    end
-
     % Add net income variables
     income.set_net_income(p, grd, grdKFE);
     income_norisk.set_net_income(p, grd_norisk, grdKFE_norisk);
