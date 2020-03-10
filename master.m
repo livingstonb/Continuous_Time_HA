@@ -30,7 +30,7 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-param_opts.calibrate = false;
+param_opts.calibrate = true;
 param_opts.fast = false; % use small grid for debugging
 param_opts.ComputeMPCS = false;
 param_opts.ComputeMPCS_illiquid = false;
@@ -39,11 +39,12 @@ param_opts.ComputeMPCS_news = false;
 param_opts.SimulateMPCS_news = false;
 param_opts.DealWithSpecialCase = false;
 
-run_opts.Server = false;
+run_opts.Server = true;
 run_opts.param_index = 1;
-run_opts.param_script = 'table_tests';
+% run_opts.name = 'grid;
+run_opts.param_script = 'grid_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-run_opts.localdir = '/Users/brian-laptop/Documents/GitHub/Continuous_Time_HA/';
+run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE
@@ -58,6 +59,7 @@ else
     
 	param_opts.fast = false;
 end
+param_opts.param_index = run_opts.param_index;
 
 % check that specified directories exist
 if ~exist(param_opts.direc, 'dir')
@@ -94,6 +96,9 @@ cd(param_opts.direc)
 % GET PARAMETERS
 % ---------------------------------------------------------------------
 p = setup.params.(run_opts.param_script)(param_opts, run_opts.param_index);
+
+% Create Params object
+p = HACTLib.model_objects.Params(p);
 p.print();
 
 %% ------------------------------------------------------------------------
@@ -141,8 +146,8 @@ toc
 
 % table_gen = HACTLib.tables.TableGenDetailed(p, stats);
 % results_table = table_gen.create(p, stats)
-tf = HACTLib.tables.TableFancy(p, {stats});
-tout = tf.create(p, {stats})
+table_gen = HACTLib.tables.TableFancy(p, {stats});
+tout = table_gen.create(p, {stats})
 
 
 % if ~run_opts.Server

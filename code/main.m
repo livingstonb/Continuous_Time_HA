@@ -179,6 +179,17 @@ function [stats, p] = main(p)
     grdKFE = to_structure(grdKFE);
     p = to_structure(p);
     income = to_structure(income);
+
+    if p.saveGrids
+        nx = max(p.nb, p.na);
+        bgrid = [grd.b.vec; NaN(nx-p.nb, 1)];
+        agrid = [grd.a.vec; NaN(nx-p.na, 1)];
+        grids = table(bgrid, agrid);
+        fpath = fullfile(p.out_dir,...
+            sprintf('grids%d.xlsx', p.param_index));
+        writetable(grids, fpath, 'WriteVariableNames', true);
+    end
+
     
     % empty some variables to reduce file size
     if ~strcmp(p.name,'baseline')

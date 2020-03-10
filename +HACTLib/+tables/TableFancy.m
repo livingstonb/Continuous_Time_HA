@@ -73,8 +73,10 @@ classdef TableFancy < handle
 				p_ip = params(ip);
 				stats_ip = stats{ip};
 
-				obj.current_column = table()
+				obj.current_column = table();
 				obj.intro_stats_table(p_ip, stats_ip);
+
+				obj.grid_size_table(stats_ip);
 
 				obj.income_stats_table();
 				obj.wealth_stats_table(stats_ip);
@@ -116,6 +118,22 @@ classdef TableFancy < handle
 				stats.mpcs(5).quarterly
 				stats.mpcs(5).annual
 				stats.beta_A
+			};
+
+			obj.update_current_column(out, new_entries);
+		end
+
+		function grid_size_table(obj, stats)
+			panel_name = 'Grid parameters';
+			out = new_table_with_header(panel_name);
+
+			new_entries = {
+				stats.params.nb
+				stats.params.na
+				stats.params.b_curv
+				stats.params.a_curv
+				stats.params.amax
+				stats.params.bmax
 			};
 
 			obj.update_current_column(out, new_entries);

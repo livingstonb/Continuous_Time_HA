@@ -12,6 +12,7 @@ classdef ParamsDefaults < handle
         DealWithSpecialCase;
         NoRisk = true;
         fast = false;
+        saveGrids = false;
         
         % Name for the parameterization
         name = 'unnamed';

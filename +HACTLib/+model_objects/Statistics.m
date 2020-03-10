@@ -51,6 +51,8 @@ classdef Statistics < handle
 		decomp_RA;
 		decomp_baseline_present = false;
 
+		params = struct();
+
 		other = struct();
 	end
 
@@ -88,12 +90,28 @@ classdef Statistics < handle
 		end
 
 		function compute_statistics(obj)
+			obj.add_params();
 			obj.compute_intro_stats();
 			obj.construct_distributions();
 			obj.compute_percentiles();
 			obj.compute_inequality();
 			obj.compute_constrained();
 			obj.compute_deposit_stats();
+		end
+
+		function add_params(obj)
+			obj.params.nb = sfill(obj.p.nb,...
+				'nb, no. of points on liquid grid');
+			obj.params.na = sfill(obj.p.na,...
+				'na, no. of points on illiquid grid', 2);
+			obj.params.b_curv = sfill(obj.p.b_gcurv_pos,...
+				'Liquid grid curvature', 2);
+			obj.params.a_curv = sfill(obj.p.a_gcurv,...
+				'Illiquid grid curvature', 2);
+			obj.params.bmax = sfill(obj.p.bmax,...
+				'Liquid grid max');
+			obj.params.amax = sfill(obj.p.amax,...
+				'Illiquid grid max');
 		end
 
 		function add_mpcs(obj, mpc_obj, simulated)

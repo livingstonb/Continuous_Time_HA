@@ -1,6 +1,6 @@
 clear
 
-server = false;
+server = true;
 
 if ~server
     basedir = '/home/brian/Documents/GitHub/Continuous_Time_HA';
@@ -58,5 +58,5 @@ tf = HACTLib.tables.TableFancy(params, stats_cell);
 tout = tf.create(params, stats_cell)
 
 
-% xlxpath = fullfile(xlxdir, 'output_table.xlsx');
-% writetable(output_table, xlxpath, 'WriteRowNames', true);
+xlxpath = fullfile(xlxdir, 'output_table.csv');
+writetable(output_table, xlxpath, 'WriteRowNames', true);

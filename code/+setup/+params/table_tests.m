@@ -13,15 +13,15 @@ function outparams = table_tests(param_opts, param_index)
     shared_params.calibration_targets = [3.5];
     shared_params.calibration_bounds = {[0.001, 0.05]};
     shared_params.income_dir = 'continuous_b';
-    shared_params.nb_KFE = 100;
-    shared_params.nb = 100;
-    shared_params.na = 100;
-    shared_params.na_KFE = 100;
-    shared_params.b_gcurv_pos = 0.25;
-    shared_params.a_gcurv = 0.25;
-    shared_params.bmax = 5;
-    shared_params.amax = 20;
-    shared_params.min_grid_spacing = 1e-5;
+    shared_params.nb_KFE = 120;
+    shared_params.nb = 120;
+    shared_params.na = 120;
+    shared_params.na_KFE = 120;
+    shared_params.b_gcurv_pos = 0.2;
+    shared_params.a_gcurv = 0.2;
+    shared_params.bmax = 100; %5;
+    shared_params.amax = 200; %20;
+%     shared_params.min_grid_spacing = 1e-5;
 
     %% adjusing (A/Y,B/Y), fixed adj costs
     raBASELINE = 0.0190643216;
@@ -165,7 +165,4 @@ function outparams = table_tests(param_opts, param_index)
     %% DO NOT CHANGE THIS SECTION
     % Use param_opts.param_index to choose which specification to select
     chosen_param = params{mod(param_index, 100)};
-
-    % Create Params object
-    outparams = HACTLib.model_objects.Params(chosen_param);
 end
