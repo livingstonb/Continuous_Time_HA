@@ -177,8 +177,6 @@ function [stats, p] = main(p)
     end
 
     stats.add_decomps(decomp_obj);
-    stats.decomp_norisk = decomp_obj.results_norisk;
-    stats.decompRA = decomp_obj.results_RA;
     
     %% ----------------------------------------------------------------
     % HOUSEKEEPING
@@ -195,13 +193,14 @@ function [stats, p] = main(p)
         grd.b.matrix = [];
     end
     
-    for ii = 1:6
-        if ii ~= 5
-	       stats.mpcs(ii).mpcs = [];
-        end
-        stats.mpcs_illiquid(ii).mpcs = [];
-    end
-    
+%     for ii = 1:6
+%         if ii ~= 5
+% 	       stats.mpcs(ii).mpcs = [];
+%         end
+%         stats.mpcs_illiquid(ii).mpcs = [];
+%     end
+%    
+    stats = HACTLib.aux.to_structure(stats);
     if p.SaveResults
         save(p.save_path,'stats','grd','grdKFE','p','KFE','income')
     end

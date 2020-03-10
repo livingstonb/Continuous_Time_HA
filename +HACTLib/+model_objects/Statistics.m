@@ -443,11 +443,11 @@ classdef Statistics < handle
 			% HtM Ratios
 			tmp = 1 - obj.w_lt_ysixth.value / obj.liqw_lt_ysixth.value;
 			obj.WHtM_over_HtM_biweekly = sfill(tmp,...
-				'P(WHtM) / P(HtM), biweekly pay', true);
+				'P(WHtM) / P(HtM), biweekly pay (y/6)', true);
 
 			tmp = 1 - obj.w_lt_ytwelfth.value / obj.liqw_lt_ytwelfth.value;
 			obj.WHtM_over_HtM_weekly = sfill(tmp,...
-				'P(WHtM) / P(HtM), weekly pay', true);
+				'P(WHtM) / P(HtM), weekly pay (y/12)', true);
 		end
 
 		function compute_deposit_stats(obj)

@@ -40,8 +40,8 @@ param_opts.SimulateMPCS_news = false;
 param_opts.DealWithSpecialCase = false;
 
 run_opts.Server = false;
-run_opts.param_index = 3;
-run_opts.param_script = 'params_one_asset';
+run_opts.param_index = 1;
+run_opts.param_script = 'params_adj_cost_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
@@ -139,9 +139,12 @@ tic
 stats = main(p);
 toc
 
-table_gen = HACTLib.tables.TableGenDetailed(p, stats);
-results_table = table_gen.create(p, stats)
+% table_gen = HACTLib.tables.TableGenDetailed(p, stats);
+% results_table = table_gen.create(p, stats)
+tf = HACTLib.tables.TableFancy(p, stats);
+tout = tf.create(p, stats)
 
-if ~run_opts.Server
-    writetable(results_table, run_opts.xlx_path, 'WriteRowNames', true)
-end
+
+% if ~run_opts.Server
+%     writetable(results_table, run_opts.xlx_path, 'WriteRowNames', true)
+% end
