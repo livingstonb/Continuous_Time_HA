@@ -103,7 +103,7 @@ function outparams = table_tests(param_opts, param_index)
 	    end
 	elseif param_index < 400
 	    %% recalibrate (rho, r_a) to match B/Y=0.5 with cont_a
-	    ras = 0.0173096090154433;
+	    ras = 0.0193096090154433;
 	    for ra = ras
 	    	params{ii} = shared_params;
 	        params{ii}.name = 'cont_a, recalibrated';
