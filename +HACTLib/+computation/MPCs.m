@@ -21,7 +21,8 @@ classdef MPCs < handle
 		defaults = struct(...
 					'delta', 0.01,...
 					'interp_method', 'linear',...
-					'liquid_mpc', true);
+					'liquid_mpc', true,...
+					'no_inc_risk', false);
     end
     
 	properties (SetAccess=protected)
@@ -110,7 +111,7 @@ classdef MPCs < handle
 			end
 		end
 
-		function solve(obj, KFE, pmf, A)
+		function solve(obj, KFE, A, varargin)
 			% computes the MPCs using Feynman-Kac by calling
 			% a sequence of class methods
 
@@ -141,9 +142,15 @@ classdef MPCs < handle
                 obj.p, obj.income, obj.options.delta, A, true);
 			obj.iterate_backward(KFE);
 
-			for ishock = 1:6
+			if obj.options.no_inc_risk
+				ishocks = 5;
+			else
+				ishocks = 1:6
+			end
+
+			for ishock = ishocks
 				obj.cumulative_consumption_with_shock(ishock);
-				obj.computeMPCs(pmf,ishock)
+				obj.computeMPCs(ishock, varargin{:});
 			end
 
 			obj.solved = true;
@@ -288,7 +295,7 @@ classdef MPCs < handle
 	        end
 		end
 
-		function computeMPCs(obj, pmf, ishock)
+		function computeMPCs(obj, ishock, pmf)
 			% compute MPCs using the cumulative consumption arrays
 			% found previously
 
@@ -313,8 +320,10 @@ classdef MPCs < handle
 				obj.mpcs(5).mpcs = mpcs;
 			end
 
-			obj.mpcs(ishock).quarterly = mpcs' * pmf(:);
-			obj.mpcs(ishock).annual = sum(mpcs,2)' * pmf(:);
+			if ~obj.options.no_inc_risk
+				obj.mpcs(ishock).quarterly = mpcs' * pmf(:);
+				obj.mpcs(ishock).annual = sum(mpcs,2)' * pmf(:);
+			end
 		end
 
 		function check_income(obj, income)

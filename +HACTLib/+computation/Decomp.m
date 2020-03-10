@@ -68,10 +68,10 @@ classdef Decomp < handle
 			obj.m_ra = (obj.p.rho + obj.p.deathrate - r_b_adj)...
 				/ obj.p.riskaver + r_b_adj;
 
-			obj.Empc = obj.stats.mpcs(5).avg_0_quarterly(1);
+			obj.Empc = obj.stats.mpcs(5).quarterly.value;
 
 			% Compute mpc(b) = E[mpc(b,yP,ib) | b]
-			mpcs_states = obj.stats.mpcs(5).mpcs(:,1);
+			mpcs_states = obj.stats.mpcs_over_ss{5};
 			obj.mpcs_b = obj.collapse_mpcs(mpcs_states, obj.pmf);
 
 			% Interpolant for cdf(b)
@@ -95,7 +95,7 @@ classdef Decomp < handle
 			import HACTLib.aux.interpolate_integral
 
 			% Compute mpc_norisk(b) = E[mpc_norisk(b,ib) | b]
-			mpcs_states_nr = obj.stats.mpcs_nr(5).mpcs(:,1);
+			mpcs_states_nr = obj.stats.other.mpcs_nr(5).mpcs(:,1);
 			mpcs_states_nr = reshape(mpcs_states_nr, obj.nb, []);
 			mpcs_b_nr = mpcs_states_nr(:,1);
 
@@ -128,7 +128,7 @@ classdef Decomp < handle
 			psmall = obj.pmf_b < 1e-9;
 			winterp = griddedInterpolant(obj.bgrid(~psmall),...
 				obj.mpcs_b(~psmall), 'pchip', 'nearest');
-			mpc_atmean = winterp(obj.stats.liqw);
+			mpc_atmean = winterp(obj.stats.liqw.value);
 
 			obj.results_RA.RAmpc = obj.m_ra;
 		    obj.results_RA.Em1_less_mRA = obj.Empc - obj.m_ra;

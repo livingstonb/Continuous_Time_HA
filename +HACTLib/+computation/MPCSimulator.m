@@ -145,8 +145,8 @@ classdef MPCSimulator < handle
 
 			% initialize mpc results to NaN
 			for ishock = 1:6
-				obj.sim_mpcs(ishock).avg_quarterly = NaN(obj.nperiods, 1);
-				obj.sim_mpcs(ishock).avg_annual = NaN;
+				obj.sim_mpcs(ishock).quarterly = NaN(obj.nperiods, 1);
+				obj.sim_mpcs(ishock).annual = NaN;
 			end
 
 			if nargin == 7
@@ -407,11 +407,11 @@ classdef MPCSimulator < handle
 		    	con_diff = obj.shock_cum_con{ishock} - obj.baseline_cum_con;
             
             	if (shock > 0) || ismember(obj.shockperiod, [0,1])
-	            	obj.sim_mpcs(ishock).avg_quarterly(period) = mean(con_diff(:,period)) / shock;
+	            	obj.sim_mpcs(ishock).quarterly(period) = mean(con_diff(:,period)) / shock;
 	            end
 
 	            if ((shock > 0) || (obj.shockperiod == 4)) && (obj.nperiods >= 4)
-                    obj.sim_mpcs(ishock).avg_annual = mean(sum(con_diff,2) / shock);
+                    obj.sim_mpcs(ishock).annual = mean(sum(con_diff,2) / shock);
                 end
 		    end
         end

@@ -92,12 +92,12 @@ function [stats, p] = main(p)
     
     if p.ComputeMPCS
     	fprintf('\nComputing MPCs out of an immediate shock...\n')
-        mpc_finder.solve(KFE, stats.pmf, Au);
+        mpc_finder.solve(KFE, Au, stats.pmf);
     end
 
     if p.ComputeMPCS_illiquid
         fprintf('\nComputing illiquid MPCs out of an immediate shock...\n')
-        mpc_finder_illiquid.solve(KFE, stats.pmf, Au);
+        mpc_finder_illiquid.solve(KFE, Au, stats.pmf);
     end
     
     stats.add_mpcs(mpc_finder);
@@ -110,19 +110,12 @@ function [stats, p] = main(p)
         fprintf('Iterating backward to find policy functions for future shock...\n')
     	trans_dyn_solver.solve(KFE,stats.pmf);
     end
-%     for ishock = 1:6
-%         stats.mpcs(ishock).avg_1_quarterly = trans_dyn_solver.mpcs(ishock).avg_1_quarterly;
-%     	stats.mpcs(ishock).avg_4_quarterly = trans_dyn_solver.mpcs(ishock).avg_4_quarterly;
-%         stats.mpcs(ishock).avg_4_annual = trans_dyn_solver.mpcs(ishock).avg_4_annual;
-%     end
-
     stats.add_mpcs_news(trans_dyn_solver);
 
 
     %% ----------------------------------------------------------------
     % SIMULATE MPCs
     % -----------------------------------------------------------------
-    stats.sim_mpcs = struct();
     shocks = [4,5,6];
     shockperiod = 0;
     mpc_simulator = HACTLib.computation.MPCSimulator(...
@@ -132,9 +125,10 @@ function [stats, p] = main(p)
         fprintf('\nSimulating MPCs...\n')
         mpc_simulator.solve(stats.pmf);
     end
+
     for ii = 1:6
-        stats.sim_mpcs(ii).avg_0_quarterly = mpc_simulator.sim_mpcs(ii).avg_quarterly;
-        stats.sim_mpcs(ii).avg_0_annual = mpc_simulator.sim_mpcs(ii).avg_annual;
+        stats.other.sim_mpcs(ii).avg_0_quarterly = mpc_simulator.sim_mpcs(ii).quarterly;
+        stats.other.sim_mpcs(ii).avg_0_annual = mpc_simulator.sim_mpcs(ii).annual;
     end
 
     clear mpc_simulator
@@ -153,8 +147,8 @@ function [stats, p] = main(p)
         mpc_simulator.solve(stats.pmf);
     end
     for ii = 1:6
-        stats.sim_mpcs(ii).avg_4_quarterly = mpc_simulator.sim_mpcs(ii).avg_quarterly;
-        stats.sim_mpcs(ii).avg_4_annual = mpc_simulator.sim_mpcs(ii).avg_annual;
+        stats.other.sim_mpcs(ii).avg_4_quarterly = mpc_simulator.sim_mpcs(ii).quarterly;
+        stats.other.sim_mpcs(ii).avg_4_annual = mpc_simulator.sim_mpcs(ii).annual;
     end
 
     clear mpc_simulator
@@ -163,13 +157,13 @@ function [stats, p] = main(p)
     % MPCs WITHOUT INCOME RISK
     % -----------------------------------------------------------------
     mpc_finder_norisk = HACTLib.computation.MPCs(...
-    	p, income_norisk, grdKFE_norisk);
+    	p, income_norisk, grdKFE_norisk, 'no_inc_risk', true);
     
     if (p.ComputeMPCS == 1) && (p.NoRisk == 1)
     	fprintf('\nComputing MPCs for model without income risk...\n')
-    	mpc_finder_norisk.solve(KFE_nr, stats.pmf_norisk, Au_nr);
+    	mpc_finder_norisk.solve(KFE_nr, Au_nr);
     end
-    stats.mpcs_nr = mpc_finder_norisk.mpcs;
+    stats.other.mpcs_nr = mpc_finder_norisk.mpcs;
     
     %% ----------------------------------------------------------------
     % DECOMPOSITIONS
@@ -182,6 +176,7 @@ function [stats, p] = main(p)
         decomp_obj.compute();
     end
 
+    stats.add_decomps(decomp_obj);
     stats.decomp_norisk = decomp_obj.results_norisk;
     stats.decompRA = decomp_obj.results_RA;
     

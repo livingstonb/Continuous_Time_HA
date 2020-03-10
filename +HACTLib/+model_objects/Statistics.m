@@ -46,6 +46,11 @@ classdef Statistics < handle
 		illiquid_mpcs;
 		mpcs_news_one_quarter;
 		mpcs_news_one_year;
+
+		decomp_norisk;
+		decomp_RA;
+
+		other = struct();
 	end
 
 	properties (Access=protected)
@@ -90,7 +95,7 @@ classdef Statistics < handle
 			obj.compute_deposit_stats();
 		end
 
-		function add_mpcs(obj, mpc_obj)
+		function add_mpcs(obj, mpc_obj, simulated)
 			if mpc_obj.options.liquid_mpc
 				two_asset_only = false;
 				mpc_type = '';
@@ -139,7 +144,7 @@ classdef Statistics < handle
 
 				obj.mpcs_over_ss = cell(1, nshocks);
 				for ishock = 1:nshocks
-					obj.mpcs_over_ss{ishock} =  mpc_obj.mpcs(ishock).mpcs;
+					obj.mpcs_over_ss{ishock} =  mpc_obj.mpcs(ishock).mpcs(:,1);
 				end
 			else
 				obj.illiquid_mpcs = mpcs_stats;
@@ -215,8 +220,63 @@ classdef Statistics < handle
 			obj.mpcs_news_one_year = mpcs_stats;
 		end
 
-		% function add_sim_mpcs(obj, mpc_obj)
-		% end
+		function add_decomps(obj, decomp_obj)
+			empty_stat = sfill([], []);
+
+			% Decomposition wrt no inc risk model
+			empty_decomp_struct = struct(...
+				'htm_level', empty_stat,...
+				'term1', empty_stat, 'term2', empty_stat,...
+				'term3', empty_stat, 'term4', empty_stat...
+			);
+			n = numel(obj.p.decomp_thresholds);
+
+			norisk = decomp_obj.results_norisk;
+			obj.decomp_norisk = empty_decomp_struct;
+			for it = 1:n
+				lvl = obj.p.decomp_thresholds(it);
+
+				obj.decomp_norisk(it) = empty_decomp_struct;
+				obj.decomp_norisk(it).htm_level = sfill(...
+					lvl, 'HtM threshold');
+				obj.decomp_norisk(it).term1 = sfill(...
+					norisk.term1(it) * 100, 'RA MPC (%)');
+
+				tmp = sprintf('HtM effect (abar <= %g)', lvl);
+				obj.decomp_norisk(it).term2 = sfill(...
+					norisk.term2(it), tmp);
+
+				tmp = sprintf(...
+					'Non-HtM (abar > %g), constraint effect ', lvl);
+				obj.decomp_norisk(it).term3 = sfill(...
+					norisk.term3(it), tmp);
+
+				tmp = sprintf(...
+					'Non-HtM (abar > %g), inc risk effect ', lvl);
+				obj.decomp_norisk(it).term4 = sfill(...
+					norisk.term4(it), tmp);
+			end
+
+			% Decomposition wrt RA model
+			n = numel(obj.p.decomp_thresholds);
+
+			results_RA = decomp_obj.results_RA;
+			obj.decomp_RA = struct();
+			obj.decomp_RA.mpc_RA = sfill(decomp_obj.m_ra,...
+				'MPC of RA model');
+			obj.decomp_RA.mean_mpc_diff = sfill(...
+				results_RA.Em1_less_mRA,...
+				'E[MPC] - MPC_ra');
+			obj.decomp_RA.term1 = sfill(...
+				results_RA.term1,...
+				'Effect of MPC fcn');
+			obj.decomp_RA.term2 = sfill(...
+				results_RA.term2,...
+				'Effect of distribution');
+			obj.decomp_RA.term3 = sfill(...
+				results_RA.term3,...
+				'Interaction');
+		end
 
 		function clean(obj)
 			obj.p = [];
