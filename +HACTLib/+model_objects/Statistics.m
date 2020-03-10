@@ -10,6 +10,7 @@ classdef Statistics < handle
 		totw;
 		sav0;
 
+		mpcs_over_ss;
 		pmf_b;
 		cdf_b;
 		pmf_a;
@@ -23,8 +24,11 @@ classdef Statistics < handle
 		median_illiqw;
 		median_totw;
 
-		top10share;
-		top1share;
+		w_top10share;
+		w_top1share;
+		lw_top10share;
+		lw_top1share;
+		wgini;
 
 		constrained;
 		constrained_liq;
@@ -37,6 +41,11 @@ classdef Statistics < handle
 		WHtM_over_HtM_weekly;
 
 		deposits;
+
+		mpcs;
+		illiquid_mpcs;
+		mpcs_news_one_quarter;
+		mpcs_news_one_year;
 	end
 
 	properties (Access=protected)
@@ -76,11 +85,148 @@ classdef Statistics < handle
 			obj.compute_intro_stats();
 			obj.construct_distributions();
 			obj.compute_percentiles();
-			obj.compute_top_shares();
+			obj.compute_inequality();
 			obj.compute_constrained();
 			obj.compute_deposit_stats();
+		end
 
-			obj.clean();
+		function add_mpcs(obj, mpc_obj)
+			if mpc_obj.options.liquid_mpc
+				two_asset_only = false;
+				mpc_type = '';
+			else
+				two_asset_only = true;
+				mpc_type = 'illiq';
+			end
+			sfill2 = @(x,y) sfill(x, y, two_asset_only);
+
+			empty_stat = sfill2([], []);
+
+			empty_mpc_struct = struct(...
+				'shock_normalized', empty_stat,...
+				'shock', empty_stat,...
+				'quarterly', empty_stat,...
+				'annual', empty_stat...
+			);
+
+			nshocks = numel(obj.p.mpc_shocks);
+			for ishock = 1:nshocks
+				shock = obj.p.mpc_shocks(ishock);
+				shock_label = obj.p.quantity2label(shock);
+				mpcs_stats(ishock) = empty_mpc_struct;
+
+				mpcs_stats(ishock).shock_normalized = sfill2(...
+					shock * 100, 'Shock size, (% of mean ann inc)');
+
+				mpcs_stats(ishock).shock = sfill2(shock_label,...
+					'Shock size');
+
+				tmp = 100 * mpc_obj.mpcs(ishock).quarterly(1);
+				label = sprintf(...
+					'Quarterly %s MPC (%%), out of %s',...
+					mpc_type, shock_label);
+				mpcs_stats(ishock).quarterly = sfill2(tmp, label);
+
+				tmp = 100 * mpc_obj.mpcs(ishock).annual;
+				label = sprintf(...
+					'Annual %s MPC (%%), out of %s',...
+					mpc_type, shock_label);
+				mpcs_stats(ishock).annual = sfill2(tmp, label);
+			end
+
+			if mpc_obj.options.liquid_mpc
+				obj.mpcs = mpcs_stats;
+
+				obj.mpcs_over_ss = cell(1, nshocks);
+				for ishock = 1:nshocks
+					obj.mpcs_over_ss{ishock} =  mpc_obj.mpcs(ishock).mpcs;
+				end
+			else
+				obj.illiquid_mpcs = mpcs_stats;
+			end
+		end
+
+		function add_mpcs_news(obj, mpc_obj)
+			empty_stat = sfill([], []);
+
+			% Shock in one quarter
+			empty_mpc_struct = struct(...
+				'shock_normalized', empty_stat,...
+				'shock', empty_stat,...
+				'quarterly', empty_stat...
+			);
+
+			mpcs_stats = empty_mpc_struct;
+			nshocks = numel(obj.p.mpc_shocks);
+			for ishock = 1:nshocks
+				shock = obj.p.mpc_shocks(ishock);
+				shock_label = obj.p.quantity2label(shock);
+
+				mpcs_stats(ishock) = empty_mpc_struct;
+
+				mpcs_stats(ishock).shock_normalized = sfill(...
+					shock * 100, 'Size of shock next quarter, (% of mean ann inc)');
+
+				mpcs_stats(ishock).shock = sfill(shock_label,...
+					'Size of shock next quarter');
+
+				tmp = 100 * mpc_obj.mpcs(ishock).avg_1_quarterly;
+				label = sprintf(...
+					'Quarterly MPC (%%), out of %s next quarter',...
+					shock_label);
+				mpcs_stats(ishock).quarterly = sfill(tmp, label);
+			end
+			obj.mpcs_news_one_quarter = mpcs_stats;
+
+			% Shock in one year
+			empty_mpc_struct = struct(...
+				'shock_normalized', empty_stat,...
+				'shock', empty_stat,...
+				'quarterly', empty_stat,...
+				'annual', empty_stat...
+			);
+
+			mpcs_stats = empty_mpc_struct;
+			nshocks = numel(obj.p.mpc_shocks);
+			for ishock = 1:nshocks
+				shock = obj.p.mpc_shocks(ishock);
+				shock_label = obj.p.quantity2label(shock);
+
+				mpcs_stats(ishock) = empty_mpc_struct;
+
+				mpcs_stats(ishock).shock_normalized = sfill(...
+					shock * 100, 'Size of shock next year, (% of mean ann inc)');
+
+				mpcs_stats(ishock).shock = sfill(shock_label,...
+					'Size of shock next year');
+
+				tmp = 100 * mpc_obj.mpcs(ishock).avg_4_quarterly;
+				label = sprintf(...
+					'Quarterly MPC (%%), out of %s next year',...
+					shock_label);
+				mpcs_stats(ishock).quarterly = sfill(tmp, label);
+
+				tmp = 100 * mpc_obj.mpcs(ishock).avg_4_annual;
+				label = sprintf(...
+					'Annual MPC (%%), out of %s next year',...
+					shock_label);
+				mpcs_stats(ishock).annual = sfill(tmp, label);
+			end
+			obj.mpcs_news_one_year = mpcs_stats;
+		end
+
+		% function add_sim_mpcs(obj, mpc_obj)
+		% end
+
+		function clean(obj)
+			obj.p = [];
+			obj.income = [];
+			obj.grdKFE = [];
+			obj.model = [];
+			obj.wealthmat = [];
+			obj.wealth_sorted = [];
+			obj.pmf_w = [];
+			obj.cdf_w = [];
 		end
 	end
 
@@ -94,7 +240,7 @@ classdef Statistics < handle
 		    obj.illiqw = sfill(tmp, 'Mean illiquid wealth', true);
 
 		    tmp = obj.expectation(obj.grdKFE.b.matrix);
-		    obj.illiqw = sfill(tmp, 'Mean liquid wealth', true);
+		    obj.liqw = sfill(tmp, 'Mean liquid wealth', true);
 
 		    tmp = obj.expectation(...
 		    	obj.grdKFE.b.matrix + obj.grdKFE.a.matrix);
@@ -141,21 +287,42 @@ classdef Statistics < handle
 			obj.median_totw = sfill(w_pct(50), 'w, median');
 		end
 
-		function compute_top_shares(obj)
-			wealth_mass = sortrows(obj.wealthmat(:)) .* obj.pmf_w;
-			wshare = cumsum(wealth_mass) ./ obj.totw.value;
+		function compute_inequality(obj)
+			import HACTLib.aux.interp_integral_alt
+			import HACTLib.aux.unique_sort
+			import HACTLib.aux.direct_gini
 
-			[wshare_u, iu] = unique(wshare, 'last');
-			cdf_w_u = obj.cdf_w(iu);
+			% Top wealth shares
+			[val_w, cdf_w, iu] = unique_sort(obj.wealth_sorted,...
+				obj.pmf_w, 2);
+			wmass = obj.wealth_sorted(:) .* obj.pmf_w(:);
+			cum_share = cumsum(wmass) / obj.totw.value;
+			cum_share = cum_share(iu);
 
 			wshare_interp = griddedInterpolant(...
-				cdf_w_u, wshare_u, 'pchip', 'nearest');
+				cdf_w, cum_share, 'pchip', 'nearest');
 
 			tmp = 1 - wshare_interp(0.9);
-			obj.top10share = sfill(tmp, 'w, Top 10% share');
+			obj.w_top10share = sfill(tmp, 'w, Top 10% share');
 
 			tmp = 1 - wshare_interp(0.99);
-			obj.top1share = sfill(tmp, 'w, Top 1% share');
+			obj.w_top1share = sfill(tmp, 'w, Top 1% share');
+
+			% Top liquid wealth shares
+			cum_share = cumsum(obj.grdKFE.b.vec .* obj.pmf_b);
+			cum_share = cum_share / obj.liqw.value;
+			lwshare_interp = griddedInterpolant(obj.cdf_b,...
+				cum_share, 'pchip', 'nearest');
+
+			tmp = 1 - lwshare_interp(0.9);
+			obj.lw_top10share = sfill(tmp, 'b, Top 10% share', true);
+
+			tmp = 1 - lwshare_interp(0.99);
+			obj.lw_top1share = sfill(tmp, 'b, Top 1% share', true);
+			
+			% Gini coefficient
+			tmp = direct_gini(obj.wealth_sorted, obj.pmf_w);
+			obj.wgini = sfill(tmp, 'Gini coefficient, wealth');
 		end
 
 		function compute_constrained(obj)
@@ -223,12 +390,6 @@ classdef Statistics < handle
 				'P(WHtM) / P(HtM), weekly pay', true);
 		end
 
-		function compute_gini(obj)
-			import HACTLib.aux.direct_gini
-			tmp = direct_gini(obj.wealth_sorted, obj.pmf_w);
-			obj.wgini = sfill(tmp, 'Gini coefficient, wealth');
-		end
-
 		function compute_deposit_stats(obj)
 			sfill2 = @(x,y) sfill(x, y, true);
 
@@ -283,22 +444,27 @@ classdef Statistics < handle
 
 			cdf_x = cumsum(pmf_x);
 		end
+	end
 
-		function clean(obj)
-			obj.p = [];
-			obj.income = [];
-			obj.grdKFE = [];
-			obj.model = [];
-			obj.wealthmat = [];
-			obj.wealth_sorted = [];
-			obj.pmf_w = [];
-			obj.cdf_w = [];
+	methods (Static)
+		function stats = test(mat_path)
+			import HACTLib.model_objects.Statistics
+			if nargin == 0
+				mat_dir = '/home/brian/Documents/temp';
+				mat_file = 'stats_vars.mat'; % stats_vars_2asset.mat
+				mat_path = fullfile(mat_dir, mat_file);
+			end
+
+			load(mat_path);
+
+			stats = Statistics(p, income, grdKFE, KFE);
+			stats.compute_statistics();
 		end
 	end
 end
 
 function out = sfill(value, label, two_asset)
-	if nargin == 2
+	if nargin < 3
 		two_asset = false;
 	end
 

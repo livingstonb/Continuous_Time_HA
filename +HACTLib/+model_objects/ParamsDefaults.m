@@ -243,7 +243,7 @@ classdef ParamsDefaults < handle
         epsilon_HtM = [0 0.005 0.01 0.02 0.05 0.1 0.15]; % for looking at fraction HtM
         wpercentiles = [10 25 50 90 99 99.9];
         mpc_shocks = [-1e-5 -0.01 -0.1 1e-5 0.01 0.1];
-        mpc_shocks_dollars = [];
+        numeraire_in_dollars;
         decomp_thresholds = [0 0.01 0.05];
 
         % ----------- adjustment costs -----------------------------------

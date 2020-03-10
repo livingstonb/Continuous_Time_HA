@@ -232,5 +232,22 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
             fprintf('\tdeathrate = %f\n',obj.deathrate)
             fprintf('\n\n')
         end
+
+
+        function label_out = quantity2label(obj, val)
+            if ~isempty(obj.numeraire_in_dollars)
+                dollars = abs(val) * obj.numeraire_in_dollars;
+                if val < 0
+                    pref = '-$';
+                else
+                    pref = '$';
+                end
+
+                label_out = sprintf('%s%g', pref, dollars);
+            else
+                pref = '';
+                label_out = sprintf('%g', val);
+            end
+        end
     end
 end

@@ -1,4 +1,4 @@
-function [stats,p] = main(p)
+function [stats, p] = main(p)
     % Instantiates necessary classes and calls functions to solve the
     % model and compute statistics
     %
@@ -74,17 +74,13 @@ function [stats,p] = main(p)
     %% ----------------------------------------------------------------
     % COMPUTE STATISTICS
     % -----------------------------------------------------------------
-    fprintf('\nComputing statistics\n')
-    stats = statistics.compute_statistics(p, income, grd, grdKFE, KFE);
-    
-    stats_new = HACTLib.model_objects.Statistics(p, income, grdKFE, KFE);
-    stats_new.compute_statistics();
+    fprintf('\nComputing statistics\n')    
+    stats = HACTLib.model_objects.Statistics(p, income, grdKFE, KFE);
+    stats.compute_statistics();
 
     %% ----------------------------------------------------------------
     % COMPUTE MPCs
     % -----------------------------------------------------------------
-    stats.mpcs = struct();
-
     import HACTLib.computation.MPCs
 
     mpc_finder = MPCs(p, income, grdKFE, p.mpc_options);
@@ -103,19 +99,9 @@ function [stats,p] = main(p)
         fprintf('\nComputing illiquid MPCs out of an immediate shock...\n')
         mpc_finder_illiquid.solve(KFE, stats.pmf, Au);
     end
-
-    for ishock = 1:6
-        stats.mpcs(ishock).avg_0_quarterly = mpc_finder.mpcs(ishock).quarterly;
-        stats.mpcs(ishock).avg_0_annual = mpc_finder.mpcs(ishock).annual;
-        stats.mpcs(ishock).mpcs = mpc_finder.mpcs(ishock).mpcs;
-
-        stats.mpcs_illiquid(ishock).avg_0_quarterly...
-            = mpc_finder_illiquid.mpcs(ishock).quarterly;
-        stats.mpcs_illiquid(ishock).avg_0_annual...
-            = mpc_finder_illiquid.mpcs(ishock).annual;
-        stats.mpcs_illiquid(ishock).mpcs...
-            = mpc_finder_illiquid.mpcs(ishock).mpcs;
-    end
+    
+    stats.add_mpcs(mpc_finder);
+    stats.add_mpcs(mpc_finder_illiquid);
     
     if p.ComputeMPCS_news == 1
     	fprintf('Computing MPCs out of news...\n')
@@ -124,11 +110,13 @@ function [stats,p] = main(p)
         fprintf('Iterating backward to find policy functions for future shock...\n')
     	trans_dyn_solver.solve(KFE,stats.pmf);
     end
-    for ishock = 1:6
-        stats.mpcs(ishock).avg_1_quarterly = trans_dyn_solver.mpcs(ishock).avg_1_quarterly;
-    	stats.mpcs(ishock).avg_4_quarterly = trans_dyn_solver.mpcs(ishock).avg_4_quarterly;
-        stats.mpcs(ishock).avg_4_annual = trans_dyn_solver.mpcs(ishock).avg_4_annual;
-    end
+%     for ishock = 1:6
+%         stats.mpcs(ishock).avg_1_quarterly = trans_dyn_solver.mpcs(ishock).avg_1_quarterly;
+%     	stats.mpcs(ishock).avg_4_quarterly = trans_dyn_solver.mpcs(ishock).avg_4_quarterly;
+%         stats.mpcs(ishock).avg_4_annual = trans_dyn_solver.mpcs(ishock).avg_4_annual;
+%     end
+
+    stats.add_mpcs_news(trans_dyn_solver);
 
 
     %% ----------------------------------------------------------------

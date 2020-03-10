@@ -451,7 +451,7 @@ classdef MPCsNews < handle
 			%	KFE grids
 
 			hours = 1;
-			obj.KFEint = solver.find_policies(...
+			obj.KFEint = HACTLib.computation.find_policies(...
 				obj.p, obj.income, obj.grids, obj.V, hours);
 		end
 
