@@ -164,9 +164,9 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     %% --------------------------------------------------------------------
     % DERIVATIVE OF VALUE FUNCTION FOR SDU WITH RETURNS RISK
     % ---------------------------------------------------------------------
-    if (p.sigma_r > 0) && (p.OneAsset == 1)
+    if (p.sigma_r > 0) && (p.OneAsset)
         V_deriv_risky_asset_nodrift = rho_mat_adj .* prefs.u1(c);
-    elseif (p.sigma_r > 0) && (p.OneAsset == 0)
+    elseif (p.sigma_r > 0) && (~p.OneAsset)
         V_deriv_risky_asset_nodrift = rho_mat_adj .* prefs.u1(c)...
         	.* (1 + HACTLib.aux.AdjustmentCost.derivative(d, grd.a.matrix, p));
     else

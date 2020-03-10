@@ -29,7 +29,6 @@ classdef AltCalibrator < handle
 			obj.options.ComputeMPCS_news = params.ComputeMPCS_news;
 			obj.options.SimulateMPCS_news = params.SimulateMPCS_news;
 			obj.options.NoRisk = params.NoRisk;
-			obj.options.SaveResults = params.SaveResults;
 
 			obj.variables = variables;
 
@@ -75,7 +74,9 @@ classdef AltCalibrator < handle
 			for i_var = 1:obj.nvars
 				current_params.set(obj.variables{i_var}, x(i_var));
 			end
-			stats = main(current_params);
+
+			save_results = false;
+			stats = main(current_params, save_results);
 			
 			fprintf('\n\n---- For ')
 			for i_var = 1:obj.nvars

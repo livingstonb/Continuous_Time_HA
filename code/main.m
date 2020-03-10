@@ -1,4 +1,4 @@
-function [stats, p] = main(p)
+function [stats, p] = main(p, save_results)
     % Instantiates necessary classes and calls functions to solve the
     % model and compute statistics
     %
@@ -28,13 +28,13 @@ function [stats, p] = main(p)
 	income = Income(income_path, p, false);
 
     % Turn off income risk (set y equal to the mean)
-    income_norisk = Income(p.direc, p, true);
+    income_norisk = Income('', p, true);
 
     p.set("ny", income.ny, true);
 
     % Natural borrowing limit
-    NBL = - min(income.y.vec+p.transfer) ...
-            / (p.r_b_borr + p.deathrate*p.perfectannuities);
+    NBL = - min(income.y.vec + p.transfer) ...
+            / (p.r_b_borr + p.deathrate * p.perfectannuities);
     if p.bmin <= -1e10
         % Set "loose" borrowing limit
         p.set("bmin", 0.95 * NBL, true);
@@ -205,9 +205,11 @@ function [stats, p] = main(p)
 %     end
 %    
     stats = HACTLib.aux.to_structure(stats);
-    if p.SaveResults
+
+    if save_results
         save(p.save_path,'stats','grd','grdKFE','p','KFE','income')
     end
+
     clear solver.two_asset.solver
     fprintf('\nCode finished for the parameterization: \n\t%s\n\n',p.name)
 end

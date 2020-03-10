@@ -7,7 +7,6 @@ classdef ParamsDefaults < handle
         ComputeMPCS_news = false;
         SimulateMPCS_news = false;
         Bequests = false;
-        SaveResults = false;
         OneAsset = true;
         DealWithSpecialCase;
         NoRisk = true;

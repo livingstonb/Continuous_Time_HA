@@ -37,6 +37,19 @@ function outparams = table_tests(param_opts, param_index)
         end
     end
 
+    maxes = [10, 30];
+    params{ii} = shared_params;
+    params{ii}.name = 'brute force, lower maxes';
+    params{ii} = set_grid(params{ii}, 200, 0.3)
+    params{ii} = set_maxes(params{ii}, maxes);
+    ii = ii + 1;
+
+    maxes = [20, 60];
+    params{ii} = shared_params;
+    params{ii}.name = 'brute force, higher maxes';
+    params{ii} = set_grid(params{ii}, 220, 0.3)
+    params{ii} = set_maxes(params{ii}, maxes);
+
     % ---------------------------------------------------------------------
     % Use param_index to choose which specification to select
     outparams = params{param_index};

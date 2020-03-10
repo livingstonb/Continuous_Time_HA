@@ -47,7 +47,7 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
             + (r_a_adj + p.deathrate*p.perfectannuities) * grids.a.matrix...
             + (r_b_mat_adj + p.deathrate*p.perfectannuities) .* grids.b.matrix + p.transfer;
 
-    if p.SDU == 1
+    if p.SDU
         u = p.rho * HACTLib.aux.u_fn(c_0, p.invies);
     else
         u = HACTLib.aux.u_fn(c_0, p.riskaver);
@@ -92,7 +92,7 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
     % ---------------------------------------------------------------------
     gg0 = ones(p.nb_KFE,p.na_KFE,p.nz,income.ny);
     gg0 = gg0 .* permute(repmat(income.ydist,[1 p.nb_KFE p.na_KFE p.nz]),[2 3 4 1]);
-    if p.OneAsset == 1
+    if p.OneAsset
         gg0(:,gridsKFE.a.vec>0,:,:) = 0;
     end
     gg0 = gg0 / sum(gg0(:));

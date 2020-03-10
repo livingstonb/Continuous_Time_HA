@@ -32,16 +32,15 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 
 param_opts.calibrate = true;
 param_opts.fast = false; % use small grid for debugging
-param_opts.ComputeMPCS = false;
-param_opts.ComputeMPCS_illiquid = false;
+param_opts.ComputeMPCS = true;
+param_opts.ComputeMPCS_illiquid = true;
 param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
 param_opts.ComputeMPCS_news = false;
 param_opts.SimulateMPCS_news = false;
 param_opts.DealWithSpecialCase = false;
+param_opts.param_index = 1;
 
 run_opts.Server = true;
-run_opts.param_index = 1;
-% run_opts.name = 'grid;
 run_opts.param_script = 'grid_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -50,31 +49,13 @@ run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 % HOUSEKEEPING, DO NOT CHANGE
 % -------------------------------------------------------------------------
 
-if run_opts.Server == 0
+if ~run_opts.Server
 	param_opts.direc = run_opts.localdir;
-    param_opts.SaveResults = true;
 else
 	param_opts.direc = run_opts.serverdir;
-	run_opts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));
-    
+	param_opts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));
 	param_opts.fast = false;
 end
-param_opts.param_index = run_opts.param_index;
-
-% check that specified directories exist
-if ~exist(param_opts.direc, 'dir')
-    error(strcat(param_opts.direc, ' does not exist'))
-end
-
-% directory to save output, and temp directory
-run_opts.save_dir = fullfile(param_opts.direc, 'output');
-
-% xlx path
-fname = sprintf('output_table_%d.xlsx', run_opts.param_index);
-run_opts.xlx_path = fullfile(run_opts.save_dir, fname);
-
-fname = sprintf('output_%d.mat', run_opts.param_index);
-param_opts.save_path = fullfile(run_opts.save_dir, fname);
 
 % temp directory
 param_opts.temp_dir = fullfile(param_opts.direc, 'temp');
@@ -82,20 +63,33 @@ param_opts.temp_dir = fullfile(param_opts.direc, 'temp');
 % output directory
 param_opts.out_dir = fullfile(param_opts.direc, 'output');
 
+fname = sprintf('output_%d.mat', param_opts.param_index);
+param_opts.save_path = fullfile(param_opts.out_dir, fname);
+
 addpath(fullfile(param_opts.direc, 'code'));
 addpath(fullfile(param_opts.direc, 'factorization_lib'));
 
-mkdir(param_opts.temp_dir);
-mkdir(run_opts.save_dir);
-addpath(param_opts.temp_dir);
-addpath(run_opts.save_dir);
+% check that specified directories exist
+if ~exist(param_opts.direc, 'dir')
+    error(strcat(param_opts.direc, ' does not exist'))
+end
+
+if ~exist(param_opts.temp_dir, 'dir')
+    mkdir(param_opts.temp_dir);
+end
+
+if ~exist(param_opts.out_dir, 'dir')
+    mkdir(param_opts.out_dir);
+end
 
 cd(param_opts.direc)
+addpath(param_opts.temp_dir);
+addpath(param_opts.out_dir);
 
 %% --------------------------------------------------------------------
 % GET PARAMETERS
 % ---------------------------------------------------------------------
-p = setup.params.(run_opts.param_script)(param_opts, run_opts.param_index);
+p = setup.params.(run_opts.param_script)(param_opts, param_opts.param_index);
 
 % Create Params object
 p = HACTLib.model_objects.Params(p);
@@ -108,8 +102,9 @@ if ~isempty(p.calibrator)
 	lbounds = p.calibrator.lbounds;
 	ubounds = p.calibrator.ubounds;
     x0 = p.calibrator.x0;
+    options = optimoptions(@lsqnonlin, 'MaxIterations', p.maxit_AY);
     [calibrated_params, resnorm] = lsqnonlin(p.calibrator.solver_handle,...
-    	x0, lbounds, ubounds);
+    	x0, lbounds, ubounds, options);
     
     if resnorm > 1e-5
         error('Could not match targets')
@@ -141,15 +136,15 @@ end
 
 % final run
 tic
-stats = main(p);
+save_results = true;
+stats = main(p, save_results);
 toc
 
 % table_gen = HACTLib.tables.TableGenDetailed(p, stats);
 % results_table = table_gen.create(p, stats)
 table_gen = HACTLib.tables.TableFancy(p, {stats});
-tout = table_gen.create(p, {stats})
+results_table = table_gen.create(p, {stats})
 
-
-% if ~run_opts.Server
-%     writetable(results_table, run_opts.xlx_path, 'WriteRowNames', true)
-% end
+xlx_path = sprintf('run%d_table.xlsx', p.param_index);
+xlx_path = fullfile(p.out_dir, xlx_path);
+writetable(results_table, xlx_path, 'WriteRowNames', true)

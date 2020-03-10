@@ -62,7 +62,6 @@ function outparams = SDU_tests(param_opts, param_index)
     params{ii}.rho = rho_ies1_chi1_015;
     params{ii}.transfer = 0.0081 * 2.0;
     params{ii}.HJB_implicit = false;
-    params{ii}.SaveResults = 1;
 
     params{ii}.calibration_vars = {'rho', 'r_a'}
     params{ii}.calibration_stats = {'totw', 'liqw'};
@@ -110,7 +109,6 @@ function outparams = SDU_tests(param_opts, param_index)
                     params{ii}.HJB_implicit = false;
                     params{ii}.transfer = 0.0081 * 2.0;
                     params{ii}.KFE_iterative = true;
-                    params{ii}.SaveResults = 1;
 
                     params{ii}.rho = rho_ies1_chi1_015;
 
