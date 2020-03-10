@@ -79,7 +79,7 @@ classdef AltCalibrator < handle
 			
 			fprintf('\n\n---- For ')
 			for i_var = 1:obj.nvars
-				v(i_var) = stats.(obj.target_names{i_var});
+				v(i_var) = stats.(obj.target_names{i_var}).value;
 				fprintf('%s = %g', obj.variables{i_var}, x(i_var))
 				if i_var < obj.nvars
 					fprintf(", ")
