@@ -1,21 +1,17 @@
 function outparams = params_adj_cost_tests(param_opts, param_index)
 	import HACTLib.aux.set_shared_fields
 
-	% chi1s = [0.01, 0.05, 0.1, 0.15, 0.2];
- %    chi2s = [0.1, 0.25, 0.5];
-
-    % chi1s = [0.05 0.1 0.2:0.2:1];
-    % chi2s = [0.01:0.01:0.05 0.1:0.1:0.5];
-    ii = 1;
+	shocks = [-1, -500, -5000, 1, 500, 5000];
+    dollars = 72000;
 
     shared_params = param_opts;
+    shared_params.mpc_shocks = shocks / dollars;
+    shared_params.numeraire_in_dollars = dollars;
     shared_params.nb = 40;
     shared_params.nb_KFE = 40;
     shared_params.na = 40;
     shared_params.na_KFE = 40;
     shared_params.min_grid_spacing = -1e10;
-    shared_params.mpc_shocks_dollars = [-1, -500, -5000, 1, 500, 5000];
-    shared_params.mpc_shocks = shared_params.mpc_shocks_dollars ./ 72000;
     shared_params.bmax = 20;
     shared_params.amax = 50;
     shared_params.b_gcurv_pos = 0.3;
@@ -25,6 +21,7 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
     shared_params.calibration_vars = {'rho', 'r_a'};
     shared_params.calibration_bounds = {[0.001, 0.05], [0.006, 0.1]};
     
+    ii = 1;
 
     %% --------------------------------------------------------------------
     % BASELINE

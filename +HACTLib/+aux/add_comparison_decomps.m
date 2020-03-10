@@ -76,6 +76,8 @@ function stats = add_comparison_decomps(p, stats, decomp_bl)
 				sprintf('Distr effect (%%), NHtM (eps = %g)', x), 2);
 		end
 	end
+
+	stats.decomp_baseline_present = true;
 end
 
 function out = sfill(value, label, asset_indicator)

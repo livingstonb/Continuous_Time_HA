@@ -49,6 +49,7 @@ classdef Statistics < handle
 
 		decomp_norisk;
 		decomp_RA;
+		decomp_baseline_present = false;
 
 		other = struct();
 	end

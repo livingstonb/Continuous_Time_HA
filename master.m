@@ -40,7 +40,7 @@ param_opts.SimulateMPCS_news = false;
 param_opts.DealWithSpecialCase = false;
 
 run_opts.Server = false;
-run_opts.param_index = 4;
+run_opts.param_index = 2;
 run_opts.param_script = 'params_adj_cost_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -141,8 +141,8 @@ toc
 
 % table_gen = HACTLib.tables.TableGenDetailed(p, stats);
 % results_table = table_gen.create(p, stats)
-tf = HACTLib.tables.TableFancy(p, stats);
-tout = tf.create(p, stats)
+tf = HACTLib.tables.TableFancy(p, {stats});
+tout = tf.create(p, {stats})
 
 
 % if ~run_opts.Server

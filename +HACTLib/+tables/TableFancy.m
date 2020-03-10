@@ -5,7 +5,7 @@ classdef TableFancy < handle
 		mpcs_news_present = false;
 		one_asset_only = false;
 		two_asset_only = false;
-		decomp_norisk_present = false;
+		decomp_baseline_present = false;
 		selected_cases;
 
 		n_cols;
@@ -16,7 +16,6 @@ classdef TableFancy < handle
 	properties
 		outdir;
 		output;
-		decomp_baseline;
 		decomp_incrisk_alt;
 	end
 
@@ -24,15 +23,21 @@ classdef TableFancy < handle
 		function obj = TableFancy(params, stats)
 			obj.outdir = params(1).out_dir;
 
-			obj.set_options(params);
+			obj.set_options(params, stats);
 			obj.filter_experiments(params);
 		end
 
-		function set_options(obj, params)
+		function set_options(obj, params, stats)
 			obj.mpcs_present = any([params.ComputeMPCS]);
 			obj.illiquid_mpcs_present = any([params.ComputeMPCS_illiquid]);
 			obj.mpcs_news_present = any([params.ComputeMPCS_news]);
 
+			for ii = 1:numel(stats)
+				if stats{ii}.decomp_baseline_present
+					obj.decomp_baseline_present = true;
+					break
+				end
+			end
 			obj.one_asset_only = all([params.OneAsset]);
 			obj.two_asset_only = all(~[params.OneAsset]);
 
@@ -77,7 +82,9 @@ classdef TableFancy < handle
 				obj.mpc_sign_table(stats_ip);
 
 				shock = stats_ip.mpcs(5).shock.value;
-				obj.mpc_comparisons(stats_ip, shock);
+
+				obj.mpc_comparison(stats_ip, shock);
+				obj.mpc_comparison_pct(stats_ip, shock);
 
 				if obj.one_asset_only
 					assets = {'b'};
@@ -192,9 +199,13 @@ classdef TableFancy < handle
 			obj.update_current_column(out, new_entries);
 		end
 
-		function mpc_comparisons(obj, stats, shock)
+		function mpc_comparison(obj, stats, shock)
+			if ~obj.decomp_baseline_present
+				return
+			end
+
 			panel_name = sprintf(...
-				'Decomposition of MPC out of %s',...
+				'Decomposition of E[MPC] - E[MPC_b] out of %s',...
 				shock);
 			panel_name = strcat(panel_name,...
 				', relative to baseline');
@@ -204,7 +215,30 @@ classdef TableFancy < handle
 				stats.decomp_baseline.mean_mpc_diff
 				stats.decomp_baseline.term1
 				stats.decomp_baseline.term2
+				stats.decomp_baseline.term2a(3)
+				stats.decomp_baseline.term2b(3)
+				stats.decomp_baseline.term2c(3)
 				stats.decomp_baseline.term3
+			};
+
+			obj.update_current_column(out, new_entries);
+		end
+
+		function mpc_comparison_pct(obj, stats, shock)
+			if ~obj.decomp_baseline_present
+				return
+			end
+
+			panel_name = ...
+				'Decomposition as % of E[MPC] - E[MPC_b]';
+			out = new_table_with_header(panel_name);
+
+			new_entries = {
+				stats.decomp_baseline.term2_pct
+				stats.decomp_baseline.term2a_pct(3)
+				stats.decomp_baseline.term2b_pct(3)
+				stats.decomp_baseline.term2c_pct(3)
+				stats.decomp_baseline.term3_pct
 			};
 
 			obj.update_current_column(out, new_entries);
