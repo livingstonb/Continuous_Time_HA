@@ -145,7 +145,7 @@ classdef MPCs < handle
 			if obj.options.no_inc_risk
 				ishocks = 5;
 			else
-				ishocks = 1:6
+				ishocks = 1:6;
 			end
 
 			for ishock = ishocks

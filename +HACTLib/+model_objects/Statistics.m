@@ -40,7 +40,7 @@ classdef Statistics < handle
 		WHtM_over_HtM_biweekly;
 		WHtM_over_HtM_weekly;
 
-		deposits;
+		adjcosts;
 
 		mpcs;
 		illiquid_mpcs;
@@ -97,13 +97,13 @@ classdef Statistics < handle
 
 		function add_mpcs(obj, mpc_obj, simulated)
 			if mpc_obj.options.liquid_mpc
-				two_asset_only = false;
+				asset_indicator = 0;
 				mpc_type = '';
 			else
-				two_asset_only = true;
+				asset_indicator = 2;
 				mpc_type = 'illiq';
 			end
-			sfill2 = @(x,y) sfill(x, y, two_asset_only);
+			sfill2 = @(x,y) sfill(x, y, asset_indicator);
 
 			empty_stat = sfill2([], []);
 
@@ -297,14 +297,14 @@ classdef Statistics < handle
 		    obj.beta_A = sfill(exp(-4 * obj.p.rho), 'beta (annualized)');
 
 		    tmp = obj.expectation(obj.grdKFE.a.matrix);
-		    obj.illiqw = sfill(tmp, 'Mean illiquid wealth', true);
+		    obj.illiqw = sfill(tmp, 'Mean illiquid wealth', 2);
 
 		    tmp = obj.expectation(obj.grdKFE.b.matrix);
-		    obj.liqw = sfill(tmp, 'Mean liquid wealth', true);
+		    obj.liqw = sfill(tmp, 'Mean liquid wealth');
 
 		    tmp = obj.expectation(...
 		    	obj.grdKFE.b.matrix + obj.grdKFE.a.matrix);
-		    obj.totw = sfill(tmp, 'Mean total wealth');
+		    obj.totw = sfill(tmp, 'Mean total wealth', 2);
 
 		    tmp = obj.expectation(obj.model.s==0);
 		    obj.sav0 = sfill(tmp, 'P(s = 0)');
@@ -331,20 +331,20 @@ classdef Statistics < handle
 
 				tmp_b = sprintf('b, %gth pctile', pct_at);
 				obj.lwpercentiles{ip} = sfill(...
-					lw_pct(pct_at), tmp_b, true);
+					lw_pct(pct_at), tmp_b);
 
 				tmp_a = sprintf('a, %gth pctile', pct_at);
 				obj.iwpercentiles{ip} = sfill(...
-					iw_pct(pct_at), tmp_a, true);
+					iw_pct(pct_at), tmp_a, 2);
 
 				tmp_w = sprintf('w, %gth pctile', pct_at);
 				obj.wpercentiles{ip} = sfill(...
-					w_pct(pct_at), tmp_w);
+					w_pct(pct_at), tmp_w, 2);
 			end
 
-			obj.median_liqw = sfill(lw_pct(50), 'b, median', true);
-			obj.median_illiqw = sfill(iw_pct(50), 'a, median', true);
-			obj.median_totw = sfill(w_pct(50), 'w, median');
+			obj.median_liqw = sfill(lw_pct(50), 'b, median');
+			obj.median_illiqw = sfill(iw_pct(50), 'a, median', 2);
+			obj.median_totw = sfill(w_pct(50), 'w, median', 2);
 		end
 
 		function compute_inequality(obj)
@@ -375,10 +375,10 @@ classdef Statistics < handle
 				cum_share, 'pchip', 'nearest');
 
 			tmp = 1 - lwshare_interp(0.9);
-			obj.lw_top10share = sfill(tmp, 'b, Top 10% share', true);
+			obj.lw_top10share = sfill(tmp, 'b, Top 10% share', 2);
 
 			tmp = 1 - lwshare_interp(0.99);
-			obj.lw_top1share = sfill(tmp, 'b, Top 1% share', true);
+			obj.lw_top1share = sfill(tmp, 'b, Top 1% share', 2);
 			
 			% Gini coefficient
 			tmp = direct_gini(obj.wealth_sorted, obj.pmf_w);
@@ -401,11 +401,11 @@ classdef Statistics < handle
 
 				tmp = lw_constrained_interp(htm);
 				obj.constrained_liq{ip} = sfill(tmp,...
-					sprintf('P(b <= %g)', htm), true);
+					sprintf('P(b <= %g)', htm));
 
 				tmp = w_constrained_interp(htm);
 				obj.constrained{ip} = sfill(tmp,...
-					sprintf('P(w <= %g)', htm));
+					sprintf('P(w <= %g)', htm), 2);
 			end
 
 			% Wealth / (quarterly earnings) < epsilon
@@ -420,9 +420,9 @@ classdef Statistics < handle
 				'pchip', 'nearest');
 
 			obj.w_lt_ysixth = sfill(...
-				wy_interp(1/6), 'P(w_i <= y_i / 6)');
+				wy_interp(1/6), 'P(w_i <= y_i / 6)', 2);
 			obj.w_lt_ytwelfth = sfill(...
-				wy_interp(1/12), 'P(w_i <= y_i / 12)');
+				wy_interp(1/12), 'P(w_i <= y_i / 12)', 2);
 
 			% Liquid wealth / (quarterly earnings) < epsilon
 			by_ratio = obj.grdKFE.a.wide ./ obj.income.y.matrixKFE;
@@ -436,50 +436,74 @@ classdef Statistics < handle
 				'pchip', 'nearest');
 
 			obj.liqw_lt_ysixth = sfill(...
-				by_interp(1/6), 'P(b_i <= y_i / 6)', true);
+				by_interp(1/6), 'P(b_i <= y_i / 6)');
 			obj.liqw_lt_ytwelfth = sfill(...
-				by_interp(1/12), 'P(b_i <= y_i / 12)', true);
+				by_interp(1/12), 'P(b_i <= y_i / 12)');
 
 			% HtM Ratios
 			tmp = 1 - obj.w_lt_ysixth.value / obj.liqw_lt_ysixth.value;
 			obj.WHtM_over_HtM_biweekly = sfill(tmp,...
-				'P(WHtM) / P(HtM), biweekly pay (y/6)', true);
+				'P(WHtM) / P(HtM), biweekly pay (y/6)', 2);
 
 			tmp = 1 - obj.w_lt_ytwelfth.value / obj.liqw_lt_ytwelfth.value;
 			obj.WHtM_over_HtM_weekly = sfill(tmp,...
-				'P(WHtM) / P(HtM), weekly pay (y/12)', true);
+				'P(WHtM) / P(HtM), weekly pay (y/12)', 2);
 		end
 
 		function compute_deposit_stats(obj)
-			sfill2 = @(x,y) sfill(x, y, true);
+			sfill2 = @(y) sfill(NaN, y, 2);
 
-			obj.deposits = struct();
+			obj.adjcosts = struct();
 
-			obj.deposits.chi0 = sfill2(obj.p.chi0,...
+			% Adj cost parameters
+			obj.adjcosts.chi0 = sfill2(...
 				'chi0, adj cost coeff on linear term');
-			obj.deposits.chi1 = sfill2(obj.p.chi1,...
+			obj.adjcosts.chi1 = sfill2(...
 				'chi1, an adj cost coeff');
-			obj.deposits.chi1 = sfill2(obj.p.chi2,...
+			obj.adjcosts.chi2 = sfill2(...
 				'chi2, an adj cost coeff');
-
-			obj.deposits.kappa0 = sfill2(obj.p.chi0,...
+			obj.adjcosts.kappa0 = sfill2(...
 				'kappa0, adj cost coeff on first (linear) term');
-			obj.deposits.kappa1 = sfill2(...
-				obj.p.chi1 ^ (-obj.p.chi2) / (1 + obj.p.chi2),...
+			obj.adjcosts.kappa1 = sfill2(...
 				'kappa1, adj cost coeff on second (power) term');
-			obj.deposits.kappa2 = sfill2(obj.p.chi2,...
+			obj.adjcosts.kappa2 = sfill2(...
 				'kappa2, power on second term');
-
-			obj.deposits.a_lb = sfill2(obj.p.a_lb,...
+			obj.adjcosts.a_lb = sfill2(...
 				'a_lb, parameter s.t. max(a, a_lb) used for adj cost');
-
-			lhs = "cost(d,a) / |d|";
-			term1 = sprintf("%g", obj.p.chi0);
-			term2 = sprintf("%g |d / max(a,%g)| ^ (%g)",...
-				obj.deposits.kappa1.value, obj.p.a_lb, obj.p.chi2);
-			fn_form = strcat(lhs, " = ", term1, " + ", term2);
-			obj.deposits.adj_cost_fn = sfill2(fn_form,...
+			obj.adjcosts.adj_cost_fn = sfill2(...
 				'Adjustment cost function');
+			obj.adjcosts.mean_cost = sfill2(...
+		        'Mean adjustment cost, E[chi(d, a)]');
+			obj.adjcosts.mean_d_div_a = sfill2(...
+		        'Mean ratio of deposits to assets, E[|d| / max(a, a_lb)]');
+
+			if ~obj.p.OneAsset
+				obj.adjcosts.chi0.value = obj.p.chi0;
+				obj.adjcosts.chi1.value = obj.p.chi1;
+				obj.adjcosts.chi2.value = obj.p.chi2;
+				obj.adjcosts.kappa0.value = obj.p.chi0;
+				obj.adjcosts.kappa1.value = ...
+					obj.p.chi1 ^ (-obj.p.chi2) / (1 + obj.p.chi2);
+				obj.adjcosts.kappa2.value = obj.p.chi2;
+				obj.adjcosts.a_lb.value = obj.p.a_lb;
+
+				lhs = "cost(d,a) / |d|";
+				term1 = sprintf("%g", obj.p.chi0);
+				term2 = sprintf("%g |d / max(a,%g)| ^ (%g)",...
+					obj.adjcosts.kappa1.value, obj.p.a_lb, obj.p.chi2);
+				fn_form = strcat(lhs, " = ", term1, " + ", term2);
+				obj.adjcosts.adj_cost_fn.value = fn_form;
+
+				% Adj cost statistics
+				chii = HACTLib.aux.AdjustmentCost.cost(obj.model.d(:),...
+		        	obj.grdKFE.a.matrix(:), obj.p);
+				obj.adjcosts.mean_cost.value = obj.expectation(chii);
+
+				% Mean abs(d)/a
+		        d_div_a = abs(obj.model.d(:) ./ max(obj.grdKFE.a.matrix(:),...
+		        	obj.p.a_lb));
+		        obj.adjcosts.mean_d_div_a.value = obj.expectation(d_div_a);
+			end
 		end
 
 		function out = expectation(obj, vals)
@@ -511,7 +535,7 @@ classdef Statistics < handle
 			import HACTLib.model_objects.Statistics
 			if nargin == 0
 				mat_dir = '/home/brian/Documents/temp';
-				mat_file = 'stats_vars.mat'; % stats_vars_2asset.mat
+				mat_file = 'stats_vars_2asset.mat'; % stats_vars.mat'; % stats_vars_2asset.mat
 				mat_path = fullfile(mat_dir, mat_file);
 			end
 
@@ -523,15 +547,19 @@ classdef Statistics < handle
 	end
 end
 
-function out = sfill(value, label, two_asset)
+function out = sfill(value, label, asset_indicator)
+	% 0 - both assets
+	% 1 asset only
+	% 2 asset only
+
 	if nargin < 3
-		two_asset = false;
+		asset_indicator = 0;
 	end
 
 	out = struct(...
 		'value', value,...
 		'label', label,...
-		'two_asset', two_asset...
+		'indicator', asset_indicator...
 	);
 end
 

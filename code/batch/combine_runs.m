@@ -43,11 +43,20 @@ for irun = 1:999
 
         % perform decomp wrt one-asset model
         % decomp_oneasset(ind) = statistics.decomp_twoasset_oneasset(oneasset,s(ind));
+        
+        stats_cell{ind} = HACTLib.aux.add_comparison_decomps(params(ind),...
+            stats(ind), decomp_base(ind));
     end
 end
 
-table_gen = HACTLib.tables.TableGenDetailed(params, stats);
-output_table = table_gen.create(params, stats);
+% table_gen = HACTLib.tables.TableGenDetailed(params, stats);
+% output_table = table_gen.create(params, stats);
+
+
+
+tf = HACTLib.tables.TableFancy(params, stats_cell);
+tout = tf.create(params, stats_cell)
+
 
 % xlxpath = fullfile(xlxdir, 'output_table.xlsx');
 % writetable(output_table, xlxpath, 'WriteRowNames', true);

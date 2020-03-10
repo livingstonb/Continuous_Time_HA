@@ -1,4 +1,4 @@
-function decomp = decomp_baseline(s0,s1)
+function decomp = decomp_baseline(s0, s1)
     % Decomposition of E[mpc1] - E[mpc0]
     % 0 is baseline
     % 1 is the experiment
@@ -25,13 +25,14 @@ function decomp = decomp_baseline(s0,s1)
     income0 = s0.income;
 
     reshape_dims = [p0.nb_KFE, p0.na_KFE, p0.nz*income0.ny];
-    m0 = reshape(stats0.mpcs(5).mpcs(:,1), reshape_dims);
+
+    m0 = reshape(stats0.mpcs_over_ss{5}, reshape_dims);
     pmf0 = stats0.pmf;
     [m0_x, pmf0_x] = HACTLib.aux.collapse_mpcs(m0, pmf0);
     Em0 = dot(m0(:), pmf0(:));
 
     reshape_dims = [p1.nb_KFE, p1.na_KFE, p1.nz*income0.ny];
-    m1 = reshape(stats1.mpcs(5).mpcs(:,1), reshape_dims);
+    m1 = reshape(stats1.mpcs_over_ss{5}, reshape_dims);
     pmf1 = stats1.pmf;
     [m1_x, pmf1_x] = HACTLib.aux.collapse_mpcs(m1, pmf1);
     Em1 = dot(m1(:), pmf1(:));
@@ -61,7 +62,7 @@ function decomp = decomp_baseline(s0,s1)
 
         if p0.OneAsset
             b0_a0 = x;
-        elseif ~p.OneAsset
+        elseif ~p0.OneAsset
             b0_a0 = [x, x];
         end
 
