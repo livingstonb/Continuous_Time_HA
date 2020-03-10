@@ -65,7 +65,6 @@ classdef Grid < handle
         % vector.
         % i.e. repmat(b, na) == 0 and kron(agrid, ones(nb, 1)) == 0
         loc0b0a;
-	    
 
         % Grid deltas for trapezoidal integration.
         da_tilde;
@@ -197,9 +196,11 @@ classdef Grid < handle
 	    	% obj.a.matrix : An array the full size of the model, (nb, na, nz, ny)
 
 	    	if nargin == 1
-				grid_vec = linspace(0, 1, obj.na)';
-				grid_vec = grid_vec .^ (1/obj.p.a_gcurv);
-				grid_vec = obj.p.amin + (obj.p.amax - obj.p.amin) * grid_vec;
+				% grid_vec = linspace(0, 1, obj.na)';
+				% grid_vec = grid_vec .^ (1/obj.p.a_gcurv);
+				% grid_vec = obj.p.amin + (obj.p.amax - obj.p.amin) * grid_vec;
+				grid_vec = create_curved_grid(obj.p.amin,...
+					obj.p.amax, obj.p.a_gcurv, obj.p.glinear, obj.na);
 				
 				for ia = 1:obj.na-1
 			        if grid_vec(ia+1) - grid_vec(ia) < obj.p.min_grid_spacing
@@ -241,9 +242,11 @@ classdef Grid < handle
 	    
 	    	if nargin == 1
 		    	% positive part
-				bgridpos = linspace(0,1,obj.nb_pos)';
-				bgridpos = bgridpos.^(1/obj.p.b_gcurv_pos);
-				bgridpos = obj.p.b_soft_constraint + (obj.p.bmax - obj.p.b_soft_constraint) * bgridpos;
+				% bgridpos = linspace(0,1,obj.nb_pos)';
+				% bgridpos = bgridpos.^(1/obj.p.b_gcurv_pos);
+				% bgridpos = obj.p.b_soft_constraint + (obj.p.bmax - obj.p.b_soft_constraint) * bgridpos;
+				bgridpos = create_curved_grid(obj.p.b_soft_constraint,...
+					obj.p.bmax, obj.p.b_gcurv_pos, obj.p.glinear, obj.nb_pos);
 				
 				for ib = 1:obj.nb_pos
 			        if bgridpos(ib+1) - bgridpos(ib) < obj.p.min_grid_spacing
@@ -404,4 +407,11 @@ classdef Grid < handle
 			obj.z.matrix = repmat(obj.z.wide,[obj.nb obj.na 1 obj.ny]);
         end
 	end
+end
+
+function vgrid = create_curved_grid(vmin, vmax, curv, lin, npts)
+	vgrid = linspace(0, 1, npts)';
+	vgrid = lin * vgrid + vgrid .^ (1 / curv);
+	vgrid = vgrid / vgrid(end);
+	vgrid = vmin + (vmax - vmin) * vgrid;
 end
