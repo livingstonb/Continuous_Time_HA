@@ -444,7 +444,7 @@ classdef Statistics < handle
 				wy_interp(1/12), 'P(w_i <= y_i / 12)', 2);
 
 			% Liquid wealth / (quarterly earnings) < epsilon
-			by_ratio = obj.grdKFE.b.wide ./ obj.income.y.matrixKFE;
+			by_ratio = obj.grdKFE.b.vec ./ obj.income.y.matrixKFE;
 			tmp = sortrows([by_ratio(:), obj.pmf(:)]);
 			[by_ratio_u, iu] = unique(tmp(:,1));
 

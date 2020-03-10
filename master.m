@@ -38,7 +38,7 @@ param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
 param_opts.ComputeMPCS_news = false;
 param_opts.SimulateMPCS_news = false;
 param_opts.DealWithSpecialCase = false;
-param_opts.param_index = 301;
+param_opts.param_index = 1;
 
 run_opts.Server = true;
 run_opts.param_script = 'table_tests';

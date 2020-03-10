@@ -11,7 +11,7 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
     shared_params.nb_KFE = 40;
     shared_params.na = 40;
     shared_params.na_KFE = 40;
-    shared_params.min_grid_spacing = -1e10;
+    shared_params.min_grid_spacing = 0;
     shared_params.bmax = 20;
     shared_params.amax = 50;
     shared_params.b_gcurv_pos = 0.3;
@@ -47,10 +47,10 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
     % Need P(b <= 1/6 quarterly inc) ~= 1/3
     % Need Wealthy HtM / Total HtM ~= 2/3
 
-    chi1s = [0.1 0.5 1];
-    chi2s = [0.05 0.1 0.5];
-    chi0s = [0 0.01 0.1];
-    a_lbs = [0.1 0.25 0.5];
+    chi1s = 0.11; %[0.1 0.5 1];
+    chi2s = 0.16; %[0.05 0.1 0.5];
+    chi0s = 0; %[0 0.01 0.1];
+    a_lbs = 0.25; %[0.1 0.25 0.5];
 
     for chi0 = chi0s
         for a_lb = a_lbs
@@ -63,9 +63,13 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
                     params{ii}.chi0 = chi0;
         		    params{ii}.chi1 = chi1;
         		    params{ii}.chi2 = chi2;
-        		    params{ii}.rho = 0.005;
-        		    params{ii}.r_a = 0.015;
+        		    params{ii}.rho = 0.008673022077755;
+        		    params{ii}.r_a = 0.019782964567322;
                     params{ii}.r_b = 0.005;
+                    params{ii}.b_gcurv_pos = 0.15;
+                    params{ii}.a_gcurv = 0.2;
+                    params{ii}.a_glinear = 0.02;
+                    params{ii}.b_glinear = 0.005;
                     % params{ii}.Bequests = true;
                     % params{ii}.dieprob = 0;
 
@@ -80,8 +84,5 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
 
     %% DO NOT CHANGE THIS SECTION
     % Use param_index to choose which specification to select
-    chosen_param = params{param_index};
-
-    % Create Params object
-    outparams = HACTLib.model_objects.Params(chosen_param);
+    outparams = params{param_index};
 end
