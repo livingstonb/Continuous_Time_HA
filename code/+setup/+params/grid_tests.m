@@ -1,4 +1,4 @@
-function outparams = table_tests(param_opts, param_index)
+function outparams = grid_tests(param_opts, param_index)
     % Create structure array 'params', and output a Params instance
     % of the structure in the 'index' entry, i.e. 1,2,3,.
 

@@ -76,7 +76,7 @@ classdef TableFancy < handle
 				obj.current_column = table();
 				obj.intro_stats_table(p_ip, stats_ip);
 
-				obj.grid_size_table(stats_ip);
+				% obj.grid_size_table(stats_ip);
 
 				obj.income_stats_table();
 				obj.wealth_stats_table(stats_ip);

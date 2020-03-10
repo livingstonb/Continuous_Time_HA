@@ -200,7 +200,7 @@ classdef Grid < handle
 				% grid_vec = grid_vec .^ (1/obj.p.a_gcurv);
 				% grid_vec = obj.p.amin + (obj.p.amax - obj.p.amin) * grid_vec;
 				grid_vec = create_curved_grid(obj.p.amin,...
-					obj.p.amax, obj.p.a_gcurv, obj.p.glinear, obj.na);
+					obj.p.amax, obj.p.a_gcurv, obj.p.a_glinear, obj.na);
 				
 				for ia = 1:obj.na-1
 			        if grid_vec(ia+1) - grid_vec(ia) < obj.p.min_grid_spacing
@@ -246,7 +246,7 @@ classdef Grid < handle
 				% bgridpos = bgridpos.^(1/obj.p.b_gcurv_pos);
 				% bgridpos = obj.p.b_soft_constraint + (obj.p.bmax - obj.p.b_soft_constraint) * bgridpos;
 				bgridpos = create_curved_grid(obj.p.b_soft_constraint,...
-					obj.p.bmax, obj.p.b_gcurv_pos, obj.p.glinear, obj.nb_pos);
+					obj.p.bmax, obj.p.b_gcurv_pos, obj.p.b_glinear, obj.nb_pos);
 				
 				for ib = 1:obj.nb_pos
 			        if bgridpos(ib+1) - bgridpos(ib) < obj.p.min_grid_spacing

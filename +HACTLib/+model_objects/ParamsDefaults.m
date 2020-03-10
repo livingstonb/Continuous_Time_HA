@@ -51,7 +51,8 @@ classdef ParamsDefaults < handle
     	bmax = 50;
         
         % Linear term in grid creation
-        glinear = 0;
+        a_glinear = 0;
+        b_glinear = 0;
 
     	% Curvature of positive section of liquid asset,
     	% lower value implies more curvature

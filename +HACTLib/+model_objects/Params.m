@@ -61,10 +61,6 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
             if obj.OneAsset
                 obj.na = 2;
                 obj.na_KFE = 2;
-                obj.b_gcurv_pos = 0.2;
-                obj.b_gcurv_neg = 0.2;
-                obj.a_gcurv = 0.2;
-                obj.bmax = 100;
                 obj.chi0 = 1e8;
                 obj.r_a = obj.r_b;
             end
