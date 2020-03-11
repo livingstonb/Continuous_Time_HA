@@ -141,7 +141,8 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
 
     import HACTLib.computation.upwind_deposits
 
-    Vb.B(1,2:na,:,:) = rho_mat_adj .* prefs.u1(upwindB.c(1,2:na,:,:));
+    Vb.B_adj = Vb.B;
+    Vb.B_adj(1,2:na,:,:) = rho_mat_adj .* prefs.u1(upwindB.c(1,2:na,:,:));
     [d, I_specialcase] = upwind_deposits(Vb, Va, adjcost, opt_d);
 
     %% --------------------------------------------------------------------

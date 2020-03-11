@@ -251,9 +251,10 @@ classdef ParamsDefaults < handle
         decomp_thresholds = [0 0.01 0.05];
 
         % ----------- adjustment costs -----------------------------------
-        chi0 = 0.070046;
-        chi1 = 0.535791;
-        chi2 = 0.971050;
+        chi0 = 0;
+        chi1 = 0.15;
+        chi2 = 0.25;
+
         a_lb = 0.2407;
 
         % deposit share     

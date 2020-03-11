@@ -29,25 +29,25 @@ function [d, Ic_special] = upwind_deposits(Vb, Va, adjcost, opt_d)
 	% Forward difference in a, backward in b
     dFB = opt_d(Va.F, Vb.B);
     dFB(:,na,:,:) = 0;
-    dFB(1,1:na-1,:,:) = 0;
+    dFB(1,:,:,:) = 0;
     HdFB = Va.F .* dFB - Vb.B .* (dFB + adjcost(dFB));
     HdFB(:,na,:,:) = -1.0e12;
-    HdFB(1,1:na-1,:,:) = -1.0e12;
+    HdFB(1,:,:,:) = -1.0e12;
     validFB = (dFB > 0) & (HdFB > 0);
 
     % Backward difference in a, forward in b
     dBF = opt_d(Va.B, Vb.F);
     dBF(:,1,:,:) = 0;
-    dBF(nb,2:na,:,:) = 0;
+    dBF(nb,:,:,:) = 0;
     HdBF = Va.B .* dBF - Vb.F .* (dBF + adjcost(dBF));
     HdBF(:,1,:,:) = -1.0e12;
-    HdBF(nb,2:na,:,:) = -1.0e12;
+    HdBF(nb,:,:,:) = -1.0e12;
     validBF = (dBF <= -adjcost(dBF)) & (HdBF > 0);
 
     % Backward differences in a and b
-    dBB = opt_d(Va.B, Vb.B);
+    dBB = opt_d(Va.B, Vb.B_adj);
     dBB(:,1,:,:) = 0;
-    HdBB = Va.B .* dBB - Vb.B .* (dBB + adjcost(dBB));
+    HdBB = Va.B .* dBB - Vb.B_adj .* (dBB + adjcost(dBB));
     HdBB(:,1,:,:) = -1.0e12;
     validBB = (dBB > - adjcost(dBB)) & (dBB <= 0) & (HdBB > 0);
 

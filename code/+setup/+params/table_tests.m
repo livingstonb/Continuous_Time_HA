@@ -36,19 +36,15 @@ function outparams = table_tests(param_opts, param_index)
     ii = 1;
     if param_index < 100
 	    % ras = [raBASELINE, 0.0129226573755814, 0.0304148974027774];
-	    ras = raBASELINE;
 	    % calibrate r_a to match B/Y in each case
-	    for ra = ras
-	    	params{ii} = shared_params;
-	        params{ii}.name = 'baseline';
-	        params{ii}.r_a = ra;
-	        params{ii}.calibration_vars = {'rho', 'r_a'};
-	        params{ii}.calibration_stats = {'totw', 'liqw'};
-	        params{ii}.calibration_targets = [3.5, 0.5];
-	        params{ii}.calibration_bounds = {[0,001, 0.05], [0.006, 0.05]};
-	        
-	        ii = ii + 1;
-	    end
+    	params{ii} = shared_params;
+        params{ii}.name = 'baseline';
+        params{ii}.calibration_vars = {'rho', 'r_a'};
+        params{ii}.calibration_stats = {'totw', 'liqw'};
+        params{ii}.calibration_targets = [3.5, 0.5];
+        params{ii}.calibration_bounds = {[0,001, 0.05], [0.006, 0.05]};
+        
+        ii = ii + 1;
 	elseif param_index < 200  
 	    %% varying chi1 and chi2
 	    for chi1 = [0.1,0.4]
