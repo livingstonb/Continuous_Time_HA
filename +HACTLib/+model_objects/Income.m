@@ -147,10 +147,19 @@ classdef Income < handle
 		        + (r_b_KFE + p.deathrate*p.perfectannuities) .* gridsKFE.b.matrix + p.transfer;
 
 		    % Income to illiquid asset
+		    import HACTLib.computation.net_illiquid_returns
+
+		    amax = gridsHJB.a.vec(end);
+		    r_a_net = net_illiquid_returns(gridsHJB.a.matrix, amax,...
+		    	p.r_a + p.deathrate * p.perfectannuities);
 		    obj.nety_HJB_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.matrix .* h ...
-		    	+ (p.r_a + p.deathrate*p.perfectannuities) * gridsHJB.a.matrix;
+		    	+ r_a_net .* gridsHJB.a.matrix;
+
+		    amax = gridsKFE.a.vec(end);
+		    r_a_net = net_illiquid_returns(gridsKFE.a.matrix, amax,...
+		    	p.r_a + p.deathrate * p.perfectannuities);
 		    obj.nety_KFE_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.matrixKFE .* h ...
-		    	+ (p.r_a + p.deathrate*p.perfectannuities) * gridsKFE.a.matrix;
+		    	+ r_a_net .* gridsKFE.a.matrix;
         end
 
         function inctrans = full_income_transition_matrix(obj, p, V)
