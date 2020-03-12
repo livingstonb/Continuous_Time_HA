@@ -321,8 +321,8 @@ classdef MPCs < handle
 			end
 
 			if ~obj.options.no_inc_risk
-				obj.mpcs(ishock).quarterly = mpcs' * pmf(:);
-				obj.mpcs(ishock).annual = sum(mpcs,2)' * pmf(:);
+				obj.mpcs(ishock).quarterly = dot(mpcs(:,1), pmf(:));
+				obj.mpcs(ishock).annual = dot(sum(mpcs, 2), pmf(:));
 			end
 		end
 

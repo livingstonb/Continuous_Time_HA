@@ -24,7 +24,7 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
 	import HACTLib.aux.sparse_diags
 
     if numel(p.rhos) > 1
-        rho_mat = reshape(p.rhos,[1 1 numel(p.rhos) 1]);
+        rho_mat = shiftdim(p.rhos, -2);
         rho_mat = repmat(rho_mat, [nb na 1 ny]);
         rho_mat = sparse_diags(rho_mat(:), 0);
     else
@@ -47,11 +47,14 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
             + (r_a_adj + p.deathrate*p.perfectannuities) * grids.a.matrix...
             + (r_b_mat_adj + p.deathrate*p.perfectannuities) .* grids.b.matrix + p.transfer;
 
+    prefs = HACTLib.model_objects.Preferences();
     if p.SDU
-        u = p.rho * HACTLib.aux.u_fn(c_0, p.invies);
+        rho_bc = shiftdim(p.rhos, -2);
+        prefs.set_SDU(p.invies, rho_bc + p.deathrate);
     else
-        u = HACTLib.aux.u_fn(c_0, p.riskaver);
+        prefs.set_crra(p.invies);
     end
+    u = prefs.u(c_0);
 
     inctrans = income.full_income_transition_matrix(p, u);
     

@@ -32,6 +32,14 @@ classdef Preferences < handle
 			obj.u1inv = @(u) CRRA.u1inv(u, invies);
 		end
 
+		function set_SDU(obj, invies, rho)
+			import HACTLib.model_objects.CRRA
+
+			obj.u = @(c) rho .* CRRA.utility(c, invies);
+			obj.u1 = @(c) rho .* CRRA.marginal_utility(c, invies);
+			obj.u1inv = @(u) CRRA.u1inv(u ./ rho, invies);
+		end
+
 		function set_frisch(obj, coeff, frisch)
 			import HACTLib.model_objects.Frisch
 
