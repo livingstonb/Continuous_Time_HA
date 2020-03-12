@@ -32,15 +32,15 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 
 param_opts.calibrate = true;
 param_opts.fast = false; % use small grid for debugging
-param_opts.ComputeMPCS = true;
-param_opts.ComputeMPCS_illiquid = true; 
+param_opts.ComputeMPCS = false;
+param_opts.ComputeMPCS_illiquid = false; 
 param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
 param_opts.ComputeMPCS_news = false;
 param_opts.SimulateMPCS_news = false;
 param_opts.DealWithSpecialCase = false;
 param_opts.param_index = 1;
 
-run_opts.Server = true;
+run_opts.Server = false;
 run_opts.param_script = 'params_adj_cost_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -101,12 +101,20 @@ p.print();
 if ~isempty(p.calibrator)
 	lbounds = p.calibrator.lbounds;
 	ubounds = p.calibrator.ubounds;
-    x0 = p.calibrator.x0;
-    options = optimoptions(@lsqnonlin, 'MaxIterations', p.maxit_AY);
-    [calibrated_params, resnorm] = lsqnonlin(p.calibrator.solver_handle,...
-    	x0, lbounds, ubounds, options);
-    
-    if resnorm > 1e-5
+
+	exitflag = 100;
+	n_x0 = numel(p.calibrator.x0);
+	i_x0 = 1;
+	while (exitflag >= 0) && (exitflag ~=1) && (i_x0 <= n_x0)
+	    x0 = p.calibrator.x0{i_x0};
+	    options = optimoptions(@lsqnonlin, 'MaxIterations', p.maxit_AY);
+	    [calibrated_params, resnorm, residual, exitflag] = ...
+	    	lsqnonlin(p.calibrator.solver_handle, x0, lbounds, ubounds, options);
+
+	   	i_x0 = i_x0 + 1;
+	end
+
+    if (exitflag ~= 1)
         error('Could not match targets')
     end
 end

@@ -45,9 +45,13 @@ classdef AltCalibrator < handle
 				error("Too many/few values provided for targets")
 			end
 
+			x0_1 = zeros(1, obj.nvars);
 			for i_var = 1:obj.nvars
-				obj.x0(i_var) = params.(obj.variables{i_var});
+				x0_1(i_var) = params.(obj.variables{i_var});
 			end
+
+			obj.x0 = {x0_1};
+			obj.x0 = [obj.x0, params.calibration_backup_x0];
 		end
 
 		function set_param_bounds(obj, bounds)
@@ -100,6 +104,13 @@ classdef AltCalibrator < handle
 				end
 			end
 
+			if ismember('r_a', obj.target_names)
+				z = abs(stats.totw.value - stats.liqw.value);
+
+				c = min(max(z - 0.01, 0), 0.5);
+				m = (1 + cos(c * pi * 2)) / 10;
+				dv(end+1) = (0.01 / (0.2 +current_params.r_a)) * m;
+			end
 			obj.reset_param_options(current_params);
 		end
 

@@ -117,6 +117,8 @@ classdef Statistics < handle
 				'Liquid grid max');
 			obj.params.amax = sfill(obj.p.amax,...
 				'Illiquid grid max');
+			obj.params.r_a = sfill(obj.p.r_a,...
+				'Illiquid return (quarterly)');
 		end
 
 		function add_mpcs(obj, mpc_obj, simulated)

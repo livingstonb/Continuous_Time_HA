@@ -189,6 +189,7 @@ classdef ParamsDefaults < handle
         calibration_stats;
         calibration_targets;
         calibration_bounds;
+        calibration_backup_x0;
 
         % ------------ taxes ------------------------------
         transfer = 0; % transfer to households 

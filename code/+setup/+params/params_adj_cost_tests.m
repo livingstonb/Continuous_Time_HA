@@ -60,7 +60,19 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
 
     kappa_0s = [0, 0.1, 0.2];
     kappa_1s = [0.5, 2, 5, 10];
-    kappa_2s = [0.1, 0.25, 1, 1.5, 2];
+    kappa_2s = [0.1, 0.25, 0.5, 1, 1.25];
+
+    params{ii} = shared_params;
+    params{ii}.name = sprintf('original baseline');
+    params{ii}.kappa0 = 0;
+    params{ii}.kappa1 = 1.6069;
+    params{ii}.kappa2 = 0.25;
+    params{ii}.rho = 0.01;
+    params{ii}.r_a = 0.015;
+    params{ii}.r_b = 0.005;
+
+    params{ii}.calibration_bounds = {[0.001, 0.02], [0.006, 0.1]};
+    ii = ii + 1;
 
     for kappa0 = kappa_0s
         for kappa1 = kappa_1s
@@ -72,12 +84,12 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
                 params{ii}.kappa1 = kappa1;
                 params{ii}.kappa2 = kappa2;
                 params{ii}.rho = 0.01;
-                params{ii}.r_a = 0.012;
+                params{ii}.r_a = 0.015;
                 params{ii}.r_b = 0.005;
 
                 % params{ii}.KFE_maxiters = 1e5;
                 % params{ii}.calibration_vars = {'rho', 'r_a'};
-                % params{ii}.calibration_bounds = {[0.001, 0.02], [0.006, 0.1]};
+                params{ii}.calibration_bounds = {[0.001, 0.02], [0.006, 0.1]};
                 % params{ii}.calibration_stats = {'median_totw', 'median_liqw'};
                 % params{ii}.calibration_targets = [1.7, 0.1];
                 ii = ii + 1;
@@ -94,13 +106,14 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
                 params{ii}.kappa0 = kappa0;
                 params{ii}.kappa1 = kappa1;
                 params{ii}.kappa2 = kappa2;
-                params{ii}.rho = 0.007;
-                params{ii}.r_a = 0.012;
+                params{ii}.rho = 0.01;
+                params{ii}.r_a = 0.015;
                 params{ii}.r_b = 0.005;
 
                 % params{ii}.KFE_maxiters = 1e5;
                 params{ii}.calibration_vars = {'rho', 'r_a'};
-                params{ii}.calibration_bounds = {[0.001, 0.05], [0.006, 0.05]};
+                params{ii}.calibration_backup_x0 = {[0.004, 0.006]};
+                params{ii}.calibration_bounds = {[0.001, 0.05], [0.003, 0.05]};
                 params{ii}.calibration_stats = {'median_totw', 'median_liqw'};
                 params{ii}.calibration_targets = [1.7, 0.1];
                 ii = ii + 1;

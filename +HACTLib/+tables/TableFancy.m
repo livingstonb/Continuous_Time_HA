@@ -328,6 +328,21 @@ classdef TableFancy < handle
 			obj.update_current_column(out, new_entries);
 		end
 
+		function adj_costs_table(obj, stats)
+			if obj.one_asset_only
+				return
+			end
+
+			panel_name = 'Other parameters';
+			out = new_table_with_header(panel_name);
+
+			new_entries = {
+				stats.params.r_a
+			};
+
+			obj.update_current_column(out, new_entries);
+		end
+
 		function update_current_column(obj, table_in, stats_in)
 			tmp = obj.construct_from_stats(table_in, stats_in);
 			obj.current_column = [obj.current_column; tmp];
