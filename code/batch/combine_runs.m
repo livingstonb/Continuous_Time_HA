@@ -55,7 +55,7 @@ end
 
 
 tf = HACTLib.tables.TableFancy(params, stats_cell);
-tout = tf.create(params, stats_cell)
+output_table = tf.create(params, stats_cell)
 
 
 xlxpath = fullfile(xlxdir, 'output_table.csv');

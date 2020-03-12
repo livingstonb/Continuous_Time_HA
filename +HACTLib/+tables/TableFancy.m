@@ -178,6 +178,12 @@ classdef TableFancy < handle
 				stats.constrained_liq{4}
 				stats.constrained_liq{5}
 				stats.constrained_liq{6}
+				stats.constrained_liq_dollars{1}
+				stats.constrained_liq_dollars{2}
+				stats.constrained_liq_dollars{3}
+				stats.constrained_liq_dollars{4}
+				stats.constrained_liq_dollars{5}
+				stats.constrained_liq_dollars{6}
 				stats.liqw_lt_ysixth
 				stats.liqw_lt_ytwelfth
 				stats.WHtM_over_HtM_biweekly
@@ -314,7 +320,7 @@ classdef TableFancy < handle
 				stats.adjcosts.kappa1
 				stats.adjcosts.kappa2
 				stats.adjcosts.a_lb
-				stats.adjcosts.adj_cost_fn
+				% stats.adjcosts.adj_cost_fn
 				stats.adjcosts.mean_cost
 				stats.adjcosts.mean_d_div_a
 			};
