@@ -154,23 +154,20 @@ classdef TransitionMatrixConstructor < handle
         	% The input variable 'model' must contain the policy
         	% functions 's' and 'd'.
 
-            adj_cost = HACTLib.aux.AdjustmentCost.cost(model.d, obj.grids.a.matrix, obj.p);
             if strcmp(obj.gridtype,'KFE')
             	adrift = model.d + obj.income.nety_KFE_illiq_hourly(model.h);
                 drifts.a_B = min(adrift, 0);
                 drifts.a_F = max(adrift, 0);
 
-                bdrift = model.s - model.d - adj_cost;
-                drifts.b_B = min(bdrift, 0);
-                drifts.b_F = max(bdrift, 0);
+                drifts.b_B = min(model.s_c + model.s_d, 0);
+                drifts.b_F = max(model.s_c + model.s_d, 0);
             elseif strcmp(obj.gridtype, 'HJB')
             	adrift = obj.income.nety_HJB_illiq_hourly(model.h);
                 drifts.a_B = min(model.d, 0) + min(adrift, 0);
                 drifts.a_F = max(model.d, 0) + max(adrift, 0);
 
-                bdrift = -model.d - adj_cost;
-                drifts.b_B = min(bdrift, 0) + min(model.s, 0);
-                drifts.b_F = max(bdrift, 0) + max(model.s, 0);    
+                drifts.b_B = min(model.s_d, 0) + min(model.s_c, 0);
+                drifts.b_F = max(model.s_d, 0) + max(model.s_c, 0);    
             end
         end
 

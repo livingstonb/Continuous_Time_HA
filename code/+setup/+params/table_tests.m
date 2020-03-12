@@ -13,7 +13,7 @@ function outparams = table_tests(param_opts, param_index)
     shared_params.chi0 = 0;
     shared_params.a_lb = 0.25;
     shared_params.chi1 = 0.15;
-	shared_params.chi2 = 0.25;
+	shared_params.chi2 = 1;
     shared_params.OneAsset = 0;
     shared_params.calibration_vars = {'rho'};
     shared_params.calibration_stats = {'totw'};
@@ -29,7 +29,7 @@ function outparams = table_tests(param_opts, param_index)
     shared_params.a_glinear = 0.02;
     shared_params.b_glinear = 0.01;
     shared_params.bmax = 20;
-    shared_params.amax = 75;
+    shared_params.amax = 200;
     shared_params.rho = 0.0144188;
     shared_params.r_a = 0.0188616;
 
@@ -39,6 +39,8 @@ function outparams = table_tests(param_opts, param_index)
 	    % calibrate r_a to match B/Y in each case
     	params{ii} = shared_params;
         params{ii}.name = 'baseline';
+        params{ii}.r_a = 0.015;
+        params{ii}.rho = 0.012;
         params{ii}.calibration_vars = {'rho', 'r_a'};
         params{ii}.calibration_stats = {'totw', 'liqw'};
         params{ii}.calibration_targets = [3.5, 0.5];

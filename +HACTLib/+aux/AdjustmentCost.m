@@ -1,4 +1,4 @@
-classdef AdjustmentCost
+classdef AdjustmentCost < handle
 	properties
 		a_lb;
 		kappa0;
@@ -7,6 +7,16 @@ classdef AdjustmentCost
 	end
 
 	methods
+		function obj = AdjustmentCost(a_lb, kappa0, kappa1, kappa2)
+			if nargin > 0
+				obj.set_form2(a_lb, kappa0, kappa1, kappa2);
+			end
+		end
+
+		function set_from_params(obj, p)
+			obj.set_form2(p.a_lb, p.kappa0, p.kappa1, p.kappa2);
+		end
+
 		function set_form1(obj, a_lb, chi0, chi1, chi2)
 			obj.a_lb = a_lb;
 			obj.kappa0 = chi0;
@@ -21,13 +31,12 @@ classdef AdjustmentCost
 			obj.kappa2 = kappa2;
 		end
 
-		function cost_out = compute_cost(d, a_grid)
+		function cost_out = compute_cost(obj, d, a_grid)
 			a_scaled = max(a_grid, obj.a_lb);
 
 			cost_linear = obj.kappa0 * abs(d);
 			cost_concave = obj.kappa1 / (1 + obj.kappa2) ...
-				* abs(d) .^ (1 + obj.kappa2) ...
-				./ (a_scaled .^ obj.kappa2);
+				* abs(d) .^ (1 + obj.kappa2)  ./ (a_scaled .^ obj.kappa2);
 
 			cost_out = cost_linear + cost_concave;
 		end
@@ -36,67 +45,15 @@ classdef AdjustmentCost
 		% 	deriv_dneg = - obj.kappa0 - 
 		% end
 
-		function d_opt = opt_deposits(Vb, Va, a)
-			dpos_term = Va ./ Vb - 1 - obj.kappa;
-			dneg_term = 1 - obj.kappa0 - Va ./ Vb;
+		function d_opt = opt_deposits(obj, Vb, Va, a)
+			dpos_term = max(Va ./ Vb - 1 - obj.kappa0, 0);
+			dneg_term = min(Va ./ Vb - 1 + obj.kappa0, 0);
+
+			combined = (dpos_term + dneg_term) ./ obj.kappa1;
 
 			a_scaled = max(a, obj.a_lb);
-			d_opt = zeros(size(a));
-			d_opt(dpos_term >0) = a_scaled .* dpos_term .^ (1/obj.kappa2);
-			d_opt(dneg_term > 0) = - a_scaled .* dneg_term .^ (1/obj.kappa2);
-		end
-	end
-
-	methods (Access=protected)
-
-		function cost_out = form1_cost_handle(d, a_grid, a_lb,...
-			chi0, chi1, chi2)
-			% Parameters
-			% ----------
-			% d : deposit rate
-			%
-			% a_grid : illiquid asset levels
-			%
-			% p : a Params object
-			%
-			% Returns
-			% -------
-			% adj_cost : the adjustment cost, same shape as d
-
-			linear_term = chi0 * abs(d);
-
-			a_scaled = max(a, a_lb);
-			coeff = (chi1 ^ (-chi2)) / (1 + chi2);
-			concave_term = coeff 
-			% concave_term = (chi1 / (1 + chi2)) * abs(d) .^ (1 + chi2) ...
-			% 	.* a_scaled .^ chi2;
-
-			% cost_out = linear_term + concave_term;
-
-
-			d_scaled = d./max(a_grid,p.a_lb);
-    		adj_cost = max(a_grid,p.a_lb) .* (p.chi0 * abs(d_scaled) + 1/(1+p.chi2) * (abs(d_scaled).^(1+p.chi2) * p.chi1^(-p.chi2)));
-		end
-
-		function cost_out = form2_cost_handle(d, a, a_lb,...
-			kappa0, kappa1, kappa2)
-			% Parameters
-			% ----------
-			% d : deposit rate
-			%
-			% a_grid : illiquid asset levels
-			%
-			% Returns
-			% -------
-			% adj_cost : the adjustment cost, same shape as d
-
-			linear_term = kappa0 * abs(d);
-
-			a_scaled = max(a, a_lb);
-			concave_term = (kappa1 / (1 + kappa2)) * abs(d) .^ (1 + kappa2) ...
-				./ (a_scaled .^ kappa2);
-
-			cost_out = linear_term + concave_term;	
+			d_opt = sign(combined) .* a_scaled ...
+				.* abs(combined) .^ (1 / obj.kappa2);
 		end
 	end
 

@@ -15,7 +15,7 @@ function [d, Ic_special] = upwind_deposits(Vb, Va, adjcost, opt_d)
     % adjcost : A function handle s.t. adjcost(d) returns
     %   an array of adjustment costs of shape size(d).
     %
-    % opt_d : A function handle s.t. opt_d(Va, Vb) returns
+    % opt_d : A function handle s.t. opt_d(Vb, Va) returns
     %   an array of the optimal deposit rate of shape
     %   size(d).
     %
@@ -27,7 +27,7 @@ function [d, Ic_special] = upwind_deposits(Vb, Va, adjcost, opt_d)
 	na = size(Vb.B, 2);
 
 	% Forward difference in a, backward in b
-    dFB = opt_d(Va.F, Vb.B);
+    dFB = opt_d(Vb.B, Va.F);
     dFB(:,na,:,:) = 0;
     dFB(1,:,:,:) = 0;
     HdFB = Va.F .* dFB - Vb.B .* (dFB + adjcost(dFB));
@@ -36,7 +36,7 @@ function [d, Ic_special] = upwind_deposits(Vb, Va, adjcost, opt_d)
     validFB = (dFB > 0) & (HdFB > 0);
 
     % Backward difference in a, forward in b
-    dBF = opt_d(Va.B, Vb.F);
+    dBF = opt_d(Vb.F, Va.B);
     dBF(:,1,:,:) = 0;
     dBF(nb,:,:,:) = 0;
     HdBF = Va.B .* dBF - Vb.F .* (dBF + adjcost(dBF));
@@ -45,7 +45,7 @@ function [d, Ic_special] = upwind_deposits(Vb, Va, adjcost, opt_d)
     validBF = (dBF <= -adjcost(dBF)) & (HdBF > 0);
 
     % Backward differences in a and b
-    dBB = opt_d(Va.B, Vb.B_adj);
+    dBB = opt_d(Vb.B_adj, Va.B);
     dBB(:,1,:,:) = 0;
     HdBB = Va.B .* dBB - Vb.B_adj .* (dBB + adjcost(dBB));
     HdBB(:,1,:,:) = -1.0e12;

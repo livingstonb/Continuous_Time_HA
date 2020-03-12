@@ -31,7 +31,12 @@ classdef Statistics < handle
 		wgini;
 
 		constrained;
+		constrained_pct;
+		constrained_dollars;
 		constrained_liq;
+		constrained_liq_pct;
+		constrained_liq_dollars;
+		
 		w_lt_ysixth;
 		w_lt_ytwelfth;
 		liqw_lt_ysixth;
@@ -414,17 +419,46 @@ classdef Statistics < handle
 
 		    neps = numel(obj.p.epsilon_HtM);
 		    obj.constrained_liq = cell(1, neps);
+		    obj.constrained_liq_pct = cell(1, neps);
+		    obj.constrained_liq_dollars = cell(1, neps);
 		    obj.constrained = cell(1, neps);
+		    obj.constrained_pct = cell(1, neps);
+		    obj.constrained_dollars = cell(1, neps);
 		    for ip = 1:neps
 				htm = obj.p.epsilon_HtM(ip);
 
 				tmp = lw_constrained_interp(htm);
 				obj.constrained_liq{ip} = sfill(tmp,...
-					sprintf('P(b <= %g)', htm));
+					sprintf('b <= %g', htm));
+
+				obj.constrained_liq_pct{ip} = sfill(tmp,...
+					sprintf('b <= %g%% mean ann inc', htm * 100));
 
 				tmp = w_constrained_interp(htm);
 				obj.constrained{ip} = sfill(tmp,...
-					sprintf('P(w <= %g)', htm), 2);
+					sprintf('w <= %g', htm), 2);
+
+				tmp = w_constrained_interp(htm);
+				obj.constrained_pct{ip} = sfill(tmp,...
+					sprintf('w <= %g%% mean ann inc', htm * 100), 2);
+			end
+
+			ndollars = numel(obj.p.dollars_HtM);
+			for ip = 1:ndollars
+				if ~isempty(obj.p.numeraire_in_dollars)
+					htm = obj.p.dollars_HtM(ip) / obj.p.numeraire_in_dollars;
+					liq_htm = lw_constrained_interp(htm);
+					w_htm = w_constrained_interp(htm);
+				else
+					liq_htm = NaN;
+					w_htm = NaN;
+				end
+
+				obj.constrained_liq_dollars{ip} = sfill(liq_htm,...
+					sprintf('b <= $%g', obj.p.dollars_HtM(ip)));
+
+				obj.constrained_dollars{ip} = sfill(w_htm,...
+					sprintf('w <= $%g', obj.p.dollars_HtM(ip)));
 			end
 
 			% Wealth / (quarterly earnings) < epsilon
@@ -439,9 +473,9 @@ classdef Statistics < handle
 				'pchip', 'nearest');
 
 			obj.w_lt_ysixth = sfill(...
-				wy_interp(1/6), 'P(w_i <= y_i / 6)', 2);
+				wy_interp(1/6), 'w_i <= y_i / 6, biweekly earnings', 2);
 			obj.w_lt_ytwelfth = sfill(...
-				wy_interp(1/12), 'P(w_i <= y_i / 12)', 2);
+				wy_interp(1/12), 'w_i <= y_i / 12, weekly earnings', 2);
 
 			% Liquid wealth / (quarterly earnings) < epsilon
 			by_ratio = obj.grdKFE.b.vec ./ obj.income.y.matrixKFE;
@@ -455,18 +489,18 @@ classdef Statistics < handle
 				'pchip', 'nearest');
 
 			obj.liqw_lt_ysixth = sfill(...
-				by_interp(1/6), 'P(b_i <= y_i / 6)');
+				by_interp(1/6), 'b_i <= y_i / 6, biweekly earnings');
 			obj.liqw_lt_ytwelfth = sfill(...
-				by_interp(1/12), 'P(b_i <= y_i / 12)');
+				by_interp(1/12), 'b_i <= y_i / 12, weekly earnings');
 
 			% HtM Ratios
 			tmp = 1 - obj.w_lt_ysixth.value / obj.liqw_lt_ysixth.value;
 			obj.WHtM_over_HtM_biweekly = sfill(tmp,...
-				'P(WHtM) / P(HtM), biweekly pay (y/6)', 2);
+				'P(WHtM) / P(HtM), biweekly earnings (y/6)', 2);
 
 			tmp = 1 - obj.w_lt_ytwelfth.value / obj.liqw_lt_ytwelfth.value;
 			obj.WHtM_over_HtM_weekly = sfill(tmp,...
-				'P(WHtM) / P(HtM), weekly pay (y/12)', 2);
+				'P(WHtM) / P(HtM), weekly earnings (y/12)', 2);
 		end
 
 		function compute_deposit_stats(obj)
@@ -475,12 +509,12 @@ classdef Statistics < handle
 			obj.adjcosts = struct();
 
 			% Adj cost parameters
-			obj.adjcosts.chi0 = sfill2(...
-				'chi0, adj cost coeff on linear term');
-			obj.adjcosts.chi1 = sfill2(...
-				'chi1, an adj cost coeff');
-			obj.adjcosts.chi2 = sfill2(...
-				'chi2, an adj cost coeff');
+			% obj.adjcosts.chi0 = sfill2(...
+			% 	'chi0, adj cost coeff on linear term');
+			% obj.adjcosts.chi1 = sfill2(...
+			% 	'chi1, an adj cost coeff');
+			% obj.adjcosts.chi2 = sfill2(...
+			% 	'chi2, an adj cost coeff');
 			obj.adjcosts.kappa0 = sfill2(...
 				'kappa0, adj cost coeff on first (linear) term');
 			obj.adjcosts.kappa1 = sfill2(...
@@ -497,25 +531,31 @@ classdef Statistics < handle
 		        'Mean ratio of deposits to assets, E[|d| / max(a, a_lb)]');
 
 			if ~obj.p.OneAsset
-				obj.adjcosts.chi0.value = obj.p.chi0;
-				obj.adjcosts.chi1.value = obj.p.chi1;
-				obj.adjcosts.chi2.value = obj.p.chi2;
-				obj.adjcosts.kappa0.value = obj.p.chi0;
-				obj.adjcosts.kappa1.value = ...
-					obj.p.chi1 ^ (-obj.p.chi2) / (1 + obj.p.chi2);
-				obj.adjcosts.kappa2.value = obj.p.chi2;
+				% obj.adjcosts.chi0.value = obj.p.chi0;
+				% obj.adjcosts.chi1.value = obj.p.chi1;
+				% obj.adjcosts.chi2.value = obj.p.chi2;
+				% obj.adjcosts.kappa0.value = obj.p.chi0;
+				% obj.adjcosts.kappa1.value = ...
+				% 	obj.p.chi1 ^ (-obj.p.chi2) / (1 + obj.p.chi2);
+				% obj.adjcosts.kappa2.value = obj.p.chi2;
+
+				obj.adjcosts.kappa0.value = obj.p.kappa0;
+				obj.adjcosts.kappa1.value = obj.p.kappa1;
+				obj.adjcosts.kappa2.value = obj.p.kappa2;
 				obj.adjcosts.a_lb.value = obj.p.a_lb;
 
-				lhs = "cost(d,a) / |d|";
-				term1 = sprintf("%g", obj.p.chi0);
-				term2 = sprintf("%g |d / max(a,%g)| ^ (%g)",...
-					obj.adjcosts.kappa1.value, obj.p.a_lb, obj.p.chi2);
+				lhs = "cost(d,a)";
+				term1 = sprintf("%g |d|", obj.p.kappa0);
+				term2 = sprintf("(%g / (1 + %g)) |d / max(a,%g)| ^ (1 + %g) * max(a,%g)",...
+					obj.p.kappa1, obj.p.kappa2, obj.p.a_lb, obj.p.kappa2, obj.p.a_lb);
 				fn_form = strcat(lhs, " = ", term1, " + ", term2);
 				obj.adjcosts.adj_cost_fn.value = fn_form;
 
 				% Adj cost statistics
-				chii = HACTLib.aux.AdjustmentCost.cost(obj.model.d(:),...
-		        	obj.grdKFE.a.matrix(:), obj.p);
+				adj_cost_obj = HACTLib.aux.AdjustmentCost();
+				adj_cost_obj.set_from_params(obj.p);
+				chii = adj_cost_obj.compute_cost(obj.model.d(:),...
+		        	obj.grdKFE.a.matrix(:));
 				obj.adjcosts.mean_cost.value = obj.expectation(chii);
 
 				% Mean abs(d)/a

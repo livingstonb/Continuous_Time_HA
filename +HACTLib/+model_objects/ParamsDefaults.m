@@ -238,24 +238,25 @@ classdef ParamsDefaults < handle
         % Endogenous labor parameters
         HOURS_maxiters = 1e3;
         endogenous_labor = false;
-        labor_disutility = 0.5;
+        labor_disutility = 0;
         frisch = 0.5;
         MPL = 1;
         MPK = 1;
         
         % ----------- statistics variables -------------------------------
         epsilon_HtM = [0 0.005 0.01 0.02 0.05 0.1 0.15]; % for looking at fraction HtM
-        wpercentiles = [10 25 50 90 99 99.9];
+        dollars_HtM = [500, 1000, 5000, 10000, 25000, 250000];
+        wpercentiles = [10 25 50 90 95 98 99 99.9];
         mpc_shocks = [-1e-5 -0.01 -0.1 1e-5 0.01 0.1];
         numeraire_in_dollars;
         decomp_thresholds = [0 0.01 0.05];
 
         % ----------- adjustment costs -----------------------------------
-        chi0 = 0;
-        chi1 = 0.15;
-        chi2 = 0.25;
+        kappa0 = 0;
+        kappa1 = 5;
+        kappa2 = 1;
 
-        a_lb = 0.2407;
+        a_lb = 0.25;
 
         % deposit share     
         directdeposit = 0;

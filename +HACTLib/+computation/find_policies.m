@@ -57,11 +57,11 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
 	    else
 	        nety_mat_liq = (1-p.directdeposit) * (1-p.wagetax) * income.y.matrixKFE;
 	    end
-        hours_fn = {@(Vb) hours_u1inv_bc_adjusted(Vb, prefs,...
-            nety_mat_liq, hours_bc)};
+        hours_fn = @(Vb) hours_u1inv_bc_adjusted(Vb, prefs,...
+            nety_mat_liq, hours_bc);
 	else
 		prefs.set_no_labor_disutility();
-		hours_fn = {};
+		hours_fn = @(h) 1;
     end
     
     %% --------------------------------------------------------------------
@@ -85,20 +85,22 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     
     if strcmp(grd.gtype, 'HJB')
         net_income_liq_hourly = income.nety_HJB_liq_hourly;
+        net_income_illiq_hourly = income.nety_HJB_illiq_hourly;
     else
         net_income_liq_hourly = income.nety_KFE_liq_hourly;
+        net_income_illiq_hourly = income.nety_KFE_illiq_hourly;
     end
 
     import HACTLib.computation.upwind_consumption
 
     upwindB = upwind_consumption(net_income_liq_hourly, Vb.B,...
-        'B', prefs, rho_mat_adj, hours_fn{:});
+        'B', prefs, rho_mat_adj, hours_fn);
 
     if p.endogenous_labor
     	hours_fn = {@(Vb) prefs.hrs_u1inv(nety_mat_liq .* Vb)};
     end
     upwindF = upwind_consumption(net_income_liq_hourly, Vb.F,...
-        'F', prefs, rho_mat_adj, hours_fn{:});
+        'F', prefs, rho_mat_adj, hours_fn);
     HcB = upwindB.H;
     HcF = upwindF.H;
 
@@ -107,13 +109,8 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
 
     % no drift
     c0 = net_income_liq_hourly(hours_bc);
-    if p.endogenous_labor
-        Hc0 = rho_mat_adj .* prefs.u(c0) - prefs.hrs_u(hours_bc);
-    else
-        Hc0 = rho_mat_adj .* prefs.u(c0);
-    end
+    Hc0 = rho_mat_adj .* prefs.u(c0) - prefs.hrs_u(hours_bc);
     s0 = zeros(nb,na,nz,ny);
-
     
     validc0 = c0 > 0;
 
@@ -123,44 +120,41 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     Ic0 = validc0 & ~(IcF | IcB);
     assert(isequal(IcF+IcB+Ic0,ones(nb,na,nz,ny,'logical')),'logicals do not sum to unity')
     c = IcF .* upwindF.c + IcB .* upwindB.c + Ic0 .* c0;
-    s = IcF .* upwindF.s + IcB .* upwindB.s + Ic0 .* s0;
+    s_c = IcF .* upwindF.s + IcB .* upwindB.s + Ic0 .* s0;
 
-    if p.endogenous_labor
-    	h = IcF .* upwindF.hours + IcB .* upwindB.hours + Ic0 .* hours_bc;
-    	u = rho_mat_adj .* prefs.u(c) - prefs.hrs_u(h);
-    else
-        h = 1;
-        u = rho_mat_adj .* prefs.u(c);
-    end
+    h = IcF .* upwindF.hours + IcB .* upwindB.hours + Ic0 .* hours_bc;
+    u = rho_mat_adj .* prefs.u(c) - prefs.hrs_u(h);
 
     %% --------------------------------------------------------------------
 	% UPWINDING FOR DEPOSITS
 	% ---------------------------------------------------------------------
-	adjcost = @(x) HACTLib.aux.AdjustmentCost.cost(x, grd.a.matrix, p);
-	opt_d = @(x, y) HACTLib.aux.opt_deposits(x, y, grd.a.matrix, p);
+    adjcost_obj = HACTLib.aux.AdjustmentCost();
+    adjcost_obj.set_from_params(p);
+
+	adjcost = @(x) adjcost_obj.compute_cost(x, grd.a.matrix);
+	opt_d = @(x, y) adjcost_obj.opt_deposits(x, y, grd.a.matrix);
 
     import HACTLib.computation.upwind_deposits
 
     Vb.B_adj = Vb.B;
     Vb.B_adj(1,2:na,:,:) = rho_mat_adj .* prefs.u1(upwindB.c(1,2:na,:,:));
     [d, I_specialcase] = upwind_deposits(Vb, Va, adjcost, opt_d);
+    s_d = - d - adjcost(d);
 
     %% --------------------------------------------------------------------
 	% STORE POLICY FUNCTIONS/OTHER VARIABLES
 	% ---------------------------------------------------------------------
     policies.c = c;
-    policies.s = s;
+    policies.s_c = s_c;
+    policies.s_d = s_d;
     policies.d = d;
     policies.h = h;
     policies.u = u;
     policies.bmin_consume_withdrawals = I_specialcase;
-    policies.bdot = s - adjcost(d);
+    policies.s = s_c + s_d;
+    policies.bdot = s_c + s_d;
 
-   	if strcmp(grd.gtype, 'HJB')
-	    policies.adot = income.nety_HJB_illiq_hourly(h) + d;
-	else
-		policies.adot = income.nety_KFE_illiq_hourly(h) + d;
-	end
+   	policies.adot = net_income_illiq_hourly(h) + d;
 
     %% --------------------------------------------------------------------
     % DERIVATIVE OF VALUE FUNCTION FOR SDU WITH RETURNS RISK

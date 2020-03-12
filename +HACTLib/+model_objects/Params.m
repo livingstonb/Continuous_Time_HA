@@ -61,7 +61,7 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
             if obj.OneAsset
                 obj.na = 2;
                 obj.na_KFE = 2;
-                obj.chi0 = 1e8;
+                obj.kappa0 = 1e8;
                 obj.r_a = obj.r_b;
             end
 
@@ -210,9 +210,6 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
                 fprintf('\ta_gcurv = %f\n',obj.a_gcurv)
                 fprintf('\n')
 
-                fprintf('\tchi0 = %f\n',obj.chi0)
-                fprintf('\tchi1 = %f\n',obj.chi1)
-                fprintf('\tchi2 = %f\n',obj.chi2)
                 fprintf('\ta_lb = %f\n',obj.a_lb)
                 fprintf('\n')
             end

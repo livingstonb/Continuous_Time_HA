@@ -116,6 +116,9 @@ classdef MPCSimulator < handle
 		% shock for each set of saved policy functions. This is used
 		% when simulating MPCs out of news.
 		savedTimes;
+
+		%
+		adj_cost;
 	end
 
 	methods
@@ -125,12 +128,17 @@ classdef MPCSimulator < handle
 		function obj = MPCSimulator(p, income, grids, policies,...
 			shocks, shockperiod, savedTimes, varargin)
 
+			import HACTLib.aux.AdjustmentCost
+
 			obj.options = parse_options(varargin{:});
 
 			obj.p = p;
 			obj.income = income;
 			obj.grids = grids;
 			obj.deathrateSubperiod = 1 - (1-obj.p.deathrate) ^ (1/obj.options.T);
+
+			obj.adj_cost = AdjustmentCost();
+			obj.adj_cost.set_from_params(p);
 
 			obj.options.delta = 1 / obj.options.T;
 			obj.shocks = shocks;
@@ -333,11 +341,9 @@ classdef MPCSimulator < handle
 	    	obj.cum_con = obj.cum_con + c * obj.options.delta;
 	    end
 
-	    function simulate_assets_one_period(obj,~)
+	    function simulate_assets_one_period(obj, ~)
 	    	% this function simulates assets over the next time
 	    	% delta
-
-	    	import HACTLib.aux.AdjustmentCost
 
 	    	% interpolate to find decisions
 	    	s = zeros(obj.options.n, obj.nshocks+1);
@@ -358,7 +364,7 @@ classdef MPCSimulator < handle
 
 	    	% update liquid assets
 	    	obj.bsim = obj.bsim + obj.options.delta ...
-				* (s - d - AdjustmentCost.cost(d, obj.asim, obj.p));
+				* (s - d - AdjustmentCost.compute_cost(d, obj.asim));
 			obj.bsim = max(obj.bsim, obj.grids.b.vec(1));
 			obj.bsim = min(obj.bsim, obj.grids.b.vec(end));
 

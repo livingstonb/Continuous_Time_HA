@@ -30,10 +30,10 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-param_opts.calibrate = false;
+param_opts.calibrate = true;
 param_opts.fast = false; % use small grid for debugging
-param_opts.ComputeMPCS = false;
-param_opts.ComputeMPCS_illiquid = false;
+param_opts.ComputeMPCS = true;
+param_opts.ComputeMPCS_illiquid = true; 
 param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
 param_opts.ComputeMPCS_news = false;
 param_opts.SimulateMPCS_news = false;
@@ -41,9 +41,9 @@ param_opts.DealWithSpecialCase = false;
 param_opts.param_index = 1;
 
 run_opts.Server = false;
-run_opts.param_script = 'table_tests';
+run_opts.param_script = 'params_adj_cost_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-run_opts.localdir = '/Users/brianlivingston/Documents/GitHub/Continuous_Time_HA/';
+run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE
