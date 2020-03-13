@@ -37,8 +37,6 @@ function decomp = decomp_baseline(s0, s1)
     [m1_x, pmf1_x] = HACTLib.aux.collapse_mpcs(m1, pmf1);
     Em1 = dot(m1(:), pmf1(:));
 
-    bMax = grdKFE0.b.vec(end);
-    aMax = grdKFE0.a.vec(end);
     if p0.OneAsset
         grids = {grdKFE0.b.vec};
     else
@@ -53,27 +51,30 @@ function decomp = decomp_baseline(s0, s1)
 
     % Main decomposition
     decomp.Em1_less_Em0 = Em1 - Em0;
-    decomp.term1 = dot(m1(:) - m0(:), pmf0(:)); 
-    decomp.term2 = dot(m0(:), pmf1(:) - pmf0(:));
-    decomp.term3 = dot(m1(:) - m0(:), pmf1(:) - pmf0(:));
+    decomp.term1 = dot(m1_x(:) - m0_x(:), pmf0_x(:)); 
+    decomp.term2 = dot(m0_x(:), pmf1_x(:) - pmf0_x(:));
+    decomp.term3 = dot(m1_x(:) - m0_x(:), pmf1_x(:) - pmf0_x(:));
 
     for ia = 1:numel(p0.decomp_thresholds)
         x = p0.decomp_thresholds(ia);
 
         if p0.OneAsset
             b0_a0 = x;
+            b0_amax = x;
         elseif ~p0.OneAsset
             b0_a0 = [x, x];
+            b0_amax = [x, inf];
+            bmax_amax = [inf, inf];
+            bmax_a0 = [inf, x];
         end
 
         decomp.term2a(ia) = m0g1interp(b0_a0) - m0g0interp(b0_a0);
-        decomp.term2b(ia) = (dot(m0(:), pmf1(:)) - m0g1interp(b0_a0)) ...
-                - (Em0 - m0g0interp(b0_a0));
+        decomp.term2b(ia) = (m0g1interp(b0_amax) - m0g1interp(b0_a0)) ...
+            - (m0g0interp(b0_amax) - m0g0interp(b0_a0));
 
         if ~p0.OneAsset
-            b0_aMax = [x, aMax];
-            decomp.term2c(ia) = (dot(m0(:), pmf1(:)) - m0g1interp(b0_aMax)) ...
-                - (Em0 - m0g0interp(b0_aMax));
+            decomp.term2c(ia) = (m0g1interp(bmax_amax) - m0g1interp(b0_amax)) ...
+                -(m0g0interp(bmax_amax) - m0g0interp(b0_amax));
         end
     end
 end

@@ -196,19 +196,9 @@ classdef Grid < handle
 	    	% obj.a.matrix : An array the full size of the model, (nb, na, nz, ny)
 
 	    	if nargin == 1
-				% grid_vec = linspace(0, 1, obj.na)';
-				% grid_vec = grid_vec .^ (1/obj.p.a_gcurv);
-				% grid_vec = obj.p.amin + (obj.p.amax - obj.p.amin) * grid_vec;
 				grid_vec = create_curved_grid(obj.p.amin,...
-					obj.p.amax, obj.p.a_gcurv, obj.p.a_glinear, obj.na);
-				
-				for ia = 1:obj.na-1
-			        if grid_vec(ia+1) - grid_vec(ia) < obj.p.min_grid_spacing
-			            grid_vec(ia+1) = grid_vec(ia) + obj.p.min_grid_spacing;
-			        else
-			            break
-			        end
-	            end
+					obj.p.amax, obj.p.agrid_term1_weight,...
+					obj.p.agrid_term1_curv, obj.p.a_gcurv, obj.na);
             elseif nargin > 1
 	        	assert(isvector(grid_vec), "Input agrid must be a vector")
 	        	assert(sum(grid_vec==0) == 1, "Input grid must include 0")
@@ -246,15 +236,8 @@ classdef Grid < handle
 				% bgridpos = bgridpos.^(1/obj.p.b_gcurv_pos);
 				% bgridpos = obj.p.b_soft_constraint + (obj.p.bmax - obj.p.b_soft_constraint) * bgridpos;
 				bgridpos = create_curved_grid(obj.p.b_soft_constraint,...
-					obj.p.bmax, obj.p.b_gcurv_pos, obj.p.b_glinear, obj.nb_pos);
-				
-				for ib = 1:obj.nb_pos
-			        if bgridpos(ib+1) - bgridpos(ib) < obj.p.min_grid_spacing
-			            bgridpos(ib+1) = bgridpos(ib) + obj.p.min_grid_spacing;
-			        else
-			            break
-			        end
-			    end
+					obj.p.bmax, obj.p.bgrid_term1_weight, obj.p.bgrid_term1_curv,...
+					obj.p.b_gcurv_pos, obj.nb_pos);
 
 				% negative part
 				if obj.nb_neg > 0
@@ -267,23 +250,6 @@ classdef Grid < handle
 					bgridneg1 = bgridneg1.^(1/obj.p.b_gcurv_neg);
 					bgridneg1 = obj.p.bmin + ...
 						(mid_neg - obj.p.bmin) * bgridneg1;
-			        
-			        % check if min_grid_spacing is too large
-			        chunk = (obj.p.b_soft_constraint - obj.p.bmin) / obj.nb_neg;
-			        if chunk < obj.p.min_grid_spacing
-			            neg_min_spacing = chunk / 2;
-			        else
-			            neg_min_spacing = obj.p.min_grid_spacing;
-			        end
-			        
-			        % enforce very small minimum grid spacing
-			        for ib = 1:nb_neg1-1
-			            if bgridneg1(ib+1) - bgridneg1(ib) < neg_min_spacing
-			                bgridneg1(ib+1) = bgridneg1(ib) + neg_min_spacing;
-			            else
-			                break
-			            end
-			        end
 
 					% part of grid close to soft constraint
 					bgridneg2 = linspace(1, 0, nb_neg2)';
@@ -294,21 +260,6 @@ classdef Grid < handle
 				   	bgridneg2(1) = []; % remove midpoint
 				    bgridneg2(end) = []; % remove 0
 
-			        % enforce minimum grid spacing
-				    if 0 - bgridneg2(nb_neg2-2) < neg_min_spacing
-				        bgridneg2(nb_neg2-2) = - neg_min_spacing;
-				    end
-
-				    for ib = nb_neg2-2:-1:2
-				        tooClose = bgridneg2(ib) - bgridneg2(ib-1) < neg_min_spacing;
-				        invalid = bgridneg2(ib) < bgridneg2(ib-1);
-				        if tooClose || invalid
-				            bgridneg2(ib-1) = bgridneg2(ib) - neg_min_spacing;
-				        else
-				            break
-			            end
-			        end
-			        
 			        bgridneg = [bgridneg1; bgridneg2];
 
 				    obj.b.vec = [bgridneg; bgridpos];
@@ -407,11 +358,19 @@ classdef Grid < handle
 			obj.z.matrix = repmat(obj.z.wide,[obj.nb obj.na 1 obj.ny]);
         end
 	end
+
+	methods (Static)
+		function grid_out = create(varargin)
+			grid_out = create_curved_grid(varargin{:});
+		end
+	end
 end
 
-function vgrid = create_curved_grid(vmin, vmax, curv, lin, npts)
+function vgrid = create_curved_grid(vmin, vmax,...
+	term1_wt, term1_curv, curv, npts)
 	vgrid = linspace(0, 1, npts)';
-	vgrid = lin * vgrid + vgrid .^ (1 / curv);
+	vgrid = term1_wt * vgrid .^ (1 / term1_curv) ...
+		+ vgrid .^ (1 / curv);
 	vgrid = vgrid / vgrid(end);
 	vgrid = vmin + (vmax - vmin) * vgrid;
 end

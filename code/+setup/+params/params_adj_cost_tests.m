@@ -11,23 +11,25 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
     shared_params.nb_KFE = 50;
     shared_params.na = 50;
     shared_params.na_KFE = 50;
-    shared_params.min_grid_spacing = 0;
+
+    shared_params.bgrid_term1_weight = 0.01;
+    shared_params.bgrid_term1_curv = 0.8;
+    shared_params.agrid_term1_weight = 0.01;
+    shared_params.agrid_term1_curv = 0.6;
+
     shared_params.b_gcurv_pos = 0.1;
     shared_params.a_gcurv = 0.2;
-    shared_params.a_glinear = 0.02;
-    shared_params.b_glinear = 0.02;
+
     shared_params.a_lb = 0.25;
     shared_params.bmax = 20;
     shared_params.amax = 75;
     shared_params.rho = 0.014;
     shared_params.r_a = 0.02;
     shared_params.calibration_backup_x0 = {[0.004, 0.006]};
-    shared_params.illiquid_tax_midpt = 60;
+    shared_params.illiquid_tax_midpt = 50;
     shared_params.illiquid_tax_threshold = 40;
     shared_params.OneAsset = 0;
     shared_params.income_dir = 'continuous_b';
-
-   
 
     ii = 1;
 

@@ -107,7 +107,10 @@ if ~isempty(p.calibrator)
 	i_x0 = 1;
 	while (resnorm >= 1e-4) && (i_x0 <= n_x0)
 	    x0 = p.calibrator.x0{i_x0};
-	    options = optimoptions(@lsqnonlin, 'MaxFunctionEvaluations', p.maxit_AY);
+	    options = optimoptions(@lsqnonlin,...
+	    	'MaxFunctionEvaluations', p.maxit_AY,...
+	    	'FunctionTolerance', 1e-5,...
+	    	'OptimalityTolerance', 1e-5);
 	    [calibrated_params, resnorm] = ...
 	    	lsqnonlin(p.calibrator.solver_handle, x0, lbounds, ubounds, options);
 
@@ -116,6 +119,11 @@ if ~isempty(p.calibrator)
 
     if (resnorm >= 1e-4)
         warning('Could not match targets')
+    elseif run_opts.Server
+		txtfile = sprintf('completed%d', p.param_index);
+		txtpath = fullfile(p.out_dir, txtfile);
+		fID = fopen(txtpath, 'w');
+		fprintf(fID, 'Algorithm converged to targets');
     end
 end
 

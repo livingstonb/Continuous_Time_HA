@@ -49,11 +49,11 @@ classdef ParamsDefaults < handle
 
     	% Max value for liquid assets
     	bmax = 50;
-        
-        % Linear term in grid creation
-        a_glinear = 0;
-        b_glinear = 0;
 
+        bgrid_term1_weight = 0.01;
+
+        bgrid_term1_curv = 1;
+        
     	% Curvature of positive section of liquid asset,
     	% lower value implies more curvature
     	b_gcurv_pos = 0.2;
@@ -95,6 +95,10 @@ classdef ParamsDefaults < handle
 
         % Number of points on the illiquid asset grid
         na = 80;
+
+        agrid_term1_weight = 0.01;
+
+        agrid_term1_curv = 1;
         
         % Curvature of positive section of illiquid asset,
 		% lower value implies more curvature
@@ -112,10 +116,6 @@ classdef ParamsDefaults < handle
 
         % Number of states in z-dimension
         nz;
-
-        % Minimum spacing of the asset grids close to the
-        % constraints
-        min_grid_spacing = 0.0001;
         
 	    %% -------------------------------------------
     	% Returns
