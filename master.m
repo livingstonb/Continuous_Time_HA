@@ -37,9 +37,11 @@ param_opts.ComputeMPCS_illiquid = true;
 param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
 param_opts.ComputeMPCS_news = false;
 param_opts.SimulateMPCS_news = false;
-param_opts.DealWithSpecialCase = false;
+param_opts.DealWithSpecialCase = false; % need to recode this
 param_opts.param_index = 1;
+param_opts.makePlots = false; % not coded yet
 
+run_opts.check_nparams = false;
 run_opts.Server = true;
 run_opts.param_script = 'params_adj_cost_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
@@ -55,6 +57,7 @@ else
 	param_opts.direc = run_opts.serverdir;
 	param_opts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));
 	param_opts.fast = false;
+    run_opts.check_nparams = false;
 end
 
 % temp directory
@@ -89,7 +92,12 @@ addpath(param_opts.out_dir);
 %% --------------------------------------------------------------------
 % GET PARAMETERS
 % ---------------------------------------------------------------------
-p = setup.params.(run_opts.param_script)(param_opts, param_opts.param_index);
+[p, nparams] = setup.params.(run_opts.param_script)(param_opts,...
+    param_opts.param_index);
+if run_opts.check_nparams
+    fprintf('Parameters script contains %d specifications\n', nparams)
+    return
+end
 
 % Create Params object
 p = HACTLib.model_objects.Params(p);
@@ -107,7 +115,10 @@ if ~isempty(p.calibrator)
 	i_x0 = 1;
 	while (resnorm >= 1e-4) && (i_x0 <= n_x0)
 	    x0 = p.calibrator.x0{i_x0};
-	    options = optimoptions(@lsqnonlin, 'MaxFunctionEvaluations', p.maxit_AY);
+	    options = optimoptions(@lsqnonlin,...
+	    	'MaxFunctionEvaluations', p.maxit_AY,...
+	    	'FunctionTolerance', 1e-5,...
+	    	'OptimalityTolerance', 1e-5);
 	    [calibrated_params, resnorm] = ...
 	    	lsqnonlin(p.calibrator.solver_handle, x0, lbounds, ubounds, options);
 
@@ -116,6 +127,11 @@ if ~isempty(p.calibrator)
 
     if (resnorm >= 1e-4)
         warning('Could not match targets')
+    elseif run_opts.Server
+		txtfile = sprintf('completed%d', p.param_index);
+		txtpath = fullfile(p.out_dir, txtfile);
+		fID = fopen(txtpath, 'w');
+		fprintf(fID, 'Algorithm converged to targets');
     end
 end
 

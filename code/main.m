@@ -64,6 +64,10 @@ function [stats, p] = main(p, save_results)
         [HJB_nr, KFE_nr, Au_nr] = model_nr.solve();
     end
 
+    % if p.makePlots
+    %     HACTLib.plots.make_wealth_histograms(model);
+    % end
+
     %% ----------------------------------------------------------------
     % COMPUTE STATISTICS
     % -----------------------------------------------------------------
