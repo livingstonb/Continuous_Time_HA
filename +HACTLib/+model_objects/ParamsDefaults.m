@@ -218,7 +218,7 @@ classdef ParamsDefaults < handle
         KFE_iterative = true;
 
     	% Outer assets-income ratio grid
-    	maxit_AY = 100; % maximal allowable number of loops over capital-labor ratio
+    	maxit_AY = 60; % maximal allowable number of loops over capital-labor ratio
     	crit_AY = 1e-7; % critical value
 
         % Options for MPC computations

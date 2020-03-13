@@ -81,10 +81,9 @@ classdef TableFancy < handle
 				obj.mpc_size_table(stats_ip);
 				obj.mpc_sign_table(stats_ip);
 
-				shock = stats_ip.mpcs(5).shock.value;
-
-				obj.mpc_comparison(stats_ip, shock);
-				obj.mpc_comparison_pct(stats_ip, shock);
+				% shock = stats_ip.mpcs(5).shock.value;
+				% obj.mpc_comparison(stats_ip, shock);
+				% obj.mpc_comparison_pct(stats_ip, shock);
 
 				if obj.one_asset_only
 					assets = {'b'};
@@ -173,12 +172,12 @@ classdef TableFancy < handle
 				stats.median_totw
 				stats.median_liqw
 				stats.sav0
-				stats.constrained_liq{1}
-				stats.constrained_liq{2}
-				stats.constrained_liq{3}
-				stats.constrained_liq{4}
-				stats.constrained_liq{5}
-				stats.constrained_liq{6}
+				stats.constrained_liq_pct{1}
+				stats.constrained_liq_pct{2}
+				stats.constrained_liq_pct{3}
+				stats.constrained_liq_pct{4}
+				stats.constrained_liq_pct{5}
+				stats.constrained_liq_pct{6}
 				stats.constrained_liq_dollars{1}
 				stats.constrained_liq_dollars{2}
 				stats.constrained_liq_dollars{3}

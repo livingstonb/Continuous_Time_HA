@@ -29,7 +29,10 @@ classdef Statistics < handle
 		w_top1share;
 		lw_top10share;
 		lw_top1share;
+		iw_top10share
+		iw_top1share
 		iwshare_b10;
+		iwshare_b25;
 		wgini;
 
 		constrained;
@@ -335,7 +338,7 @@ classdef Statistics < handle
 		    obj.totw = sfill(tmp, 'Mean total wealth', 2);
 
 		    tmp = obj.expectation(obj.model.s==0);
-		    obj.sav0 = sfill(tmp, 'P(s = 0)');
+		    obj.sav0 = sfill(tmp, 's = 0');
 		end
 
 		function construct_distributions(obj)
@@ -350,8 +353,6 @@ classdef Statistics < handle
 		    % grids = {obj.grdKFE.b.vec, obj.grdKFE.a.vec};
 		    % obj.joint_cdf_interp = interp_integral_alt(grids,...
 		    % 	ones(obj.p.nb_KFE, obj.p.na_KFE), joint_pmf);
-
-
 
 		end
 
@@ -402,10 +403,10 @@ classdef Statistics < handle
 				cdf_w, cum_share, 'pchip', 'nearest');
 
 			tmp = 1 - wshare_interp(0.9);
-			obj.w_top10share = sfill(tmp, 'w, Top 10% share');
+			obj.w_top10share = sfill(tmp, 'w, Top 10% share', 2);
 
 			tmp = 1 - wshare_interp(0.99);
-			obj.w_top1share = sfill(tmp, 'w, Top 1% share');
+			obj.w_top1share = sfill(tmp, 'w, Top 1% share', 2);
 
 			% Top liquid wealth shares
 			cum_share = cumsum(obj.grdKFE.b.vec .* obj.pmf_b);
@@ -414,10 +415,22 @@ classdef Statistics < handle
 				cum_share, 'pchip', 'nearest');
 
 			tmp = 1 - lwshare_interp(0.9);
-			obj.lw_top10share = sfill(tmp, 'b, Top 10% share', 2);
+			obj.lw_top10share = sfill(tmp, 'b, Top 10% share');
 
 			tmp = 1 - lwshare_interp(0.99);
 			obj.lw_top1share = sfill(tmp, 'b, Top 1% share', 2);
+
+			% Top illiquid wealth shares
+			cum_share = cumsum(obj.grdKFE.a.vec .* obj.pmf_a);
+			cum_share = cum_share / obj.illiqw.value;
+			iwshare_interp = griddedInterpolant(obj.cdf_a,...
+				cum_share, 'pchip', 'nearest');
+
+			tmp = 1 - iwshare_interp(0.9);
+			obj.iw_top10share = sfill(tmp, 'a, Top 10% share', 2);
+
+			tmp = 1 - lwshare_interp(0.99);
+			obj.iw_top1share = sfill(tmp, 'a, Top 1% share', 2);
 			
 			% Gini coefficient
 			tmp = direct_gini(obj.wealth_sorted, obj.pmf_w);
@@ -425,27 +438,23 @@ classdef Statistics < handle
 
 			% % Share of illiquid wealth owned by households in
 			% % liquid wealth quintiles
-			% b_10th_pctile = obj.lwpercentiles{1}.value;
-			% cum_share = cumsum(obj.grdKFE.a.vec .* obj.pmf_a);
-			% cum_share = cum_share / obj.illiqw.value;
-			% tmp_interp = griddedInterpolant(obj.cdf_a,...
-			% 	cum_share, 'pchip', 'nearest');
-
-			% tmp = tmp_interp(b_10th_pctile);
-			% obj.iwshare_by_liq_pct = sfill()
-
 			grids = {obj.grdKFE.b.vec, obj.grdKFE.a.vec};
 			vals = repmat(shiftdim(obj.grdKFE.a.vec, -1),...
 				[obj.p.nb_KFE, 1]);
 			integral_a = interp_integral_alt(grids,...
 				vals, obj.pmf_b_a);
 
-			b_10th_pctile = obj.lwpercentiles{3}.value;
 			amax = obj.grdKFE.a.vec(end);
-			lt_b10 = integral_a({b_10th_pctile, amax});
+			lt_b10 = integral_a({obj.lwpercentiles{1}.value, amax});
 			obj.iwshare_b10 = sfill(lt_b10 / obj.illiqw.value,...
 				strcat('Share of illiquid wealth owned by households',...
 				' in the bottom 10th percentile of liquid wealth'));
+
+			amax = obj.grdKFE.a.vec(end);
+			lt_b25 = integral_a({obj.lwpercentiles{2}.value, amax});
+			obj.iwshare_b25 = sfill(lt_b25 / obj.illiqw.value,...
+				strcat('Share of illiquid wealth owned by households',...
+				' in the bottom 25th percentile of liquid wealth'));
 		end
 
 		function compute_constrained(obj)
@@ -621,7 +630,7 @@ classdef Statistics < handle
 				pmf_x = sum(pmf_tmp, 2);
 			elseif dims == 2
 				pmf_tmp = reshape(obj.pmf, obj.nb, obj.na, []);
-				pmf_x = squeeze(sum(sum(pmf_tmp, 3), 1));
+				pmf_x = reshape(sum(sum(pmf_tmp, 3), 1), [], 1);
 			end
 
 			cdf_x = cumsum(pmf_x);
