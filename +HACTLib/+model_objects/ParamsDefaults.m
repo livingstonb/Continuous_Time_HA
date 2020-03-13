@@ -12,6 +12,7 @@ classdef ParamsDefaults < handle
         NoRisk = true;
         fast = false;
         saveGrids = false;
+        makePlots = false;
         
         % Name for the parameterization
         name = 'unnamed';

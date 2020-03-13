@@ -41,6 +41,10 @@ classdef Statistics < handle
 		constrained_liq;
 		constrained_liq_pct;
 		constrained_liq_dollars;
+		constrained_illiq;
+		constrained_illiq_pct;
+		constrained_illiq_dollars;
+		hhs_paying_wealth_tax;
 		
 		w_lt_ysixth;
 		w_lt_ytwelfth;
@@ -73,10 +77,13 @@ classdef Statistics < handle
 		model;
 
 		wealth_sorted;
+		wealth_sorted_u;
+		wealth_sorted_iu;
 		wealthmat;
 
 		pmf_w;
 		cdf_w;
+		cdf_w_uwealth;
 
 		nb;
 		na;
@@ -95,6 +102,8 @@ classdef Statistics < handle
 			tmp = grdKFE.b.vec + grdKFE.a.wide;
 			obj.wealthmat = tmp;
 			obj.wealth_sorted = sortrows(tmp(:));
+			[obj.wealth_sorted_u, iu] = unique(obj.wealth_sorted);
+			obj.wealth_sorted_iu = iu;
 
 			obj.pmf = model.g .* grdKFE.trapezoidal.matrix;
 		end
@@ -348,6 +357,8 @@ classdef Statistics < handle
 		    [obj.pmf_w, obj.cdf_w] = obj.marginal_dists([1, 2]);
 		    obj.pmf_b_a = sum(sum(obj.pmf, 4), 3);
 
+		    obj.cdf_w_uwealth = obj.cdf_w(obj.wealth_sorted_iu);
+
 		    % % Joint distribution interpolant
 		    % joint_pmf = sum(sum(obj.pmf, 4), 3);
 		    % grids = {obj.grdKFE.b.vec, obj.grdKFE.a.vec};
@@ -360,7 +371,7 @@ classdef Statistics < handle
 			lw_pct = pct_interp(obj.grdKFE.b.vec, obj.cdf_b);
 			iw_pct = pct_interp(obj.grdKFE.a.vec, obj.cdf_a);
 			w_pct = pct_interp(...
-				obj.wealth_sorted, obj.cdf_w);
+				obj.wealth_sorted_u, obj.cdf_w_uwealth);
 
 			npct = numel(obj.p.wpercentiles);
 		    obj.lwpercentiles = cell(1, npct);
@@ -461,13 +472,19 @@ classdef Statistics < handle
 
 		function compute_constrained(obj)
 			% Constrained by fraction of mean ann inc
+			iw_constrained_interp = constrained_interp(...
+	        	obj.grdKFE.a.vec, obj.cdf_a);
+
 			lw_constrained_interp = constrained_interp(...
 	        	obj.grdKFE.b.vec, obj.cdf_b);
 
 		    w_constrained_interp = constrained_interp(...
-	        	obj.wealth_sorted, obj.cdf_w);
+	        	obj.wealth_sorted_u, obj.cdf_w_uwealth);
 
 		    neps = numel(obj.p.epsilon_HtM);
+		    obj.constrained_illiq = cell(1, neps);
+		    obj.constrained_illiq_pct = cell(1, neps);
+		    obj.constrained_illiq_dollars = cell(1, neps);
 		    obj.constrained_liq = cell(1, neps);
 		    obj.constrained_liq_pct = cell(1, neps);
 		    obj.constrained_liq_dollars = cell(1, neps);
@@ -484,6 +501,13 @@ classdef Statistics < handle
 				obj.constrained_liq_pct{ip} = sfill(tmp,...
 					sprintf('b <= %g%% mean ann inc', htm * 100));
 
+				tmp = iw_constrained_interp(htm);
+				obj.constrained_illiq{ip} = sfill(tmp,...
+					sprintf('a <= %g', htm), 2);
+
+				obj.constrained_illiq_pct{ip} = sfill(tmp,...
+					sprintf('a <= %g%% mean ann inc', htm * 100), 2);
+
 				tmp = w_constrained_interp(htm);
 				obj.constrained{ip} = sfill(tmp,...
 					sprintf('w <= %g', htm), 2);
@@ -497,24 +521,35 @@ classdef Statistics < handle
 			for ip = 1:ndollars
 				if ~isempty(obj.p.numeraire_in_dollars)
 					htm = obj.p.dollars_HtM(ip) / obj.p.numeraire_in_dollars;
+					illiq_htm = iw_constrained_interp(htm);
 					liq_htm = lw_constrained_interp(htm);
 					w_htm = w_constrained_interp(htm);
 				else
+					illiq_htm = NaN;
 					liq_htm = NaN;
 					w_htm = NaN;
 				end
+
+				obj.constrained_illiq_dollars{ip} = sfill(illiq_htm,...
+					sprintf('a <= $%g', obj.p.dollars_HtM(ip)), 2);
 
 				obj.constrained_liq_dollars{ip} = sfill(liq_htm,...
 					sprintf('b <= $%g', obj.p.dollars_HtM(ip)));
 
 				obj.constrained_dollars{ip} = sfill(w_htm,...
-					sprintf('w <= $%g', obj.p.dollars_HtM(ip)));
+					sprintf('w <= $%g', obj.p.dollars_HtM(ip)), 2);
 			end
+
+			% Fraction paying illiquid asset tax
+			z = obj.p.illiquid_tax_threshold;
+			tmp = 1 - iw_constrained_interp(z);
+			obj.hhs_paying_wealth_tax = sfill(tmp,...
+				'HHs paying tax on illiquid returns', 2);
 
 			% Wealth / (quarterly earnings) < epsilon
 			wy_ratio = obj.wealthmat ./ obj.income.y.matrixKFE;
 			tmp = sortrows([wy_ratio(:), obj.pmf(:)]);
-			[wy_ratio_u, iu] = unique(tmp(:,1));
+			[wy_ratio_u, iu] = unique(tmp(:,1), 'last');
 
 			cdf_w_u = cumsum(tmp(:,2));
 			cdf_w_u = cdf_w_u(iu);
@@ -528,9 +563,10 @@ classdef Statistics < handle
 				wy_interp(1/12), 'w_i <= y_i / 12, weekly earnings', 2);
 
 			% Liquid wealth / (quarterly earnings) < epsilon
-			by_ratio = obj.grdKFE.b.vec ./ obj.income.y.matrixKFE;
-			tmp = sortrows([by_ratio(:), obj.pmf(:)]);
-			[by_ratio_u, iu] = unique(tmp(:,1));
+			by_ratio = obj.grdKFE.b.vec ./ obj.income.y.wide;
+			pmf_by = squeeze(sum(sum(obj.pmf, 3), 2));
+			tmp = sortrows([by_ratio(:), pmf_by(:)]);
+			[by_ratio_u, iu] = unique(tmp(:,1), 'last');
 
 			cdf_b_u = cumsum(tmp(:,2));
 			cdf_b_u = cdf_b_u(iu);
@@ -559,18 +595,14 @@ classdef Statistics < handle
 			obj.adjcosts = struct();
 
 			% Adj cost parameters
-			% obj.adjcosts.chi0 = sfill2(...
-			% 	'chi0, adj cost coeff on linear term');
-			% obj.adjcosts.chi1 = sfill2(...
-			% 	'chi1, an adj cost coeff');
-			% obj.adjcosts.chi2 = sfill2(...
-			% 	'chi2, an adj cost coeff');
 			obj.adjcosts.kappa0 = sfill2(...
 				'kappa0, adj cost coeff on first (linear) term');
 			obj.adjcosts.kappa1 = sfill2(...
 				'kappa1, adj cost coeff on second (power) term');
 			obj.adjcosts.kappa2 = sfill2(...
 				'kappa2, power on second term');
+			obj.adjcosts.kappa_var = sfill2(...
+				'kappa1 ^(-1/kappa2), low values cause mass at high a');
 			obj.adjcosts.a_lb = sfill2(...
 				'a_lb, parameter s.t. max(a, a_lb) used for adj cost');
 			obj.adjcosts.adj_cost_fn = sfill2(...
@@ -581,17 +613,10 @@ classdef Statistics < handle
 		        'Mean ratio of deposits to assets, E[|d| / max(a, a_lb)]');
 
 			if ~obj.p.OneAsset
-				% obj.adjcosts.chi0.value = obj.p.chi0;
-				% obj.adjcosts.chi1.value = obj.p.chi1;
-				% obj.adjcosts.chi2.value = obj.p.chi2;
-				% obj.adjcosts.kappa0.value = obj.p.chi0;
-				% obj.adjcosts.kappa1.value = ...
-				% 	obj.p.chi1 ^ (-obj.p.chi2) / (1 + obj.p.chi2);
-				% obj.adjcosts.kappa2.value = obj.p.chi2;
-
 				obj.adjcosts.kappa0.value = obj.p.kappa0;
 				obj.adjcosts.kappa1.value = obj.p.kappa1;
 				obj.adjcosts.kappa2.value = obj.p.kappa2;
+				obj.adjcosts.kappa_var.value = obj.p.kappa1 ^ (-1/obj.p.kappa2);
 				obj.adjcosts.a_lb.value = obj.p.a_lb;
 
 				lhs = "cost(d,a)";

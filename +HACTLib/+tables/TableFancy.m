@@ -81,9 +81,9 @@ classdef TableFancy < handle
 				obj.mpc_size_table(stats_ip);
 				obj.mpc_sign_table(stats_ip);
 
-				% shock = stats_ip.mpcs(5).shock.value;
-				% obj.mpc_comparison(stats_ip, shock);
-				% obj.mpc_comparison_pct(stats_ip, shock);
+				shock = stats_ip.mpcs(5).shock.value;
+				obj.mpc_comparison(stats_ip, shock);
+				obj.mpc_comparison_pct(stats_ip, shock);
 
 				if obj.one_asset_only
 					assets = {'b'};
@@ -94,6 +94,7 @@ classdef TableFancy < handle
                 obj.illiquid_mpcs_table(stats_ip);
                 obj.adj_costs_table(stats_ip);
                 obj.other_params_table(stats_ip);
+                obj.other_stats_table(stats_ip);
 
                 obj.add_column(ip)
 			end
@@ -312,15 +313,20 @@ classdef TableFancy < handle
 				return
 			end
 
+			cost_lhs = 'cost(d,a)';
+			cost_rhs = 'k0 * |d| + k1 * |d| ^ (1 + k2) / (1 + k2)';
+			cost_fn = strcat(cost_lhs, ' = ', cost_rhs);
+
 			panel_name = 'Adjustment cost statistics';
-			out = new_table_with_header(panel_name);
+			panel_header = strcat(panel_name, ', ', cost_fn);
+			out = new_table_with_header(panel_header);
 
 			new_entries = {
 				stats.adjcosts.kappa0
 				stats.adjcosts.kappa1
 				stats.adjcosts.kappa2
+				stats.adjcosts.kappa_var
 				stats.adjcosts.a_lb
-				% stats.adjcosts.adj_cost_fn
 				stats.adjcosts.mean_cost
 				stats.adjcosts.mean_d_div_a
 			};
@@ -338,6 +344,43 @@ classdef TableFancy < handle
 
 			new_entries = {
 				stats.params.r_a
+			};
+
+			obj.update_current_column(out, new_entries);
+		end
+
+		function other_stats_table(obj, stats)
+			panel_name = 'Other statistics';
+			out = new_table_with_header(panel_name);
+
+			new_entries = {
+				stats.constrained_illiq_pct{1}
+				stats.constrained_illiq_pct{2}
+				stats.constrained_illiq_pct{3}
+				stats.constrained_illiq_pct{4}
+				stats.constrained_illiq_pct{5}
+				stats.constrained_illiq_pct{6}
+				stats.constrained_illiq_dollars{1}
+				stats.constrained_illiq_dollars{2}
+				stats.constrained_illiq_dollars{3}
+				stats.constrained_illiq_dollars{4}
+				stats.constrained_illiq_dollars{5}
+				stats.constrained_illiq_dollars{6}
+				stats.constrained_pct{1}
+				stats.constrained_pct{2}
+				stats.constrained_pct{3}
+				stats.constrained_pct{4}
+				stats.constrained_pct{5}
+				stats.constrained_pct{6}
+				stats.constrained_dollars{1}
+				stats.constrained_dollars{2}
+				stats.constrained_dollars{3}
+				stats.constrained_dollars{4}
+				stats.constrained_dollars{5}
+				stats.constrained_dollars{6}
+				stats.hhs_paying_wealth_tax
+				stats.w_lt_ysixth
+				stats.w_lt_ytwelfth
 			};
 
 			obj.update_current_column(out, new_entries);
