@@ -15,6 +15,7 @@ classdef Statistics < handle
 		cdf_b;
 		pmf_a;
 		cdf_a;
+		pmf_b_a;
 
 		lwpercentiles;
 		iwpercentiles;
@@ -28,6 +29,7 @@ classdef Statistics < handle
 		w_top1share;
 		lw_top10share;
 		lw_top1share;
+		iwshare_b10;
 		wgini;
 
 		constrained;
@@ -337,9 +339,20 @@ classdef Statistics < handle
 		end
 
 		function construct_distributions(obj)
+			import HACTLib.aux.interp_integral_alt
 		    [obj.pmf_b, obj.cdf_b] = obj.marginal_dists(1);
 		    [obj.pmf_a, obj.cdf_a] = obj.marginal_dists(2);
-		    [obj.pmf_w, obj.cdf_w] = obj.marginal_dists([1, 2]); 
+		    [obj.pmf_w, obj.cdf_w] = obj.marginal_dists([1, 2]);
+		    obj.pmf_b_a = sum(sum(obj.pmf, 4), 3);
+
+		    % % Joint distribution interpolant
+		    % joint_pmf = sum(sum(obj.pmf, 4), 3);
+		    % grids = {obj.grdKFE.b.vec, obj.grdKFE.a.vec};
+		    % obj.joint_cdf_interp = interp_integral_alt(grids,...
+		    % 	ones(obj.p.nb_KFE, obj.p.na_KFE), joint_pmf);
+
+
+
 		end
 
 		function compute_percentiles(obj)
@@ -409,6 +422,30 @@ classdef Statistics < handle
 			% Gini coefficient
 			tmp = direct_gini(obj.wealth_sorted, obj.pmf_w);
 			obj.wgini = sfill(tmp, 'Gini coefficient, wealth');
+
+			% % Share of illiquid wealth owned by households in
+			% % liquid wealth quintiles
+			% b_10th_pctile = obj.lwpercentiles{1}.value;
+			% cum_share = cumsum(obj.grdKFE.a.vec .* obj.pmf_a);
+			% cum_share = cum_share / obj.illiqw.value;
+			% tmp_interp = griddedInterpolant(obj.cdf_a,...
+			% 	cum_share, 'pchip', 'nearest');
+
+			% tmp = tmp_interp(b_10th_pctile);
+			% obj.iwshare_by_liq_pct = sfill()
+
+			grids = {obj.grdKFE.b.vec, obj.grdKFE.a.vec};
+			vals = repmat(shiftdim(obj.grdKFE.a.vec, -1),...
+				[obj.p.nb_KFE, 1]);
+			integral_a = interp_integral_alt(grids,...
+				vals, obj.pmf_b_a);
+
+			b_10th_pctile = obj.lwpercentiles{3}.value;
+			amax = obj.grdKFE.a.vec(end);
+			lt_b10 = integral_a({b_10th_pctile, amax});
+			obj.iwshare_b10 = sfill(lt_b10 / obj.illiqw.value,...
+				strcat('Share of illiquid wealth owned by households',...
+				' in the bottom 10th percentile of liquid wealth'));
 		end
 
 		function compute_constrained(obj)

@@ -33,5 +33,5 @@ function interpolant = interp_integral_alt(grids, integrand_values, pmf)
     end
 
 	interpolant = griddedInterpolant(...
-		grids, integral_values, 'linear', 'nearest');
+		grids, integral_values, 'spline', 'nearest');
 end

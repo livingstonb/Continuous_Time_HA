@@ -12,13 +12,15 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
     shared_params.na = 50;
     shared_params.na_KFE = 50;
     shared_params.min_grid_spacing = 0;
-    shared_params.b_gcurv_pos = 0.2;
+    shared_params.b_gcurv_pos = 0.1;
     shared_params.a_gcurv = 0.2;
     shared_params.a_glinear = 0.02;
-    shared_params.b_glinear = 0.01;
+    shared_params.b_glinear = 0.02;
     shared_params.a_lb = 0.25;
     shared_params.bmax = 20;
-    shared_params.amax = 100;
+    shared_params.amax = 75;
+    shared_params.illiquid_tax_midpt = 60;
+    shared_params.illiquid_tax_threshold = 45;
     shared_params.OneAsset = 0;
     shared_params.income_dir = 'continuous_b';
     % shared_params.calibration_vars = {'rho', 'r_a'};
@@ -58,18 +60,27 @@ function outparams = params_adj_cost_tests(param_opts, param_index)
     % rho0s = [0.01, 0.01];
     % ra_0s = [0.015, 0.02];
 
-    kappa_0s = [0, 0.1, 0.2];
-    kappa_1s = [0.5, 2, 5, 10];
-    kappa_2s = [0.1, 0.25, 0.5, 1, 1.25];
-
     params{ii} = shared_params;
     params{ii}.name = sprintf('original baseline');
     params{ii}.kappa0 = 0;
     params{ii}.kappa1 = 1.6069;
     params{ii}.kappa2 = 0.25;
-    params{ii}.rho = 0.01;
-    params{ii}.r_a = 0.015;
+    params{ii}.rho = 0.0144111653479278;
+    params{ii}.r_a = 0.0191715864165008;
     params{ii}.r_b = 0.005;
+    params{ii}.nb = 50;
+    params{ii}.nb_KFE = 50;
+    params{ii}.na = 50;
+    params{ii}.na_KFE = 50;
+
+    % 100/100
+    params{ii}.rho = 0.0145500678582774;
+    params{ii}.r_a = 0.0193444510123558;
+
+
+    kappa_0s = [0, 0.1, 0.2];
+    kappa_1s = [0.5, 2, 5, 10];
+    kappa_2s = [0.1, 0.25, 0.5, 1, 1.25];
 
     params{ii}.calibration_bounds = {[0.001, 0.02], [0.006, 0.1]};
     ii = ii + 1;

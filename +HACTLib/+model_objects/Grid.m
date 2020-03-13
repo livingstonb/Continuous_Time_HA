@@ -214,7 +214,7 @@ classdef Grid < handle
 	        	assert(sum(grid_vec==0) == 1, "Input grid must include 0")
 	        end
             obj.a.vec = grid_vec(:);
-            obj.a.wide = reshape(grid_vec, [1 obj.na 1 1]);
+            obj.a.wide = shiftdim(grid_vec, -1);
 			obj.a.matrix = repmat(obj.a.wide, [obj.nb, 1, obj.nz, obj.ny]);
 			assert(all(diff(obj.a.vec)>0), 'agrid not strictly increasing')
 	    end

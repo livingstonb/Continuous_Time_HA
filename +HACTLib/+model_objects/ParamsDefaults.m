@@ -194,6 +194,8 @@ classdef ParamsDefaults < handle
         % ------------ taxes ------------------------------
         transfer = 0; % transfer to households 
         wagetax = 0; % tax rate on wage income
+        illiquid_tax_midpt = 50;
+        illiquid_tax_threshold = 40;
 
     	% ------------ approximation parameters -----------
     	% HJB loop

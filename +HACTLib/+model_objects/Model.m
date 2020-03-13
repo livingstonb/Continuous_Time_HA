@@ -154,6 +154,15 @@ classdef Model < handle
 				obj.grids_KFE.a.vec, obj.grids_HJB.b.vec, obj.grids_HJB.a.vec);
 			interp_decision = kron(speye(obj.income.ny*obj.p.nz), interp_decision);
 
+			% Vn = zeros([obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
+			% for iz = 1:obj.p.nz
+			% 	for iy = 1:obj.income.ny
+			% 	Vinterp = griddedInterpolant({obj.grids_HJB.b.vec, obj.grids_HJB.a.vec},...
+			% 		HJB.Vn(:,:,iz,iy), 'spline', 'nearest');
+			% 	Vn(:,:,iz,iy) = Vinterp({obj.grids_KFE.b.vec, obj.grids_KFE.a.vec});
+			% 	end
+			% end
+
 			Vn = reshape(interp_decision * HJB.Vn(:),...
 		    	[obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
 		    KFE = HACTLib.computation.find_policies(obj.p, obj.income, obj.grids_KFE, Vn, hours_bc);

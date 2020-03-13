@@ -102,20 +102,20 @@ if ~isempty(p.calibrator)
 	lbounds = p.calibrator.lbounds;
 	ubounds = p.calibrator.ubounds;
 
-	exitflag = 100;
+	resnorm = 100;
 	n_x0 = numel(p.calibrator.x0);
 	i_x0 = 1;
-	while (exitflag >= 0) && (exitflag ~=1) && (i_x0 <= n_x0)
+	while (resnorm >= 1e-4) && (i_x0 <= n_x0)
 	    x0 = p.calibrator.x0{i_x0};
 	    options = optimoptions(@lsqnonlin, 'MaxIterations', p.maxit_AY);
-	    [calibrated_params, resnorm, residual, exitflag] = ...
+	    [calibrated_params, resnorm] = ...
 	    	lsqnonlin(p.calibrator.solver_handle, x0, lbounds, ubounds, options);
 
 	   	i_x0 = i_x0 + 1;
 	end
 
-    if (exitflag ~= 1)
-        error('Could not match targets')
+    if (resnorm >= 1e-4)
+        warning('Could not match targets')
     end
 end
 

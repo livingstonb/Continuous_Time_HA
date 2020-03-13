@@ -94,6 +94,7 @@ classdef TableFancy < handle
 				obj.percentiles_tables(stats_ip, assets);
                 obj.illiquid_mpcs_table(stats_ip);
                 obj.adj_costs_table(stats_ip);
+                obj.other_params_table(stats_ip);
 
                 obj.add_column(ip)
 			end
@@ -328,7 +329,7 @@ classdef TableFancy < handle
 			obj.update_current_column(out, new_entries);
 		end
 
-		function adj_costs_table(obj, stats)
+		function other_params_table(obj, stats)
 			if obj.one_asset_only
 				return
 			end
