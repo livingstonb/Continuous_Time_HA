@@ -107,7 +107,7 @@ if ~isempty(p.calibrator)
 	i_x0 = 1;
 	while (resnorm >= 1e-4) && (i_x0 <= n_x0)
 	    x0 = p.calibrator.x0{i_x0};
-	    options = optimoptions(@lsqnonlin, 'MaxFunctionEvaluations', 1);
+	    options = optimoptions(@lsqnonlin, 'MaxFunctionEvaluations', p.maxit_AY);
 	    [calibrated_params, resnorm] = ...
 	    	lsqnonlin(p.calibrator.solver_handle, x0, lbounds, ubounds, options);
 
