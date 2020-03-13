@@ -58,5 +58,8 @@ tf = HACTLib.tables.TableFancy(params, stats_cell);
 output_table = tf.create(params, stats_cell)
 
 
-xlxpath = fullfile(xlxdir, 'output_table.csv');
+csvpath = fullfile(xlxdir, 'output_table.csv');
+writetable(output_table, csvpath, 'WriteRowNames', true);
+
+xlxpath = fullfile(xlxdir, 'output_table.xlsx');
 writetable(output_table, xlxpath, 'WriteRowNames', true);
