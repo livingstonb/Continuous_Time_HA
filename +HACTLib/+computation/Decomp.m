@@ -83,14 +83,12 @@ classdef Decomp < handle
 
 		    % Interpolant for mpc(b) * g(b)
 		    is_sorted = true;
-		    % obj.mpc_integral = interpolate_integral(...
-		    % 	obj.bgrid, obj.mpcs_b, obj.pmf_b, is_sorted);
 		    obj.mpc_integral = interp_integral_alt(...
 		    	{obj.bgrid}, obj.mpcs_b, obj.pmf_b);
 		end
 
 		function decomp_norisk(obj)
-			import HACTLib.aux.interpolate_integral
+			import HACTLib.aux.interp_integral_alt
 
 			% Compute mpc_norisk(b) = E[mpc_norisk(b,ib) | b]
 			mpcs_states_nr = obj.stats.other.mpcs_nr(5).mpcs(:,1);
@@ -103,8 +101,8 @@ classdef Decomp < handle
 
 			% Interpolant for mpc_norisk(b) * g(b)
 		    is_sorted = true;
-		    norisk_integ_interp = interpolate_integral(...
-		    	obj.bgrid, mpcs_b_nr, obj.pmf_b, is_sorted);
+		    norisk_integ_interp = interp_integral_alt(...
+		    	{obj.bgrid}, mpcs_b_nr, obj.pmf_b, is_sorted);
 
 		    for ia = 1:obj.nthresholds
 		    	abar = obj.p.decomp_thresholds(ia);

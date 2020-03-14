@@ -150,21 +150,20 @@ classdef Model < handle
 	    % SOLVE KFE
 		% ---------------------------------------------------------------------
 		function [KFE, Au] = solve_KFE(obj, HJB, hours_bc)
-			interp_decision = HACTLib.aux.interp_2d(obj.grids_KFE.b.vec,...
-				obj.grids_KFE.a.vec, obj.grids_HJB.b.vec, obj.grids_HJB.a.vec);
-			interp_decision = kron(speye(obj.income.ny*obj.p.nz), interp_decision);
+			if isequal(obj.grids_HJB.b.vec, obj.grids_KFE.b.vec) ...
+				&& isequal(obj.grids_HJB.a.vec, obj.grids_KFE.a.vec)
+				Vn = HJB.Vn;
+			else
+				Vn = zeros([obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
+				for iz = 1:obj.p.nz
+					for iy = 1:obj.income.ny
+					Vinterp = griddedInterpolant({obj.grids_HJB.b.vec, obj.grids_HJB.a.vec},...
+						HJB.Vn(:,:,iz,iy), 'spline', 'nearest');
+					Vn(:,:,iz,iy) = Vinterp({obj.grids_KFE.b.vec, obj.grids_KFE.a.vec});
+					end
+				end
+			end
 
-			% Vn = zeros([obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
-			% for iz = 1:obj.p.nz
-			% 	for iy = 1:obj.income.ny
-			% 	Vinterp = griddedInterpolant({obj.grids_HJB.b.vec, obj.grids_HJB.a.vec},...
-			% 		HJB.Vn(:,:,iz,iy), 'spline', 'nearest');
-			% 	Vn(:,:,iz,iy) = Vinterp({obj.grids_KFE.b.vec, obj.grids_KFE.a.vec});
-			% 	end
-			% end
-
-			Vn = reshape(interp_decision * HJB.Vn(:),...
-		    	[obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
 		    KFE = HACTLib.computation.find_policies(obj.p, obj.income, obj.grids_KFE, Vn, hours_bc);
 		    KFE.Vn = Vn;
 
@@ -174,8 +173,7 @@ classdef Model < handle
 			returns_risk = (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 1);
 		    A_constructor_kfe = TransitionMatrixConstructor(obj.p,...
 		    	obj.income, obj.grids_KFE, returns_risk);
-		    Au = A_constructor_kfe.construct(KFE, KFE.Vn);
-		    
+		    Au = A_constructor_kfe.construct(KFE, KFE.Vn);   
 		    
 		    KFE.g = obj.kfe_solver.solve(Au);
 		end
