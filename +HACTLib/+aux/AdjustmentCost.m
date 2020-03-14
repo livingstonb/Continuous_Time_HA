@@ -41,9 +41,13 @@ classdef AdjustmentCost < handle
 			cost_out = cost_linear + cost_concave;
 		end
 
-		% function cost_deriv = compute_deriv(d, a_grid)
-		% 	deriv_dneg = - obj.kappa0 - 
-		% end
+		function cost_deriv = compute_deriv(obj, d, a_grid)
+			a_scaled = max(a_grid, obj.a_lb);
+			d_scaled = abs(d) ./ a_scaled;
+
+			tmp = obj.kappa0 + obj.kappa1 .* d_scaled .^ obj.kappa2;
+			cost_deriv = sign(d) .* tmp;
+		end
 
 		function d_opt = opt_deposits(obj, Vb, Va, a)
 			dpos_term = max(Va ./ Vb - 1 - obj.kappa0, 0);

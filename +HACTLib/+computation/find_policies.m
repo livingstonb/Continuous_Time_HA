@@ -31,9 +31,6 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     nz = p.nz;
     ny = numel(income.y.vec);
 
-    % Returns grid
-    r_b_mat = p.r_b .* (grd.b.matrix>=0) +  p.r_b_borr .* (grd.b.matrix<0);
-
     import HACTLib.model_objects.Preferences
     prefs = Preferences();
     
