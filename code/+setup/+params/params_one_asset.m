@@ -1,67 +1,57 @@
-function outparams = params_one_asset(param_opts, param_index)
+function [outparams, n] = params_one_asset(param_opts)
 
-    dollars = [-1, -500, -5000, 1, 500, 5000];
-    shocks = dollars ./ 72000;
+    shocks = [-1, -500, -5000, 1, 500, 5000];
+    dollars = 72000;
+
+    shared_params = param_opts;
+    shared_params.mpc_shocks = shocks / dollars;
+    shared_params.numeraire_in_dollars = dollars;
+    shared_params.nb = 250;
+    shared_params.nb_KFE = 250;
+
+    shared_params.bgrid_term1_weight = 0.01;
+    shared_params.bgrid_term1_curv = 0.8;
+    shared_params.b_gcurv_pos = 0.1;
+    shared_params.OneAsset = true;
+    shared_params.Bequests = true;
+
+    shared_params.bmax = 50;
+    shared_params.rho = 0.005;
+
+    shared_params.calibration_vars = {'rho'};
+    shared_params.calibration_stats = {'totw'};
+    shared_params.calibration_targets = 3.5;
+    shared_params.calibration_bounds = {[0.003, 0.01]};
 
 	%% --------------------------------------------------------------------
     % CREATE PARAMETERIZATIONS HERE
     % ---------------------------------------------------------------------
     ii = 1;
-    params{ii} = param_opts;
+    params{ii} = shared_params;
 	params{ii}.name = 'calib_to_median_wealth'; 
-    params{ii}.OneAsset = 1;
     params{ii}.income_dir = 'continuous_a';
-    params{ii}.Bequests = 1;
-    params{ii}.rho = 0.003902728727572;
-    params{ii}.n_mpcsim = 5e5;
-    params{ii}.nb = 200;
-    params{ii}.nb_KFE = 200;
+    params{ii}.calibration_vars = {'rho'};
+    params{ii}.calibration_stats = {'median_totw'};
+    params{ii}.calibration_targets = 1.7;
+    params{ii}.calibration_bounds = {[0.002, 0.01]};
     ii = ii + 1;
 
-    params{ii} = param_opts;
+    params{ii} = shared_params;
     params{ii}.name = 'baseline'; 
-    params{ii}.OneAsset = 1;
     params{ii}.income_dir = 'continuous_a';
-    params{ii}.Bequests = 1;
     params{ii}.rho = 0.003902728727572;
-    params{ii}.nb = 250;
-    params{ii}.nb_KFE = 250;
-    params{ii}.mpc_shocks = shocks;
-    params{ii}.b_gcurv_pos = 0.3;
-    params{ii}.mpc_shocks_dollars = [];
-    params{ii}.calibration_vars = {'rho'};
-    params{ii}.calibration_stats = {'totw'};
-    params{ii}.calibration_targets = 3.5;
-    params{ii}.calibration_bounds = {[0.003, 0.0042]};
-    params{ii}.bmax = 50;
     ii = ii + 1;
     
-    params{ii} = param_opts;
+    params{ii} = shared_params;
     params{ii}.name = 'cont_b'; 
-    params{ii}.OneAsset = 1;
     params{ii}.income_dir = 'continuous_b';
-    params{ii}.Bequests = 1;
     params{ii}.rho = 0.003902728727572;
-    params{ii}.nb = 250;
-    params{ii}.nb_KFE = 250;
-    params{ii}.mpc_shocks = shocks;
-    params{ii}.b_gcurv_pos = 0.3;
-    params{ii}.mpc_shocks_dollars = [];
-    params{ii}.calibration_vars = {'rho'};
-    params{ii}.calibration_stats = {'totw'};
-    params{ii}.calibration_targets = 3.5;
-    params{ii}.calibration_bounds = {[0.0042, 0.005]};
-    params{ii}.bmax = 50;
     ii = ii + 1;
 
     
     %% --------------------------------------------------------------------
     % HOUSEKEEPING, DO NOT CHANGE
     % ---------------------------------------------------------------------
-
-    % Use runopts.param_index to choose which specification to select
-    chosen_param = params{param_index};
-
-    % Create Params object
-    outparams = HACTLib.model_objects.Params(chosen_param);
+    n = numel(params);
+    outparams = params{param_opts.param_index};
 end

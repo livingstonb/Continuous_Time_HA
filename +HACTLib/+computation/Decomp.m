@@ -62,7 +62,7 @@ classdef Decomp < handle
 		end
 
 		function make_initial_computations(obj)
-			import HACTLib.aux.interpolate_integral
+			import HACTLib.aux.interp_integral_alt
 
 			r_b_adj = obj.p.r_b + obj.p.deathrate * obj.p.perfectannuities;
 			obj.m_ra = (obj.p.rho + obj.p.deathrate - r_b_adj)...
@@ -82,8 +82,10 @@ classdef Decomp < handle
 
 		    % Interpolant for mpc(b) * g(b)
 		    is_sorted = true;
-		    obj.mpc_integral = interpolate_integral(...
-		    	obj.bgrid, obj.mpcs_b, obj.pmf_b, is_sorted);
+		    % obj.mpc_integral = interpolate_integral(...
+		    % 	obj.bgrid, obj.mpcs_b, obj.pmf_b, is_sorted);
+		    obj.mpc_integral = interp_integral_alt(...
+		    	{obj.bgrid}, obj.mpcs_b, obj.pmf_b);
 		end
 
 		function decomp_norisk(obj)

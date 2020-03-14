@@ -168,7 +168,7 @@ function [stats, p] = main(p, save_results)
     import HACTLib.computation.Decomp
     decomp_obj = Decomp(p, grdKFE.b.vec, stats, income);
 
-    if (p.ComputeMPCS == 1) && (p.OneAsset == 1)
+    if p.ComputeMPCS && p.OneAsset
         fprintf('\nPerforming decompositions...\n')
         decomp_obj.compute();
     end

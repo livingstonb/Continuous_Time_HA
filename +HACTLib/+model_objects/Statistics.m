@@ -433,11 +433,15 @@ classdef Statistics < handle
 			obj.lw_top1share = sfill(tmp, 'b, Top 1% share', 2);
 
 			% Top illiquid wealth shares
-			cum_share = cumsum(obj.grdKFE.a.vec .* obj.pmf_a);
-			cum_share = cum_share / obj.illiqw.value;
-			[cdf_a_u, iu] = unique(obj.cdf_a, 'first');
-			iwshare_interp = griddedInterpolant(cdf_a_u,...
-				cum_share(iu), 'pchip', 'nearest');
+			if ~obj.p.OneAsset
+				cum_share = cumsum(obj.grdKFE.a.vec .* obj.pmf_a);
+				cum_share = cum_share / obj.illiqw.value;
+				[cdf_a_u, iu] = unique(obj.cdf_a, 'first');
+				iwshare_interp = griddedInterpolant(cdf_a_u,...
+					cum_share(iu), 'pchip', 'nearest');
+			else
+				iwshare_interp = @(x) NaN;
+			end
 
 			tmp = 1 - iwshare_interp(0.9);
 			obj.iw_top10share = sfill(tmp, 'a, Top 10% share', 2);
@@ -449,25 +453,30 @@ classdef Statistics < handle
 			tmp = direct_gini(obj.wealth_sorted, obj.pmf_w);
 			obj.wgini = sfill(tmp, 'Gini coefficient, wealth');
 
-			% % Share of illiquid wealth owned by households in
-			% % liquid wealth quintiles
-			grids = {obj.grdKFE.b.vec, obj.grdKFE.a.vec};
-			vals = repmat(shiftdim(obj.grdKFE.a.vec, -1),...
-				[obj.p.nb_KFE, 1]);
-			integral_a = interp_integral_alt(grids,...
-				vals, obj.pmf_b_a);
+			% Share of illiquid wealth owned by households in
+			% liquid wealth quintiles
+			if ~obj.p.OneAsset
+				grids = {obj.grdKFE.b.vec, obj.grdKFE.a.vec};
+				vals = repmat(shiftdim(obj.grdKFE.a.vec, -1),...
+					[obj.p.nb_KFE, 1]);
+				integral_a = interp_integral_alt(grids,...
+					vals, obj.pmf_b_a);
 
-			amax = obj.grdKFE.a.vec(end);
-			lt_b10 = integral_a({obj.lwpercentiles{1}.value, amax});
+				amax = obj.grdKFE.a.vec(end);
+				lt_b10 = integral_a({obj.lwpercentiles{1}.value, amax});
+				lt_b25 = integral_a({obj.lwpercentiles{2}.value, amax});
+			else
+				lt_b10 = NaN;
+				lt_b25 = NaN;
+			end
+
 			obj.iwshare_b10 = sfill(lt_b10 / obj.illiqw.value,...
 				strcat('Share of illiquid wealth owned by households',...
-				' in the bottom 10th percentile of liquid wealth'));
-
-			amax = obj.grdKFE.a.vec(end);
-			lt_b25 = integral_a({obj.lwpercentiles{2}.value, amax});
+				' in the bottom 10th percentile of liquid wealth'), 2);
+			
 			obj.iwshare_b25 = sfill(lt_b25 / obj.illiqw.value,...
 				strcat('Share of illiquid wealth owned by households',...
-				' in the bottom 25th percentile of liquid wealth'));
+				' in the bottom 25th percentile of liquid wealth'), 2);
 		end
 
 		function compute_constrained(obj)

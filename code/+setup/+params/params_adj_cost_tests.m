@@ -1,4 +1,4 @@
-function [outparams, n] = params_adj_cost_tests(param_opts, param_index)
+function [outparams, n] = params_adj_cost_tests(param_opts)
 	import HACTLib.aux.set_shared_fields
 
 	shocks = [-1, -500, -5000, 1, 500, 5000];
@@ -21,8 +21,8 @@ function [outparams, n] = params_adj_cost_tests(param_opts, param_index)
     shared_params.a_gcurv = 0.2;
 
     shared_params.a_lb = 0.25;
-    shared_params.bmax = 20;
-    shared_params.amax = 75;
+    shared_params.bmax = 25;
+    shared_params.amax = 100;
     shared_params.rho = 0.014;
     shared_params.r_a = 0.02;
     % shared_params.illiquid_tax_midpt = 35;
@@ -116,5 +116,5 @@ function [outparams, n] = params_adj_cost_tests(param_opts, param_index)
 
     %% DO NOT CHANGE THIS SECTION
     n = numel(params);
-    outparams = params{param_index};
+    outparams = params{param_opts.param_index}
 end
