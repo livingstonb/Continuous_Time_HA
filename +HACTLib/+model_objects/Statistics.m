@@ -61,6 +61,7 @@ classdef Statistics < handle
 		mpcs_news_one_quarter;
 		mpcs_news_one_year;
 
+		decomp_norisk_completed;
 		decomp_norisk;
 		decomp_RA;
 		decomp_baseline_present = false;
@@ -266,20 +267,26 @@ classdef Statistics < handle
 			% Decomposition wrt no inc risk model
 			empty_decomp_struct = struct(...
 				'htm_level', empty_stat,...
-				'term1', empty_stat, 'term2', empty_stat,...
-				'term3', empty_stat, 'term4', empty_stat...
+				'term1', empty_stat, 'term1_pct', empty_stat,...
+				'term2', empty_stat, 'term3', empty_stat,...
+				'term4', empty_stat...
 			);
 			n = numel(obj.p.decomp_thresholds);
 
 			norisk = decomp_obj.results_norisk;
 			obj.decomp_norisk = empty_decomp_struct;
+			obj.decomp_norisk_completed = norisk.completed;
 			for it = 1:n
 				lvl = obj.p.decomp_thresholds(it);
 
 				obj.decomp_norisk(it) = empty_decomp_struct;
 				obj.decomp_norisk(it).htm_level = sfill(...
 					lvl, 'HtM threshold');
+
 				obj.decomp_norisk(it).term1 = sfill(...
+					norisk.term1(it), 'RA MPC');
+
+				obj.decomp_norisk(it).term1_pct = sfill(...
 					norisk.term1(it) * 100, 'RA MPC (%)');
 
 				tmp = sprintf('HtM effect (abar <= %g)', lvl);

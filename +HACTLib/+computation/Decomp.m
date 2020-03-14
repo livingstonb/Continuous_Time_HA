@@ -68,11 +68,12 @@ classdef Decomp < handle
 			obj.m_ra = (obj.p.rho + obj.p.deathrate - r_b_adj)...
 				/ obj.p.riskaver + r_b_adj;
 
-			obj.Empc = obj.stats.mpcs(5).quarterly.value;
+			
 
 			% Compute mpc(b) = E[mpc(b,yP,ib) | b]
 			mpcs_states = obj.stats.mpcs_over_ss{5};
 			obj.mpcs_b = obj.collapse_mpcs(mpcs_states, obj.pmf);
+			obj.Empc = dot(obj.mpcs_b, obj.pmf_b);
 
 			% Interpolant for cdf(b)
 			cdf_b = cumsum(obj.pmf_b);

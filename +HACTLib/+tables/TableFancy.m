@@ -6,6 +6,7 @@ classdef TableFancy < handle
 		one_asset_only = false;
 		two_asset_only = false;
 		decomp_baseline_present = false;
+		decomp_norisk_present = false;
 		selected_cases;
 
 		n_cols;
@@ -31,6 +32,8 @@ classdef TableFancy < handle
 			obj.mpcs_present = any([params.ComputeMPCS]);
 			obj.illiquid_mpcs_present = any([params.ComputeMPCS_illiquid]);
 			obj.mpcs_news_present = any([params.ComputeMPCS_news]);
+			obj.decomp_norisk_present = any(...
+				cellfun(@(x) x.decomp_norisk_completed, stats));
 
 			for ii = 1:numel(stats)
 				if stats{ii}.decomp_baseline_present
@@ -80,6 +83,8 @@ classdef TableFancy < handle
 				obj.wealth_stats_table(stats_ip);
 				obj.mpc_size_table(stats_ip);
 				obj.mpc_sign_table(stats_ip);
+
+				obj.decomp_norisk_table(p_ip, stats_ip);
 
 				shock = stats_ip.mpcs(5).shock.value;
 				obj.mpc_comparison(stats_ip, shock);
@@ -223,30 +228,34 @@ classdef TableFancy < handle
 		end
 
 		function decomp_norisk_table(obj, p, stats)
-			threshold = p.decomp_thresholds(ithresh);
-			header_name = sprintf('Decomposition of E[MPC] around %g', threshold);
-			output_table = HACTLib.tables.TableGen.new_table_with_header(header_name);
-
-			panel_name = 'Decomposition of mean MPC, with respect to RA and no inc risk';
-			out = new_table_with_header(panel_name);
-
-			for ithresh = 1:numel(p.decomp_thresholds(ithresh))
-				panel_name = 'Decomposition of mean MPC, with respect to RA and no inc risk';
-				out_tmp = new_table_with_header(panel_name);
+			if (obj.two_asset_only) || (~obj.decomp_norisk_present)
+				return
 			end
 
-			lab_prefix = sprintf("Decomp around %g, ", threshold);
-			full_lab = @(postf) char(strcat(lab_prefix, postf));
+			panel_name = 'Decomps of E[MPC] wrt RA and no inc risk, $500 shock';
+			out = new_table_with_header(panel_name);
 
-			vals = stats.decomp_norisk;
+			tmp = stats.mpcs(5).quarterly;
+			tmp.label = 'Quarterly MPC (%)'
+			new_entries = {
+				tmp
+				stats.decomp_norisk(1).term1_pct
+			};
+			obj.update_current_column(out, new_entries);
 
-			new_entries = {	full_lab("RA MPC"), vals.term1(ithresh)
-							full_lab("HtM Effect"), vals.term2(ithresh)
-							full_lab("Non-HtM, constraint"), vals.term3(ithresh)
-							full_lab("Non-HtM, inc risk"), vals.term4(ithresh)
+			for ithresh = 1:numel(p.decomp_thresholds)
+				threshold = p.decomp_thresholds(ithresh);
+				panel_name = sprintf('For HtM threshold #%d', ithresh);
+				out = new_table_with_header(panel_name);
+
+				new_entries = {
+					stats.decomp_norisk(ithresh).term2;
+					stats.decomp_norisk(ithresh).term3;
+					stats.decomp_norisk(ithresh).term4;
 				};
 
-			output_table = HACTLib.tables.TableGen.append_to_table(output_table, new_entries);
+				obj.update_current_column(out, new_entries);
+			end
 		end
 
 		function mpc_comparison(obj, stats, shock)
@@ -416,7 +425,11 @@ classdef TableFancy < handle
 		end
 
 		function update_current_column(obj, table_in, stats_in)
-			tmp = obj.construct_from_stats(table_in, stats_in);
+			if nargin < 3
+				tmp = table_in;
+			else
+				tmp = obj.construct_from_stats(table_in, stats_in);
+			end
 			obj.current_column = [obj.current_column; tmp];
 		end
 
