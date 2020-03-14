@@ -25,8 +25,8 @@ function [outparams, n] = params_adj_cost_tests(param_opts, param_index)
     shared_params.amax = 75;
     shared_params.rho = 0.014;
     shared_params.r_a = 0.02;
-    shared_params.illiquid_tax_midpt = 35;
-    shared_params.illiquid_tax_threshold = 30;
+    % shared_params.illiquid_tax_midpt = 35;
+    % shared_params.illiquid_tax_threshold = 30;
     shared_params.OneAsset = 0;
     shared_params.income_dir = 'continuous_b';
 
@@ -56,6 +56,8 @@ function [outparams, n] = params_adj_cost_tests(param_opts, param_index)
     params{ii}.kappa0 = 0;
     params{ii}.kappa1 = 1.6069;
     params{ii}.kappa2 = 0.25;
+    params{ii}.rho = 0.008;
+    params{ii}.r_a = 0.014;
     ii = ii + 1;
 
     params{ii} = median_calibration;
@@ -74,7 +76,7 @@ function [outparams, n] = params_adj_cost_tests(param_opts, param_index)
     % Need P(b <= 1/6 quarterly inc) ~= 1/3
     % Need Wealthy HtM / Total HtM ~= 2/3
 
-    kappa_0s = [0, 0.1, 0.2];
+    kappa_0s = [0, 0.01, 0.03];
 
     % Since ra << kappa1 ^(-1 / kappa2) to prevent illiquid
     % asset overaccumulation at the top, want to avoid

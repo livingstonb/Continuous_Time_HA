@@ -381,6 +381,8 @@ classdef TableFancy < handle
 				stats.hhs_paying_wealth_tax
 				stats.w_lt_ysixth
 				stats.w_lt_ytwelfth
+				stats.iwshare_b10
+				stats.iwshare_b25
 			};
 
 			obj.update_current_column(out, new_entries);

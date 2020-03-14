@@ -471,6 +471,8 @@ classdef Statistics < handle
 		end
 
 		function compute_constrained(obj)
+            import HACTLib.computation.interpolate_cdf
+
 			% Constrained by fraction of mean ann inc
 			iw_constrained_interp = constrained_interp(...
 	        	obj.grdKFE.a.vec, obj.cdf_a);
@@ -542,43 +544,56 @@ classdef Statistics < handle
 
 			% Fraction paying illiquid asset tax
 			z = obj.p.illiquid_tax_threshold;
-			tmp = 1 - iw_constrained_interp(z);
+			if isfinite(z)
+				tmp = 1 - iw_constrained_interp(z);
+			else
+				tmp = 0;
+			end
 			obj.hhs_paying_wealth_tax = sfill(tmp,...
 				'HHs paying tax on illiquid returns', 2);
 
 			% Wealth / (quarterly earnings) < epsilon
 			wy_ratio = obj.wealthmat ./ obj.income.y.matrixKFE;
-			tmp = sortrows([wy_ratio(:), obj.pmf(:)]);
-			[wy_ratio_u, iu] = unique(tmp(:,1), 'last');
+			% tmp = sortrows([wy_ratio(:), obj.pmf(:)]);
+			% [wy_ratio_u, iu] = unique(tmp(:,1), 'last');
 
-			cdf_w_u = cumsum(tmp(:,2));
-			cdf_w_u = cdf_w_u(iu);
+			% cdf_w_u = cumsum(tmp(:,2));
+			% cdf_w_u = cdf_w_u(iu);
 
-			wy_interp = griddedInterpolant(wy_ratio_u, cdf_w_u,...
-				'pchip', 'nearest');
+			% wy_interp = griddedInterpolant(wy_ratio_u, cdf_w_u,...
+			% 	'pchip', 'nearest');
 
+			tmp = interpolate_cdf(obj.pmf(:), wy_ratio(:),...
+                [0.05, 0.4], 1/6, 3);
 			obj.w_lt_ysixth = sfill(...
-				wy_interp(1/6), 'w_i <= y_i / 6, biweekly earnings', 2);
+				tmp, 'w_i <= y_i / 6, biweekly earnings', 2);
+			tmp = interpolate_cdf(obj.pmf(:), wy_ratio(:),...
+                [0.05, 0.2], 1/12, 3);
 			obj.w_lt_ytwelfth = sfill(...
-				wy_interp(1/12), 'w_i <= y_i / 12, weekly earnings', 2);
+				tmp, 'w_i <= y_i / 12, weekly earnings', 2);
 
 			% Liquid wealth / (quarterly earnings) < epsilon
 			by_ratio = obj.grdKFE.b.vec ./ obj.income.y.wide;
 			pmf_by = squeeze(sum(sum(obj.pmf, 3), 2));
-			tmp = sortrows([by_ratio(:), pmf_by(:)]);
-			[by_ratio_u, iu] = unique(tmp(:,1), 'last');
+% 			tmp = sortrows([by_ratio(:), pmf_by(:)]);
+% 			[by_ratio_u, iu] = unique(tmp(:,1), 'last');
+% 
+% 			cdf_b_u = cumsum(tmp(:,2));
+% 			cdf_b_u = cdf_b_u(iu);
 
-			cdf_b_u = cumsum(tmp(:,2));
-			cdf_b_u = cdf_b_u(iu);
-
-			by_interp = griddedInterpolant(by_ratio_u, cdf_b_u,...
-				'pchip', 'nearest');
-
+% 			by_interp = griddedInterpolant(by_ratio_u, cdf_b_u,...
+% 				'pchip', 'nearest');
+           
+            tmp = interpolate_cdf(pmf_by(:), by_ratio(:),...
+                [0.05, 0.4], 1/6, 3);
 			obj.liqw_lt_ysixth = sfill(...
-				by_interp(1/6), 'b_i <= y_i / 6, biweekly earnings');
+				tmp, 'b_i <= y_i / 6, biweekly earnings');
+            
+            tmp = interpolate_cdf(pmf_by(:), by_ratio(:),...
+                [0.05, 0.2], 1/12, 3);
 			obj.liqw_lt_ytwelfth = sfill(...
-				by_interp(1/12), 'b_i <= y_i / 12, weekly earnings');
-
+				tmp, 'b_i <= y_i / 12, weekly earnings');
+            
 			% HtM Ratios
 			tmp = 1 - obj.w_lt_ysixth.value / obj.liqw_lt_ysixth.value;
 			obj.WHtM_over_HtM_biweekly = sfill(tmp,...

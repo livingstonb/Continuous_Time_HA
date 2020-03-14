@@ -16,6 +16,7 @@ classdef AltCalibrator < handle
 		x0;
 
 		solver_handle;
+		stats;
 	end
 
 	methods
@@ -80,11 +81,11 @@ classdef AltCalibrator < handle
 			end
 
 			save_results = false;
-			stats = main(current_params, save_results);
+			obj.stats = main(current_params, save_results);
 			
 			fprintf('\n\n---- For ')
 			for i_var = 1:obj.nvars
-				v(i_var) = stats.(obj.target_names{i_var}).value;
+				v(i_var) = obj.stats.(obj.target_names{i_var}).value;
 				fprintf('%s = %g', obj.variables{i_var}, x(i_var))
 				if i_var < obj.nvars
 					fprintf(", ")
@@ -105,7 +106,7 @@ classdef AltCalibrator < handle
 			end
 
 			if ismember('r_a', obj.target_names)
-				z = abs(stats.totw.value - stats.liqw.value);
+				z = abs(obj.stats.totw.value - obj.stats.liqw.value);
 
 				c = min(max(z - 0.01, 0), 0.5);
 				m = (1 + cos(c * pi * 2)) / 10;

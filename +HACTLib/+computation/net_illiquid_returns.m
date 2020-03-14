@@ -6,6 +6,7 @@ function R_a_net = net_illiquid_returns(avalues, r_a,...
     
     if (tax_midpt <= tax_threshold)
         R_a_net = r_a .* avalues;
+        return;
     end
 
 %     decay_constant = find_constant(tax_midpt - tax_threshold);

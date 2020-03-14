@@ -1,4 +1,16 @@
-function [bins, vals] = smoothed_histogram(agrid, pmf, nbins, amax)
+function [edges, counts, hist_out] = smoothed_histogram(...
+	agrid, pmf, nbins, amax, rescale_dist)
+	if nargin < 5
+		rescale_dist = false;
+	end
+
+	if rescale_dist
+		too_large = agrid > amax;
+		agrid = agrid(~too_large);
+		pmf = pmf(~too_large);
+		pmf = pmf / sum(pmf(:));
+	end
+
 	a_cdf = cumsum(pmf);
 	[agrid_u, iu] = unique(agrid, 'last');
 	a_cdf = a_cdf(iu);
@@ -7,13 +19,13 @@ function [bins, vals] = smoothed_histogram(agrid, pmf, nbins, amax)
 
 	amin = agrid(1);
 	spacing = (amax - amin) / nbins;
-	bins = 1:nbins;
-	bins = amin + bins * spacing;
+	edges = 1:nbins;
+	edges = amin + edges * spacing;
 
-	vals = zeros(nbins, 1);
+	counts = zeros(nbins, 1);
 	for ibin = 1:nbins
-		bin_start = bins(ibin) - spacing;
-		bin_end = bins(ibin);
+		bin_start = edges(ibin) - spacing;
+		bin_end = edges(ibin);
 
 		P_lt_start = cdf_interp(bin_start);
 
@@ -23,8 +35,16 @@ function [bins, vals] = smoothed_histogram(agrid, pmf, nbins, amax)
 			P_lt_end = 1;
 		end
 
-		vals(ibin) = P_lt_end - P_lt_start;
+		counts(ibin) = P_lt_end - P_lt_start;
 	end
 
-	bins = [amin, bins];
+	edges = [amin, edges];
+
+	if nargout > 2
+		fig = figure();
+		hist_out = histogram(...
+			'Parent', fig, 'BinEdges', edges,...
+			'BinCounts', counts);
+		ylabel("Probability density")
+	end
 end
