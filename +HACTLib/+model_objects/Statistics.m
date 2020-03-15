@@ -332,8 +332,11 @@ classdef Statistics < handle
 			obj.model = [];
 			obj.wealthmat = [];
 			obj.wealth_sorted = [];
+			obj.wealth_sorted_u = [];
+			obj.wealth_sorted_iu = [];
 			obj.pmf_w = [];
 			obj.cdf_w = [];
+			obj.cdf_w_uwealth = [];
 		end
 	end
 

@@ -275,6 +275,13 @@ classdef Grid < handle
 	    function obj = set(obj, varname, value)
 	    	obj.(varname) = value;
 	    end
+
+	    function clean(obj)
+        	obj.trapezoidal = [];
+        	obj.z = [];
+        	obj.da_tilde = [];
+        	obj.db_tilde = [];
+        end
 	end
 
 	methods (Access=private)

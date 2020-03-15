@@ -179,6 +179,11 @@ function [stats, p] = main(p, save_results)
     % HOUSEKEEPING
     % -----------------------------------------------------------------
     import HACTLib.aux.to_structure
+
+    grd.clean();
+    grdKFE.clean();
+    income.clean();
+
     grd = to_structure(grd);
     grdKFE = to_structure(grdKFE);
     p = to_structure(p);

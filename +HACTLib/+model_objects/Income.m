@@ -254,5 +254,13 @@ classdef Income < handle
 		        sdu_adj(:,kk,kk) = -sum(sdu_adj(:, kk, idx_k), 3);
 		    end
 		end
+
+		function clean(obj)
+			obj.nety_HJB_liq_hourly = [];
+			obj.nety_KFE_liq_hourly = [];
+			obj.nety_HJB_illiq_hourly = [];
+			obj.nety_KFE_illiq_hourly = [];
+			obj.ytrans = [];
+		end
 	end
 end
