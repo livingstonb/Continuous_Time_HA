@@ -75,17 +75,16 @@ function [outparams, n] = params_adj_cost_tests(param_opts)
     %
     % Need P(b <= 1/6 quarterly inc) ~= 1/3
     % Need Wealthy HtM / Total HtM ~= 2/3
-
     kappa_0s = [0, 0.01, 0.03];
 
-    % Since ra << kappa1 ^(-1 / kappa2) to prevent illiquid
+    % Since ra << kappa1 ^ (-1 / kappa2) to prevent illiquid
     % asset overaccumulation at the top, want to avoid
     % case of high kappa1, low kappa 2. Split each param
     % into two groups: low and high
     kappa1s = {[0.5, 1], [2, 5, 10]};
     kappa2s = {[0.1, 0.25, 0.5], [1, 1.25]};
     icombinations = {[1, 1], [1, 2], [2, 2]};
-    
+
     for icalibration = [1, 2]
     for kappa0 = kappa_0s
         for ic = 1:numel(icombinations)
@@ -102,11 +101,6 @@ function [outparams, n] = params_adj_cost_tests(param_opts)
                 params{ii}.kappa0 = kappa0;
                 params{ii}.kappa1 = kappa1;
                 params{ii}.kappa2 = kappa2;
-
-                params{ii}.calibration_vars = {'rho', 'r_a'};
-                params{ii}.calibration_bounds = {[0.001, 0.05], [0.006, 0.05]};
-                params{ii}.calibration_stats = {'totw', 'liqw'};
-                params{ii}.calibration_targets = [3.5, 0.5];
                 ii = ii + 1;
             end
             end
