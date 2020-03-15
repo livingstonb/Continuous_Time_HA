@@ -23,8 +23,8 @@ function [outparams, n] = params_adj_cost_tests(param_opts)
     shared_params.a_lb = 0.25;
     shared_params.bmax = 25;
     shared_params.amax = 100;
-    shared_params.rho = 0.014;
-    shared_params.r_a = 0.02;
+    shared_params.rho = 0.012;
+    shared_params.r_a = 0.015;
     % shared_params.illiquid_tax_midpt = 35;
     % shared_params.illiquid_tax_threshold = 30;
     shared_params.OneAsset = 0;
@@ -116,5 +116,5 @@ function [outparams, n] = params_adj_cost_tests(param_opts)
 
     %% DO NOT CHANGE THIS SECTION
     n = numel(params);
-    outparams = params{param_opts.param_index}
+    outparams = params{param_opts.param_index};
 end
