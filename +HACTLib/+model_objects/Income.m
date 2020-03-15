@@ -126,9 +126,7 @@ classdef Income < handle
 	        end
 
         	obj.ny = numel(obj.y.vec);
-            obj.y.wide = reshape(obj.y.vec,[1 1 1 obj.ny]);
-		    obj.y.matrix = repmat(obj.y.wide,[p.nb p.na p.nz 1]);
-            obj.y.matrixKFE = repmat(obj.y.wide,[p.nb_KFE p.na_KFE p.nz 1]);
+        	obj.y.wide = shiftdim(obj.y.vec, -3);
             obj.fully_initialized = true;
         end
 
@@ -137,14 +135,16 @@ classdef Income < handle
         	% If labor is endogenous, a function handle is returned, otherwise an
         	% array is returned.
 
-        	r_b_HJB = p.r_b .* (gridsHJB.b.matrix>=0) +  p.r_b_borr .* (gridsHJB.b.matrix<0);
-        	r_b_KFE = p.r_b .* (gridsKFE.b.matrix>=0) +  p.r_b_borr .* (gridsKFE.b.matrix<0);
+        	import HACTLib.computation.net_liquid_returns
+
+        	r_b_HJB = net_liquid_returns(gridsHJB.b.vec, p.r_b, p.r_b_borr);
+        	r_b_KFE = net_liquid_returns(gridsKFE.b.vec, p.r_b, p.r_b_borr);
 
 			% Income to liquid asset
-			obj.nety_HJB_liq_hourly = @(h) (1-p.directdeposit) * (1-p.wagetax) * obj.y.matrix .* h ...
-		        + (r_b_HJB + p.deathrate*p.perfectannuities) .* gridsHJB.b.matrix + p.transfer;
-            obj.nety_KFE_liq_hourly = @(h) (1-p.directdeposit) * (1-p.wagetax) * obj.y.matrixKFE .* h ...
-		        + (r_b_KFE + p.deathrate*p.perfectannuities) .* gridsKFE.b.matrix + p.transfer;
+			obj.nety_HJB_liq_hourly = @(h) (1-p.directdeposit) * (1-p.wagetax) * obj.y.wide .* h ...
+		        + (r_b_HJB + p.deathrate*p.perfectannuities) .* gridsHJB.b.vec + p.transfer;
+            obj.nety_KFE_liq_hourly = @(h) (1-p.directdeposit) * (1-p.wagetax) * obj.y.wide .* h ...
+		        + (r_b_KFE + p.deathrate*p.perfectannuities) .* gridsKFE.b.vec + p.transfer;
 
 		    % Income to illiquid asset
 		    import HACTLib.computation.net_illiquid_returns
@@ -152,13 +152,13 @@ classdef Income < handle
 		    R_a_net = net_illiquid_returns(gridsHJB.a.wide,...
 		    	p.r_a + p.deathrate * p.perfectannuities, p.illiquid_tax_threshold,...
 		    	p.illiquid_tax_midpt);
-		    obj.nety_HJB_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.matrix .* h ...
+		    obj.nety_HJB_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.wide .* h ...
 		    	+ R_a_net;
 
 		    R_a_net = net_illiquid_returns(gridsKFE.a.wide,...
 		    	p.r_a + p.deathrate * p.perfectannuities, p.illiquid_tax_threshold,...
 		    	p.illiquid_tax_midpt);
-		    obj.nety_KFE_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.matrixKFE .* h ...
+		    obj.nety_KFE_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.wide .* h ...
 		    	+ R_a_net;
         end
 

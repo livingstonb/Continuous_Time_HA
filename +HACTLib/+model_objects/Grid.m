@@ -205,7 +205,6 @@ classdef Grid < handle
 	        end
             obj.a.vec = grid_vec(:);
             obj.a.wide = shiftdim(grid_vec, -1);
-			obj.a.matrix = repmat(obj.a.wide, [obj.nb, 1, obj.nz, obj.ny]);
 			assert(all(diff(obj.a.vec)>0), 'agrid not strictly increasing')
 	    end
 
@@ -270,14 +269,8 @@ classdef Grid < handle
 				assert(isvector(bgrid_vec), "Input bgrid must be a vector")
 				obj.b.vec = bgrid_vec(:);
 			end
-			obj.b.matrix = repmat(obj.b.vec, [1 obj.na obj.nz obj.ny]);
 		    assert(all(diff(obj.b.vec)>0), 'bgrid not strictly increasing')
 	    end
-
-	    % function create_wgrids(obj)
-	    % 	obj.w.matrix = obj.b.matrix = obj.a.matrix;
-
-	    % end
 
 	    function obj = set(obj, varname, value)
 	    	obj.(varname) = value;
@@ -352,10 +345,8 @@ classdef Grid < handle
 
 		function create_zgrids(obj)
 			% Creates an integer index grid for the z-dimension.
-
 			obj.z.vec = (1:obj.nz)';
-			obj.z.wide = reshape(obj.z.vec,[1 1 obj.nz 1]);
-			obj.z.matrix = repmat(obj.z.wide,[obj.nb obj.na 1 obj.ny]);
+			obj.z.wide = shiftdim(obj.z.vec, -2);
         end
 	end
 

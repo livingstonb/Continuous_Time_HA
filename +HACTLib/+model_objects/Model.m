@@ -217,7 +217,7 @@ function risk_adj = compute_risk_adjustment_for_nodrift_case(...
 			risk_adj = V_deriv_risky_asset_nodrift .^ 2 ./ Vn * (p.invies - p.riskaver) / (1-p.invies);
 		end
 
-		risk_adj = risk_adj .* (grd.a.matrix * p.sigma_r) .^ 2 / 2;
+		risk_adj = risk_adj .* (grd.a.wide * p.sigma_r) .^ 2 / 2;
 		risk_adj(~stationary) = 0;
 	else
 		risk_adj = [];
@@ -235,7 +235,9 @@ function check_if_not_converging(dst, nn)
 end
 
 function wealth = compute_wealth(g, grdKFE)
-	iwealth= (g(:) .* grdKFE.trapezoidal.matrix(:))' * grdKFE.a.matrix(:);
-	lwealth = (g(:) .* grdKFE.trapezoidal.matrix(:))' * grdKFE.b.matrix(:);
-	wealth = iwealth + lwealth;
+	pmf = g .* grdKFE.trapezoidal.matrix;
+	wealth_grid = grdKFE.b.vec + grdKFE.a.wide;
+
+	tmp = pmf .* wealth_grid;
+	wealth = sum(tmp(:));
 end

@@ -1,6 +1,6 @@
 function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
     % Makes initial guesses for the value function and distribution
-
+    %
     % Parameters
     % ----------
     % p : a Params object
@@ -17,35 +17,42 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
     %
     % gg : distribution guess, of shape (nb_KFE, na_KFE, nz, ny)
 
+    import HACTLib.aux.repmat_auto
+    import HACTLib.aux.sparse_diags
+    import HACTLib.computation.net_liquid_returns
+
 	nb = p.nb; na = p.na; 
 	nz = p.nz; ny = income.ny;
 	dim = nb * na * nz * ny;
 
-	import HACTLib.aux.sparse_diags
+	ss_dims = [nb, na, nz, ny];
+	repmat_to_ss = @(arr) repmat_auto(arr, ss_dims);
+	reshape_to_ss = @(arr) reshape(arr, ss_dims);
 
     if numel(p.rhos) > 1
-        rho_mat = shiftdim(p.rhos, -2);
-        rho_mat = repmat(rho_mat, [nb na 1 ny]);
+        rho_mat = p.deathrate + shiftdim(p.rhos, -2);
+        rho_mat = repmat_to_ss(rho_mat);
         rho_mat = sparse_diags(rho_mat(:), 0);
     else
-        rho_mat = p.rho * speye(nb*na*nz*ny);
+        rho_mat = (p.deathrate + p.rho) * speye(dim);
     end
-    rho_mat = rho_mat + p.deathrate * speye(nb*na*nz*ny);
-
 
     %% --------------------------------------------------------------------
     % GUESS FOR VALUE FUNCTION
     % ---------------------------------------------------------------------
-	% liquid returns grid
-	r_b_mat = p.r_b .* (grids.b.matrix>=0) +  p.r_b_borr .* (grids.b.matrix<0);
+	% Liquid returns grid
+	r_b_mat = net_liquid_returns(grids.b.vec, p.r_b, p.r_b_borr);
 
-	% consumption guess
-	r_b_mat_adj = r_b_mat;
-	r_b_mat_adj(r_b_mat<=0.001) = 0.001; % mostly for r_b <= 0, enforce a reasonable guess
-    r_a_adj = (p.r_a <= 0.001) * 0.001 + (p.r_a > 0.001) * p.r_a;
-	c_0 = (1-p.directdeposit - p.wagetax) * income.y.matrix ...
-            + (r_a_adj + p.deathrate*p.perfectannuities) * grids.a.matrix...
-            + (r_b_mat_adj + p.deathrate*p.perfectannuities) .* grids.b.matrix + p.transfer;
+	% Ensure a numerically feasible guess
+	r_b_mat = max(r_b_mat, 0.001);
+	r_a_adj = max(p.r_a, 0.001);
+
+	% Consumption guess
+	c_0 = (1 - p.directdeposit) * (1 - p.wagetax) * income.y.wide + p.transfer ...
+        + (r_a_adj + p.deathrate * p.perfectannuities) * grids.a.wide...
+        + (r_b_mat + p.deathrate * p.perfectannuities) .* grids.b.vec;
+
+    c_0 = repmat_to_ss(c_0);
 
     prefs = HACTLib.model_objects.Preferences();
     if p.SDU
@@ -74,7 +81,7 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
         lowdiag = repmat(1 ./ grids.a.dB, [1 1 nz ny]);
         lowdiag(:,1,:,:) = -repmat(1 ./ grids.a.dF(:,1), [1 1 nz ny]);
         
-        risk_adj = (grids.a.matrix .* p.sigma_r) .^ 2;
+        risk_adj = (grids.a.wide .* p.sigma_r) .^ 2;
 
         updiag = risk_adj .* updiag ./ deltas;
         centdiag = risk_adj .* centdiag ./ deltas;
@@ -88,18 +95,19 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
     end
 
     V = (rho_mat - inctrans - Arisk) \ u(:);
-    V = reshape(V, nb, na, nz, ny);
+    V = reshape_to_ss(V);
 
     %% --------------------------------------------------------------------
     % GUESS FOR EQUILIBRIUM DISTRIBUTION
     % ---------------------------------------------------------------------
     gg0 = ones(p.nb_KFE,p.na_KFE,p.nz,income.ny);
-    gg0 = gg0 .* permute(repmat(income.ydist,[1 p.nb_KFE p.na_KFE p.nz]),[2 3 4 1]);
+    gg0 = gg0 .* permute( repmat(...
+    	income.ydist, [1 p.nb_KFE p.na_KFE p.nz]), [2 3 4 1]);
+
     if p.OneAsset
         gg0(:,gridsKFE.a.vec>0,:,:) = 0;
     end
     gg0 = gg0 / sum(gg0(:));
     gg0 = gg0 ./ gridsKFE.trapezoidal.matrix;
     gg = gg0;
-
 end

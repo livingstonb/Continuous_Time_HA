@@ -1,5 +1,6 @@
 function out = upwind_consumption(net_income_liq_hourly, Vb_fd, direction,...
 	prefs, hours_fn)
+	import HACTLib.aux.repmat_auto
 
 	endogenous_labor = (nargin > 5);
 
@@ -9,12 +10,15 @@ function out = upwind_consumption(net_income_liq_hourly, Vb_fd, direction,...
 	end
 
 	nb = size(Vb_fd, 1);
+	na = size(Vb_fd, 2);
+	ss_dims = size(Vb_fd);
 
     % Hours worked
     out.hours = hours_fn(Vb_fd);
     out.hours = min(out.hours, 1);
 
-    net_income_liq = net_income_liq_hourly(out.hours);
+    net_income_liq = repmat_auto(...
+    	net_income_liq_hourly(out.hours), ss_dims);
 
 	out.c = prefs.u1inv(Vb_fd);
 

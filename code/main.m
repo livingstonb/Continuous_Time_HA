@@ -195,12 +195,6 @@ function [stats, p] = main(p, save_results)
     end
 
     
-    % empty some variables to reduce file size
-    if ~strcmp(p.name,'baseline')
-        grd.a.matrix = [];
-        grd.b.matrix = [];
-    end
-    
 %     for ii = 1:6
 %         if ii ~= 5
 % 	       stats.mpcs(ii).mpcs = [];
@@ -208,6 +202,8 @@ function [stats, p] = main(p, save_results)
 %         stats.mpcs_illiquid(ii).mpcs = [];
 %     end
 %    
+	
+	stats.clean();
     stats = HACTLib.aux.to_structure(stats);
 
     if save_results

@@ -343,14 +343,14 @@ classdef Statistics < handle
 		    obj.beta_Q = sfill(exp(-obj.p.rho), 'beta (quarterly)');
 		    obj.beta_A = sfill(exp(-4 * obj.p.rho), 'beta (annualized)');
 
-		    tmp = obj.expectation(obj.grdKFE.a.matrix);
+		    tmp = obj.expectation(obj.grdKFE.a.wide);
 		    obj.illiqw = sfill(tmp, 'Mean illiquid wealth', 2);
 
-		    tmp = obj.expectation(obj.grdKFE.b.matrix);
+		    tmp = obj.expectation(obj.grdKFE.b.vec);
 		    obj.liqw = sfill(tmp, 'Mean liquid wealth');
 
 		    tmp = obj.expectation(...
-		    	obj.grdKFE.b.matrix + obj.grdKFE.a.matrix);
+		    	obj.grdKFE.b.vec + obj.grdKFE.a.wide);
 		    obj.totw = sfill(tmp, 'Mean total wealth', 2);
 
 		    tmp = obj.expectation(obj.model.s==0);
@@ -359,19 +359,14 @@ classdef Statistics < handle
 
 		function construct_distributions(obj)
 			import HACTLib.aux.interp_integral_alt
+			import HACTLib.aux.multi_sum
+
 		    [obj.pmf_b, obj.cdf_b] = obj.marginal_dists(1);
 		    [obj.pmf_a, obj.cdf_a] = obj.marginal_dists(2);
 		    [obj.pmf_w, obj.cdf_w] = obj.marginal_dists([1, 2]);
-		    obj.pmf_b_a = sum(sum(obj.pmf, 4), 3);
+		    obj.pmf_b_a = multi_sum(obj.pmf, [3, 4]);
 
 		    obj.cdf_w_uwealth = obj.cdf_w(obj.wealth_sorted_iu);
-
-		    % % Joint distribution interpolant
-		    % joint_pmf = sum(sum(obj.pmf, 4), 3);
-		    % grids = {obj.grdKFE.b.vec, obj.grdKFE.a.vec};
-		    % obj.joint_cdf_interp = interp_integral_alt(grids,...
-		    % 	ones(obj.p.nb_KFE, obj.p.na_KFE), joint_pmf);
-
 		end
 
 		function compute_percentiles(obj)
@@ -488,6 +483,7 @@ classdef Statistics < handle
 
 		function compute_constrained(obj)
             import HACTLib.computation.interpolate_cdf
+            import HACTLib.aux.multi_sum
 
 			% Constrained by fraction of mean ann inc
 			iw_constrained_interp = constrained_interp(...
@@ -569,7 +565,8 @@ classdef Statistics < handle
 				'HHs paying tax on illiquid returns', 2);
 
 			% Wealth / (quarterly earnings) < epsilon
-			wy_ratio = obj.wealthmat ./ obj.income.y.matrixKFE;
+			wy_ratio = obj.wealthmat ./ obj.income.y.wide;
+			pmf_wy = sum(obj.pmf, 3);
 			% tmp = sortrows([wy_ratio(:), obj.pmf(:)]);
 			% [wy_ratio_u, iu] = unique(tmp(:,1), 'last');
 
@@ -579,18 +576,18 @@ classdef Statistics < handle
 			% wy_interp = griddedInterpolant(wy_ratio_u, cdf_w_u,...
 			% 	'pchip', 'nearest');
 
-			tmp = interpolate_cdf(obj.pmf(:), wy_ratio(:),...
+			tmp = interpolate_cdf(pmf_wy(:), wy_ratio(:),...
                 [0.05, 0.4], 1/6, 3);
 			obj.w_lt_ysixth = sfill(...
 				tmp, 'w_i <= y_i / 6, biweekly earnings', 2);
-			tmp = interpolate_cdf(obj.pmf(:), wy_ratio(:),...
+			tmp = interpolate_cdf(pmf_wy(:), wy_ratio(:),...
                 [0.05, 0.2], 1/12, 3);
 			obj.w_lt_ytwelfth = sfill(...
 				tmp, 'w_i <= y_i / 12, weekly earnings', 2);
 
 			% Liquid wealth / (quarterly earnings) < epsilon
 			by_ratio = obj.grdKFE.b.vec ./ obj.income.y.wide;
-			pmf_by = squeeze(sum(sum(obj.pmf, 3), 2));
+			pmf_by = multi_sum(obj.pmf, [2, 3]);
 % 			tmp = sortrows([by_ratio(:), pmf_by(:)]);
 % 			[by_ratio_u, iu] = unique(tmp(:,1), 'last');
 % 
@@ -660,37 +657,40 @@ classdef Statistics < handle
 				% Adj cost statistics
 				adj_cost_obj = HACTLib.aux.AdjustmentCost();
 				adj_cost_obj.set_from_params(obj.p);
-				chii = adj_cost_obj.compute_cost(obj.model.d(:),...
-		        	obj.grdKFE.a.matrix(:));
+				chii = adj_cost_obj.compute_cost(obj.model.d,...
+		        	obj.grdKFE.a.wide);
 				obj.adjcosts.mean_cost.value = obj.expectation(chii);
 
 				% Mean abs(d)/a
-		        d_div_a = abs(obj.model.d(:) ./ max(obj.grdKFE.a.matrix(:),...
+		        d_div_a = abs(obj.model.d ./ max(obj.grdKFE.a.wide,...
 		        	obj.p.a_lb));
 		        obj.adjcosts.mean_d_div_a.value = obj.expectation(d_div_a);
 			end
 		end
 
 		function out = expectation(obj, vals)
-			out = dot(obj.pmf(:), vals(:));
+			import HACTLib.aux.repmat_auto
+			if numel(vals(:)) == numel(obj.pmf(:))
+				out = dot(obj.pmf(:), vals(:));
+			else
+				tmp = repmat_auto(vals, size(obj.pmf));
+				out = dot(obj.pmf(:), tmp(:));
+			end
 		end
 
 		function [pmf_x, cdf_x] = marginal_dists(obj, dims)
-			if isequal(dims, [1, 2])
-				pmf_tmp = reshape(obj.pmf, obj.nb*obj.na, []);
-				pmf_x = sum(pmf_tmp, 2);
+			import HACTLib.aux.multi_sum
 
+			sum_dims = 1:4;
+			sum_dims = sum_dims(~ismember(sum_dims, dims));
+
+			flatten = true;
+			pmf_x = multi_sum(obj.pmf, sum_dims, flatten);
+
+			if isequal(dims, [1, 2])
 				dist_sorted = sortrows([obj.wealthmat(:), pmf_x]);
 				pmf_x = dist_sorted(:,2);
-				
-			elseif dims == 1
-				pmf_tmp = reshape(obj.pmf, obj.nb, []);
-				pmf_x = sum(pmf_tmp, 2);
-			elseif dims == 2
-				pmf_tmp = reshape(obj.pmf, obj.nb, obj.na, []);
-				pmf_x = reshape(sum(sum(pmf_tmp, 3), 1), [], 1);
 			end
-
 			cdf_x = cumsum(pmf_x);
 		end
 	end

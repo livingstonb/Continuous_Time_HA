@@ -135,7 +135,7 @@ classdef MPCSimulator < handle
 			obj.p = p;
 			obj.income = income;
 			obj.grids = grids;
-			obj.deathrateSubperiod = 1 - (1-obj.p.deathrate) ^ (1/obj.options.T);
+			obj.deathrateSubperiod = 1 - (1-obj.p.deathrate) ^ (1 / obj.options.T);
 
 			obj.adj_cost = AdjustmentCost();
 			obj.adj_cost.set_from_params(p);
@@ -243,14 +243,21 @@ classdef MPCSimulator < handle
 		        end
 			end
 
+			import HACTLib.aux.repmat_auto
+			ss_dims = size(pmf);
+			repmat_to_ss = @(arr) repmat_auto(arr, ss_dims);
+			repmat_to_long = @(arr) reshape(repmat_to_ss(arr), [], 1);
+
 			% initial income
-			ygrid_flat = obj.income.y.matrixKFE(:);
+			ygrid_flat = repmat_to_long(obj.income.y.wide);
 			obj.ysim = ygrid_flat(index);
-			yind_trans = kron((1:obj.income.ny)', ones(obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz, 1));
+
+			yind_tmp = shiftdim(1:obj.income.ny, -2);
+			yind_trans = repmat_to_long(yind_tmp);
 			obj.yinds = yind_trans(index);
 
 			% initial assets
-			bgrid_flat = obj.grids.b.matrix(:);
+			bgrid_flat = repmat_to_long(obj.grids.b.vec);
 			obj.bsim = repmat(bgrid_flat(index), 1, obj.nshocks+1);
 			obj.b0 = obj.bsim;
             
@@ -262,11 +269,12 @@ classdef MPCSimulator < handle
             end
 
             % initial z-heterogeneity
-        	zgrid_flat = obj.grids.z.matrix(:);
+            z_tmp = shiftdim(1:obj.p.nz, -1);
+        	zgrid_flat = repmat_to_long(z_tmp);
         	obj.zinds = zgrid_flat(index);
 
             % initial illiquid assets
-			agrid_flat = obj.grids.a.matrix(:);
+			agrid_flat = repmat_to_long(obj.grids.a.wide);
 			obj.asim = repmat(agrid_flat(index), 1, obj.nshocks+1);
 
 		    % record households pushed below grid, and bring them

@@ -7,12 +7,8 @@ function decomp = decomp_nobc_norisk(baseline, no_bc)
     p = baseline.p;
     income = baseline.income;
 
-    assets = grdKFE.a.matrix + grdKFE.b.matrix;
-
-    n_assets = p.nb_KFE * p.na_KFE;
-    n_other = income.ny * p.nz;
-    assets = reshape(assets, n_assets, n_other);
-    assets = assets(:,1);
+    assets = grdKFE.b.vec + grdKFE.a.wide;
+    assets = assets(:);
 
     % Initialize to NaN
     for ia = 1:numel(p.decomp_thresholds)

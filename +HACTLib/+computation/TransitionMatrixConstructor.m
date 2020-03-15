@@ -50,6 +50,9 @@ classdef TransitionMatrixConstructor < handle
         % Shape of the full state space, a row vector.
         shape;
 
+        % Function handle to auto-repmat to full state space dims.
+        repmat_to_ss;
+
         % returns risk is on or off
         returns_risk;
 
@@ -88,12 +91,15 @@ classdef TransitionMatrixConstructor < handle
             % returns_risk : A boolean indicator for whether or not returns
             %	  risk is to be included in the transition matrix.
 
+            import HACTLib.aux.repmat_auto
+
             obj.nb = numel(grids.b.vec);
             obj.na = numel(grids.a.vec);
             obj.nz = grids.nz;
             obj.ny = numel(income.y.vec);
             obj.n_states = obj.nb * obj.na * obj.nz * obj.ny;
             obj.shape = [obj.nb obj.na obj.nz obj.ny];
+            obj.repmat_to_ss = @(arr) repmat_auto(arr, obj.shape);
 
             obj.gridtype = grids.gtype;
             obj.grids = grids;
@@ -238,18 +244,18 @@ classdef TransitionMatrixConstructor < handle
 
             obj.top = false(obj.nb, obj.na, obj.nz, obj.ny);
             if obj.p.OneAsset == 1
-                obj.asset_dB = repmat(obj.grids.b.dB, [1 1 obj.nz obj.ny]);
-                obj.asset_dF = repmat(obj.grids.b.dF, [1 1 obj.nz obj.ny]);
+                obj.asset_dB = obj.repmat_to_ss(obj.grids.b.dB);
+                obj.asset_dF = obj.repmat_to_ss(obj.grids.b.dF);
 
                 obj.top(obj.nb, :, :, :) = true;
-                obj.risk_term = (obj.grids.b.matrix * obj.p.sigma_r) .^ 2;
+                obj.risk_term = (obj.grids.b.vec * obj.p.sigma_r) .^ 2;
                 obj.offsets_for_rr = [-1, 0, 1];
             else
-                obj.asset_dB = repmat(obj.grids.a.dB, [1 1 obj.nz obj.ny]);
-                obj.asset_dF = repmat(obj.grids.a.dF, [1 1 obj.nz obj.ny]);
+                obj.asset_dB = obj.repmat_to_ss(obj.grids.a.dB);
+                obj.asset_dF = obj.repmat_to_ss(obj.grids.a.dF);
 
                 obj.top(:, obj.na, :, :) = true;
-                obj.risk_term = (obj.grids.a.matrix * obj.p.sigma_r) .^ 2;
+                obj.risk_term = (obj.grids.a.wide * obj.p.sigma_r) .^ 2;
                 obj.offsets_for_rr = [-obj.nb, 0, obj.nb];
             end
 

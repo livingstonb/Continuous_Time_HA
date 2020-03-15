@@ -45,11 +45,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
 
     if p.endogenous_labor
     	prefs.set_frisch(p.labor_disutility, p.frisch);
-    	if strcmp(grd.gtype, 'HJB')
-	        nety_mat_liq = (1-p.directdeposit) * (1-p.wagetax) * income.y.matrix;
-	    else
-	        nety_mat_liq = (1-p.directdeposit) * (1-p.wagetax) * income.y.matrixKFE;
-	    end
+    	nety_mat_liq = (1-p.directdeposit) * (1-p.wagetax) * income.y.wide;
         hours_fn = @(Vb) hours_u1inv_bc_adjusted(Vb, prefs,...
             nety_mat_liq, hours_bc);
 	else
@@ -124,8 +120,8 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     adjcost_obj = HACTLib.aux.AdjustmentCost();
     adjcost_obj.set_from_params(p);
 
-	adjcost = @(x) adjcost_obj.compute_cost(x, grd.a.matrix);
-	opt_d = @(x, y) adjcost_obj.opt_deposits(x, y, grd.a.matrix);
+	adjcost = @(x) adjcost_obj.compute_cost(x, grd.a.wide);
+	opt_d = @(x, y) adjcost_obj.opt_deposits(x, y, grd.a.wide);
 
     import HACTLib.computation.upwind_deposits
 
@@ -156,7 +152,7 @@ function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
         V_deriv_risky_asset_nodrift = prefs.u1(c);
     elseif (p.sigma_r > 0) && (~p.OneAsset)
         V_deriv_risky_asset_nodrift = prefs.u1(c)...
-        	.* (1 + HACTLib.aux.AdjustmentCost.derivative(d, grd.a.matrix, p));
+        	.* (1 + HACTLib.aux.AdjustmentCost.derivative(d, grd.a.wide, p));
     else
         V_deriv_risky_asset_nodrift = [];
     end
