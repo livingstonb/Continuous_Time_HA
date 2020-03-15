@@ -334,12 +334,15 @@ classdef Grid < handle
 
 		function construct_trapezoidal_grid(obj)
 			% Constructs the grid of db * da.
+			import HACTLib.aux.sparse_diags
 
 			obj.trapezoidal.vec = kron(obj.da_tilde, obj.db_tilde);
-		    obj.trapezoidal.matrix = reshape(repmat(obj.trapezoidal.vec,obj.ny*obj.nz,1),...
-		    	obj.nb,obj.na,obj.nz,obj.ny);
-			obj.trapezoidal.diagm = spdiags(repmat(obj.trapezoidal.vec,obj.ny*obj.nz,1), 0,...
-				obj.nb*obj.na*obj.ny*obj.nz,obj.nb*obj.na*obj.ny*obj.nz);
+
+			tmp = obj.db_tilde * shiftdim(obj.da_tilde, -1);
+		    obj.trapezoidal.matrix = repmat(tmp,...
+		    	[1, 1, obj.nz, obj.ny]);
+			obj.trapezoidal.diagm = sparse_diags(...
+				obj.trapezoidal.matrix(:), 0);
 		end
 
 

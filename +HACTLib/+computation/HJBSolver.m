@@ -227,19 +227,19 @@ classdef HJBSolver < handle
 		end
 
 		function obj = create_rho_matrix(obj)
+			import HACTLib.aux.sparse_diags
 			if obj.options.implicit
 				% discount factor values
 		        if numel(obj.p.rhos) > 1
 		            rhocol = repmat(kron(obj.p.rhos(:), ones(obj.p.nb*obj.p.na, 1)), obj.income.ny, 1);
-		            obj.rho_mat = spdiags(rhocol, 0, obj.n_states, obj.n_states);
+		            obj.rho_mat = sparse_diags(rhocol, 0);
 		        else
 		            obj.rho_mat = obj.p.rho * speye(obj.n_states);
 		        end
 		    else
 		    	if numel(obj.p.rhos) > 1
 			        rhocol = kron(obj.p.rhos(:), ones(obj.p.nb*obj.p.na,1));
-			        obj.rho_mat = spdiags(rhocol, 0,...
-                        obj.states_per_income, obj.states_per_income);
+			        obj.rho_mat = sparse_diags(rhocol, 0);
 			    else
 			        obj.rho_mat = obj.p.rho * speye(obj.states_per_income);
 			    end
