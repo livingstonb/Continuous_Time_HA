@@ -49,12 +49,7 @@ for irun = 1:999
     end
 end
 
-% table_gen = HACTLib.tables.TableGenDetailed(params, stats);
-% output_table = table_gen.create(params, stats);
-
-
-
-tf = HACTLib.tables.TableFancy(params, stats_cell);
+tf = HACTLib.tables.StatsTable(params, stats_cell);
 output_table = tf.create(params, stats_cell)
 
 

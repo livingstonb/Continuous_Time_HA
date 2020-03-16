@@ -56,8 +56,8 @@ function [outparams, n] = params_adj_cost_tests(param_opts)
     params{ii}.kappa0 = 0;
     params{ii}.kappa1 = 1.6069;
     params{ii}.kappa2 = 0.25;
-    params{ii}.rho = 0.008;
-    params{ii}.r_a = 0.014;
+    params{ii}.rho = 0.0147354;
+    params{ii}.r_a = 0.0191904;
     ii = ii + 1;
 
     params{ii} = median_calibration;
@@ -65,6 +65,8 @@ function [outparams, n] = params_adj_cost_tests(param_opts)
     params{ii}.kappa0 = 0;
     params{ii}.kappa1 = 1.6069;
     params{ii}.kappa2 = 0.25;
+    params{ii}.rho = 0.0078551;
+    params{ii}.r_a = 0.0164144;
     ii = ii + 1;
 
     %% --------------------------------------------------------------------

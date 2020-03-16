@@ -30,19 +30,19 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-param_opts.calibrate = true;
+param_opts.calibrate = false;
 param_opts.fast = false; % use small grid for debugging
 param_opts.ComputeMPCS = true;
-param_opts.ComputeMPCS_illiquid = true; 
+param_opts.ComputeMPCS_illiquid = false; 
 param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
 param_opts.ComputeMPCS_news = false;
 param_opts.SimulateMPCS_news = false;
 param_opts.DealWithSpecialCase = false; % need to recode this
-param_opts.param_index = 1;
+param_opts.param_index = 2;
 param_opts.makePlots = false; % not coded yet
 
 run_opts.check_nparams = false;
-run_opts.Server = true;
+run_opts.Server = false;
 run_opts.param_script = 'params_adj_cost_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
@@ -134,14 +134,14 @@ if ~isempty(p.calibrator)
     end
     
     stats = p.calibrator.stats;
-else
-    save_results = true;
-    stats = main(p, save_results);
 end
+
+save_results = true;
+stats = main(p, save_results);
 
 % table_gen = HACTLib.tables.TableGenDetailed(p, stats);
 % results_table = table_gen.create(p, stats)
-table_gen = HACTLib.tables.TableFancy(p, {stats});
+table_gen = HACTLib.tables.StatsTable(p, {stats});
 results_table = table_gen.create(p, {stats})
 
 xlx_path = sprintf('run%d_table.xlsx', p.param_index);
