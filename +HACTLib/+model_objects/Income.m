@@ -35,6 +35,9 @@ classdef Income < handle
 
         % Net income accruing to the illiquid asset, over the KFE grids.
         nety_KFE_illiq_hourly;
+
+        % Absence of income risk
+        norisk = false;
 	end
 
 	methods
@@ -62,6 +65,7 @@ classdef Income < handle
   	 		%	Default = false.
 
   	 		if nargin > 0
+  	 			obj.norisk = norisk;
 	  	 		if norisk
 	  	 			obj.ydist = 1;
 	  	 			obj.ytrans = 0;

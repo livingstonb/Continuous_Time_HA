@@ -83,16 +83,47 @@ classdef Model < handle
 			end
 
 			%% --------------------------------------------------------------------
-			% SOLVE
+			% HJB
 			% ---------------------------------------------------------------------
 			HJB = obj.solve_HJB(hours_bc_HJB);
-			[KFE, Au] = obj.solve_KFE(HJB, hours_bc_KFE);
-		    
+
+			% Interpolate value function from HJB grids into KFE grids, if necessary
+			if isequal(obj.grids_HJB.b.vec, obj.grids_KFE.b.vec) ...
+				&& isequal(obj.grids_HJB.a.vec, obj.grids_KFE.a.vec)
+				KFE = HJB;
+			else
+				V_KFE = zeros([obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
+				for iz = 1:obj.p.nz
+					for iy = 1:obj.income.ny
+						Vinterp = griddedInterpolant({obj.grids_HJB.b.vec, obj.grids_HJB.a.vec},...
+							V_KFE(:,:,iz,iy), 'spline', 'nearest');
+						V_KFE(:,:,iz,iy) = Vinterp({obj.grids_KFE.b.vec, obj.grids_KFE.a.vec});
+					end
+				end
+
+				KFE = HACTLib.computation.find_policies(obj.p, obj.income,...
+		    		obj.grids_KFE, V_KFE, hours_bc);
+				KFE.Vn = V_KFE;
+			end
+
 			%% --------------------------------------------------------------------
-			% COMPUTE WEALTH
+			% KFE
 			% ---------------------------------------------------------------------
-			wealth = compute_wealth(KFE.g, obj.grids_KFE);
-			fprintf('    --- MEAN WEALTH = %f ---\n\n', wealth)
+			import HACTLib.computation.TransitionMatrixConstructor
+
+			% True if returns should be treated as risky in the KFE
+			returns_risk = (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 1);
+		    A_constructor_kfe = TransitionMatrixConstructor(obj.p,...
+		    	obj.income, obj.grids_KFE, returns_risk);
+		    Au = A_constructor_kfe.construct(KFE, KFE.Vn);   
+
+			if obj.income.norisk
+				wealth = NaN;
+			else
+				KFE.g = obj.kfe_solver.solve(Au);
+				wealth = compute_wealth(KFE.g, obj.grids_KFE);
+				fprintf('    --- MEAN WEALTH = %f ---\n\n', wealth)
+			end
 		end
 	end
 
@@ -103,7 +134,12 @@ classdef Model < handle
 			[Vn, gguess] = make_initial_guess(obj.p, obj.grids_HJB,...
 					obj.grids_KFE, obj.income);
 
-			fprintf('    --- Iterating over HJB ---\n')
+			if obj.income.norisk
+				fprintf('    --- Iterating over HJB (no inc risk) ---\n')
+			else
+				fprintf('    --- Iterating over HJB ---\n')
+			end
+
 		    dst = 1e5;
 			for nn	= 1:obj.p.HJB_maxiters
 				[HJB, V_deriv_risky_asset_nodrift] = HACTLib.computation.find_policies(...
@@ -144,38 +180,6 @@ classdef Model < handle
 		    
 		    % Store value function and policies on both grids
 		    HJB.Vn = Vn;
-		end
-
-		%% --------------------------------------------------------------------
-	    % SOLVE KFE
-		% ---------------------------------------------------------------------
-		function [KFE, Au] = solve_KFE(obj, HJB, hours_bc)
-			if isequal(obj.grids_HJB.b.vec, obj.grids_KFE.b.vec) ...
-				&& isequal(obj.grids_HJB.a.vec, obj.grids_KFE.a.vec)
-				Vn = HJB.Vn;
-			else
-				Vn = zeros([obj.p.nb_KFE, obj.p.na_KFE, obj.p.nz, obj.income.ny]);
-				for iz = 1:obj.p.nz
-					for iy = 1:obj.income.ny
-					Vinterp = griddedInterpolant({obj.grids_HJB.b.vec, obj.grids_HJB.a.vec},...
-						HJB.Vn(:,:,iz,iy), 'spline', 'nearest');
-					Vn(:,:,iz,iy) = Vinterp({obj.grids_KFE.b.vec, obj.grids_KFE.a.vec});
-					end
-				end
-			end
-
-		    KFE = HACTLib.computation.find_policies(obj.p, obj.income, obj.grids_KFE, Vn, hours_bc);
-		    KFE.Vn = Vn;
-
-			import HACTLib.computation.TransitionMatrixConstructor
-
-			% True if returns should be treated as risky in the KFE
-			returns_risk = (obj.p.sigma_r > 0) && (obj.p.retrisk_KFE == 1);
-		    A_constructor_kfe = TransitionMatrixConstructor(obj.p,...
-		    	obj.income, obj.grids_KFE, returns_risk);
-		    Au = A_constructor_kfe.construct(KFE, KFE.Vn);   
-		    
-		    KFE.g = obj.kfe_solver.solve(Au);
 		end
 	end
 end

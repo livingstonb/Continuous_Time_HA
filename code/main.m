@@ -55,13 +55,13 @@ function [stats, p] = main(p, save_results)
 
     model = HACTLib.model_objects.Model(p, grd, grdKFE, income);
     model.initialize();
-    [HJB, KFE, Au] = model.solve();
+    [~, KFE, Au] = model.solve();
 
     if p.NoRisk == 1
         model_nr = HACTLib.model_objects.Model(...
             p, grd_norisk, grdKFE_norisk, income_norisk);
         model_nr.initialize();
-        [HJB_nr, KFE_nr, Au_nr] = model_nr.solve();
+        [~, KFE_nr, Au_nr] = model_nr.solve();
     end
 
     % if p.makePlots
