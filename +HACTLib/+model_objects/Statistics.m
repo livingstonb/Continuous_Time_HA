@@ -417,14 +417,11 @@ classdef Statistics < handle
 			import HACTLib.aux.direct_gini
 			import HACTLib.aux.multi_sum
 
-			wshares_kernel_options = obj.kernel_options;
-
-
 			% Top wealth shares
 			pmf_w = multi_sum(obj.pmf, [3, 4]);
 			tmp = sortrows([obj.wealthmat(:), pmf_w(:)]);
 			values_w = cumsum(tmp(:,1) .* tmp(:,2) / obj.totw.value);
-			wcumshare_interp = get_interpolant(wshares_kernel_options,...
+			wcumshare_interp = get_interpolant(obj.kernel_options,...
 				values_w, tmp(:,2));
 
 			tmp = 1 - wcumshare_interp.icdf(0.9);
@@ -435,7 +432,7 @@ classdef Statistics < handle
 
 			% Top liquid wealth shares
 			values_b = cumsum(obj.grdKFE.b.vec .* obj.pmf_b / obj.liqw.value);
-			bcumshare_interp = get_interpolant(wshares_kernel_options,...
+			bcumshare_interp = get_interpolant(obj.kernel_options,...
 				values_b, obj.pmf_b);
 			tmp = 1 - bcumshare_interp.icdf(0.9);
 			obj.lw_top10share = sfill(tmp, 'b, Top 10% share');
@@ -446,7 +443,7 @@ classdef Statistics < handle
 			% Top illiquid wealth shares
 			if ~obj.p.OneAsset
 				values_a = cumsum(obj.grdKFE.a.vec .* obj.pmf_a(:) / obj.illiqw.value);
-				acumshare_interp = get_interpolant(wshares_kernel_options,...
+				acumshare_interp = get_interpolant(obj.kernel_options,...
 					obj.grdKFE.a.vec, obj.pmf_a(:));
 
 				iwshare_interp = @(x) acumshare_interp.icdf(x);
@@ -492,8 +489,6 @@ classdef Statistics < handle
 
 		function compute_constrained(obj)
             import HACTLib.aux.multi_sum
-
-            wy_kernel_options = obj.kernel_options;
 
 		    neps = numel(obj.p.epsilon_HtM);
 		    obj.constrained_illiq = cell(1, neps);
@@ -568,7 +563,7 @@ classdef Statistics < handle
 			pmf_by = multi_sum(obj.pmf, [2, 3]);
 
 			tmp = sortrows([by_ratio(:), pmf_by(:)]);
-			by_interp = get_interpolant(wy_kernel_options,...
+			by_interp = get_interpolant(obj.kernel_options,...
 				tmp(:,1), tmp(:,2));
 			
 			tmp = by_interp.cdf(1/6);
@@ -584,7 +579,7 @@ classdef Statistics < handle
 			pmf_wy = sum(obj.pmf, 3);
 
 			tmp = sortrows([wy_ratio(:), pmf_wy(:)]);
-			wy_interp = get_interpolant(wy_kernel_options,...
+			wy_interp = get_interpolant(obj.kernel_options,...
 				tmp(:,1), tmp(:,2));
 			
 			tmp = wy_interp.cdf(1/6);

@@ -4,8 +4,6 @@ classdef KernelSmoother < handle
 			'ktype', 'gaussian',...
 			'force_fit_cdf_low', [],...
 			'rescale_and_log', true,...
-			'x_transform', @(x) x,...
-			'x_revert', @(z) z,...
 			'h', 0.2...
 			)
 	end
@@ -20,7 +18,6 @@ classdef KernelSmoother < handle
         rescale_and_log;
 		force_fit_cdf_low;
 		x_transform;
-		x_revert;
 	end
 
 	methods
@@ -31,9 +28,6 @@ classdef KernelSmoother < handle
 			obj.ktype = options.ktype;
 			obj.force_fit_cdf_low = options.force_fit_cdf_low;
             obj.rescale_and_log = options.rescale_and_log;
-
-            obj.x_transform = options.x_transform;
-            obj.x_revert = options.x_revert;
 			obj.h = options.h;
 		end
 
@@ -44,10 +38,11 @@ classdef KernelSmoother < handle
             if obj.rescale_and_log
                 xb = [min(x), max(x)];
                 obj.x_transform = @(x) rescale_and_log_x(x, xb);
+            else
+            	obj.x_transform = @(x) x;
             end
 
 			[y_hat, iu] = unique(obj.keval(obj.x));
-
 			obj.inv_interp = griddedInterpolant(y_hat,...
 				obj.x(iu), 'spline', 'nearest');
 		end
@@ -63,7 +58,6 @@ classdef KernelSmoother < handle
 			else
 				h_adj = obj.h;
 			end
-
 			
 			y_out = zeros(size(x_query));
 			x_query = obj.x_transform(reshape(x_query, 1, []));
@@ -90,9 +84,6 @@ classdef KernelSmoother < handle
 				y_out(ii) = sum(obj.y .* kd) ./ sum(kd);
 				ii = ii + 1;
 			end
-			
-			% y_out = sum(obj.y .* kd, 1) ./ sum(kd, 1);
-			% y_out = y_out(:);
         end
         
         function x_hat = keval_inv(obj, y_query)
@@ -127,9 +118,4 @@ end
 function x_scaled = rescale_and_log_x(x, xbounds)
 	x_scaled = (x - xbounds(1)) / (xbounds(2) - xbounds(1));
 	x_scaled = log(0.001 + 100 * x_scaled);
-end
-
-function x = revert_rescale_and_log_x(x_scaled)
-	x = exp(x_scaled) - 0.001;
-	x = x / 100;
 end

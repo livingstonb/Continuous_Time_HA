@@ -20,13 +20,8 @@ classdef InterpObj < handle
 		function set_dist(obj, values, pmf, dims_to_keep)
 			import HACTLib.aux.multi_sum
 
-			if nargin < 4
-				already_sorted = true;
-			else
-				already_sorted = isequal(dims_to_keep, []);
-			end
-
-			if already_sorted
+			if isequal(dims_to_keep, []);
+				% Already sorted
 				[v_u, iu] = unique(values(:), 'last');
 				cdf_u = cumsum(pmf(:));
 			else
@@ -114,20 +109,11 @@ function [x, y] = thin_cdf(x, y, nmax)
 
 	pct_to_drop = 100 * (n - nmax) / n;
 
-	% xn = (x - min(x)) / (max(x) - min(x));
-	% xn = log(0.01 + xn);
-	% yn = 100 * (y - min(y)) / (max(y) - min(y));
-
 	dydx = diff(y) ./ diff(x);
 	dydx_pctile = prctile(dydx, pct_to_drop);
 	keep = (dydx > dydx_pctile);
+	keep = [true; keep];
 
-	% dnorm = sqrt(sum(diff([xn, yn]) .^ 2, 2));
-	% dnorm = [100; dnorm];
-
-	% dx = prctile(dnorm, pct_to_drop);
-
-	% keep = (dnorm >= dx);
     x = x(keep);
     y = y(keep);
 end
