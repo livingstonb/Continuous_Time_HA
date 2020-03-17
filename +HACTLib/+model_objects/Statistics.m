@@ -453,10 +453,10 @@ classdef Statistics < handle
 			% Top illiquid wealth shares
 			if ~obj.p.OneAsset
 				values_a = cumsum(obj.grdKFE.a.vec .* obj.pmf_a(:) / obj.illiqw.value);
-				bcumshare_interp = get_interpolant(obj.grdKFE.a.vec,...
+				acumshare_interp = get_interpolant(obj.grdKFE.a.vec,...
 					obj.pmf_a(:), [], obj.kernel_options{:});
 
-				iwshare_interp = @(x) bcumshare_interp.percentile(x);
+				iwshare_interp = @(x) acumshare_interp.percentile(x);
 			else
 				iwshare_interp = @(x) NaN;
 			end
@@ -524,25 +524,24 @@ classdef Statistics < handle
 		    for ip = 1:neps
 				htm = obj.p.epsilon_HtM(ip);
 
-				tmp = lw_constrained_interp(htm);
+				tmp = obj.lw_interp.cdf_at_value(htm);
 				obj.constrained_liq{ip} = sfill(tmp,...
 					sprintf('b <= %g', htm));
 
 				obj.constrained_liq_pct{ip} = sfill(tmp,...
 					sprintf('b <= %g%% mean ann inc', htm * 100));
 
-				tmp = iw_constrained_interp(htm);
+				tmp = obj.iw_interp.cdf_at_value(htm);
 				obj.constrained_illiq{ip} = sfill(tmp,...
 					sprintf('a <= %g', htm), 2);
 
 				obj.constrained_illiq_pct{ip} = sfill(tmp,...
 					sprintf('a <= %g%% mean ann inc', htm * 100), 2);
 
-				tmp = w_constrained_interp(htm);
+				tmp = obj.w_interp.cdf_at_value(htm);
 				obj.constrained{ip} = sfill(tmp,...
 					sprintf('w <= %g', htm), 2);
 
-				tmp = w_constrained_interp(htm);
 				obj.constrained_pct{ip} = sfill(tmp,...
 					sprintf('w <= %g%% mean ann inc', htm * 100), 2);
 			end
@@ -551,9 +550,9 @@ classdef Statistics < handle
 			for ip = 1:ndollars
 				if ~isempty(obj.p.numeraire_in_dollars)
 					htm = obj.p.dollars_HtM(ip) / obj.p.numeraire_in_dollars;
-					illiq_htm = iw_constrained_interp(htm);
-					liq_htm = lw_constrained_interp(htm);
-					w_htm = w_constrained_interp(htm);
+					illiq_htm = obj.iw_interp.cdf_at_value(htm);
+					liq_htm = obj.lw_interp.cdf_at_value(htm);
+					w_htm = obj.w_interp.cdf_at_value(htm);
 				else
 					illiq_htm = NaN;
 					liq_htm = NaN;
@@ -573,7 +572,7 @@ classdef Statistics < handle
 			% Fraction paying illiquid asset tax
 			z = obj.p.illiquid_tax_threshold;
 			if isfinite(z)
-				tmp = 1 - iw_constrained_interp(z);
+				tmp = 1 - obj.iw_interp.cdf_at_value(z);
 			else
 				tmp = 0;
 			end
@@ -583,6 +582,15 @@ classdef Statistics < handle
 			% Wealth / (quarterly earnings) < epsilon
 			wy_ratio = obj.wealthmat ./ obj.income.y.wide;
 			pmf_wy = sum(obj.pmf, 3);
+
+			tmp = sortrows([wy_ratio(:), pmf_wy(:)]);
+			values = tmp(:,1);
+			keep = values <= 0.5;
+			values = values(keep);
+			pmf_wy = tmp(keep,2);
+
+			wy_interp = get_interpolant(values, pmf_wy,...
+				[], obj.kernel_options{:});
 			% tmp = sortrows([wy_ratio(:), obj.pmf(:)]);
 			% [wy_ratio_u, iu] = unique(tmp(:,1), 'last');
 
@@ -592,12 +600,14 @@ classdef Statistics < handle
 			% wy_interp = griddedInterpolant(wy_ratio_u, cdf_w_u,...
 			% 	'pchip', 'nearest');
 
-			tmp = interpolate_cdf(pmf_wy(:), wy_ratio(:),...
-                [0.05, 0.4], 1/6, 3);
+			% tmp = interpolate_cdf(pmf_wy(:), wy_ratio(:),...
+   %              [0.05, 0.4], 1/6, 3);
+
+			tmp = wy_interp.cdf_at_value(1/6);
 			obj.w_lt_ysixth = sfill(...
 				tmp, 'w_i <= y_i / 6, biweekly earnings', 2);
-			tmp = interpolate_cdf(pmf_wy(:), wy_ratio(:),...
-                [0.05, 0.2], 1/12, 3);
+			
+			tmp = wy_interp.cdf_at_value(1/12);
 			obj.w_lt_ytwelfth = sfill(...
 				tmp, 'w_i <= y_i / 12, weekly earnings', 2);
 

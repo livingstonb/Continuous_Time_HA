@@ -67,7 +67,6 @@ classdef InterpObj < handle
 		function configure_kernel_smoother(obj, kernel_options)
 			import HACTLib.computation.KernelSmoother
 
-			log_transform = true;
 			obj.kernel_smoother = KernelSmoother(...
 				kernel_options.ktype, kernel_options.log_transform,...
 				kernel_options.log_transform_const);
