@@ -44,11 +44,9 @@ classdef KernelSmoother < handle
 		end
 
 		function y_out = keval(obj, x_query)
-			x_query = obj.x_transform(x_query);
-
 			if numel(obj.force_fit_threshold) == 2
-				adj_range = (obj.y >= force_fit_threshold(1)) ...
-					& (obj.y <= force_fit_threshold(1));
+				adj_range = (obj.y >= obj.force_fit_threshold(1)) ...
+					& (obj.y <= obj.force_fit_threshold(2));
 
 				adjustment = ones(size(obj.x));
 				adjustment(adj_range) = linspace(0.01, 1, sum(adj_range))';
@@ -57,28 +55,39 @@ classdef KernelSmoother < handle
 				h_adj = obj.h;
 			end
 
-			x_query = reshape(x_query, 1, []);
-			v = abs(x_query - obj.x_transform(obj.x)) ./ h_adj;
-
-			switch obj.ktype
-				case 'gaussian'
-					kd = exp(-v .^ 2);
-				case 'epanechnikov'
-					kd = 1 - v .^ 2;
-					kd(v > 1) = 0;
-				case 'logistic'
-					kd = 1 ./ (exp(v) + 2 + exp(-v));
-				case 'triweight'
-					kd = (1 - v .^ 2) .^ 3;
-					kd(v > 1) = 0;
-				end
 			
-			y_out = sum(obj.y .* kd, 1) ./ sum(kd, 1);
-			y_out = y_out(:);
+			y_out = zeros(size(x_query));
+			x_query = obj.x_transform(reshape(x_query, 1, []));
+			x_trans = obj.x_transform(obj.x);
+
+			ii = 1;
+			for xq = x_query
+				v = abs(xq - x_trans) ./ h_adj;
+			% v = abs(x_query - obj.x_transform(obj.x)) ./ h_adj;
+
+				switch obj.ktype
+					case 'gaussian'
+						kd = exp(-v .^ 2);
+					case 'epanechnikov'
+						kd = 1 - v .^ 2;
+						kd(v > 1) = 0;
+					case 'logistic'
+						kd = 1 ./ (exp(v) + 2 + exp(-v));
+					case 'triweight'
+						kd = (1 - v .^ 2) .^ 3;
+						kd(v > 1) = 0;
+				end
+
+				y_out(ii) = sum(obj.y .* kd) ./ sum(kd);
+				ii = ii + 1;
+			end
+			
+			% y_out = sum(obj.y .* kd, 1) ./ sum(kd, 1);
+			% y_out = y_out(:);
         end
         
         function x_hat = keval_inv(obj, y_query)
-        	x_hat = obj.x_revert(obj.inv_interp(y_query));
+        	x_hat = obj.inv_interp(y_query);
         end
 
         function make_plots(obj, plot_raw, plot_fitted)

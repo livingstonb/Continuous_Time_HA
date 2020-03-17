@@ -573,7 +573,7 @@ classdef Statistics < handle
 
 			tmp = sortrows([wy_ratio(:), pmf_wy(:)]);
 			values = tmp(:,1);
-			keep = values <= 0.5;
+			keep = values <= 10;
 			values = values(keep);
 			pmf_wy = tmp(keep,2);
 
@@ -594,7 +594,7 @@ classdef Statistics < handle
 
 			tmp = sortrows([by_ratio(:), pmf_by(:)]);
 			values = tmp(:,1);
-			keep = values <= 0.5;
+			keep = values <= 1;
 			values = values(keep);
 			pmf_by = tmp(keep,2);
 
