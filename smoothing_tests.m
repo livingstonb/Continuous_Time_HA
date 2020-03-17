@@ -4,6 +4,30 @@ clear
 close all
 load('/home/brian/Documents/pmf_smoothing.mat')
 
+%% NO SMOOTHING
+iobj = HACTLib.computation.InterpObj();
+iobj.set_dist(x, y, [1, 4]);
+iobj.configure();
+% iobj.plot_cdf()
+
+fprintf('10th percentile = %g\n', iobj.percentile(0.1))
+fprintf('Median = %g\n', iobj.percentile(0.5))
+fprintf('P(x <= 1) = %g\n', iobj.cdf_at_value(1))
+
+%% SMOOTHING
+iobj2 = HACTLib.computation.InterpObj();
+iobj2.set_dist(x, y, [1, 4]);
+
+kernel_options.ktype = 'gaussian';
+kernel_options.h = 0.1;
+kernel_options.log_transform = true;
+iobj2.configure(kernel_options);
+% iobj.plot_cdf()
+
+fprintf('10th percentile = %g, smoothed\n', iobj2.percentile(0.1))
+fprintf('Median = %g, smoothed\n', iobj2.percentile(0.5))
+fprintf('P(x <= 1) = %g, smoothed\n', iobj2.cdf_at_value(1))
+
 sm = HACTLib.computation.KernelSmoother('gaussian', true);
 
 h = linspace(0.05, 1, numel(unique(x(:)))) .^ 3;

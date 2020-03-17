@@ -88,6 +88,8 @@ classdef Statistics < handle
 
 		nb;
 		na;
+        
+        use_kernel_smoothing;
 	end
 
 	methods
@@ -109,7 +111,8 @@ classdef Statistics < handle
 			obj.pmf = model.g .* grdKFE.trapezoidal.matrix;
 		end
 
-		function compute_statistics(obj)
+		function compute_statistics(obj, use_kernel_smoothing)
+            obj.use_kernel_smoothing = use_kernel_smoothing;
 			obj.add_params();
 			obj.compute_intro_stats();
 			obj.construct_distributions();

@@ -57,9 +57,16 @@ classdef KernelSmoother < handle
 			end
 			obj.y = y;
 			obj.h = h;
+
+			obj.y_hat = impose_monotonic(obj.transform_x(obj.x),...
+				obj.keval(obj.transform_x(obj.x)));
 		end
 
 		function x_out = keval(obj, x_query)
+			if obj.log_transform
+				x_query = log(0.1 + x_query);
+			end
+
 			x_query = reshape(x_query, 1, []);
 			v = abs(x_query - obj.x) ./ obj.h;
 
@@ -81,7 +88,7 @@ classdef KernelSmoother < handle
         end
         
         function x_hat = keval_inv(obj, y_query)
-        	ginterp = griddedInterpolant(obj.y_hat, exp(obj.x),...
+        	ginterp = griddedInterpolant(obj.y_hat, obj.transform_x(obj.x),...
         		'spline', 'nearest');
         	x_hat = ginterp(y_query);
         end
