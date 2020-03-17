@@ -72,7 +72,7 @@ function [stats, p] = main(p, save_results)
     % COMPUTE STATISTICS
     % -----------------------------------------------------------------
     fprintf('\nComputing statistics\n')    
-    stats = HACTLib.model_objects.Statistics(p, income, grdKFE, KFE);
+    stats = HACTLib.Statistics(p, income, grdKFE, KFE);
     
     kernel_options.ktype = 'gaussian';
     kernel_options.h = 0.2;

@@ -1,15 +1,12 @@
 
 classdef InterpObj < handle
-	properties
+	properties (Access=protected)
 		x;
 		y;
-
-		kernel_smoothing = false;
-	end
-
-	properties (Access=protected)
 		kernel_smoother;
 		linear_interpolant;
+		insufficient_grid_pts = false;
+		kernel_smoothing = false;
 	end
 
 	methods
@@ -19,7 +16,7 @@ classdef InterpObj < handle
 		function set_dist(obj, values, pmf, dims_to_keep)
 			import HACTLib.aux.multi_sum
 
-			if isequal(dims_to_keep, []);
+			if (nargin == 3) || isequal(dims_to_keep, []);
 				% Already sorted
 				[v_u, iu] = unique(values(:), 'last');
 				cdf_u = cumsum(pmf(:));
@@ -37,6 +34,8 @@ classdef InterpObj < handle
 
 			if numel(v_u) > 5000
 				[obj.x, obj.y] = thin_cdf(v_u, cdf_u(iu), 5000);
+			elseif numel(v_u) <= 5
+				obj.insufficient_grid_pts = true;
 			else
 				obj.x = v_u;
 				obj.y = cdf_u(iu);
@@ -44,9 +43,13 @@ classdef InterpObj < handle
 		end
 
 		function configure(obj, kernel_options)
+			if obj.insufficient_grid_pts
+				return
+			end
+
 			obj.configure_interpolants();
 			
-			if numel(kernel_options) = 1
+			if numel(kernel_options) == 1
 				obj.kernel_smoothing = true;
 				obj.configure_kernel_smoother(kernel_options);
 			end
@@ -71,11 +74,14 @@ classdef InterpObj < handle
 
 			obj.kernel_smoother = KernelSmoother(kernel_options);
 			obj.kernel_smoother.set(obj.x, obj.y);
+
 		end
 
 
 		function z_out = icdf(obj, p, interp_type)
-			if (nargin == 2) && (obj.kernel_smoothing)
+			if obj.insufficient_grid_pts
+				z_out = NaN;
+			elseif (nargin == 2) && (obj.kernel_smoothing)
 				z_out = obj.kernel_smoother.keval_inv(p);
 			elseif (nargin == 2)
 				z_out = obj.linear_interpolant.icdf(p);
@@ -86,20 +92,24 @@ classdef InterpObj < handle
 			end
 		end
 
-		function cdf_out = cdf(obj, val, interp_type)
-			if (nargin == 2) && (obj.kernel_smoothing)
-				cdf_out = obj.kernel_smoother.keval(val);
+		function g_out = cdf(obj, val, interp_type)
+			if obj.insufficient_grid_pts
+				g_out = NaN;
+			elseif (nargin == 2) && (obj.kernel_smoothing)
+				g_out = obj.kernel_smoother.keval(val);
 			elseif (nargin == 2)
-				cdf_out = obj.linear_interpolant.icdf(val);
+				g_out = obj.linear_interpolant.icdf(val);
 			elseif (nargin == 3) && strcmp(interp_type, 'kernel')
-				cdf_out = obj.kernel_smoother.keval(val);
+				g_out = obj.kernel_smoother.keval(val);
 			elseif (nargin == 3) && strcmp(interp_type, 'linear')
-				cdf_out = obj.linear_interpolant.icdf(val);
+				g_out = obj.linear_interpolant.icdf(val);
 			end
 		end
 
 		function plot_cdf(obj, varargin)
-			if obj.kernel_smoothing
+			if obj.insufficient_grid_pts
+				error('Insufficient number of grid points')
+			elseif obj.kernel_smoothing
 				obj.kernel_smoother.make_plots(varargin{:});
 			else
 				plot(obj.x, obj.y);

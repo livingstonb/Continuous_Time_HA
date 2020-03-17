@@ -138,7 +138,7 @@ classdef MPCs < handle
 				error('Already solved, create another instance')
             end
 
-			obj.FKmat = HACTLib.computation.feynman_kac_divisor(...
+			obj.FKmat = HACTLib.computation.FeynmanKac.divisor(...
                 obj.p, obj.income, obj.options.delta, A, true);
 			obj.iterate_backward(KFE);
 
@@ -182,7 +182,7 @@ classdef MPCs < handle
 			% This method also modifies other class properties
 			% via other methods.
 
-			import HACTLib.computation.feynman_kac
+			import HACTLib.computation.FeynmanKac
 
 			dim = obj.p.nb_KFE*obj.p.na_KFE*obj.p.nz*obj.income.ny;
 			obj.cumcon = zeros(dim,4);
@@ -192,10 +192,11 @@ classdef MPCs < handle
 				end
 
 				for period = ceil(it):4
-					% when 'it' falls to 'period', start updating
+					% When 'it' falls to 'period', start updating
 					% that 'period'
-					obj.cumcon(:,period) = feynman_kac(obj.p, obj.grids,...
-						obj.income, obj.cumcon(:,period), obj.FKmat, KFE.c, obj.options.delta);
+					obj.cumcon(:,period) = FeynmanKac.update(obj.p, obj.grids,...
+						obj.income, obj.cumcon(:,period), obj.FKmat,...
+						KFE.c, obj.options.delta);
 				end
 			end
 

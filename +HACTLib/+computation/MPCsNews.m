@@ -358,8 +358,7 @@ classdef MPCsNews < handle
 
 			import HACTLib.computation.hjb_divisor
 			import HACTLib.aux.sparse_diags
-            import HACTLib.computation.feynman_kac_divisor
-            import HACTLib.computation.feynman_kac
+            import HACTLib.computation.FeynmanKac
 			
             shock = obj.p.mpc_shocks(ishock);
 			obj.cumcon = zeros(obj.n_states, 4);
@@ -407,15 +406,15 @@ classdef MPCsNews < handle
 
 			    if obj.options.compute_mpcs
 				    if (obj.p.sigma_r > 0) && (~obj.p.retrisk_KFE)
-	                    FKmats = feynman_kac_divisor(obj.p, obj.income,...
+	                    FKmats = FeynmanKac.divisor(obj.p, obj.income,...
 	                    			obj.options.delta, obj.A_FK, true);
 	                else
-	                	FKmats = feynman_kac_divisor(obj.p, obj.income,...
+	                	FKmats = FeynmanKac.divisor(obj.p, obj.income,...
 	                				obj.options.delta, obj.A_HJB, true);
 	                end
 
 			        for period = ceil(it):4
-			        	obj.cumcon(:,period) = feynman_kac(obj.p, obj.grids,...
+			        	obj.cumcon(:,period) = FeynmanKac.update(obj.p, obj.grids,...
 							obj.income, obj.cumcon(:,period), FKmats, obj.KFEint.c,...
 							obj.options.delta);
 	                end

@@ -82,7 +82,6 @@ classdef Decomp < handle
 		    	obj.bgrid, cdf_b, 'pchip', 'nearest');
 
 		    % Interpolant for mpc(b) * g(b)
-		    is_sorted = true;
 		    obj.mpc_integral = interp_integral_alt(...
 		    	{obj.bgrid}, obj.mpcs_b, obj.pmf_b);
 		end
@@ -100,9 +99,8 @@ classdef Decomp < handle
 			end
 
 			% Interpolant for mpc_norisk(b) * g(b)
-		    is_sorted = true;
 		    norisk_integ_interp = interp_integral_alt(...
-		    	{obj.bgrid}, mpcs_b_nr, obj.pmf_b, is_sorted);
+		    	{obj.bgrid}, mpcs_b_nr, obj.pmf_b);
 
 		    for ia = 1:obj.nthresholds
 		    	abar = obj.p.decomp_thresholds(ia);

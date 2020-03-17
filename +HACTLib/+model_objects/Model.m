@@ -96,13 +96,13 @@ classdef Model < handle
 				for iz = 1:obj.p.nz
 					for iy = 1:obj.income.ny
 						Vinterp = griddedInterpolant({obj.grids_HJB.b.vec, obj.grids_HJB.a.vec},...
-							V_KFE(:,:,iz,iy), 'spline', 'nearest');
+							HJB.Vn(:,:,iz,iy), 'spline', 'nearest');
 						V_KFE(:,:,iz,iy) = Vinterp({obj.grids_KFE.b.vec, obj.grids_KFE.a.vec});
 					end
 				end
 
 				KFE = HACTLib.computation.find_policies(obj.p, obj.income,...
-		    		obj.grids_KFE, V_KFE, hours_bc);
+		    		obj.grids_KFE, V_KFE, hours_bc_KFE);
 				KFE.Vn = V_KFE;
 			end
 
