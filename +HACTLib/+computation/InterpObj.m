@@ -16,18 +16,28 @@ classdef InterpObj < handle
 		function obj = InterpObj()
 		end
 
-		function set_dist(obj, values, pmf, dims_to_keep)
+		function set_dist(obj, values, pmf, dims_to_keep,...
+			already_sorted)
 			import HACTLib.aux.multi_sum
 
-			sum_dims = 1:4;
-			sum_dims = sum_dims(...
-				~ismember(sum_dims, dims_to_keep));
+			if nargin == 4
+				already_sorted = false;
+			end
 
-			pmf_x = multi_sum(pmf, sum_dims);
+			if ~already_sorted
+				sum_dims = 1:4;
+				sum_dims = sum_dims(...
+					~ismember(sum_dims, dims_to_keep));
 
-			sorted_mat = sortrows([values(:), pmf_x(:)]);
-			[v_u, iu] = unique(sorted_mat(:,1), 'last');
-			cdf_u = cumsum(sorted_mat(:,2));
+				pmf_x = multi_sum(pmf, sum_dims);
+
+				sorted_mat = sortrows([values(:), pmf_x(:)]);
+				[v_u, iu] = unique(sorted_mat(:,1), 'last');
+				cdf_u = cumsum(sorted_mat(:,2));
+			else
+				[v_u, iu] = unique(values(:), 'last');
+				cdf_u = cumsum(pmf(:));
+			end
 
 			obj.x = v_u;
 			obj.y = cdf_u(iu);

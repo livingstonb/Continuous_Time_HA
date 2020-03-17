@@ -1,7 +1,7 @@
 classdef KernelSmoother < handle
 	properties
 		x;
-		y_hat;
+		inv_interp;
 		y;
 		h;
 		ktype = 'gaussian';
@@ -70,8 +70,12 @@ classdef KernelSmoother < handle
 			obj.y = y;
 			obj.h = h;
 
-			obj.y_hat = impose_monotonic(obj.transform_x(obj.x),...
+			[y_hat, iu] = impose_monotonic(obj.transform_x(obj.x),...
 				obj.keval(obj.transform_x(obj.x)));
+
+			obj.inv_interp = griddedInterpolant(y_hat,...
+				obj.transform_x(obj.x(iu)),...
+        		'spline', 'nearest');
 		end
 
 		function x_out = keval(obj, x_query)
@@ -80,11 +84,10 @@ classdef KernelSmoother < handle
 			end
 
 			if obj.force_fit_bottom
-				h_adj = obj.h;
 				adj_range = (obj.y >= 0) & (obj.y <= 0.05);
 
 				adjustment = ones(size(obj.x));
-				adjustment(adj_range) = linspace(0.001, 0.01, sum(adj_range))';
+				adjustment(adj_range) = linspace(0.01, 1, sum(adj_range))';
 				h_adj = adjustment .* obj.h;
 			else
 				h_adj = obj.h;
@@ -111,9 +114,7 @@ classdef KernelSmoother < handle
         end
         
         function x_hat = keval_inv(obj, y_query)
-        	ginterp = griddedInterpolant(obj.y_hat, obj.transform_x(obj.x),...
-        		'spline', 'nearest');
-        	x_hat = ginterp(y_query);
+        	x_hat = obj.inv_interp(y_query);
         end
 
         function make_plots(obj, plot_raw, plot_fitted)
@@ -175,22 +176,20 @@ classdef KernelSmoother < handle
 	end
 end
 
-function arr_out = impose_monotonic(agrid, arr_in)
+function [arr_out, iu] = impose_monotonic(agrid, arr_in)
 	increasing = false(size(arr_in));
 
 	last_val = arr_in(1);
+	end_val = arr_in(end);
 	increasing(1) = true;
-	for ia = 2:numel(arr_in)
-		if arr_in(ia) > last_val
+	increasing(end) = true;
+	for ia = 2:numel(arr_in)-1
+		if (arr_in(ia) > last_val) && (arr_in(ia) < end_val)
 			increasing(ia) = true;
 			last_val = arr_in(ia);
 		end
 	end
 
-	cinterp = griddedInterpolant(agrid(increasing),...
-		arr_in(increasing), 'spline', 'nearest');
-
-	arr_out = zeros(size(arr_in));
-	arr_out(~increasing) = cinterp(agrid(~increasing));
-	arr_out(increasing) = arr_in(increasing);
+	arr_out = arr_in(increasing);
+	iu = find(increasing);
 end

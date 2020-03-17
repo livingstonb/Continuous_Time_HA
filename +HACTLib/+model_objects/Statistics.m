@@ -92,6 +92,8 @@ classdef Statistics < handle
         kernel_options;
 
         lw_interp;
+        iw_interp;
+        w_interp;
 	end
 
 	methods
@@ -383,14 +385,14 @@ classdef Statistics < handle
 
 		    obj.lw_interp = get_interpolant(obj.grdKFE.b.vec,...
 				obj.pmf, [1], obj.kernel_options{:});
+		    obj.iw_interp = get_interpolant(obj.grdKFE.a.vec,...
+				obj.pmf, [2], obj.kernel_options{:});
+
+		    obj.w_interp = get_interpolant(obj.wealthmat,...
+				obj.pmf, [1, 2], obj.kernel_options{:});
 		end
 
 		function compute_percentiles(obj)
-			lw_pct = pct_interp(obj.grdKFE.b.vec, obj.cdf_b);
-			iw_pct = pct_interp(obj.grdKFE.a.vec, obj.cdf_a);
-			w_pct = pct_interp(...
-				obj.wealth_sorted_u, obj.cdf_w_uwealth);
-
 			npct = numel(obj.p.wpercentiles);
 		    obj.lwpercentiles = cell(1, npct);
 		    obj.iwpercentiles = cell(1, npct);
@@ -400,63 +402,61 @@ classdef Statistics < handle
 
 				tmp_b = sprintf('b, %gth pctile', pct_at);
 				obj.lwpercentiles{ip} = sfill(...
-					lw_pct(pct_at/100), tmp_b);
+					obj.lw_interp.percentile(pct_at/100), tmp_b);
 
 				tmp_a = sprintf('a, %gth pctile', pct_at);
 				obj.iwpercentiles{ip} = sfill(...
-					iw_pct(pct_at/100), tmp_a, 2);
+					obj.iw_interp.percentile(pct_at/100), tmp_a, 2);
 
 				tmp_w = sprintf('w, %gth pctile', pct_at);
 				obj.wpercentiles{ip} = sfill(...
-					w_pct(pct_at/100), tmp_w, 2);
+					obj.w_interp.percentile(pct_at/100), tmp_w, 2);
 			end
 
-			obj.median_liqw = sfill(lw_pct(0.5), 'b, median');
-			obj.median_illiqw = sfill(iw_pct(0.5), 'a, median', 2);
-			obj.median_totw = sfill(w_pct(0.5), 'w, median', 2);
+			obj.median_liqw = sfill(obj.lw_interp.percentile(0.5),...
+				'b, median');
+			obj.median_illiqw = sfill(obj.iw_interp.percentile(0.5),...
+				'a, median', 2);
+			obj.median_totw = sfill(obj.w_interp.percentile(0.5),...
+				'w, median', 2);
 		end
 
 		function compute_inequality(obj)
 			import HACTLib.aux.interp_integral_alt
 			import HACTLib.aux.unique_sort
 			import HACTLib.aux.direct_gini
+			import HACTLib.aux.multi_sum
 
 			% Top wealth shares
-			[val_w, cdf_w, iu] = unique_sort(obj.wealth_sorted,...
-				obj.pmf_w, 2);
-			wmass = obj.wealth_sorted(:) .* obj.pmf_w(:);
-			cum_share = cumsum(wmass) / obj.totw.value;
-			cum_share = cum_share(iu);
+			pmf_w = multi_sum(obj.pmf, [3, 4]);
+			tmp = sortrows([obj.wealthmat(:), pmf_w(:)]);
+			values_w = cumsum(tmp(:,1) .* tmp(:,2) / obj.totw.value);
+			wcumshare_interp = get_interpolant(values_w,...
+				tmp(:,2), [], obj.kernel_options{:});
 
-			wshare_interp = griddedInterpolant(...
-				cdf_w, cum_share, 'pchip', 'nearest');
-
-			tmp = 1 - wshare_interp(0.9);
+			tmp = 1 - wcumshare_interp.percentile(0.9);
 			obj.w_top10share = sfill(tmp, 'w, Top 10% share', 2);
 
-			tmp = 1 - wshare_interp(0.99);
+			tmp = 1 - wcumshare_interp.percentile(0.99);
 			obj.w_top1share = sfill(tmp, 'w, Top 1% share', 2);
 
 			% Top liquid wealth shares
-			cum_share = cumsum(obj.grdKFE.b.vec .* obj.pmf_b);
-			cum_share = cum_share / obj.liqw.value;
-			[cdf_b_u, iu] = unique(obj.cdf_b, 'first');
-			lwshare_interp = griddedInterpolant(cdf_b_u,...
-				cum_share(iu), 'pchip', 'nearest');
-
-			tmp = 1 - lwshare_interp(0.9);
+			values_b = cumsum(obj.grdKFE.b.vec .* obj.pmf_b / obj.liqw.value);
+			bcumshare_interp = get_interpolant(values_b,...
+				obj.pmf_b, [], obj.kernel_options{:});
+			tmp = 1 - bcumshare_interp.percentile(0.9);
 			obj.lw_top10share = sfill(tmp, 'b, Top 10% share');
 
-			tmp = 1 - lwshare_interp(0.99);
+			tmp = 1 - bcumshare_interp.percentile(0.99);
 			obj.lw_top1share = sfill(tmp, 'b, Top 1% share', 2);
 
 			% Top illiquid wealth shares
 			if ~obj.p.OneAsset
-				cum_share = cumsum(obj.grdKFE.a.vec .* obj.pmf_a);
-				cum_share = cum_share / obj.illiqw.value;
-				[cdf_a_u, iu] = unique(obj.cdf_a, 'first');
-				iwshare_interp = griddedInterpolant(cdf_a_u,...
-					cum_share(iu), 'pchip', 'nearest');
+				values_a = cumsum(obj.grdKFE.a.vec .* obj.pmf_a(:) / obj.illiqw.value);
+				bcumshare_interp = get_interpolant(obj.grdKFE.a.vec,...
+					obj.pmf_a(:), [], obj.kernel_options{:});
+
+				iwshare_interp = @(x) bcumshare_interp.percentile(x);
 			else
 				iwshare_interp = @(x) NaN;
 			end
@@ -464,7 +464,7 @@ classdef Statistics < handle
 			tmp = 1 - iwshare_interp(0.9);
 			obj.iw_top10share = sfill(tmp, 'a, Top 10% share', 2);
 
-			tmp = 1 - lwshare_interp(0.99);
+			tmp = 1 - iwshare_interp(0.99);
 			obj.iw_top1share = sfill(tmp, 'a, Top 1% share', 2);
 			
 			% Gini coefficient
@@ -772,10 +772,10 @@ function interp_obj = get_interpolant(values, pmf, dims_to_keep,...
 	varargin)
 	import HACTLib.computation.InterpObj
 
-	interp_obj = InterpObj();
-	interp_obj.set_dist(values, pmf, dims_to_keep);
+	already_sorted = isequal(dims_to_keep, []);
 
-	if nargin == 4
-		interp_obj.configure(varargin{:});
-	end
+	interp_obj = InterpObj();
+	interp_obj.set_dist(values, pmf, dims_to_keep, already_sorted);
+
+	interp_obj.configure(varargin{:});
 end
