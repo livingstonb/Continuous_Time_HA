@@ -73,7 +73,12 @@ function [stats, p] = main(p, save_results)
     % -----------------------------------------------------------------
     fprintf('\nComputing statistics\n')    
     stats = HACTLib.model_objects.Statistics(p, income, grdKFE, KFE);
-    stats.compute_statistics();
+    
+    kernel_options.ktype = 'gaussian';
+    kernel_options.h = 0.2;
+    kernel_options.log_transform = true;
+    kernel_options.log_transform_const = 0.01;
+    stats.compute_statistics(kernel_options);
 
     %% ----------------------------------------------------------------
     % COMPUTE MPCs

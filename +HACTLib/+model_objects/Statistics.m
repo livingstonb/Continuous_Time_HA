@@ -89,7 +89,9 @@ classdef Statistics < handle
 		nb;
 		na;
         
-        use_kernel_smoothing;
+        kernel_options;
+
+        lw_interp;
 	end
 
 	methods
@@ -111,8 +113,13 @@ classdef Statistics < handle
 			obj.pmf = model.g .* grdKFE.trapezoidal.matrix;
 		end
 
-		function compute_statistics(obj, use_kernel_smoothing)
-            obj.use_kernel_smoothing = use_kernel_smoothing;
+		function compute_statistics(obj, kernel_options)
+			if nargin == 1
+				obj.kernel_options = {};
+			else
+				obj.kernel_options = {kernel_options};
+            end
+
 			obj.add_params();
 			obj.compute_intro_stats();
 			obj.construct_distributions();
@@ -373,6 +380,9 @@ classdef Statistics < handle
 		    obj.pmf_b_a = multi_sum(obj.pmf, [3, 4]);
 
 		    obj.cdf_w_uwealth = obj.cdf_w(obj.wealth_sorted_iu);
+
+		    obj.lw_interp = get_interpolant(obj.grdKFE.b.vec,...
+				obj.pmf, [1], obj.kernel_options{:});
 		end
 
 		function compute_percentiles(obj)
@@ -755,5 +765,17 @@ function interp_out = constrained_interp(values, cdf_x)
 			values_u, cdf_x_u, 'pchip', 'nearest');
 	else
 		interp_out = @(x) NaN;
+	end
+end
+
+function interp_obj = get_interpolant(values, pmf, dims_to_keep,...
+	varargin)
+	import HACTLib.computation.InterpObj
+
+	interp_obj = InterpObj();
+	interp_obj.set_dist(values, pmf, dims_to_keep);
+
+	if nargin == 4
+		interp_obj.configure(varargin{:});
 	end
 end

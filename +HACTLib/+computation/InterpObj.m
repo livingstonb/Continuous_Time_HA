@@ -59,7 +59,8 @@ classdef InterpObj < handle
 
 			log_transform = true;
 			obj.kernel_smoother = KernelSmoother(...
-				kernel_options.ktype, kernel_options.log_transform);
+				kernel_options.ktype, kernel_options.log_transform,...
+				kernel_options.log_transform_const);
 			obj.kernel_smoother.set(obj.x, obj.y, kernel_options.h);
 		end
 
@@ -80,8 +81,12 @@ classdef InterpObj < handle
 			end
 		end
 
-		function plot_cdf(obj)
-			plot(obj.x, obj.y);
+		function plot_cdf(obj, varargin)
+			if obj.kernel_smoothing
+				obj.kernel_smoother.make_plots(varargin{:});
+			else
+				plot(obj.x, obj.y);
+			end
 			ylim([0, 0.8]);
 			xlim('auto')
 		end

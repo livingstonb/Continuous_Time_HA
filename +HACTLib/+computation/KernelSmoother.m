@@ -5,21 +5,33 @@ classdef KernelSmoother < handle
 		y;
 		h;
 		ktype = 'gaussian';
+
+		force_fit_bottom = true;
+
+		log_transform_const = 0.1;
 		log_transform = false;
 		transform_x = @(x) x;
 	end
 
 	methods
-		function obj = KernelSmoother(ktype, log_transform)
+		function obj = KernelSmoother(ktype, log_transform,...
+			log_transform_const)
 			if nargin == 1
 				obj.ktype = ktype;
-			elseif nargin == 2
+			end
+
+			if nargin >= 2
 				obj.ktype = ktype;
 				obj.log_transform = log_transform;
 
-				if log_transform
-					obj.transform_x = @(x) exp(x) - 0.1;
+				if nargin == 3
+					obj.log_transform_const = log_transform_const;
 				end
+			end
+
+			if obj.log_transform
+				obj.transform_x = ...
+					@(x) exp(x) - obj.log_transform_const;
 			end
 		end
 
@@ -31,7 +43,7 @@ classdef KernelSmoother < handle
 			cdf_u = cdf_u(iu);
 
 			if obj.log_transform
-				v_u = log(0.1 + v_u);
+				v_u = log(obj.log_transform_const + v_u);
 			end
 
 			obj.x = v_u;
@@ -51,7 +63,7 @@ classdef KernelSmoother < handle
 
 		function set(obj, x, y, h)
 			if obj.log_transform
-				obj.x = log(0.1 + x);
+				obj.x = log(obj.log_transform_const + x);
 			else
 				obj.x = x;
 			end
@@ -64,11 +76,22 @@ classdef KernelSmoother < handle
 
 		function x_out = keval(obj, x_query)
 			if obj.log_transform
-				x_query = log(0.1 + x_query);
+				x_query = log(obj.log_transform_const + x_query);
+			end
+
+			if obj.force_fit_bottom
+				h_adj = obj.h;
+				adj_range = (obj.y >= 0) & (obj.y <= 0.05);
+
+				adjustment = ones(size(obj.x));
+				adjustment(adj_range) = linspace(0.001, 0.01, sum(adj_range))';
+				h_adj = adjustment .* obj.h;
+			else
+				h_adj = obj.h;
 			end
 
 			x_query = reshape(x_query, 1, []);
-			v = abs(x_query - obj.x) ./ obj.h;
+			v = abs(x_query - obj.x) ./ h_adj;
 
 			switch obj.ktype
 				case 'gaussian'
@@ -93,25 +116,50 @@ classdef KernelSmoother < handle
         	x_hat = ginterp(y_query);
         end
 
-        function make_plots(obj)
-        	if obj.log_transform
-        		x_grid = obj.transform_x(obj.x);
-        	else
-        		x_grid = obj.x;
+        function make_plots(obj, plot_raw, plot_fitted)
+        	x_grid = obj.transform_x(obj.x);
+
+        	if nargin == 1
+        		plot_raw = true;
+        		plot_fitted = true;
         	end
 
-	        plot(x_grid, obj.y)
-	        hold on
-            plot(x_grid, obj.keval(obj.x));
-            legend('Raw data', 'Kernel-smoothed (Gaussian)')
+        	legends = {};
+
+        	if plot_raw
+	        	plot(x_grid, obj.y)
+	        	legends = [legends 'Raw data'];
+	        	hold on
+	        end
+
+	        if plot_fitted
+	            plot(x_grid, obj.keval(obj.transform_x(obj.x)));
+	            legends = [legends 'Kernel-smoothed (Gaussian)'];
+	        end
+
+	        legend(legends{:})
+            hold off
         end
         
-        function plot_cdfs(obj)
-            plot(obj.x, cumsum(obj.y))
-            hold on
+        function plot_cdf(obj, plot_raw, plot_fitted)
+        	if nargin == 1
+        		plot_raw = true;
+        		plot_fitted = true;
+        	end
 
-            plot(obj.x, cumsum(obj.keval(obj.x)));
-            legend('Raw data', 'Kernel-smoothed (Gaussian)')
+        	if plot_raw
+            	plot(obj.transform_x(obj.x), cumsum(obj.y))
+            	legend('Raw data')
+            end
+
+            if plot_fitted
+            	if plot_raw
+            		hold on
+            	end
+	            plot(obj.transform_x(obj.x), cumsum(obj.keval(obj.x)));
+	            legend('Raw data', 'Kernel-smoothed (Gaussian)')
+	            hold off
+           end
         end
 	end
 
