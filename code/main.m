@@ -1,4 +1,4 @@
-function [stats, p] = main(p, save_results)
+function [stats, stats_alt] = main(p, save_results)
     % Instantiates necessary classes and calls functions to solve the
     % model and compute statistics
     %
@@ -76,11 +76,11 @@ function [stats, p] = main(p, save_results)
     
     kernel_options.ktype = 'gaussian';
     kernel_options.h = 0.2;
-%     kernel_options.x_transform = @(x) log(0.001 + x);
-%     kernel_options.x_revert = @(z) exp(z) - 0.001;
     kernel_options.rescale_and_log = true;
-%     kernel_options.force_fit_cdf_low = [0, 0.1];
     stats.compute_statistics(kernel_options);
+
+    stats_alt = HACTLib.Statistics(p, income, grdKFE, KFE);
+    stats_alt.compute_statistics();
 
     %% ----------------------------------------------------------------
     % COMPUTE MPCs
@@ -206,17 +206,11 @@ function [stats, p] = main(p, save_results)
         writetable(grids, fpath, 'WriteVariableNames', true);
     end
 
-    
-%     for ii = 1:6
-%         if ii ~= 5
-% 	       stats.mpcs(ii).mpcs = [];
-%         end
-%         stats.mpcs_illiquid(ii).mpcs = [];
-%     end
-%    
-	
 	stats.clean();
     stats = HACTLib.aux.to_structure(stats);
+
+    stats_alt.clean();
+    stats_alt = HACTLib.aux.to_structure(stats_alt);
 
     if save_results
         save(p.save_path,'stats','grd','grdKFE','p','KFE','income')

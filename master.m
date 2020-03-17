@@ -31,7 +31,7 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % -------------------------------------------------------------------------
 
 param_opts.calibrate = false;
-param_opts.fast = true; % use small grid for debugging
+param_opts.fast = false; % use small grid for debugging
 param_opts.ComputeMPCS = true;
 param_opts.ComputeMPCS_illiquid = false; 
 param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
@@ -43,7 +43,7 @@ param_opts.makePlots = false; % not coded yet
 
 run_opts.check_nparams = false;
 run_opts.Server = false;
-run_opts.param_script = 'params_one_asset';
+run_opts.param_script = 'params_adj_cost_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
@@ -115,9 +115,9 @@ if ~isempty(p.calibrator)
 	while (resnorm >= 1e-4) && (i_x0 <= n_x0)
 	    x0 = p.calibrator.x0{i_x0};
 	    options = optimoptions(@lsqnonlin,...
-	    	'MaxFunctionEvaluations', p.maxit_AY,...
-	    	'FunctionTolerance', 1e-5,...
-	    	'OptimalityTolerance', 1e-5);
+	    	'MaxFunctionEvaluations', p.calibration_maxiters,...
+	    	'FunctionTolerance', p.calibration_crit,...
+	    	'OptimalityTolerance', p.calibration_crit);
 	    [calibrated_params, resnorm] = ...
 	    	lsqnonlin(p.calibrator.solver_handle, x0, lbounds, ubounds, options);
 
@@ -132,12 +132,10 @@ if ~isempty(p.calibrator)
 		fID = fopen(txtpath, 'w');
 		fprintf(fID, 'Algorithm converged to targets');
     end
-    
-    stats = p.calibrator.stats;
 end
 
 save_results = true;
-stats = main(p, save_results);
+[stats, stats_alt] = main(p, save_results);
 
 % table_gen = HACTLib.tables.TableGenDetailed(p, stats);
 % results_table = table_gen.create(p, stats)

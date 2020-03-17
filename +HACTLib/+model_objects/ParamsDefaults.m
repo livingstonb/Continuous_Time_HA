@@ -191,6 +191,8 @@ classdef ParamsDefaults < handle
         calibration_targets;
         calibration_bounds;
         calibration_backup_x0;
+        calibration_maxiters = 60;
+        calibration_crit = 1e-5;
 
         % ------------ taxes ------------------------------
         transfer = 0; % transfer to households 
@@ -217,10 +219,6 @@ classdef ParamsDefaults < handle
     	KFE_tol = 1e-8; % critical value
     	KFE_delta = 1e6; %1e6; % step size
         KFE_iterative = true;
-
-    	% Outer assets-income ratio grid
-    	maxit_AY = 60; % maximal allowable number of loops over capital-labor ratio
-    	crit_AY = 1e-7; % critical value
 
         % Options for MPC computations
         MPC_delta = 0.005;

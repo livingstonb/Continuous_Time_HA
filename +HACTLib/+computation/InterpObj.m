@@ -74,7 +74,6 @@ classdef InterpObj < handle
 
 			obj.kernel_smoother = KernelSmoother(kernel_options);
 			obj.kernel_smoother.set(obj.x, obj.y);
-
 		end
 
 
@@ -98,11 +97,11 @@ classdef InterpObj < handle
 			elseif (nargin == 2) && (obj.kernel_smoothing)
 				g_out = obj.kernel_smoother.keval(val);
 			elseif (nargin == 2)
-				g_out = obj.linear_interpolant.icdf(val);
+				g_out = obj.linear_interpolant.cdf(val);
 			elseif (nargin == 3) && strcmp(interp_type, 'kernel')
 				g_out = obj.kernel_smoother.keval(val);
 			elseif (nargin == 3) && strcmp(interp_type, 'linear')
-				g_out = obj.linear_interpolant.icdf(val);
+				g_out = obj.linear_interpolant.cdf(val);
 			end
 		end
 

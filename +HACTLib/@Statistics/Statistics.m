@@ -110,9 +110,7 @@ classdef Statistics < handle
 		end
 
 		function compute_statistics(obj, kernel_options)
-			if nargin == 1
-				obj.kernel_options = struct();
-			else
+			if nargin == 2
 				obj.kernel_options = kernel_options;
             end
 
