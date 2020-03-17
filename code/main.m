@@ -76,6 +76,7 @@ function [stats, stats_alt] = main(p, save_results)
     
     kernel_options.ktype = 'gaussian';
     kernel_options.h = 0.2;
+    kernel_options.force_fit_cdf_low = [];
     kernel_options.rescale_and_log = true;
     stats.compute_statistics(kernel_options);
 

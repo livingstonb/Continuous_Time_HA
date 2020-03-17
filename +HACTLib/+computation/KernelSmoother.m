@@ -53,7 +53,7 @@ classdef KernelSmoother < handle
 					& (obj.y <= obj.force_fit_cdf_low(2));
 
 				adjustment = ones(size(obj.x));
-				adjustment(adj_range) = linspace(0.01, 1, sum(adj_range))';
+				adjustment(adj_range) = linspace(0.1, 1, sum(adj_range))';
 				h_adj = adjustment .* obj.h;
 			else
 				h_adj = obj.h;
@@ -66,7 +66,6 @@ classdef KernelSmoother < handle
 			ii = 1;
 			for xq = x_query
 				v = abs(xq - x_trans) ./ h_adj;
-			% v = abs(x_query - obj.x_transform(obj.x)) ./ h_adj;
 
 				switch obj.ktype
 					case 'gaussian'

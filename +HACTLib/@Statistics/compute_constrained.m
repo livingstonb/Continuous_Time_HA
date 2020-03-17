@@ -70,11 +70,15 @@ function compute_constrained(obj)
 		'HHs paying tax on illiquid returns', 2);
 
 	% Liquid wealth / (quarterly earnings) < epsilon
+    kopts = obj.kernel_options;
+    kopts.h = 0.1;
+    kopts.force_fit_cdf_low = [0, 0.15];
+
 	by_ratio = obj.grdKFE.b.vec ./ obj.income.y.wide;
 	pmf_by = multi_sum(obj.pmf, [2, 3]);
 
 	tmp = sortrows([by_ratio(:), pmf_by(:)]);
-	by_interp = obj.get_interpolant(obj.kernel_options,...
+	by_interp = obj.get_interpolant(kopts,...
 		tmp(:,1), tmp(:,2));
 	
 	tmp = by_interp.cdf(1/6);
@@ -90,7 +94,7 @@ function compute_constrained(obj)
 	pmf_wy = sum(obj.pmf, 3);
 
 	tmp = sortrows([wy_ratio(:), pmf_wy(:)]);
-	wy_interp = obj.get_interpolant(obj.kernel_options,...
+	wy_interp = obj.get_interpolant(kopts,...
 		tmp(:,1), tmp(:,2));
 	
 	tmp = wy_interp.cdf(1/6);
