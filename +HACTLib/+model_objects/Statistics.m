@@ -78,13 +78,10 @@ classdef Statistics < handle
 		model;
 
 		wealth_sorted;
-		wealth_sorted_u;
-		wealth_sorted_iu;
 		wealthmat;
 
 		pmf_w;
 		cdf_w;
-		cdf_w_uwealth;
 
 		nb;
 		na;
@@ -109,17 +106,15 @@ classdef Statistics < handle
 			tmp = grdKFE.b.vec + grdKFE.a.wide;
 			obj.wealthmat = tmp;
 			obj.wealth_sorted = sortrows(tmp(:));
-			[obj.wealth_sorted_u, iu] = unique(obj.wealth_sorted);
-			obj.wealth_sorted_iu = iu;
 
 			obj.pmf = model.g .* grdKFE.trapezoidal.matrix;
 		end
 
 		function compute_statistics(obj, kernel_options)
 			if nargin == 1
-				obj.kernel_options = {};
+				obj.kernel_options = struct();
 			else
-				obj.kernel_options = {kernel_options};
+				obj.kernel_options = kernel_options;
             end
 
 			obj.add_params();
@@ -344,11 +339,11 @@ classdef Statistics < handle
 			obj.model = [];
 			obj.wealthmat = [];
 			obj.wealth_sorted = [];
-			obj.wealth_sorted_u = [];
-			obj.wealth_sorted_iu = [];
 			obj.pmf_w = [];
 			obj.cdf_w = [];
-			obj.cdf_w_uwealth = [];
+			obj.lw_interp = [];
+			obj.iw_interp = [];
+			obj.w_interp = [];
 		end
 	end
 
@@ -373,7 +368,6 @@ classdef Statistics < handle
 		end
 
 		function construct_distributions(obj)
-			import HACTLib.aux.interp_integral_alt
 			import HACTLib.aux.multi_sum
 
 		    [obj.pmf_b, obj.cdf_b] = obj.marginal_dists(1);
@@ -381,15 +375,13 @@ classdef Statistics < handle
 		    [obj.pmf_w, obj.cdf_w] = obj.marginal_dists([1, 2]);
 		    obj.pmf_b_a = multi_sum(obj.pmf, [3, 4]);
 
-		    obj.cdf_w_uwealth = obj.cdf_w(obj.wealth_sorted_iu);
-
 		    obj.lw_interp = get_interpolant(obj.grdKFE.b.vec,...
-				obj.pmf, [1], obj.kernel_options{:});
+				obj.pmf, [1], obj.kernel_options);
 		    obj.iw_interp = get_interpolant(obj.grdKFE.a.vec,...
-				obj.pmf, [2], obj.kernel_options{:});
+				obj.pmf, [2], obj.kernel_options);
 
 		    obj.w_interp = get_interpolant(obj.wealthmat,...
-				obj.pmf, [1, 2], obj.kernel_options{:});
+				obj.pmf, [1, 2], obj.kernel_options);
 		end
 
 		function compute_percentiles(obj)
@@ -402,61 +394,64 @@ classdef Statistics < handle
 
 				tmp_b = sprintf('b, %gth pctile', pct_at);
 				obj.lwpercentiles{ip} = sfill(...
-					obj.lw_interp.percentile(pct_at/100), tmp_b);
+					obj.lw_interp.icdf(pct_at/100), tmp_b);
 
 				tmp_a = sprintf('a, %gth pctile', pct_at);
 				obj.iwpercentiles{ip} = sfill(...
-					obj.iw_interp.percentile(pct_at/100), tmp_a, 2);
+					obj.iw_interp.icdf(pct_at/100), tmp_a, 2);
 
 				tmp_w = sprintf('w, %gth pctile', pct_at);
 				obj.wpercentiles{ip} = sfill(...
-					obj.w_interp.percentile(pct_at/100), tmp_w, 2);
+					obj.w_interp.icdf(pct_at/100), tmp_w, 2);
 			end
 
-			obj.median_liqw = sfill(obj.lw_interp.percentile(0.5),...
+			obj.median_liqw = sfill(obj.lw_interp.icdf(0.5),...
 				'b, median');
-			obj.median_illiqw = sfill(obj.iw_interp.percentile(0.5),...
+			obj.median_illiqw = sfill(obj.iw_interp.icdf(0.5),...
 				'a, median', 2);
-			obj.median_totw = sfill(obj.w_interp.percentile(0.5),...
+			obj.median_totw = sfill(obj.w_interp.icdf(0.5),...
 				'w, median', 2);
 		end
 
 		function compute_inequality(obj)
 			import HACTLib.aux.interp_integral_alt
-			import HACTLib.aux.unique_sort
 			import HACTLib.aux.direct_gini
 			import HACTLib.aux.multi_sum
+
+			wshares_kernel_options = obj.kernel_options;
+			wshares_kernel_options.x_transform = @(x) log(0.001 + 100*x);
+		    wshares_kernel_options.x_revert = @(z) (exp(z) - 0.001) / 100;
 
 			% Top wealth shares
 			pmf_w = multi_sum(obj.pmf, [3, 4]);
 			tmp = sortrows([obj.wealthmat(:), pmf_w(:)]);
 			values_w = cumsum(tmp(:,1) .* tmp(:,2) / obj.totw.value);
 			wcumshare_interp = get_interpolant(values_w,...
-				tmp(:,2), [], obj.kernel_options{:});
+				tmp(:,2), [], wshares_kernel_options);
 
-			tmp = 1 - wcumshare_interp.percentile(0.9);
+			tmp = 1 - wcumshare_interp.icdf(0.9);
 			obj.w_top10share = sfill(tmp, 'w, Top 10% share', 2);
 
-			tmp = 1 - wcumshare_interp.percentile(0.99);
+			tmp = 1 - wcumshare_interp.icdf(0.99);
 			obj.w_top1share = sfill(tmp, 'w, Top 1% share', 2);
 
 			% Top liquid wealth shares
 			values_b = cumsum(obj.grdKFE.b.vec .* obj.pmf_b / obj.liqw.value);
 			bcumshare_interp = get_interpolant(values_b,...
-				obj.pmf_b, [], obj.kernel_options{:});
-			tmp = 1 - bcumshare_interp.percentile(0.9);
+				obj.pmf_b, [], wshares_kernel_options);
+			tmp = 1 - bcumshare_interp.icdf(0.9);
 			obj.lw_top10share = sfill(tmp, 'b, Top 10% share');
 
-			tmp = 1 - bcumshare_interp.percentile(0.99);
+			tmp = 1 - bcumshare_interp.icdf(0.99);
 			obj.lw_top1share = sfill(tmp, 'b, Top 1% share', 2);
 
 			% Top illiquid wealth shares
 			if ~obj.p.OneAsset
 				values_a = cumsum(obj.grdKFE.a.vec .* obj.pmf_a(:) / obj.illiqw.value);
 				acumshare_interp = get_interpolant(obj.grdKFE.a.vec,...
-					obj.pmf_a(:), [], obj.kernel_options{:});
+					obj.pmf_a(:), [], wshares_kernel_options);
 
-				iwshare_interp = @(x) acumshare_interp.percentile(x);
+				iwshare_interp = @(x) acumshare_interp.icdf(x);
 			else
 				iwshare_interp = @(x) NaN;
 			end
@@ -498,18 +493,11 @@ classdef Statistics < handle
 		end
 
 		function compute_constrained(obj)
-            import HACTLib.computation.interpolate_cdf
             import HACTLib.aux.multi_sum
 
-			% Constrained by fraction of mean ann inc
-			iw_constrained_interp = constrained_interp(...
-	        	obj.grdKFE.a.vec, obj.cdf_a);
-
-			lw_constrained_interp = constrained_interp(...
-	        	obj.grdKFE.b.vec, obj.cdf_b);
-
-		    w_constrained_interp = constrained_interp(...
-	        	obj.wealth_sorted_u, obj.cdf_w_uwealth);
+            wy_kernel_options = obj.kernel_options;
+			wy_kernel_options.x_transform = @(x) log(0.001 + 100*x);
+		    wy_kernel_options.x_revert = @(z) (exp(z) - 0.001) / 100;
 
 		    neps = numel(obj.p.epsilon_HtM);
 		    obj.constrained_illiq = cell(1, neps);
@@ -524,21 +512,21 @@ classdef Statistics < handle
 		    for ip = 1:neps
 				htm = obj.p.epsilon_HtM(ip);
 
-				tmp = obj.lw_interp.cdf_at_value(htm);
+				tmp = obj.lw_interp.cdf(htm);
 				obj.constrained_liq{ip} = sfill(tmp,...
 					sprintf('b <= %g', htm));
 
 				obj.constrained_liq_pct{ip} = sfill(tmp,...
 					sprintf('b <= %g%% mean ann inc', htm * 100));
 
-				tmp = obj.iw_interp.cdf_at_value(htm);
+				tmp = obj.iw_interp.cdf(htm);
 				obj.constrained_illiq{ip} = sfill(tmp,...
 					sprintf('a <= %g', htm), 2);
 
 				obj.constrained_illiq_pct{ip} = sfill(tmp,...
 					sprintf('a <= %g%% mean ann inc', htm * 100), 2);
 
-				tmp = obj.w_interp.cdf_at_value(htm);
+				tmp = obj.w_interp.cdf(htm);
 				obj.constrained{ip} = sfill(tmp,...
 					sprintf('w <= %g', htm), 2);
 
@@ -550,9 +538,9 @@ classdef Statistics < handle
 			for ip = 1:ndollars
 				if ~isempty(obj.p.numeraire_in_dollars)
 					htm = obj.p.dollars_HtM(ip) / obj.p.numeraire_in_dollars;
-					illiq_htm = obj.iw_interp.cdf_at_value(htm);
-					liq_htm = obj.lw_interp.cdf_at_value(htm);
-					w_htm = obj.w_interp.cdf_at_value(htm);
+					illiq_htm = obj.iw_interp.cdf(htm);
+					liq_htm = obj.lw_interp.cdf(htm);
+					w_htm = obj.w_interp.cdf(htm);
 				else
 					illiq_htm = NaN;
 					liq_htm = NaN;
@@ -572,7 +560,7 @@ classdef Statistics < handle
 			% Fraction paying illiquid asset tax
 			z = obj.p.illiquid_tax_threshold;
 			if isfinite(z)
-				tmp = 1 - obj.iw_interp.cdf_at_value(z);
+				tmp = 1 - obj.iw_interp.cdf(z);
 			else
 				tmp = 0;
 			end
@@ -590,46 +578,34 @@ classdef Statistics < handle
 			pmf_wy = tmp(keep,2);
 
 			wy_interp = get_interpolant(values, pmf_wy,...
-				[], obj.kernel_options{:});
-			% tmp = sortrows([wy_ratio(:), obj.pmf(:)]);
-			% [wy_ratio_u, iu] = unique(tmp(:,1), 'last');
-
-			% cdf_w_u = cumsum(tmp(:,2));
-			% cdf_w_u = cdf_w_u(iu);
-
-			% wy_interp = griddedInterpolant(wy_ratio_u, cdf_w_u,...
-			% 	'pchip', 'nearest');
-
-			% tmp = interpolate_cdf(pmf_wy(:), wy_ratio(:),...
-   %              [0.05, 0.4], 1/6, 3);
-
-			tmp = wy_interp.cdf_at_value(1/6);
+				[], wy_kernel_options);
+			
+			tmp = wy_interp.cdf(1/6);
 			obj.w_lt_ysixth = sfill(...
 				tmp, 'w_i <= y_i / 6, biweekly earnings', 2);
 			
-			tmp = wy_interp.cdf_at_value(1/12);
+			tmp = wy_interp.cdf(1/12);
 			obj.w_lt_ytwelfth = sfill(...
 				tmp, 'w_i <= y_i / 12, weekly earnings', 2);
 
 			% Liquid wealth / (quarterly earnings) < epsilon
 			by_ratio = obj.grdKFE.b.vec ./ obj.income.y.wide;
 			pmf_by = multi_sum(obj.pmf, [2, 3]);
-% 			tmp = sortrows([by_ratio(:), pmf_by(:)]);
-% 			[by_ratio_u, iu] = unique(tmp(:,1), 'last');
-% 
-% 			cdf_b_u = cumsum(tmp(:,2));
-% 			cdf_b_u = cdf_b_u(iu);
 
-% 			by_interp = griddedInterpolant(by_ratio_u, cdf_b_u,...
-% 				'pchip', 'nearest');
-           
-            tmp = interpolate_cdf(pmf_by(:), by_ratio(:),...
-                [0.05, 0.4], 1/6, 3);
+			tmp = sortrows([by_ratio(:), pmf_by(:)]);
+			values = tmp(:,1);
+			keep = values <= 0.5;
+			values = values(keep);
+			pmf_by = tmp(keep,2);
+
+			by_interp = get_interpolant(values, pmf_by,...
+				[], wy_kernel_options);
+			
+			tmp = by_interp.cdf(1/6);
 			obj.liqw_lt_ysixth = sfill(...
 				tmp, 'b_i <= y_i / 6, biweekly earnings');
             
-            tmp = interpolate_cdf(pmf_by(:), by_ratio(:),...
-                [0.05, 0.2], 1/12, 3);
+            tmp = by_interp.cdf(1/12);
 			obj.liqw_lt_ytwelfth = sfill(...
 				tmp, 'b_i <= y_i / 12, weekly earnings');
             
@@ -754,32 +730,8 @@ function out = sfill(value, label, asset_indicator)
 	);
 end
 
-function interp_out = pct_interp(values, cdf_x)
-	[cdf_x_u, iu] = unique(cdf_x(:), 'first');
-	values_u = values(iu);
-
-	if numel(cdf_x_u) >= 2
-		interp_out = griddedInterpolant(...
-			cdf_x_u, values_u, 'pchip', 'nearest');
-	else
-		interp_out = @(x) NaN;
-	end
-end
-
-function interp_out = constrained_interp(values, cdf_x)
-	[values_u, iu] = unique(values, 'last');
-	cdf_x_u = cdf_x(iu);
-
-	if numel(values_u) >= 2
-		interp_out = griddedInterpolant(...
-			values_u, cdf_x_u, 'pchip', 'nearest');
-	else
-		interp_out = @(x) NaN;
-	end
-end
-
 function interp_obj = get_interpolant(values, pmf, dims_to_keep,...
-	varargin)
+	kernel_options)
 	import HACTLib.computation.InterpObj
 
 	already_sorted = isequal(dims_to_keep, []);
@@ -787,5 +739,5 @@ function interp_obj = get_interpolant(values, pmf, dims_to_keep,...
 	interp_obj = InterpObj();
 	interp_obj.set_dist(values, pmf, dims_to_keep, already_sorted);
 
-	interp_obj.configure(varargin{:});
+	interp_obj.configure(kernel_options);
 end

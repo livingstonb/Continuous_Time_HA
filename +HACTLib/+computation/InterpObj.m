@@ -1,3 +1,4 @@
+
 classdef InterpObj < handle
 	properties
 		x;
@@ -44,7 +45,7 @@ classdef InterpObj < handle
 		end
 
 		function configure(obj, kernel_options)
-			if nargin == 1
+			if numel(kernel_options) == 0
 				obj.configure_interpolants();
 			else
 				obj.kernel_smoothing = true;
@@ -67,22 +68,20 @@ classdef InterpObj < handle
 		function configure_kernel_smoother(obj, kernel_options)
 			import HACTLib.computation.KernelSmoother
 
-			obj.kernel_smoother = KernelSmoother(...
-				kernel_options.ktype, kernel_options.log_transform,...
-				kernel_options.log_transform_const);
-			obj.kernel_smoother.set(obj.x, obj.y, kernel_options.h);
+			obj.kernel_smoother = KernelSmoother(kernel_options);
+			obj.kernel_smoother.set(obj.x, obj.y);
 		end
 
 
-		function val_pct = percentile(obj, pct)
+		function z_out = icdf(obj, p)
 			if obj.kernel_smoothing
-				val_pct = obj.kernel_smoother.keval_inv(pct);
+				z_out = obj.kernel_smoother.keval_inv(p);
 			else
-				val_pct = obj.pct_interp(pct);
+				z_out = obj.pct_interp(p);
 			end
 		end
 
-		function cdf_out = cdf_at_value(obj, val)
+		function cdf_out = cdf(obj, val)
 			if obj.kernel_smoothing
 				cdf_out = obj.kernel_smoother.keval(val);
 			else
