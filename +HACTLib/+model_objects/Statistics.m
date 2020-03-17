@@ -375,13 +375,12 @@ classdef Statistics < handle
 		    [obj.pmf_w, obj.cdf_w] = obj.marginal_dists([1, 2]);
 		    obj.pmf_b_a = multi_sum(obj.pmf, [3, 4]);
 
-		    obj.lw_interp = get_interpolant(obj.grdKFE.b.vec,...
-				obj.pmf, [1], obj.kernel_options);
-		    obj.iw_interp = get_interpolant(obj.grdKFE.a.vec,...
-				obj.pmf, [2], obj.kernel_options);
-
-		    obj.w_interp = get_interpolant(obj.wealthmat,...
-				obj.pmf, [1, 2], obj.kernel_options);
+		    obj.lw_interp = get_interpolant(obj.kernel_options,...
+		    	obj.grdKFE.b.vec, obj.pmf, [1]);
+		    obj.iw_interp = get_interpolant(obj.kernel_options,...
+		    	obj.grdKFE.a.vec, obj.pmf, [2]);
+		    obj.w_interp = get_interpolant(obj.kernel_options,...
+		    	obj.wealthmat, obj.pmf, [1, 2]);
 		end
 
 		function compute_percentiles(obj)
@@ -419,15 +418,14 @@ classdef Statistics < handle
 			import HACTLib.aux.multi_sum
 
 			wshares_kernel_options = obj.kernel_options;
-			wshares_kernel_options.x_transform = @(x) log(0.001 + 100*x);
-		    wshares_kernel_options.x_revert = @(z) (exp(z) - 0.001) / 100;
+
 
 			% Top wealth shares
 			pmf_w = multi_sum(obj.pmf, [3, 4]);
 			tmp = sortrows([obj.wealthmat(:), pmf_w(:)]);
 			values_w = cumsum(tmp(:,1) .* tmp(:,2) / obj.totw.value);
-			wcumshare_interp = get_interpolant(values_w,...
-				tmp(:,2), [], wshares_kernel_options);
+			wcumshare_interp = get_interpolant(wshares_kernel_options,...
+				values_w, tmp(:,2));
 
 			tmp = 1 - wcumshare_interp.icdf(0.9);
 			obj.w_top10share = sfill(tmp, 'w, Top 10% share', 2);
@@ -437,8 +435,8 @@ classdef Statistics < handle
 
 			% Top liquid wealth shares
 			values_b = cumsum(obj.grdKFE.b.vec .* obj.pmf_b / obj.liqw.value);
-			bcumshare_interp = get_interpolant(values_b,...
-				obj.pmf_b, [], wshares_kernel_options);
+			bcumshare_interp = get_interpolant(wshares_kernel_options,...
+				values_b, obj.pmf_b);
 			tmp = 1 - bcumshare_interp.icdf(0.9);
 			obj.lw_top10share = sfill(tmp, 'b, Top 10% share');
 
@@ -448,8 +446,8 @@ classdef Statistics < handle
 			% Top illiquid wealth shares
 			if ~obj.p.OneAsset
 				values_a = cumsum(obj.grdKFE.a.vec .* obj.pmf_a(:) / obj.illiqw.value);
-				acumshare_interp = get_interpolant(obj.grdKFE.a.vec,...
-					obj.pmf_a(:), [], wshares_kernel_options);
+				acumshare_interp = get_interpolant(wshares_kernel_options,...
+					obj.grdKFE.a.vec, obj.pmf_a(:));
 
 				iwshare_interp = @(x) acumshare_interp.icdf(x);
 			else
@@ -496,8 +494,6 @@ classdef Statistics < handle
             import HACTLib.aux.multi_sum
 
             wy_kernel_options = obj.kernel_options;
-			wy_kernel_options.x_transform = @(x) log(0.001 + 100*x);
-		    wy_kernel_options.x_revert = @(z) (exp(z) - 0.001) / 100;
 
 		    neps = numel(obj.p.epsilon_HtM);
 		    obj.constrained_illiq = cell(1, neps);
@@ -567,18 +563,29 @@ classdef Statistics < handle
 			obj.hhs_paying_wealth_tax = sfill(tmp,...
 				'HHs paying tax on illiquid returns', 2);
 
+			% Liquid wealth / (quarterly earnings) < epsilon
+			by_ratio = obj.grdKFE.b.vec ./ obj.income.y.wide;
+			pmf_by = multi_sum(obj.pmf, [2, 3]);
+
+			tmp = sortrows([by_ratio(:), pmf_by(:)]);
+			by_interp = get_interpolant(wy_kernel_options,...
+				tmp(:,1), tmp(:,2));
+			
+			tmp = by_interp.cdf(1/6);
+			obj.liqw_lt_ysixth = sfill(...
+				tmp, 'b_i <= y_i / 6, biweekly earnings');
+            
+            tmp = by_interp.cdf(1/12);
+			obj.liqw_lt_ytwelfth = sfill(...
+				tmp, 'b_i <= y_i / 12, weekly earnings');
+
 			% Wealth / (quarterly earnings) < epsilon
 			wy_ratio = obj.wealthmat ./ obj.income.y.wide;
 			pmf_wy = sum(obj.pmf, 3);
 
 			tmp = sortrows([wy_ratio(:), pmf_wy(:)]);
-			values = tmp(:,1);
-			keep = values <= 10;
-			values = values(keep);
-			pmf_wy = tmp(keep,2);
-
-			wy_interp = get_interpolant(values, pmf_wy,...
-				[], wy_kernel_options);
+			wy_interp = get_interpolant(wy_kernel_options,...
+				tmp(:,1), tmp(:,2));
 			
 			tmp = wy_interp.cdf(1/6);
 			obj.w_lt_ysixth = sfill(...
@@ -588,27 +595,6 @@ classdef Statistics < handle
 			obj.w_lt_ytwelfth = sfill(...
 				tmp, 'w_i <= y_i / 12, weekly earnings', 2);
 
-			% Liquid wealth / (quarterly earnings) < epsilon
-			by_ratio = obj.grdKFE.b.vec ./ obj.income.y.wide;
-			pmf_by = multi_sum(obj.pmf, [2, 3]);
-
-			tmp = sortrows([by_ratio(:), pmf_by(:)]);
-			values = tmp(:,1);
-			keep = values <= 1;
-			values = values(keep);
-			pmf_by = tmp(keep,2);
-
-			by_interp = get_interpolant(values, pmf_by,...
-				[], wy_kernel_options);
-			
-			tmp = by_interp.cdf(1/6);
-			obj.liqw_lt_ysixth = sfill(...
-				tmp, 'b_i <= y_i / 6, biweekly earnings');
-            
-            tmp = by_interp.cdf(1/12);
-			obj.liqw_lt_ytwelfth = sfill(...
-				tmp, 'b_i <= y_i / 12, weekly earnings');
-            
 			% HtM Ratios
 			tmp = 1 - obj.w_lt_ysixth.value / obj.liqw_lt_ysixth.value;
 			obj.WHtM_over_HtM_biweekly = sfill(tmp,...
@@ -730,14 +716,10 @@ function out = sfill(value, label, asset_indicator)
 	);
 end
 
-function interp_obj = get_interpolant(values, pmf, dims_to_keep,...
-	kernel_options)
+function interp_obj = get_interpolant(kernel_options, varargin)
 	import HACTLib.computation.InterpObj
 
-	already_sorted = isequal(dims_to_keep, []);
-
 	interp_obj = InterpObj();
-	interp_obj.set_dist(values, pmf, dims_to_keep, already_sorted);
-
+	interp_obj.set_dist(varargin{:});
 	interp_obj.configure(kernel_options);
 end

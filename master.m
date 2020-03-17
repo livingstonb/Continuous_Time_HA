@@ -45,7 +45,7 @@ run_opts.check_nparams = false;
 run_opts.Server = false;
 run_opts.param_script = 'params_adj_cost_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-run_opts.localdir = '/Users/brian-laptop/Documents/GitHub/Continuous_Time_HA/';
+run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE

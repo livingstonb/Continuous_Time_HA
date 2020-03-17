@@ -2,7 +2,8 @@ classdef KernelSmoother < handle
 	properties (Constant)
 		defaults = struct(...
 			'ktype', 'gaussian',...
-			'force_fit_threshold', [],...
+			'force_fit_cdf_low', [],...
+			'rescale_and_log', true,...
 			'x_transform', @(x) x,...
 			'x_revert', @(z) z,...
 			'h', 0.2...
@@ -16,7 +17,8 @@ classdef KernelSmoother < handle
 		h;
 
 		ktype;
-		force_fit_threshold;
+        rescale_and_log;
+		force_fit_cdf_low;
 		x_transform;
 		x_revert;
 	end
@@ -27,15 +29,22 @@ classdef KernelSmoother < handle
 			options = parse_keyvalue_pairs(obj.defaults, varargin{:});
 
 			obj.ktype = options.ktype;
-			obj.force_fit_threshold = options.force_fit_threshold;
-			obj.x_transform = options.x_transform;
-			obj.x_revert = options.x_revert;
+			obj.force_fit_cdf_low = options.force_fit_cdf_low;
+            obj.rescale_and_log = options.rescale_and_log;
+
+            obj.x_transform = options.x_transform;
+            obj.x_revert = options.x_revert;
 			obj.h = options.h;
 		end
 
 		function set(obj, x, y)
 			obj.x = x;
 			obj.y = y;
+
+            if obj.rescale_and_log
+                xb = [min(x), max(x)];
+                obj.x_transform = @(x) rescale_and_log_x(x, xb);
+            end
 
 			[y_hat, iu] = unique(obj.keval(obj.x));
 
@@ -44,9 +53,9 @@ classdef KernelSmoother < handle
 		end
 
 		function y_out = keval(obj, x_query)
-			if numel(obj.force_fit_threshold) == 2
-				adj_range = (obj.y >= obj.force_fit_threshold(1)) ...
-					& (obj.y <= obj.force_fit_threshold(2));
+			if numel(obj.force_fit_cdf_low) == 2
+				adj_range = (obj.y >= obj.force_fit_cdf_low(1)) ...
+					& (obj.y <= obj.force_fit_cdf_low(2));
 
 				adjustment = ones(size(obj.x));
 				adjustment(adj_range) = linspace(0.01, 1, sum(adj_range))';
@@ -91,8 +100,6 @@ classdef KernelSmoother < handle
         end
 
         function make_plots(obj, plot_raw, plot_fitted)
-        	x_grid = obj.x;
-
         	if nargin == 1
         		plot_raw = true;
         		plot_fitted = true;
@@ -101,13 +108,13 @@ classdef KernelSmoother < handle
         	legends = {};
 
         	if plot_raw
-	        	plot(x_grid, obj.y)
+	        	plot(obj.x, obj.y)
 	        	legends = [legends 'Raw data'];
 	        	hold on
 	        end
 
 	        if plot_fitted
-	            plot(x_grid, obj.keval(obj.x));
+	            plot(obj.x, obj.keval(obj.x));
 	            legends = [legends 'Kernel-smoothed (Gaussian)'];
 	        end
 
@@ -115,4 +122,14 @@ classdef KernelSmoother < handle
             hold off
         end
 	end
+end
+
+function x_scaled = rescale_and_log_x(x, xbounds)
+	x_scaled = (x - xbounds(1)) / (xbounds(2) - xbounds(1));
+	x_scaled = log(0.001 + 100 * x_scaled);
+end
+
+function x = revert_rescale_and_log_x(x_scaled)
+	x = exp(x_scaled) - 0.001;
+	x = x / 100;
 end

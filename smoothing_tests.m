@@ -4,6 +4,10 @@ clear
 close all
 load('/home/brian/Documents/pmf_smoothing.mat')
 
+
+%% USING INTERPOBJ
+
+
 %% NO SMOOTHING
 iobj = HACTLib.computation.InterpObj();
 iobj.set_dist(x, y, [1, 4]);

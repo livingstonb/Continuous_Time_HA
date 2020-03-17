@@ -76,9 +76,10 @@ function [stats, p] = main(p, save_results)
     
     kernel_options.ktype = 'gaussian';
     kernel_options.h = 0.2;
-    kernel_options.x_transform = @(x) log(0.001 + x);
-    kernel_options.x_revert = @(z) exp(z) - 0.001;
-    kernel_options.force_fit_threshold = [0, 0.1];
+%     kernel_options.x_transform = @(x) log(0.001 + x);
+%     kernel_options.x_revert = @(z) exp(z) - 0.001;
+    kernel_options.rescale_and_log = true;
+%     kernel_options.force_fit_cdf_low = [0, 0.1];
     stats.compute_statistics(kernel_options);
 
     %% ----------------------------------------------------------------
