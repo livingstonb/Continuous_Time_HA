@@ -9,8 +9,7 @@ classdef InterpObj < handle
 
 	properties (Access=protected)
 		kernel_smoother;
-		pct_interp;
-		cdf_interp;
+		linear_interpolant;
 	end
 
 	methods
@@ -45,26 +44,25 @@ classdef InterpObj < handle
 		end
 
 		function configure(obj, kernel_options)
-			if numel(kernel_options) == 0
-				obj.configure_interpolants();
-			else
+			obj.configure_interpolants();
+			
+			if numel(kernel_options) = 1
 				obj.kernel_smoothing = true;
 				obj.configure_kernel_smoother(kernel_options);
-
-				obj.x = [];
-				obj.y = [];
 			end
 		end
 
 		function configure_interpolants(obj)
+			obj.linear_interpolant = struct();
+
 			% Interpolant for cdf
-			obj.cdf_interp = griddedInterpolant(...
+			obj.linear_interpolant.cdf = griddedInterpolant(...
 				obj.x, obj.y, 'pchip', 'nearest');
 
-			% Interpolant for percentiles
+			% Interpolant for inv cdf
 			[y_u, iu] = unique(obj.y);
 			x_u = obj.x(iu);
-			obj.pct_interp = griddedInterpolant(...
+			obj.linear_interpolant.icdf = griddedInterpolant(...
 				y_u, x_u, 'pchip', 'nearest');
 		end
 
@@ -76,19 +74,27 @@ classdef InterpObj < handle
 		end
 
 
-		function z_out = icdf(obj, p)
-			if obj.kernel_smoothing
+		function z_out = icdf(obj, p, interp_type)
+			if (nargin == 2) && (obj.kernel_smoothing)
 				z_out = obj.kernel_smoother.keval_inv(p);
-			else
-				z_out = obj.pct_interp(p);
+			elseif (nargin == 2)
+				z_out = obj.linear_interpolant.icdf(p);
+			elseif (nargin == 3) && strcmp(interp_type, 'kernel')
+				z_out = obj.kernel_smoother.keval_inv(p);
+			elseif (nargin == 3) && strcmp(interp_type, 'linear')
+				z_out = obj.linear_interpolant.icdf(p);
 			end
 		end
 
-		function cdf_out = cdf(obj, val)
-			if obj.kernel_smoothing
+		function cdf_out = cdf(obj, val, interp_type)
+			if (nargin == 2) && (obj.kernel_smoothing)
 				cdf_out = obj.kernel_smoother.keval(val);
-			else
-				cdf_out = obj.cdf_interp(val);
+			elseif (nargin == 2)
+				cdf_out = obj.linear_interpolant.icdf(val);
+			elseif (nargin == 3) && strcmp(interp_type, 'kernel')
+				cdf_out = obj.kernel_smoother.keval(val);
+			elseif (nargin == 3) && strcmp(interp_type, 'linear')
+				cdf_out = obj.linear_interpolant.icdf(val);
 			end
 		end
 

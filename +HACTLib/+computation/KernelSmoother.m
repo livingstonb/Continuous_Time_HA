@@ -90,7 +90,7 @@ classdef KernelSmoother < handle
         	x_hat = obj.inv_interp(y_query);
         end
 
-        function make_plots(obj, plot_raw, plot_fitted)
+        function ax = make_plots(obj, plot_raw, plot_fitted)
         	if nargin == 1
         		plot_raw = true;
         		plot_fitted = true;
@@ -111,6 +111,8 @@ classdef KernelSmoother < handle
 
 	        legend(legends{:})
             hold off
+
+            ax = gca();
         end
 	end
 end
