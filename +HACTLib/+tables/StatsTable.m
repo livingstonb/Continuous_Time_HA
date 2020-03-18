@@ -51,22 +51,6 @@ classdef StatsTable < HACTLib.tables.BaseTable
 			obj.update_current_column(out, new_entries);
 		end
 
-		function grid_size_table(obj, stats)
-			panel_name = 'Grid parameters';
-			out = obj.new_table_with_header(panel_name);
-
-			new_entries = {
-				stats.params.nb
-				stats.params.na
-				stats.params.b_curv
-				stats.params.a_curv
-				stats.params.amax
-				stats.params.bmax
-			};
-
-			obj.update_current_column(out, new_entries);
-		end
-
 		function income_stats_table(obj)
 			panel_name = 'Income Statistics';
 			out = obj.new_table_with_header(panel_name);
@@ -133,6 +117,8 @@ classdef StatsTable < HACTLib.tables.BaseTable
 			new_entries = {
 				stats.mpcs(4).quarterly
 				stats.mpcs(6).quarterly
+				stats.mpcs(4).annual
+				stats.mpcs(6).annual
 			};
 
 			obj.update_current_column(out, new_entries);
@@ -146,6 +132,9 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				stats.mpcs(1).quarterly
 				stats.mpcs(2).quarterly
 				stats.mpcs(3).quarterly
+				stats.mpcs(1).annual
+				stats.mpcs(2).annual
+				stats.mpcs(3).annual
 			};
 
 			obj.update_current_column(out, new_entries);
@@ -217,6 +206,7 @@ classdef StatsTable < HACTLib.tables.BaseTable
 			out = obj.new_table_with_header(panel_name);
 
 			new_entries = {
+				stats.decomp_baseline.term1_pct
 				stats.decomp_baseline.term2_pct
 				stats.decomp_baseline.term2a_pct(3)
 				stats.decomp_baseline.term2b_pct(3)
@@ -303,7 +293,15 @@ classdef StatsTable < HACTLib.tables.BaseTable
 			out = obj.new_table_with_header(panel_name);
 
 			new_entries = {
+				stats.params.r_b
 				stats.params.r_a
+				stats.params.deathrate
+				stats.params.bequests
+				stats.params.bmax
+				stats.params.amax
+				stats.params.borrowlim
+				stats.params.riskaver
+				stats.params.numeraire
 			};
 
 			obj.update_current_column(out, new_entries);
@@ -338,7 +336,7 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				stats.constrained_dollars{4}
 				stats.constrained_dollars{5}
 				stats.constrained_dollars{6}
-				stats.hhs_paying_wealth_tax
+				% stats.hhs_paying_wealth_tax
 				stats.w_lt_ysixth
 				stats.w_lt_ytwelfth
 				stats.iwshare_b10

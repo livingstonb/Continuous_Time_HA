@@ -105,12 +105,29 @@ classdef InterpObj < handle
 			end
 		end
 
-		function g_out = cdf_poly(obj, val, interval)
-			keep = (obj.x >= interval(1)) & ...
-				(obj.x <= interval(2));
-			p = polyfit(obj.x(keep), obj.y(keep), 3);
-			g_out = polyval(p, val);
+		function g_out = cdf_spline(obj, val, show_plot)
+			if obj.insufficient_grid_pts
+				g_out = NaN;
+			end
+
+			if nargin == 2
+				show_plot = false;
+			end
+
+			lsp = HACTLib.computation.LocalSpline();
+			g_out = lsp.fit_spline(obj.x, obj.y, val);
+
+			if show_plot
+				lsp.show_fit(obj.x, obj.y);
+			end
 		end
+
+		% function g_out = cdf_poly(obj, val, interval)
+		% 	keep = (obj.x >= interval(1)) & ...
+		% 		(obj.x <= interval(2));
+		% 	p = polyfit(obj.x(keep), obj.y(keep), 3);
+		% 	g_out = polyval(p, val);
+		% end
 
 		function plot_cdf(obj, varargin)
 			if obj.insufficient_grid_pts
