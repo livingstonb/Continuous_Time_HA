@@ -105,6 +105,13 @@ classdef InterpObj < handle
 			end
 		end
 
+		function g_out = cdf_poly(obj, val, interval)
+			keep = (obj.x >= interval(1)) & ...
+				(obj.x <= interval(2));
+			p = polyfit(obj.x(keep), obj.y(keep), 3);
+			g_out = polyval(p, val);
+		end
+
 		function plot_cdf(obj, varargin)
 			if obj.insufficient_grid_pts
 				error('Insufficient number of grid points')

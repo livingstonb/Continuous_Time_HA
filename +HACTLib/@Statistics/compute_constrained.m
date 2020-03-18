@@ -71,8 +71,7 @@ function compute_constrained(obj)
 
 	% Liquid wealth / (quarterly earnings) < epsilon
     kopts = obj.kernel_options;
-    kopts.h = 0.1;
-    kopts.force_fit_cdf_low = [0, 0.15];
+    kopts.h = 0.15;
 
 	by_ratio = obj.grdKFE.b.vec ./ obj.income.y.wide;
 	pmf_by = multi_sum(obj.pmf, [2, 3]);

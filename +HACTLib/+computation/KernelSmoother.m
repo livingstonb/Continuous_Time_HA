@@ -18,6 +18,8 @@ classdef KernelSmoother < handle
         rescale_and_log;
 		force_fit_cdf_low;
 		x_transform;
+
+		p_lower;
 	end
 
 	methods
@@ -47,24 +49,33 @@ classdef KernelSmoother < handle
 				obj.x(iu), 'spline', 'nearest');
 		end
 
+		% function set_reflection(obj)
+		% 	preflect0 = 
+		% end
+
+		% function fit_polys(obj)
+		% 	xlower = (obj.y <= 0.1);
+		% 	obj.p_lower = polyfit(obj.x(xlower), obj.y(xlower), 3);
+		% end
+
 		function y_out = keval(obj, x_query)
 			if numel(obj.force_fit_cdf_low) == 2
 				adj_range = (obj.y >= obj.force_fit_cdf_low(1)) ...
 					& (obj.y <= obj.force_fit_cdf_low(2));
 
 				adjustment = ones(size(obj.x));
-				adjustment(adj_range) = linspace(0.1, 1, sum(adj_range))';
+				adjustment(adj_range) = linspace(0.1, 1, sum(adj_range));
 				h_adj = adjustment .* obj.h;
 			else
 				h_adj = obj.h;
 			end
 			
 			y_out = zeros(size(x_query));
-			x_query = obj.x_transform(reshape(x_query, 1, []));
+			x_qtrans = obj.x_transform(reshape(x_query, 1, []));
 			x_trans = obj.x_transform(obj.x);
 
 			ii = 1;
-			for xq = x_query
+			for xq = x_qtrans
 				v = abs(xq - x_trans) ./ h_adj;
 
 				switch obj.ktype
@@ -80,7 +91,13 @@ classdef KernelSmoother < handle
 						kd(v > 1) = 0;
 				end
 
-				y_out(ii) = sum(obj.y .* kd) ./ sum(kd);
+				kd(x_trans - xq > xq) = 0;
+
+				if sum(kd) > 0
+					y_out(ii) = sum(obj.y .* kd) ./ sum(kd);
+				else
+					y_out(ii) = obj.y(1);
+				end
 				ii = ii + 1;
 			end
         end
@@ -118,5 +135,5 @@ end
 
 function x_scaled = rescale_and_log_x(x, xbounds)
 	x_scaled = (x - xbounds(1)) / (xbounds(2) - xbounds(1));
-	x_scaled = log(0.001 + 100 * x_scaled);
+	x_scaled = log(1 + 100 * x);
 end
