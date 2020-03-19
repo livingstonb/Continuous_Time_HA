@@ -73,7 +73,7 @@ function compute_constrained(obj)
     kopts = obj.kernel_options;
     kopts.h = 0.15;
 
-	by_ratio = obj.grdKFE.b.vec ./ obj.income.y.wide;
+	by_ratio = obj.bgrid ./ obj.income.y.wide;
 	pmf_by = multi_sum(obj.pmf, [2, 3]);
 
 	tmp = sortrows([by_ratio(:), pmf_by(:)]);

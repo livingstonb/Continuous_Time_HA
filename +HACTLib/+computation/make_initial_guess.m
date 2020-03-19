@@ -19,7 +19,7 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
 
     import HACTLib.aux.repmat_auto
     import HACTLib.aux.sparse_diags
-    import HACTLib.computation.net_liquid_returns
+    import HACTLib.computation.Returns.liq_returns_incl_borrowing
 
 	nb = p.nb; na = p.na; 
 	nz = p.nz; ny = income.ny;
@@ -41,7 +41,7 @@ function [V, gg] = make_initial_guess(p, grids, gridsKFE, income)
     % GUESS FOR VALUE FUNCTION
     % ---------------------------------------------------------------------
 	% Liquid returns grid
-	r_b_mat = net_liquid_returns(grids.b.vec, p.r_b, p.r_b_borr);
+	r_b_mat = liq_returns_incl_borrowing(grids.b.vec, p.r_b, p.r_b_borr);
 
 	% Ensure a numerically feasible guess
 	r_b_mat = max(r_b_mat, 0.001);

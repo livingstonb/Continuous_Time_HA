@@ -25,7 +25,7 @@ classdef BaseTable < handle
 			obj.outdir = params(1).out_dir;
 
 			obj.set_options(params, stats);
-			obj.filter_experiments(params);
+			% obj.filter_experiments(params);
 		end
 
 		function set_options(obj, params, stats)
@@ -47,27 +47,27 @@ classdef BaseTable < handle
 			obj.n_cols = numel(params);
 		end
 
-		function filter_experiments(obj, params, use_all)
-			if nargin < 3
-				use_all = true;
-			end
+		% function filter_experiments(obj, params, use_all)
+		% 	if nargin < 3
+		% 		use_all = true;
+		% 	end
 
-			if use_all || isempty(obj.included_groups)
-				obj.selected_cases = 1:numel(params);
-			else
-				all_names = {params.group};
-				inames = [];
-				for ii = 1:numel(all_names)
-					if ismember(obj.included_groups, all_names{ii})
-						inames = [inames, ii];
-					end
-				end
+		% 	if use_all || isempty(obj.included_groups)
+		% 		obj.selected_cases = 1:numel(params);
+		% 	else
+		% 		all_names = {params.group};
+		% 		inames = [];
+		% 		for ii = 1:numel(all_names)
+		% 			if ismember(obj.included_groups, all_names{ii})
+		% 				inames = [inames, ii];
+		% 			end
+		% 		end
 
-				obj.selected_cases = unique(inames);
-			end
+		% 		obj.selected_cases = unique(inames);
+		% 	end
 
-			obj.n_cols = numel(obj.selected_cases);
-		end
+		% 	obj.n_cols = numel(obj.selected_cases);
+		% end
 
 		function update_current_column(obj, table_in, stats_in)
 			if nargin < 3

@@ -17,7 +17,7 @@ function compute_inequality(obj)
 	obj.w_top1share = obj.sfill(tmp, 'w, Top 1% share', 2);
 
 	% Top liquid wealth shares
-	values_b = cumsum(obj.grdKFE.b.vec .* obj.pmf_b / obj.liqw.value);
+	values_b = cumsum(obj.bgrid .* obj.pmf_b / obj.liqw.value);
 	bcumshare_interp = obj.get_interpolant(obj.kernel_options,...
 		values_b, obj.pmf_b);
 	tmp = 1 - bcumshare_interp.icdf(0.9);
@@ -28,9 +28,9 @@ function compute_inequality(obj)
 
 	% Top illiquid wealth shares
 	if ~obj.p.OneAsset
-		values_a = cumsum(obj.grdKFE.a.vec .* obj.pmf_a(:) / obj.illiqw.value);
+		values_a = cumsum(obj.agrid .* obj.pmf_a(:) / obj.illiqw.value);
 		acumshare_interp = obj.get_interpolant(obj.kernel_options,...
-			obj.grdKFE.a.vec, obj.pmf_a(:));
+			obj.agrid, obj.pmf_a(:));
 
 		iwshare_interp = @(x) acumshare_interp.icdf(x);
 	else
@@ -50,13 +50,13 @@ function compute_inequality(obj)
 	% Share of illiquid wealth owned by households in
 	% liquid wealth quintiles
 	if ~obj.p.OneAsset
-		grids = {obj.grdKFE.b.vec, obj.grdKFE.a.vec};
-		vals = repmat(shiftdim(obj.grdKFE.a.vec, -1),...
+		grids = {obj.bgrid, obj.agrid};
+		vals = repmat(shiftdim(obj.agrid, -1),...
 			[obj.p.nb_KFE, 1]);
 		integral_a = interp_integral_alt(grids,...
 			vals, obj.pmf_b_a);
 
-		amax = obj.grdKFE.a.vec(end);
+		amax = obj.agrid(end);
 		lt_b10 = integral_a({obj.lwpercentiles{1}.value, amax});
 		lt_b25 = integral_a({obj.lwpercentiles{2}.value, amax});
 	else

@@ -39,12 +39,12 @@ function compute_deposit_stats(obj)
 		adj_cost_obj = HACTLib.aux.AdjustmentCost();
 		adj_cost_obj.set_from_params(obj.p);
 		chii = adj_cost_obj.compute_cost(obj.model.d,...
-        	obj.grdKFE.a.wide);
+        	shiftdim(obj.agrid, -1));
 		obj.adjcosts.mean_cost.value = obj.expectation(chii);
 
 		% Mean abs(d)/a
-        d_div_a = abs(obj.model.d ./ max(obj.grdKFE.a.wide,...
-        	obj.p.a_lb));
+        d_div_a = abs(obj.model.d ./ max(...
+        	shiftdim(obj.agrid, -1), obj.p.a_lb));
         obj.adjcosts.mean_d_div_a.value = obj.expectation(d_div_a);
 	end
 end

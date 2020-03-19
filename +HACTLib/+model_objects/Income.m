@@ -139,10 +139,11 @@ classdef Income < handle
         	% If labor is endogenous, a function handle is returned, otherwise an
         	% array is returned.
 
-        	import HACTLib.computation.net_liquid_returns
+        	import HACTLib.computation.Returns.liq_returns_incl_borrowing
+        	import HACTLib.computation.Returns.net_illiquid_returns
 
-        	r_b_HJB = net_liquid_returns(gridsHJB.b.vec, p.r_b, p.r_b_borr);
-        	r_b_KFE = net_liquid_returns(gridsKFE.b.vec, p.r_b, p.r_b_borr);
+        	r_b_HJB = liq_returns_incl_borrowing(gridsHJB.b.vec, p.r_b, p.r_b_borr);
+        	r_b_KFE = liq_returns_incl_borrowing(gridsKFE.b.vec, p.r_b, p.r_b_borr);
 
 			% Income to liquid asset
 			obj.nety_HJB_liq_hourly = @(h) (1-p.directdeposit) * (1-p.wagetax) * obj.y.wide .* h ...
@@ -151,19 +152,18 @@ classdef Income < handle
 		        + (r_b_KFE + p.deathrate*p.perfectannuities) .* gridsKFE.b.vec + p.transfer;
 
 		    % Income to illiquid asset
-		    import HACTLib.computation.net_illiquid_returns
+		    r_a_effective = p.r_a + p.deathrate * p.perfectannuities;
+		    if isfinite(p.illiquid_tax_threshold)
+		    	illiquid_returns = @(agrid) net_illiquid_returns(...
+		    		agrid, r_a_effective, p.illiquid_tax_threshold, p.illiquid_tax_midpt);
+			else
+				illiquid_returns = @(agrid) r_a_effective .* agrid;
+			end
 
-		    R_a_net = net_illiquid_returns(gridsHJB.a.wide,...
-		    	p.r_a + p.deathrate * p.perfectannuities, p.illiquid_tax_threshold,...
-		    	p.illiquid_tax_midpt);
 		    obj.nety_HJB_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.wide .* h ...
-		    	+ R_a_net;
-
-		    R_a_net = net_illiquid_returns(gridsKFE.a.wide,...
-		    	p.r_a + p.deathrate * p.perfectannuities, p.illiquid_tax_threshold,...
-		    	p.illiquid_tax_midpt);
+		    	+ illiquid_returns(gridsHJB.a.wide);
 		    obj.nety_KFE_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.wide .* h ...
-		    	+ R_a_net;
+		    	+ illiquid_returns(gridsKFE.a.wide);
         end
 
         function inctrans = full_income_transition_matrix(obj, p, V)

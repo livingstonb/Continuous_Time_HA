@@ -66,6 +66,14 @@ classdef Statistics < handle
 		decomp_RA;
 		decomp_baseline_present = false;
 
+		bgrid;
+		agrid;
+
+		nb;
+		na;
+		nz;
+		ny;
+
 		params = struct();
 
 		other = struct();
@@ -74,16 +82,12 @@ classdef Statistics < handle
 	properties (Access=protected)
 		p;
 		income;
-		grdKFE;
 		model;
 
 		wealth_sorted;
 		wealthmat;
 
 		pmf_w;
-
-		nb;
-		na;
         
         kernel_options;
 
@@ -96,13 +100,17 @@ classdef Statistics < handle
 		function obj = Statistics(p, income, grdKFE, model)
 			obj.p = p;
 			obj.income = income;
-			obj.grdKFE = grdKFE;
 			obj.model = model;
+
+			obj.bgrid = grdKFE.b.vec;
+			obj.agrid = grdKFE.a.vec;
 
 			obj.na = p.na_KFE;
 			obj.nb = p.nb_KFE;
+			obj.nz = p.nz;
+			obj.ny = income.ny;
 
-			tmp = grdKFE.b.vec + grdKFE.a.wide;
+			tmp = obj.bgrid + shiftdim(obj.agrid, -1);
 			obj.wealthmat = tmp;
 			obj.wealth_sorted = sortrows(tmp(:));
 
@@ -147,7 +155,6 @@ classdef Statistics < handle
 		function clean(obj)
 			obj.p = [];
 			obj.income = [];
-			obj.grdKFE = [];
 			obj.model = [];
 			obj.wealthmat = [];
 			obj.wealth_sorted = [];
@@ -164,14 +171,14 @@ classdef Statistics < handle
 		    obj.beta_Q = obj.sfill(exp(-obj.p.rho), 'beta (quarterly)');
 		    obj.beta_A = obj.sfill(exp(-4 * obj.p.rho), 'beta (annualized)');
 
-		    tmp = obj.expectation(obj.grdKFE.a.wide);
+		    tmp = obj.expectation(shiftdim(obj.agrid, -1));
 		    obj.illiqw = obj.sfill(tmp, 'Mean illiquid wealth', 2);
 
-		    tmp = obj.expectation(obj.grdKFE.b.vec);
+		    tmp = obj.expectation(obj.bgrid);
 		    obj.liqw = obj.sfill(tmp, 'Mean liquid wealth');
 
 		    tmp = obj.expectation(...
-		    	obj.grdKFE.b.vec + obj.grdKFE.a.wide);
+		    	obj.bgrid + shiftdim(obj.agrid, -1));
 		    obj.totw = obj.sfill(tmp, 'Mean total wealth', 2);
 
 		    tmp = obj.expectation(obj.model.s==0);
@@ -187,9 +194,9 @@ classdef Statistics < handle
 		    obj.pmf_b_a = multi_sum(obj.pmf, [3, 4]);
 
 		    obj.lw_interp = obj.get_interpolant(obj.kernel_options,...
-		    	obj.grdKFE.b.vec, obj.pmf, [1]);
+		    	obj.bgrid, obj.pmf, [1]);
 		    obj.iw_interp = obj.get_interpolant(obj.kernel_options,...
-		    	obj.grdKFE.a.vec, obj.pmf, [2]);
+		    	obj.agrid, obj.pmf, [2]);
 		    obj.w_interp = obj.get_interpolant(obj.kernel_options,...
 		    	obj.wealthmat, obj.pmf, [1, 2]);
 		end

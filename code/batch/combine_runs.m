@@ -1,10 +1,10 @@
 clear
 
-server = true;
+server = false;
 
 if ~server
     basedir = '/home/brian/Documents/GitHub/Continuous_Time_HA';
-    matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output';
+    matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/server2';
     xlxdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output';
 else
     basedir = '/home/livingstonb/GitHub/Continuous_Time_HA';
@@ -30,27 +30,23 @@ for irun = 1:999
         end
         
         params(ind) = s(ind).p;
-        stats(ind) = s(ind).stats;
+        stats{ind} = s(ind).stats;
 
         % perform Empc1 - Empc0 decomposition
-%         if isequal(s(ind).grdKFE.b.vec, s(1).grdKFE.b.vec)
-%             decomp_base(ind) = statistics.decomp_baseline(s(1),s(ind));
-%         else
-%             decomp_base(ind) = statistics.decomp_baseline(s(1),s(1));
-%         end
-
         decomp_base(ind) = statistics.decomp_baseline(s(1), s(ind));
 
         % perform decomp wrt one-asset model
         % decomp_oneasset(ind) = statistics.decomp_twoasset_oneasset(oneasset,s(ind));
         
-        stats_cell{ind} = HACTLib.aux.add_comparison_decomps(params(ind),...
-            stats(ind), decomp_base(ind));
+        stats{ind} = HACTLib.aux.add_comparison_decomps(params(ind),...
+            stats{ind}, decomp_base(ind));
     end
 end
 
-tf = HACTLib.tables.StatsTable(params, stats_cell);
-output_table = tf.create(params, stats_cell)
+fprintf('%d experiments were found..\n\n', ind)
+
+tobj = HACTLib.tables.StatsTable(params, stats);
+output_table = tobj.create(params, stats)
 
 
 csvpath = fullfile(xlxdir, 'output_table.csv');

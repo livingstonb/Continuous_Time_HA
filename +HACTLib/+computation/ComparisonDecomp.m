@@ -9,7 +9,6 @@ classdef ComparisonDecomp < handle
 		income;
 		nthresholds;
 
-		grdKFE;
 		grids;
 
 		income;
@@ -20,14 +19,13 @@ classdef ComparisonDecomp < handle
 		function obj = ComparisonDecomp(s0, s1)
 			obj.p0 = s0.p;
 			obj.p1 = s1.p;
-			% obj.grdKFE = grdKFE;
 			
 			obj.income = s0.income;
 
 			if obj.p0.OneAsset
-				obj.grids = {s0.grdKFE.b.vec};
+				obj.grids = {s0.bgrid};
 			else
-				obj.grids = {s0.grdKFE.b.vec, s0.grdKFE.a.vec};
+				obj.grids = {s0.bgrid, s0.agrid};
 			end
 
 			obj.nthresholds = numel(p0.decomp_thresholds);
