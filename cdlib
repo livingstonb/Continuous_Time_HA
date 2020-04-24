@@ -1,6 +1,0 @@
-if [ $# == 0 ]
-then
-  cd "+HACTLib"
-else
-  cd "+HACTLib/+$1"
-fi
