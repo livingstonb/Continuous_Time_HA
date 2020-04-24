@@ -80,9 +80,6 @@ function [stats, stats_alt] = main(p, save_results)
     kernel_options.rescale_and_log = true;
     stats.compute_statistics(kernel_options);
 
-    stats_alt = HACTLib.Statistics(p, income, grdKFE, KFE);
-    stats_alt.compute_statistics();
-
     %% ----------------------------------------------------------------
     % COMPUTE MPCs
     % -----------------------------------------------------------------
@@ -209,9 +206,6 @@ function [stats, stats_alt] = main(p, save_results)
 
 	stats.clean();
     stats = HACTLib.aux.to_structure(stats);
-
-    stats_alt.clean();
-    stats_alt = HACTLib.aux.to_structure(stats_alt);
 
     if save_results
         save(p.save_path,'stats','grd','grdKFE','p','KFE','income')

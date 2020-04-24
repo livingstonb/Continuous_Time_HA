@@ -187,8 +187,10 @@ Used for computing moments and other statistics associated with the stationary d
 
 The *StatsTable* class, which inherits from *BaseTable*, is used to produce results tables based on values provided by an instance of the *Statistics* class.
 
+## Calibrator
+
+Used to calibrate the model to certain targets set by the user by calling a Matlab solver to iterate over the values of one or more parameters.
+
 ## Rate of return risk
 
-Rate of return risk can be enabled by setting the *sigma\_r* parameter to a positive value. Set *retrisk\_KFE* to true to include returns risk in the KFE, or false to exclude it from the KFE, but still include it in the HJB.
-
-## Calibration
+Rate of return risk can be enabled by setting the *sigma\_r* parameter to a positive value. Set *retrisk\_KFE* to true to include returns risk in the KFE, or false to exclude it from the KFE, but still include it in the HJB. If the two-asset model is used, returns risk is applied to the illiquid asset only. Otherwise, returns risk is applied to the liquid asset.
