@@ -48,7 +48,7 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
             end
 
             obj.rhos = obj.rho + obj.rho_grid;
-            obj.riskaver_fulldim = reshape(obj.riskaver,[1 1 numel(obj.riskaver) 1]);
+            obj.riskaver_fulldim = reshape(obj.riskaver, [1 1 numel(obj.riskaver) 1]);
 
             if ~obj.SDU
                 obj.invies = obj.riskaver;

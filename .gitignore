@@ -6,3 +6,4 @@ temp
 *sublime-workspace
 *.mat
 .DS_Store
+*.pdf
