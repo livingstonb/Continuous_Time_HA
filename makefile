@@ -12,12 +12,19 @@ combine :
 check_combine :
 	cat "output/combine.err"
 
-dldir = output/download
+dldir = output/download/
 copy_for_download :
-	-cp "output/*.csv" $(dldir)
-	-cp "output/*.xlsx" $(dldir)
-	-cp "output/*.out" $(dldir)
-	-cp "output/*.err" $(dldir)
+	-rm -rf "$(dldir)"
+	-mkdir -p "$(dldir)"
+	-cp output/*.csv "$(dldir)"
+	-cp output/*.xlsx "$(dldir)"
+	-cp output/*.out "$(dldir)"
+	-cp output/*.err "$(dldir)"
+
+spath := "$$MW:/home/livingstonb/GitHub/Continuous_Time_HA/output/download/*"
+download :
+	-mkdir -p output/server
+	-scp $(spath) output/server/
 
 readme :
 	-pandoc readme.md -o readme.pdf
