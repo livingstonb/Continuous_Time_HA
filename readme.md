@@ -18,7 +18,7 @@ We use SuiteSparse, a package written by Timothy A. Davis.
 # HACTLib
 
 ## Summary
-HACTLib is a library of functions and classes designed to allow for the creation of a heterogenous agent continuous time model. The main components of the library are the following:
+HACTLib is a library of functions and classes designed to allow for the creation of a heterogenous agent continuous time model. The *Model* class utilizes most of the library objects and the source code for *Model* can be used as a guideline for how the different model objects can be used together. Details omitted in this document can for most classes can be found in comments written in the source code, which can often be viewed directly in MATLAB with the `help` command. The main components of the library are the following:
 
 * The Params class, used to store model parameters.
 
@@ -27,8 +27,6 @@ HACTLib is a library of functions and classes designed to allow for the creation
 * The Grid class, used to store the asset grids.
 
 * The Preferences class, used to store utility functions.
-
-* The Model class, which initializes and solves the model.
 
 * Additional classes provided to solve the HJB and/or KFE and to compute or simulate MPCs.
 
@@ -94,6 +92,10 @@ Some parameters are expected to take true/false values, which may activate or di
 * *perfectannuities*
 
 	When true, the *Bequests* parameter is set to false automatically and returns on both the liquid and illiquid asset, where they are used, are augmented by the death rate.
+
+* *SDU*
+
+	When true, stochastic-differential utility is used. The *invies* and *riskaver* parameters should both be set by the user if SDU is used.
 
 * *DealWithSpecialCase*
 
@@ -161,6 +163,32 @@ The model can accomodate a single, liquid asset, or a liquid asset in combinatio
 
 The form of the adjustment cost function can be viewed in the *AdjustmentCost* class. There are two functional forms in the code, which are equivalent, but we use only the second.
 
-## Stochastic-differential utility
+## HJBSolver, KFESolver, MPCs, and MPCsNews
+
+Each of these classes have their own set of options, which can be set manually or by passing a *Params* object into the class constructor. These classes have methods that solve various parts of the model and return the result(s).
+
+## Statistics
+
+Used for computing moments and other statistics associated with the stationary distribution. Most properties of this class are structures containing three fields:
+
+1. *value*
+
+	The value taken by the given statistic.
+
+2. *label*
+
+	The description of the given statistic.
+
+3. *indicator*
+
+	An indicator of which asset the statistic applies to. Takes the value of zero if the statistic is relevant for both one- and two-asset models, one if the statistic is only relevant for the one-asset model, and two if the statistic is only relevant for the two-asset model. This is used by the StatsTable object which may selectively present statistics based on the type of model used.
+
+## StatsTable and BaseTable
+
+The *StatsTable* class, which inherits from *BaseTable*, is used to produce results tables based on values provided by an instance of the *Statistics* class.
 
 ## Rate of return risk
+
+Rate of return risk can be enabled by setting the *sigma\_r* parameter to a positive value. Set *retrisk\_KFE* to true to include returns risk in the KFE, or false to exclude it from the KFE, but still include it in the HJB.
+
+## Calibration
