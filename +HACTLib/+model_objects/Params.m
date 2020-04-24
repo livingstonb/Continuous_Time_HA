@@ -176,9 +176,9 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
         end
 
         function set_calibrator(obj)
-            import HACTLib.model_objects.AltCalibrator
+            import HACTLib.model_objects.Calibrator
 
-            calibrator = AltCalibrator(obj, obj.calibration_vars,...
+            calibrator = Calibrator(obj, obj.calibration_vars,...
                 obj.calibration_stats, obj.calibration_targets);
             calibrator.set_param_bounds(obj.calibration_bounds);
             calibrator.set_handle(obj);

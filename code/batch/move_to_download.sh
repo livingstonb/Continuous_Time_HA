@@ -1,12 +1,10 @@
-path0="/home/livingstonb/GitHub/Continuous_Time_HA/output/"
+path1="output/*.csv"
+path2="output/*.xlsx"
+path3="output/*.out"
+path4="output/*.err"
 
-path1="${path0}*.csv"
-path2="${path0}*.xlsx"
-path3="${path0}*.out"
-path4="${path0}*.err"
-
-dlpath="${path0}download/"
-cp $path1 $dlpath
-cp $path2 $dlpath
-cp $path3 $dlpath
-cp $path4 $dlpath 
+dlpath="$output/download/"
+cp "output/*.csv" $dlpath
+cp "output/*.xlsx" $dlpath
+cp "output/*.out" $dlpath
+cp "output/*.err" $dlpath 

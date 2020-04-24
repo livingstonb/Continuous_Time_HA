@@ -1,4 +1,4 @@
-classdef AltCalibrator < handle
+classdef Calibrator < handle
 	% Brian Livingston, 2020
 	% livingstonb@uchicago.edu
 
@@ -20,7 +20,7 @@ classdef AltCalibrator < handle
 	end
 
 	methods
-		function obj = AltCalibrator(params, variables,...
+		function obj = Calibrator(params, variables,...
 			target_names, target_values)
 
 			obj.options = struct();
