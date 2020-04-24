@@ -64,6 +64,7 @@ function decomp = decomp_baseline(s0, s1)
         if p0.OneAsset
             b0_a0 = x;
             b0_amax = x;
+            bmax = inf;
         elseif ~p0.OneAsset
             b0_a0 = [x, x];
             b0_amax = [x, inf];
@@ -72,10 +73,13 @@ function decomp = decomp_baseline(s0, s1)
         end
 
         decomp.term2a(ia) = m0g1interp(b0_a0) - m0g0interp(b0_a0);
-        decomp.term2b(ia) = (m0g1interp(b0_amax) - m0g1interp(b0_a0)) ...
-            - (m0g0interp(b0_amax) - m0g0interp(b0_a0));
 
-        if ~p0.OneAsset
+        if p0.OneAsset
+            decomp.term2b(ia) = (m0g1interp(inf) - m0g1interp(x)) ...
+                - (m0g0interp(inf) - m0g0interp(x));
+        else
+            decomp.term2b(ia) = (m0g1interp(b0_amax) - m0g1interp(b0_a0)) ...
+                - (m0g0interp(b0_amax) - m0g0interp(b0_a0));
             decomp.term2c(ia) = (m0g1interp(bmax_amax) - m0g1interp(b0_amax)) ...
                 -(m0g0interp(bmax_amax) - m0g0interp(b0_amax));
         end

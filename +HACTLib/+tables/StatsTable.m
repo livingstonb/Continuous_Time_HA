@@ -92,6 +92,7 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				stats.constrained_liq_pct{4}
 				stats.constrained_liq_pct{5}
 				stats.constrained_liq_pct{6}
+				stats.constrained_liq_pct{7}
 				stats.constrained_liq_dollars{1}
 				stats.constrained_liq_dollars{2}
 				stats.constrained_liq_dollars{3}

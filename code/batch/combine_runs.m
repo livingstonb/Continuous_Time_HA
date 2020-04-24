@@ -4,7 +4,7 @@ server = false;
 
 if ~server
     basedir = '/home/brian/Documents/GitHub/Continuous_Time_HA';
-    matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/server2';
+    matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/';
     xlxdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output';
 else
     basedir = '/home/livingstonb/GitHub/Continuous_Time_HA';

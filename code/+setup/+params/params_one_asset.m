@@ -9,13 +9,13 @@ function [outparams, n] = params_one_asset(param_opts)
     shared_params.nb = 250;
     shared_params.nb_KFE = 250;
 
-    shared_params.bgrid_term1_weight = 0.01;
-    shared_params.bgrid_term1_curv = 0.8;
-    shared_params.b_gcurv_pos = 0.1;
+    shared_params.bgrid_term1_weight = 0;
+    shared_params.bgrid_term1_curv = 1;
+    shared_params.b_gcurv_pos = 0.2;
     shared_params.OneAsset = true;
     shared_params.Bequests = true;
 
-    shared_params.bmax = 50;
+    shared_params.bmax = 100;
     shared_params.rho = 0.005;
 
     shared_params.calibration_vars = {'rho'};
