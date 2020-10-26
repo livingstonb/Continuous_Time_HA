@@ -352,6 +352,8 @@ classdef MPCSimulator < handle
 	    function simulate_assets_one_period(obj, ~)
 	    	% this function simulates assets over the next time
 	    	% delta
+            
+            import HACTLib.aux.AdjustmentCost
 
 	    	% interpolate to find decisions
 	    	s = zeros(obj.options.n, obj.nshocks+1);

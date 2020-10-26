@@ -1,11 +1,15 @@
-function outparams = table_tests(param_opts, param_index)
+function [outparams, nparams] = table_tests(param_opts)
     % Create structure array 'params', and output a Params instance
     % of the structure in the 'index' entry, i.e. 1,2,3,.
+    
+    nparams = -1;
 
     import HACTLib.aux.set_shared_fields
 
     shocks = [-1, -500, -5000, 1, 500, 5000];
     dollars = 72000;
+    
+    param_index = param_opts.param_index;
 
     shared_params = param_opts;
     shared_params.mpc_shocks = shocks / dollars;

@@ -38,12 +38,12 @@ param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
 param_opts.ComputeMPCS_news = false;
 param_opts.SimulateMPCS_news = false;
 param_opts.DealWithSpecialCase = false; % need to recode this
-param_opts.param_index = 2;
+param_opts.param_index = 1;
 param_opts.makePlots = false; % not coded yet
 
 run_opts.check_nparams = false;
 run_opts.Server = false;
-run_opts.param_script = 'params_one_asset';
+run_opts.param_script = 'params_adj_cost_tests';
 run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
 run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
@@ -130,7 +130,7 @@ if ~isempty(p.calibrator)
 end
 
 save_results = true;
-[stats, stats_alt] = main(p, save_results);
+stats = main(p, save_results);
 
 table_gen = HACTLib.tables.StatsTable(p, {stats});
 results_table = table_gen.create(p, {stats})
