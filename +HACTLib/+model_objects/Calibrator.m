@@ -14,6 +14,8 @@ classdef Calibrator < handle
 		ubounds;
 
 		x0;
+        
+        ix_curr = 1;
 
 		solver_handle;
 		stats;
@@ -44,8 +46,9 @@ classdef Calibrator < handle
 				error("Number of instruments and targets don't match")
 			elseif numel(obj.target_values) ~= numel(obj.target_names)
 				error("Too many/few values provided for targets")
-			end
+            end
 
+            % Use current parameter values as initial guess
 			x0_1 = zeros(1, obj.nvars);
 			for i_var = 1:obj.nvars
 				x0_1(i_var) = params.(obj.variables{i_var});
@@ -83,6 +86,7 @@ classdef Calibrator < handle
 			save_results = false;
 			obj.stats = main(current_params, save_results);
 			
+            % Report values of target variables
 			fprintf('\n\n---- For ')
 			for i_var = 1:obj.nvars
 				v(i_var) = obj.stats.(obj.target_names{i_var}).value;
@@ -106,9 +110,12 @@ classdef Calibrator < handle
 			end
 
 			if ismember('r_a', obj.target_names)
-				z = abs(obj.stats.totw.value - obj.stats.liqw.value);
+                % If illiquid wealth is very close to zero, introduce an
+                % ad-hoc reward on increasing the illiquid return. The
+                % effect of this vanishes as illiquid wealth gets larger.
+				z = obj.stats.illiqw.value - 0.01;
 
-				c = min(max(z - 0.01, 0), 0.5);
+				c = min(max(z, 0), 0.5);
 				m = (1 + cos(c * pi * 2)) / 10;
 				dv(end+1) = (0.01 / (0.2 +current_params.r_a)) * m;
 			end
@@ -116,6 +123,8 @@ classdef Calibrator < handle
 		end
 
 		function turn_off_param_options(obj, params)
+            % Turns off unecessary features during intermediate solver
+            % iterations.
 			quiet = true;
 			props = fields(obj.options);
 			for ip = 1:numel(props)
@@ -124,11 +133,24 @@ classdef Calibrator < handle
 		end
 
 		function reset_param_options(obj, params)
+            % Turns features back on in case solver has converged and final
+            % results need to be computed.
 			quiet = true;
 			props = fields(obj.options);
 			for ip = 1:numel(props)
 				params.set(props{ip}, obj.options.(props{ip}), quiet);
 			end
-		end
+        end
+        
+        function x0curr = get_next_x0(obj)
+            if (obj.ix_curr <= numel(obj.x0))
+                x0curr = obj.x0{obj.ix_curr};
+                obj.ix_curr = obj.ix_curr + 1;
+            else
+                x0curr = [];
+            end
+        end
+        
+        
 	end
 end

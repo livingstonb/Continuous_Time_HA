@@ -30,7 +30,7 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-param_opts.calibrate = false;
+param_opts.calibrate = true;
 param_opts.fast = true; % use small grid for debugging
 param_opts.ComputeMPCS = true;
 param_opts.ComputeMPCS_illiquid = false; 
@@ -85,22 +85,20 @@ p.print();
 % CALIBRATING WITH SOLVER
 % -------------------------------------------------------------------------
 if ~isempty(p.calibrator)
-	lbounds = p.calibrator.lbounds;
-	ubounds = p.calibrator.ubounds;
-
-	resnorm = 100;
-	n_x0 = numel(p.calibrator.x0);
-	i_x0 = 1;
-	while (resnorm >= 1e-4) && (i_x0 <= n_x0)
-	    x0 = p.calibrator.x0{i_x0};
-	    options = optimoptions(@lsqnonlin,...
+    options = optimoptions(@lsqnonlin,...
 	    	'MaxFunctionEvaluations', p.calibration_maxiters,...
 	    	'FunctionTolerance', p.calibration_crit,...
 	    	'OptimalityTolerance', p.calibration_crit);
-	    [calibrated_params, resnorm] = ...
-	    	lsqnonlin(p.calibrator.solver_handle, x0, lbounds, ubounds, options);
+	resnorm = 100;
+	while (resnorm >= 1e-4)
+	    x0 = p.calibrator.get_next_x0();
+        if isempty(x0)
+            break;
+        end
 
-	   	i_x0 = i_x0 + 1;
+	    [calibrated_params, resnorm] = ...
+	    	lsqnonlin(p.calibrator.solver_handle, x0,...
+                p.calibrator.lbounds, p.calibrator.ubounds, options);
 	end
 
     if (resnorm >= 1e-4)
