@@ -82,11 +82,11 @@ function compute_constrained(obj)
 	
 	tmp = by_interp.cdf(1/6);
 	obj.liqw_lt_ysixth = obj.sfill(...
-		tmp, 'b_i <= y_i / 6, biweekly earnings');
+		tmp, 'b_i <= y_i / 6');
     
     tmp = by_interp.cdf(1/12);
 	obj.liqw_lt_ytwelfth = obj.sfill(...
-		tmp, 'b_i <= y_i / 12, weekly earnings');
+		tmp, 'b_i <= y_i / 12');
 
 	% Wealth / (quarterly earnings) < epsilon
 	wy_ratio = obj.wealthmat ./ obj.income.y.wide;
@@ -98,18 +98,18 @@ function compute_constrained(obj)
 	
 	tmp = wy_interp.cdf(1/6);
 	obj.w_lt_ysixth = obj.sfill(...
-		tmp, 'w_i <= y_i / 6, biweekly earnings', 2);
+		tmp, 'w_i <= y_i / 6', 2);
 	
 	tmp = wy_interp.cdf(1/12);
 	obj.w_lt_ytwelfth = obj.sfill(...
-		tmp, 'w_i <= y_i / 12, weekly earnings', 2);
+		tmp, 'w_i <= y_i / 12', 2);
 
 	% HtM Ratios
 	tmp = 1 - obj.w_lt_ysixth.value / obj.liqw_lt_ysixth.value;
 	obj.WHtM_over_HtM_biweekly = obj.sfill(tmp,...
-		'P(WHtM) / P(HtM), biweekly earnings (y/6)', 2);
+		'P(WHtM) / P(HtM), HtM in terms of y/6', 2);
 
 	tmp = 1 - obj.w_lt_ytwelfth.value / obj.liqw_lt_ytwelfth.value;
 	obj.WHtM_over_HtM_weekly = obj.sfill(tmp,...
-		'P(WHtM) / P(HtM), weekly earnings (y/12)', 2);
+		'P(WHtM) / P(HtM), HtM in terms of y/12', 2);
 end

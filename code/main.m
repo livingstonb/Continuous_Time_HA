@@ -208,7 +208,7 @@ function [stats, stats_alt] = main(p, save_results)
     stats = HACTLib.aux.to_structure(stats);
 
     if save_results
-        fname = sprintf('output_%d.mat', param_opts.param_index);
+        fname = sprintf('output_%d.mat', p.param_index);
         fpath = fullfile('output', fname);
         save(fpath,'stats','grd','grdKFE','p','KFE','income')
     end
