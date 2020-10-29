@@ -35,7 +35,7 @@ function [outparams, n] = main_calibrations(param_opts)
     % Iterate over r_a, rho
     median_calibration = shared_params;
     median_calibration.calibration_vars = {'rho', 'r_a'};
-    median_calibration.calibration_bounds = {[0.001, 0.05], [0.0055, 0.05]};
+%     median_calibration.calibration_bounds = {[0.001, 0.05], [0.0055, 0.05]};
     median_calibration.calibration_backup_x0 = {[0.004, 0.0065]};
     median_calibration.calibration_stats = {'median_totw', 'median_liqw'};
     median_calibration.calibration_targets = [scf.median_totw, scf.median_liqw];
