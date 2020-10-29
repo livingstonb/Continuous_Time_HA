@@ -6,8 +6,8 @@ function [outparams, n] = main_calibrations(param_opts)
 	shocks = [-1, -500, -5000, 1, 500, 5000];
 
     shared_params = param_opts;
-    shared_params.mpc_shocks = shocks / scf.quarterly_earnings;
-    shared_params.numeraire_in_dollars = scf.quarterly_earnings;
+    shared_params.mpc_shocks = shocks / (scf.quarterly_earnings * 4);
+    shared_params.numeraire_in_dollars = (scf.quarterly_earnings * 4);
     shared_params.nb = 50;
     shared_params.nb_KFE = 50;
     shared_params.na = 50;
@@ -35,7 +35,7 @@ function [outparams, n] = main_calibrations(param_opts)
     % Iterate over r_a, rho
     median_calibration = shared_params;
     median_calibration.calibration_vars = {'rho', 'r_a'};
-%     median_calibration.calibration_bounds = {[0.001, 0.05], [0.0055, 0.05]};
+    median_calibration.calibration_bounds = {[0.001, 0.05], [0.0055, 0.05]};
     median_calibration.calibration_backup_x0 = {[0.004, 0.0065]};
     median_calibration.calibration_stats = {'median_totw', 'median_liqw'};
     median_calibration.calibration_targets = [scf.median_totw, scf.median_liqw];
