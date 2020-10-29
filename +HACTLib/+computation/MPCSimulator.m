@@ -447,12 +447,12 @@ classdef MPCSimulator < handle
             for k = 1:obj.nshocks
             	ishock = obj.shocks(k);
             	name1 = sprintf('policy%ishock%i.mat', closest1, ishock);
-            	lpath1 = fullfile(obj.p.temp_dir, name1);
+            	lpath1 = fullfile('temp', name1);
             	policies1 = load(lpath1);
 
             	if closest2 <= numel(obj.savedTimes)
             		name2 = sprintf('policy%ishock%i.mat', closest2, ishock);
-            		lpath2 = fullfile(obj.p.temp_dir, name2);
+            		lpath2 = fullfile('temp', name2);
             		policies2 = load(lpath2);
 
 	            	weight1 = (timeUntilShock - obj.savedTimes(closest2))...

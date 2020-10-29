@@ -22,7 +22,7 @@ classdef BaseTable < handle
 
 	methods
 		function obj = BaseTable(params, stats)
-			obj.outdir = params(1).out_dir;
+			obj.outdir = 'output';
 
 			obj.set_options(params, stats);
 			% obj.filter_experiments(params);

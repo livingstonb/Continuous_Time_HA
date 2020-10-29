@@ -22,7 +22,7 @@ function [stats, stats_alt] = main(p, save_results)
     %% --------------------------------------------------------------------
     % CREATE GRID, INCOME OBJECTS
     % ---------------------------------------------------------------------
-	income_path = fullfile(p.direc, 'input', p.income_dir);
+	income_path = fullfile('input', p.income_dir);
 
     % Main income process
 	income = Income(income_path, p, false);
@@ -199,7 +199,7 @@ function [stats, stats_alt] = main(p, save_results)
         bgrid = [grd.b.vec; NaN(nx-p.nb, 1)];
         agrid = [grd.a.vec; NaN(nx-p.na, 1)];
         grids = table(bgrid, agrid);
-        fpath = fullfile(p.out_dir,...
+        fpath = fullfile('output',...
             sprintf('grids%d.xlsx', p.param_index));
         writetable(grids, fpath, 'WriteVariableNames', true);
     end
@@ -208,7 +208,9 @@ function [stats, stats_alt] = main(p, save_results)
     stats = HACTLib.aux.to_structure(stats);
 
     if save_results
-        save(p.save_path,'stats','grd','grdKFE','p','KFE','income')
+        fname = sprintf('output_%d.mat', param_opts.param_index);
+        fpath = fullfile('output', fname);
+        save(fpath,'stats','grd','grdKFE','p','KFE','income')
     end
 
     clear solver.two_asset.solver

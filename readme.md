@@ -69,10 +69,6 @@ Note that some parameters set with the Params object are intended to be used to 
 
 Note that some of the properties of the Params object are structures containing multiple parameters, which I use to pass these parameters to other objects, such as HJBSolver. These structures should not be set manually; instead, the user should override the appropriate parameters, and the Params object will update these structures accordingly. E.g. to override the default value for the delta passed to HJBSolver (the default value for which can be seen in *HJBSolver.m*), one should override the HJB\_delta property when instantiating the Params object.
 
-### Parameters that *must* be set by the user
-
-The user must set the directory parameters. These parameters are *out_dir*, *temp_dir*, and *direc*, which should be set to the paths of the output directory, a temp directory, and the path of the directory containing the +HACTLib folder.
-
 ### Frequency intepretation of parameters
 
 Parameters related to the passage of time should be set to their equivalent quarterly values. E.g. if the user wants the probability of death within a given year to be 0.02, the *deathrate* parameter should be set to 0.005.

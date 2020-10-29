@@ -492,7 +492,7 @@ classdef MPCsNews < handle
         	d = obj.KFEint.d;
 
 	    	name = sprintf('policy%ishock%i.mat', index, ishock);
-	    	spath = fullfile(obj.p.temp_dir, name);
+	    	spath = fullfile('temp', name);
 	    	save(spath, 'c', 's', 'd')
         end
 	end

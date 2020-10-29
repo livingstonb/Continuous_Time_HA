@@ -22,21 +22,8 @@ classdef ParamsDefaults < handle
         % Numeric identifier for the parameterization
         param_index;
 
-        % Path to the root directory
-        main_dir;
-
         % Path to the income variables
         income_dir;
-
-        % Path to the temp directory
-        temp_dir;
-
-        % Path to output directory
-        out_dir;
-
-        save_path;
-
-        direc;
 
         %% -------------------------------------------
     	% Liquid Asset Grid Parameters

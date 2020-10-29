@@ -4,9 +4,7 @@
 %
 % Prior to running this script:
 %
-% (1) Set options in the section below. Directory only needs to be set for
-% either the server or the local directory, depending on whether
-% run_opts.Server = 0 or 1
+% (1) Set options in the section below.
 %
 % (2) Modify the parameters script 'code/+setup/+params/get_params.m' and make sure that 
 % run_opts.mode is equal to 'get_params'. Note that all parameter defaults
@@ -17,6 +15,8 @@
 %
 % (3) Set run_opts.param_index equal to the index of the parameterization
 % you would like to run in the parameters file (1,2,...).
+%
+% (4) cd into the Continuous_Time_HA directory.
 %
 % RUNNING ON THE SERVER: To run in batch on the server, use 
 % code/batch/server.sbatch as a template. That script sends an array to SLURM 
@@ -30,8 +30,8 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-param_opts.calibrate = true;
-param_opts.fast = false; % use small grid for debugging
+param_opts.calibrate = false;
+param_opts.fast = true; % use small grid for debugging
 param_opts.ComputeMPCS = true;
 param_opts.ComputeMPCS_illiquid = false; 
 param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
@@ -44,50 +44,29 @@ param_opts.makePlots = false; % not coded yet
 run_opts.check_nparams = false;
 run_opts.Server = false;
 run_opts.param_script = 'params_adj_cost_tests';
-run_opts.serverdir = '/home/livingstonb/GitHub/Continuous_Time_HA/';
-run_opts.localdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE
 % -------------------------------------------------------------------------
+[~, currdir] = fileparts(pwd());
+if ~strcmp(currdir, 'Continuous_Time_HA')
+    msg = 'The user must cd into the Continuous_Time_HA directory';
+    bad_dir = MException('Continuous_Time_HA:master', msg);
+    throw(bad_dir);
+end
 
-if ~run_opts.Server
-	param_opts.direc = run_opts.localdir;
-else
-	param_opts.direc = run_opts.serverdir;
+if run_opts.Server
 	param_opts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));
 	param_opts.fast = false;
     run_opts.check_nparams = false;
 end
 
-% temp directory
-param_opts.temp_dir = fullfile(param_opts.direc, 'temp');
+addpath('code');
+addpath('factorization_lib');
 
-% output directory
-param_opts.out_dir = fullfile(param_opts.direc, 'output');
-
-fname = sprintf('output_%d.mat', param_opts.param_index);
-param_opts.save_path = fullfile(param_opts.out_dir, fname);
-
-addpath(fullfile(param_opts.direc, 'code'));
-addpath(fullfile(param_opts.direc, 'factorization_lib'));
-
-% check that specified directories exist
-if ~exist(param_opts.direc, 'dir')
-    error(strcat(param_opts.direc, ' does not exist'))
-end
-
-if ~exist(param_opts.temp_dir, 'dir')
-    mkdir(param_opts.temp_dir);
-end
-
-if ~exist(param_opts.out_dir, 'dir')
-    mkdir(param_opts.out_dir);
-end
-
-cd(param_opts.direc)
-addpath(param_opts.temp_dir);
-addpath(param_opts.out_dir);
+warning('off', 'MATLAB:MKDIR:DirectoryExists')
+mkdir('temp');
+mkdir('output');
 
 %% --------------------------------------------------------------------
 % GET PARAMETERS
@@ -136,5 +115,5 @@ table_gen = HACTLib.tables.StatsTable(p, {stats});
 results_table = table_gen.create(p, {stats})
 
 xlx_path = sprintf('run%d_table.xlsx', p.param_index);
-xlx_path = fullfile(p.out_dir, xlx_path);
+xlx_path = fullfile('output', xlx_path);
 writetable(results_table, xlx_path, 'WriteRowNames', true)
