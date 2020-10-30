@@ -98,7 +98,6 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				stats.constrained_liq_dollars{3}
 				stats.constrained_liq_dollars{4}
 				stats.constrained_liq_dollars{5}
-				stats.constrained_liq_dollars{6}
 				stats.liqw_lt_ysixth
 				stats.liqw_lt_ytwelfth
 				stats.WHtM_over_HtM_biweekly
@@ -324,7 +323,6 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				stats.constrained_illiq_dollars{3}
 				stats.constrained_illiq_dollars{4}
 				stats.constrained_illiq_dollars{5}
-				stats.constrained_illiq_dollars{6}
 				stats.constrained_pct{1}
 				stats.constrained_pct{2}
 				stats.constrained_pct{3}
@@ -336,7 +334,6 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				stats.constrained_dollars{3}
 				stats.constrained_dollars{4}
 				stats.constrained_dollars{5}
-				stats.constrained_dollars{6}
 				% stats.hhs_paying_wealth_tax
 				stats.w_lt_ysixth
 				stats.w_lt_ytwelfth
