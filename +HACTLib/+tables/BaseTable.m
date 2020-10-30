@@ -15,7 +15,6 @@ classdef BaseTable < handle
 	end
 
 	properties
-		outdir;
 		output;
 		decomp_incrisk_alt;
 	end

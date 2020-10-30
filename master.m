@@ -42,7 +42,6 @@ param_opts.param_index = 1;
 param_opts.makePlots = false; % not coded yet
 
 run_opts.check_nparams = false;
-run_opts.Server = true;
 run_opts.param_script = 'main_calibrations';
 
 %% ------------------------------------------------------------------------
@@ -55,8 +54,10 @@ if ~strcmp(currdir, 'Continuous_Time_HA')
     throw(bad_dir);
 end
 
-if run_opts.Server
-	param_opts.param_index = str2num(getenv('SLURM_ARRAY_TASK_ID'));
+taskid_from_server = str2num(getenv('SLURM_ARRAY_TASK_ID'));
+
+if ~isempty(taskid_from_server)
+	param_opts.param_index = taskid_from_server;
 	param_opts.fast = false;
     run_opts.check_nparams = false;
 end
