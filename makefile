@@ -24,7 +24,7 @@ copy_for_download :
 spath := "$$MW:/home/livingstonb/GitHub/Continuous_Time_HA/output/download/*"
 download :
 	-mkdir -p output/server
-	-scp $(spath) output/server/
+	-scp $(spath) output/server
 
 readme :
 	-pandoc readme.md -o readme.pdf

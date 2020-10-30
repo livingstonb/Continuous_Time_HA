@@ -1,25 +1,18 @@
 clear
 
-server = false;
-
-if ~server
-    basedir = '/home/brian/Documents/GitHub/Continuous_Time_HA';
-    matdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output/';
-    xlxdir = '/home/brian/Documents/GitHub/Continuous_Time_HA/output';
-else
-    basedir = '/home/livingstonb/GitHub/Continuous_Time_HA';
-    matdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output';
-    xlxdir = '/home/livingstonb/GitHub/Continuous_Time_HA/output';
+if ~strcmp(currdir, 'Continuous_Time_HA')
+    msg = 'The user must cd into the Continuous_Time_HA directory';
+    bad_dir = MException('Continuous_Time_HA:master', msg);
+    throw(bad_dir);
 end
 
-addpath(basedir);
-addpath([basedir '/code']);
+addpath('code');
 
 %% Read .mat files into a cell array
 ind = 0;
 for irun = 1:999
     fname = sprintf('output_%d.mat', irun);
-    fpath = fullfile(matdir, fname);
+    fpath = fullfile('output', fname);
     if exist(fpath,'file')
         ind = ind + 1;
         
@@ -49,8 +42,8 @@ tobj = HACTLib.tables.StatsTable(params, stats);
 output_table = tobj.create(params, stats)
 
 
-csvpath = fullfile(xlxdir, 'output_table.csv');
+csvpath = fullfile('output', 'output_table.csv');
 writetable(output_table, csvpath, 'WriteRowNames', true);
 
-xlxpath = fullfile(xlxdir, 'output_table.xlsx');
+xlxpath = fullfile('output', 'output_table.xlsx');
 writetable(output_table, xlxpath, 'WriteRowNames', true);
