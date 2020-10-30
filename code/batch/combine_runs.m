@@ -41,7 +41,7 @@ try
     fprintf('%d experiments were found..\n\n', ind)
 
     tobj = HACTLib.tables.StatsTable(params, stats);
-    output_table = tobj.create()
+    output_table = tobj.create(params, stats);
 
     csvpath = fullfile('output', 'output_table.csv');
     writetable(output_table, csvpath, 'WriteRowNames', true);
@@ -50,4 +50,9 @@ try
     writetable(output_table, xlxpath, 'WriteRowNames', true);
 catch ME
     HACTLib.aux.display_exception_stack(ME);
+    rethrow(ME);
+end
+
+if ~isempty(getenv('SLURM_ARRAY_TASK_ID'))
+    exit
 end
