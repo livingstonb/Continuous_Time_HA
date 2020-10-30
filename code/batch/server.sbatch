@@ -9,6 +9,6 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem-per-cpu=6000
 
-module load matlab
+module load matlab/2019b
 
 matlab -nodisplay < /home/livingstonb/GitHub/Continuous_Time_HA/master.m

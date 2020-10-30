@@ -9,6 +9,6 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem-per-cpu=8000
 
-module load matlab
+module load matlab/2019b
 
 matlab -nodisplay < /home/livingstonb/GitHub/Continuous_Time_HA/code/batch/combine_runs.m
