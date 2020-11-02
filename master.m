@@ -31,7 +31,7 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % -------------------------------------------------------------------------
 
 param_opts.calibrate = true;
-param_opts.fast = false; % use small grid for debugging
+param_opts.fast = true; % use small grid for debugging
 param_opts.ComputeMPCS = true;
 param_opts.ComputeMPCS_illiquid = false; 
 param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
@@ -54,6 +54,10 @@ if ~strcmp(currdir, 'Continuous_Time_HA')
     throw(bad_dir);
 end
 
+if ~exist('+EconTools', 'dir')
+    error("EconTools not found")
+end
+
 taskid_from_server = str2num(getenv('SLURM_ARRAY_TASK_ID'));
 
 if ~isempty(taskid_from_server)
@@ -61,12 +65,6 @@ if ~isempty(taskid_from_server)
 	param_opts.fast = false;
     run_opts.check_nparams = false;
 end
-
-if ~exist('../EconTools', 'dir')
-    error("EconTools not found")
-end
-
-addpath('../EconTools');
 addpath('code');
 addpath('factorization_lib');
 
