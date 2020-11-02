@@ -196,9 +196,9 @@ classdef Grid < handle
 	    	% obj.a.matrix : An array the full size of the model, (nb, na, nz, ny)
 
 	    	if nargin == 1
-				grid_vec = create_curved_grid(obj.p.amin,...
-					obj.p.amax, obj.p.agrid_term1_weight,...
-					obj.p.agrid_term1_curv, obj.p.a_gcurv, obj.na);
+				grid_vec = GridConstruction.create_positive_asset_grid(obj.p.amax,...
+					obj.p.a_gcurv, obj.na, 'term1_curv', obj.p.agrid_term1_curv,...
+					'term1_wt', obj.p.agrid_term1_weight);
             elseif nargin > 1
 	        	assert(isvector(grid_vec), "Input agrid must be a vector")
 	        	assert(sum(grid_vec==0) == 1, "Input grid must include 0")
@@ -230,36 +230,13 @@ classdef Grid < handle
 	    	assert(obj.nb == obj.nb_pos + obj.nb_neg, msg)
 	    
 	    	if nargin == 1
-		    	% positive part
-				% bgridpos = linspace(0,1,obj.nb_pos)';
-				% bgridpos = bgridpos.^(1/obj.p.b_gcurv_pos);
-				% bgridpos = obj.p.b_soft_constraint + (obj.p.bmax - obj.p.b_soft_constraint) * bgridpos;
-				bgridpos = create_curved_grid(obj.p.b_soft_constraint,...
-					obj.p.bmax, obj.p.bgrid_term1_weight, obj.p.bgrid_term1_curv,...
-					obj.p.b_gcurv_pos, obj.nb_pos);
+				bgridpos = GridConstruction.create_positive_asset_grid(obj.p.bmax,...
+					obj.p.b_gcurv_pos, obj.nb_pos, 'term1_curv', obj.p.bgrid_term1_curv,...
+					'term1_wt', obj.p.bgrid_term1_weight);
 
-				% negative part
 				if obj.nb_neg > 0
-					nb_neg1 = ceil(obj.nb_neg/2) + 1;
-					nb_neg2 = obj.nb_neg - nb_neg1 + 2;
-					mid_neg = (obj.p.b_soft_constraint + obj.p.bmin) / 2;
-
-					% part of grid close to borrowing limit
-					bgridneg1 = linspace(0, 1, nb_neg1)';
-					bgridneg1 = bgridneg1.^(1/obj.p.b_gcurv_neg);
-					bgridneg1 = obj.p.bmin + ...
-						(mid_neg - obj.p.bmin) * bgridneg1;
-
-					% part of grid close to soft constraint
-					bgridneg2 = linspace(1, 0, nb_neg2)';
-					bgridneg2 = bgridneg2 .^ (1/obj.p.b_gcurv_neg);
-			        bgridneg2 = 1-bgridneg2;
-			        bgridneg2 = mid_neg + ...
-				    	(obj.p.b_soft_constraint - mid_neg) * bgridneg2;
-				   	bgridneg2(1) = []; % remove midpoint
-				    bgridneg2(end) = []; % remove 0
-
-			        bgridneg = [bgridneg1; bgridneg2];
+					bgridneg = GridConstruction.create_negative_asset_grid(obj.p.bmin,...
+			  			obj.p.b_gcurv_neg, obj.nb_neg);
 
 				    obj.b.vec = [bgridneg; bgridpos];
 				else
@@ -359,19 +336,4 @@ classdef Grid < handle
 			obj.z.wide = shiftdim(obj.z.vec, -2);
         end
 	end
-
-	methods (Static)
-		function grid_out = create(varargin)
-			grid_out = create_curved_grid(varargin{:});
-		end
-	end
-end
-
-function vgrid = create_curved_grid(vmin, vmax,...
-	term1_wt, term1_curv, curv, npts)
-	vgrid = linspace(0, 1, npts)';
-	vgrid = term1_wt * vgrid .^ (1 / term1_curv) ...
-		+ vgrid .^ (1 / curv);
-	vgrid = vgrid / vgrid(end);
-	vgrid = vmin + (vmax - vmin) * vgrid;
 end
