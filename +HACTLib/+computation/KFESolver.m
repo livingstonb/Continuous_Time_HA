@@ -18,7 +18,8 @@ classdef KFESolver
 			'tol', 1e-8,...
 			'delta', 1e5,...
 			'maxiters', 1e4,...
-			'intermediate_check', true...
+			'intermediate_check', true,...
+			'quiet', false...
 			);
 	end
 
@@ -158,7 +159,11 @@ classdef KFESolver
 			states_per_income = obj.p.nb_KFE * obj.p.na_KFE * obj.p.nz;
 			iter = 0;
 			dst = 1e5;
-			fprintf('    --- Iterating over KFE ---\n')
+
+			if ~obj.options.quiet
+				fprintf('    --- Iterating over KFE ---\n')
+			end
+
             g = g0(:);
 			while (iter <= obj.options.maxiters) && (dst > obj.options.tol)
 				iter = iter + 1;
@@ -182,7 +187,7 @@ classdef KFESolver
 		        	check_if_not_converging(dst, iter);
 		        end
 		        
-			    if (iter==1) || (mod(iter, 100) == 0)
+			    if ((iter==1) || (mod(iter, 100) == 0)) & ~obj.options.quiet
 			        fprintf('\tKFE iteration  = %i, distance = %e\n', iter, dst);
 			    end
 			    g = g1;
@@ -220,7 +225,7 @@ classdef KFESolver
 	    end
 
 	    function check_if_converged(obj, dst, iter)
-	    	if dst < obj.options.tol
+	    	if (dst < obj.options.tol) & ~obj.options.quiet
 			    fprintf('\tKFE converged after %i iterations\n', iter);
 			elseif dst >= obj.options.tol
 				error('KFE did not converge')

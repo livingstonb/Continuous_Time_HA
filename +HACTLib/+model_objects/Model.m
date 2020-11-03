@@ -20,14 +20,22 @@ classdef Model < handle
 
 		% Instance of TransitionMatrixConstructor class.
 		A_constructor_HJB;
+
+		% Options
+		options = struct();
 	end
 
 	methods
-		function obj = Model(params, gridsHJB, gridsKFE, inc)
+		function obj = Model(params, gridsHJB, gridsKFE, inc, varargin)
 			obj.p = params;
 			obj.grids_HJB = gridsHJB;
 			obj.grids_KFE = gridsKFE;
 			obj.income = inc;
+
+			parser = inputParser;
+		    addOptional(parser, 'quiet', false);
+		    parse(parser, varargin{:});
+		    obj.options.quiet = parser.Results.quiet;
 		end
 
 		function initialize(obj)
@@ -42,7 +50,7 @@ classdef Model < handle
 				obj.grids_HJB, returns_risk);
 
 			obj.kfe_solver = KFESolver(obj.p, obj.income,...
-				obj.grids_KFE, obj.p.kfe_options);
+				obj.grids_KFE, obj.p.kfe_options, 'quiet', obj.options.quiet);
 		end
 
 		function [HJB, KFE, Au] = solve(obj)
@@ -122,7 +130,9 @@ classdef Model < handle
 			else
 				KFE.g = obj.kfe_solver.solve(Au);
 				wealth = compute_wealth(KFE.g, obj.grids_KFE);
-				fprintf('    --- MEAN WEALTH = %f ---\n\n', wealth)
+				if ~obj.options.quiet
+					fprintf('    --- MEAN WEALTH = %f ---\n\n', wealth)
+				end
 			end
 		end
 	end
@@ -134,9 +144,9 @@ classdef Model < handle
 			[Vn, gguess] = make_initial_guess(obj.p, obj.grids_HJB,...
 					obj.grids_KFE, obj.income);
 
-			if obj.income.norisk
+			if (obj.income.norisk & ~obj.options.quiet)
 				fprintf('    --- Iterating over HJB (no inc risk) ---\n')
-			else
+			elseif ~obj.options.quiet
 				fprintf('    --- Iterating over HJB ---\n')
 			end
 
@@ -163,12 +173,14 @@ classdef Model < handle
 			    Vdiff = Vn1 - Vn;
 			    Vn = Vn1;
 			    dst = max(abs(Vdiff(:)));
-		        if (nn==1) || (mod(nn,25)==0)
+		        if ((nn==1) || (mod(nn,25)==0)) & ~obj.options.quiet
 			    	fprintf('\tHJB iteration = %i, distance = %e\n', nn, dst);
 		        end
 
 		        if dst < obj.p.HJB_tol
-			        fprintf('\tHJB converged after %i iterations\n', nn);
+		        	if ~obj.options.quiet
+			        	fprintf('\tHJB converged after %i iterations\n', nn);
+			        end
 				 	break
 				end
 				check_if_not_converging(dst, nn);
