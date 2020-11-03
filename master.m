@@ -111,7 +111,7 @@ if ~isempty(p.calibrator)
 end
 
 save_results = true;
-stats = main(p, save_results);
+stats = main(p, 'iterating', false);
 
 table_gen = HACTLib.tables.StatsTable(p, {stats});
 results_table = table_gen.create(p, {stats})
