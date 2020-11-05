@@ -22,9 +22,10 @@ copy_for_download :
 	-cp output/*.err "$(dldir)"
 
 spath := "$$MW:/home/livingstonb/GitHub/Continuous_Time_HA/output/download/*"
+cdate := $(shell date +"%m-%d-%Y-%T")
 download :
-	-mkdir -p output/server
-	-scp $(spath) output/server
+	-mkdir -p output/server-$(cdate)
+	-scp $(spath) output/server-$(cdate)
 
 readme :
 	-pandoc readme.md -o readme.pdf

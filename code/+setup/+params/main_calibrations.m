@@ -28,7 +28,7 @@ function [outparams, n] = main_calibrations(param_opts)
     shared_params.r_a = 0.015;
     shared_params.OneAsset = 0;
     shared_params.income_dir = 'continuous_b';
-    shared_params.r_b = 0;
+    shared_params.r_b = 0.02 / 4;
     
     params = {};
     
@@ -42,15 +42,19 @@ function [outparams, n] = main_calibrations(param_opts)
     median_calibration.calibration_targets = [scf.median_totw, scf.median_liqw];
     median_calibration.calibration_scales = [1, 10];
     
-    kappa_0s = [0, 0.01];
+    % kappa_0s = [0, 0.01];
+    kappa_0s = [0, 0.05];
 
     % Since ra << kappa1 ^ (-1 / kappa2) to prevent illiquid
     % asset overaccumulation at the top, want to avoid
     % case of high kappa1, low kappa 2. Split each param
     % into two groups: low and high
-    kappa1s = {[0.5, 1], [2, 5, 10]};
-    kappa2s = {[0.1, 0.25, 0.5], [1, 1.25]};
-    icombinations = {[1, 1], [1, 2], [2, 2]};
+    % kappa1s = {[0.5, 1], [2, 5, 10]};
+    % kappa2s = {[0.1, 0.25, 0.5], [1, 1.25]};
+    % icombinations = {[1, 1], [1, 2], [2, 2]};
+    kappa1s = {1:0.25:3};
+    kappa2s = {[0.025 0.05 0.075 0.1:0.1:0.5]};
+    icombinations = {[1, 1]};
     
     calibrations = {median_calibration};
     calibration_labels = {'MEDIAN TARGETS'};
