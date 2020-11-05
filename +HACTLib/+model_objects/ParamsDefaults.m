@@ -180,6 +180,7 @@ classdef ParamsDefaults < handle
         calibration_backup_x0;
         calibration_maxiters = 60;
         calibration_crit = 1e-5;
+        calibration_scales = [];
 
         % ------------ taxes ------------------------------
         transfer = 0; % transfer to households 

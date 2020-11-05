@@ -40,6 +40,7 @@ function [outparams, n] = main_calibrations(param_opts)
     median_calibration.calibration_backup_x0 = {[0.004, 0.0065]};
     median_calibration.calibration_stats = {'median_totw', 'median_liqw'};
     median_calibration.calibration_targets = [scf.median_totw, scf.median_liqw];
+    median_calibration.calibration_scales = [1, 10];
     
     kappa_0s = [0, 0.01];
 

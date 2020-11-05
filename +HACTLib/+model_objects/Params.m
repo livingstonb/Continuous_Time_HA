@@ -180,6 +180,11 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
 
             calibrator = HACTCalibrator(obj, obj.calibration_vars,...
                 obj.calibration_stats, obj.calibration_targets);
+
+            if ~isempty(obj.calibration_scales)
+                calibrator.set_fscale(obj.calibration_scales);
+            end
+            
             calibrator.add_backup_x0(obj.calibration_backup_x0{:});
             calibrator.set_param_bounds(obj.calibration_bounds{:});
             calibrator.set_handle(obj);
