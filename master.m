@@ -42,7 +42,7 @@ param_opts.param_index = 1;
 param_opts.makePlots = false; % not coded yet
 
 run_opts.check_nparams = false;
-run_opts.param_script = 'main_calibrations';
+run_opts.param_script = 'params_one_asset';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE
@@ -54,7 +54,9 @@ if ~strcmp(currdir, 'Continuous_Time_HA')
     throw(bad_dir);
 end
 
-if ~exist('+EconTools', 'dir')
+if exist('../EconTools', 'dir')
+    addpath('../EconTools')
+else
     error("EconTools not found")
 end
 
