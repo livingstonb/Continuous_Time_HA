@@ -20,6 +20,16 @@ function compute_deposit_stats(obj)
         'Mean adjustment cost, E[chi(d, a)]');
 	obj.adjcosts.mean_d_div_a = sfill2(...
         'Mean ratio of deposits to assets, E[|d| / max(a, a_lb)]');
+	obj.adjcosts.mean_chi_div_d = obj.sfill(NaN,...
+		'E[chi(d,a)/|d|]', 2);
+
+	npct = numel(obj.p.wpercentiles);
+	obj.adjcosts.chi_div_d_pctiles = cell(1, npct);
+	for ip = 1:npct
+		pct_at = obj.p.wpercentiles(ip);
+		obj.adjcosts.chi_div_d_pctiles{ip} = obj.sfill(NaN,...
+			sprintf('chi/|d|, %gth pctile', pct_at), 2);
+	end
 
 	if ~obj.p.OneAsset
 		obj.adjcosts.kappa0.value = obj.p.kappa0;
@@ -46,5 +56,31 @@ function compute_deposit_stats(obj)
         d_div_a = abs(obj.model.d ./ max(...
         	shiftdim(obj.agrid, -1), obj.p.a_lb));
         obj.adjcosts.mean_d_div_a.value = obj.expectation(d_div_a);
+
+        % Distribution of chi / |d|
+        chii = adj_cost_obj.compute_cost(obj.model.d,...
+        	shiftdim(obj.agrid, -1));
+        chi_div_d = chii ./ abs(obj.model.d);
+        chi_div_d(obj.model.d == 0) = 0;
+
+        sorted_mat = sortrows([chi_div_d(:) obj.pmf(:)]);
+        pct_interpolant = pct_interp(sorted_mat(:,1), cumsum(sorted_mat(:,2)));
+        obj.adjcosts.mean_chi_div_d.value = obj.expectation(chi_div_d);
+		for ip = 1:npct
+			pct_at = obj.p.wpercentiles(ip);
+			obj.adjcosts.chi_div_d_pctiles{ip}.value = pct_interpolant(pct_at / 100);
+		end
+	end
+end
+
+function interp_out = pct_interp(values, cdf_x)
+	[cdf_x_u, iu] = unique(cdf_x(:), 'first');
+	values_u = values(iu);
+
+	if numel(cdf_x_u) >= 2
+		interp_out = griddedInterpolant(...
+			cdf_x_u, values_u, 'pchip', 'nearest');
+	else
+		interp_out = @(x) NaN;
 	end
 end

@@ -279,6 +279,13 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				stats.adjcosts.a_lb
 				stats.adjcosts.mean_cost
 				stats.adjcosts.mean_d_div_a
+				stats.adjcosts.mean_chi_div_d
+				stats.adjcosts.chi_div_d_pctiles{1}
+				stats.adjcosts.chi_div_d_pctiles{2}
+				stats.adjcosts.chi_div_d_pctiles{3}
+				stats.adjcosts.chi_div_d_pctiles{4}
+				stats.adjcosts.chi_div_d_pctiles{5}
+				stats.adjcosts.chi_div_d_pctiles{7}
 			};
 
 			obj.update_current_column(out, new_entries);

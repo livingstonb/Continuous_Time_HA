@@ -29,6 +29,7 @@ function [outparams, n] = main_calibrations(param_opts)
     shared_params.OneAsset = 0;
     shared_params.income_dir = 'continuous_b';
     shared_params.r_b = 0.02 / 4;
+    shared_params.transfer = 0.01;
     
     params = {};
     
