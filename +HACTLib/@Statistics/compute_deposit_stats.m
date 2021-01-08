@@ -21,14 +21,14 @@ function compute_deposit_stats(obj)
 	obj.adjcosts.mean_d_div_a = sfill2(...
         'Mean ratio of deposits to assets, E[|d| / max(a, a_lb)]');
 	obj.adjcosts.mean_chi_div_d = obj.sfill(NaN,...
-		'E[chi(d,a)/|d|]', 2);
+		'E[chi(d,a)/abs(d) | d != 0]', 2);
 
 	npct = numel(obj.p.wpercentiles);
 	obj.adjcosts.chi_div_d_pctiles = cell(1, npct);
 	for ip = 1:npct
 		pct_at = obj.p.wpercentiles(ip);
 		obj.adjcosts.chi_div_d_pctiles{ip} = obj.sfill(NaN,...
-			sprintf('chi/|d|, %gth pctile', pct_at), 2);
+			sprintf('chi/abs(d), %gth pctile condl on d != 0', pct_at), 2);
 	end
 
 	if ~obj.p.OneAsset
@@ -52,20 +52,25 @@ function compute_deposit_stats(obj)
         	shiftdim(obj.agrid, -1));
 		obj.adjcosts.mean_cost.value = obj.expectation(chii);
 
-		% Mean abs(d)/a
+		% Mean abs(d) / a
         d_div_a = abs(obj.model.d ./ max(...
         	shiftdim(obj.agrid, -1), obj.p.a_lb));
         obj.adjcosts.mean_d_div_a.value = obj.expectation(d_div_a);
 
-        % Distribution of chi / |d|
+        % Conditional distribution of chi / |d|
         chii = adj_cost_obj.compute_cost(obj.model.d,...
         	shiftdim(obj.agrid, -1));
         chi_div_d = chii ./ abs(obj.model.d);
-        chi_div_d(obj.model.d == 0) = 0;
+        nonzdeposits = abs(obj.model.d) > 1.0e-7;
+        chi_div_d = chi_div_d(:);
+        chi_div_d = chi_div_d(nonzdeposits(:));
+        condpmf = obj.pmf(:);
+        condpmf = condpmf(nonzdeposits(:));
+        condpmf = condpmf / sum(condpmf);
 
-        sorted_mat = sortrows([chi_div_d(:) obj.pmf(:)]);
+        sorted_mat = sortrows([chi_div_d(:) condpmf(:)]);
         pct_interpolant = pct_interp(sorted_mat(:,1), cumsum(sorted_mat(:,2)));
-        obj.adjcosts.mean_chi_div_d.value = obj.expectation(chi_div_d);
+        obj.adjcosts.mean_chi_div_d.value = condpmf' * chi_div_d;
 		for ip = 1:npct
 			pct_at = obj.p.wpercentiles(ip);
 			obj.adjcosts.chi_div_d_pctiles{ip}.value = pct_interpolant(pct_at / 100);

@@ -24,12 +24,13 @@ function [outparams, n] = main_calibrations(param_opts)
     shared_params.a_lb = 0.25;
     shared_params.bmax = 25;
     shared_params.amax = 100;
-    shared_params.rho = 0.012;
+    shared_params.rho = 0.015;
     shared_params.r_a = 0.015;
     shared_params.OneAsset = 0;
     shared_params.income_dir = 'continuous_a';
     shared_params.r_b = 0.02 / 4;
     shared_params.transfer = 0.0025;
+    shared_params.Bequests = true;
     
     params = {};
     
@@ -43,8 +44,9 @@ function [outparams, n] = main_calibrations(param_opts)
     median_calibration.calibration_targets = [scf.median_totw, scf.median_liqw];
     median_calibration.calibration_scales = [1, 10];
     
-    % kappa_0s = [0, 0.01];
-    kappa_0s = [0, 0.05];
+    kappa_0s = [0];
+    kappa_1s = 0.1:0.1:4;
+    kappa_2s = [0.1, 1.0, 2.0];
 
     % Since ra << kappa1 ^ (-1 / kappa2) to prevent illiquid
     % asset overaccumulation at the top, want to avoid
@@ -53,9 +55,9 @@ function [outparams, n] = main_calibrations(param_opts)
     % kappa1s = {[0.5, 1], [2, 5, 10]};
     % kappa2s = {[0.1, 0.25, 0.5], [1, 1.25]};
     % icombinations = {[1, 1], [1, 2], [2, 2]};
-    kappa1s = {1:0.25:3};
-    kappa2s = {[0.025 0.05 0.075 0.1:0.1:0.5]};
-    icombinations = {[1, 1]};
+    % kappa1s = {1:0.25:3};
+    % kappa2s = {[0.025 0.05 0.075 0.1:0.1:0.5]};
+    % icombinations = {[1, 1]};
     
     calibrations = {median_calibration};
     calibration_labels = {'MEDIAN TARGETS'};
@@ -63,14 +65,8 @@ function [outparams, n] = main_calibrations(param_opts)
     ii = 1;
     for icalibration = [1]
     for kappa0 = kappa_0s
-        for ic = 1:numel(icombinations)
-            i_kappa1s = icombinations{ic}(1);
-            i_kappa2s = icombinations{ic}(2);
-            kappa1s_comb = kappa1s{i_kappa1s};
-            kappa2s_comb = kappa2s{i_kappa2s};
-
-            for kappa1 = kappa1s_comb
-            for kappa2 = kappa2s_comb
+        for kappa1 = kappa_1s
+            for kappa2 = kappa_2s
                 params = [params {calibrations{icalibration}}];
                 params{ii}.name = sprintf('%s, kappa0=%g, kappa1=%g, kappa2=%g',...
                     calibration_labels{icalibration}, kappa0, kappa1, kappa2);
@@ -78,7 +74,6 @@ function [outparams, n] = main_calibrations(param_opts)
                 params{ii}.kappa1 = kappa1;
                 params{ii}.kappa2 = kappa2;
                 ii = ii + 1;
-            end
             end
         end
     end
