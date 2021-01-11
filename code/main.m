@@ -20,11 +20,13 @@ function [stats, stats_alt] = main(p, varargin)
     end
 
     parser = inputParser;
-    addOptional(parser, 'iterating', false);
+    addOptional(parser, 'quiet', false);
+    addOptional(parser, 'final', false);
     parse(parser, varargin{:});
-    iterating = parser.Results.iterating;
+    quiet = parser.Results.quiet;
+    final = parser.Results.final;
 
-    if iterating
+    if quiet
         fprintf_internal = @(varargin) fprintf('');
     else
         fprintf_internal = @(varargin) fprintf(varargin{:});
@@ -64,7 +66,7 @@ function [stats, stats_alt] = main(p, varargin)
     income.set_net_income(p, grd, grdKFE);
     income_norisk.set_net_income(p, grd_norisk, grdKFE_norisk);
 
-    model = HACTLib.model_objects.Model(p, grd, grdKFE, income, 'quiet', iterating);
+    model = HACTLib.model_objects.Model(p, grd, grdKFE, income, 'quiet', quiet);
     model.initialize();
     [~, KFE, Au] = model.solve();
 
@@ -218,7 +220,7 @@ function [stats, stats_alt] = main(p, varargin)
 	stats.clean();
     stats = HACTLib.aux.to_structure(stats);
 
-    if ~iterating
+    if final
         fname = sprintf('output_%d.mat', p.param_index);
         fpath = fullfile('output', fname);
         save(fpath,'stats','grd','grdKFE','p','KFE','income')
