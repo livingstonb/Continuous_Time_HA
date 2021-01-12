@@ -7,7 +7,6 @@ batch :
 	sbatch "code/batch/server.sbatch"
 
 combine :
-	python code/batch/copy_completed.py
 	sbatch "code/batch/combine_runs.sbatch"
 
 check_combine :

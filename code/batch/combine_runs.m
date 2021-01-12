@@ -14,7 +14,7 @@ try
     ind = 0;
     for irun = 1:999
         fname = sprintf('output_%d.mat', irun);
-        fpath = fullfile('output', 'completed', fname);
+        fpath = fullfile('output', fname);
         if exist(fpath,'file')
             ind = ind + 1;
             
