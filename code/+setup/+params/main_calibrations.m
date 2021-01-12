@@ -23,13 +23,13 @@ function [outparams, n] = main_calibrations(param_opts)
 
     shared_params.a_lb = 0.25;
     shared_params.bmax = 25;
-    shared_params.amax = 100;
+    shared_params.amax = 200;
     shared_params.rho = 0.015;
     shared_params.r_a = 0.015;
     shared_params.OneAsset = 0;
     shared_params.income_dir = 'continuous_a';
     shared_params.r_b = 0.02 / 4;
-    shared_params.transfer = 0.0025;
+    shared_params.transfer = 0;
     shared_params.Bequests = true;
     
     params = {};
@@ -45,8 +45,8 @@ function [outparams, n] = main_calibrations(param_opts)
     median_calibration.calibration_scales = [1, 10];
     
     kappa_0s = [0];
-    kappa_1s = 0.1:0.1:4;
-    kappa_2s = [0.1, 1.0, 2.0];
+    kappa_1s = [0.02:0.02:0.08 0.1:0.1:4];
+    kappa_2s = [0.1, 0.5, 1.0, 2.0];
 
     % Since ra << kappa1 ^ (-1 / kappa2) to prevent illiquid
     % asset overaccumulation at the top, want to avoid

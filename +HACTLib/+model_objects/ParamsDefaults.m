@@ -203,7 +203,7 @@ classdef ParamsDefaults < handle
 
     	% KFE loop
     	kfe_options;
-    	KFE_maxiters = 1e4; % maximal allowable number of KFE iterations
+    	KFE_maxiters = 2e4; % maximal allowable number of KFE iterations
     	KFE_tol = 1e-8; % critical value
     	KFE_delta = 1e6; %1e6; % step size
         KFE_iterative = true;
