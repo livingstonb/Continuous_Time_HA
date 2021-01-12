@@ -45,7 +45,7 @@ function [outparams, n] = main_calibrations(param_opts)
     median_calibration.calibration_scales = [1, 10];
     
     kappa_0s = [0];
-    kappa_1s = [0.02:0.02:0.08 0.1:0.1:4];
+    kappa_1s = [0.025 0.05 0.075 0.1:0.1:1 1.25:0.25:10];
     kappa_2s = [0.1, 0.5, 1.0, 2.0];
 
     % Since ra << kappa1 ^ (-1 / kappa2) to prevent illiquid

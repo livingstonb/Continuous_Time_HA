@@ -107,7 +107,7 @@ if ~isempty(p.calibrator)
                 p.calibrator.lbounds, p.calibrator.ubounds, options);
 	end
 
-    if (resnorm >= 1e-4)
+    if (p.calibrator.dnorm >= 1e-3)
         error('Could not match targets')
     end
 end
