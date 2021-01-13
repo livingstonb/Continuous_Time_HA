@@ -25,6 +25,9 @@ classdef ParamsDefaults < handle
         % Path to the income variables
         income_dir;
 
+        % Turn off transitory income risk
+        no_transitory_incrisk = false;
+
         %% -------------------------------------------
     	% Liquid Asset Grid Parameters
     	% --------------------------------------------

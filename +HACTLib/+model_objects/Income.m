@@ -73,11 +73,17 @@ classdef Income < handle
 	  	 			obj.y.vec = 1/4;
 	  	 			obj.logy.vec = log(obj.y.vec);
 	  	 		else
-		            logy = load(fullfile(income_path, 'ygrid_combined.txt'));
+	  	 			if p.no_transitory_incrisk
+	  	 				logy = load(fullfile(income_path, 'ygrid1.txt'));
+			            obj.ydist = load(fullfile(income_path, 'ydist1.txt'));
+			            obj.ytrans = load(fullfile(income_path, 'y1markov.txt'));
+	  	 			else
+			            logy = load(fullfile(income_path, 'ygrid_combined.txt'));
+			            obj.ydist = load(fullfile(income_path, 'ydist_combined.txt'));
+			            obj.ytrans = load(fullfile(income_path, 'ymarkov_combined.txt'));
+		            end
+
 		            y = exp(logy);
-		            
-		            obj.ydist = load(fullfile(income_path, 'ydist_combined.txt'));
-		            obj.ytrans = load(fullfile(income_path, 'ymarkov_combined.txt'));
 		            obj.ydist = HACTLib.aux.stat_dist(obj.ytrans');
 		            
 					% normalize
