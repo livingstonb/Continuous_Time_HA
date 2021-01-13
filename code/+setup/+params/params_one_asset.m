@@ -17,6 +17,7 @@ function [outparams, n] = params_one_asset(param_opts)
     shared_params.b_gcurv_pos = 0.2;
     shared_params.OneAsset = true;
     shared_params.Bequests = true;
+    shared_params.no_transitory_incrisk = true;
 
     shared_params.bmax = 500;
     shared_params.rho = 0.005;

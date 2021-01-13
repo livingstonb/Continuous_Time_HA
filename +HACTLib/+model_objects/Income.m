@@ -74,8 +74,8 @@ classdef Income < handle
 	  	 			obj.logy.vec = log(obj.y.vec);
 	  	 		else
 	  	 			if p.no_transitory_incrisk
-	  	 				logy = load(fullfile(income_path, 'ygrid1.txt'));
-			            obj.ydist = load(fullfile(income_path, 'ydist1.txt'));
+	  	 				logy = load(fullfile(income_path, 'y1grid.txt'));
+			            obj.ydist = load(fullfile(income_path, 'y1dist.txt'));
 			            obj.ytrans = load(fullfile(income_path, 'y1markov.txt'));
 	  	 			else
 			            logy = load(fullfile(income_path, 'ygrid_combined.txt'));
