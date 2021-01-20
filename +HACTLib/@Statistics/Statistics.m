@@ -150,6 +150,8 @@ classdef Statistics < handle
 				'CRRA coefficient');
 			obj.params.numeraire = obj.sfill(obj.p.numeraire_in_dollars,...
 				'Value of the numeraire, mean annual earning, in $');
+			obj.params.income_descr = obj.sfill(obj.p.IncomeDescr,...
+				'Income Process');
 		end
 
 		function clean(obj)

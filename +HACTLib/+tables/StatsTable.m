@@ -309,6 +309,7 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				stats.params.borrowlim
 				stats.params.riskaver
 				stats.params.numeraire
+				stats.params.income_descr
 			};
 
 			obj.update_current_column(out, new_entries);

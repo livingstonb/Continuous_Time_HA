@@ -13,6 +13,7 @@ classdef ParamsDefaults < handle
         fast = false;
         saveGrids = false;
         makePlots = false;
+        IncomeDescr = '';
         
         % Name for the parameterization
         name = 'unnamed';

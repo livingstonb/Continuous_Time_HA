@@ -62,22 +62,36 @@ function [outparams, n] = main_calibrations(param_opts)
     
     calibrations = {median_calibration};
     calibration_labels = {'MEDIAN TARGETS'};
+
+    incomedirs = {'quarterly_a/no_measurement_error',...
+        'quarterly_a/measurement_error_20pc',...
+        'quarterly_a/measurement_error_33pc',...
+        'quarterly_a/measurement_error_50pc'};
+
+    IncomeDescriptions = {'quart_a, no meas err',...
+        'quart_a, meas err 20pc',...
+        'quart_a, meas err 33pc',...
+        'quart_a, meas err 50pc'};
     
     ii = 1;
     for icalibration = [1]
-    for kappa0 = kappa_0s
-        for kappa1 = kappa_1s
-            for kappa2 = kappa_2s
-                params = [params {calibrations{icalibration}}];
-                params{ii}.name = sprintf('%s, kappa0=%g, kappa1=%g, kappa2=%g',...
-                    calibration_labels{icalibration}, kappa0, kappa1, kappa2);
-                params{ii}.kappa0 = kappa0;
-                params{ii}.kappa1 = kappa1;
-                params{ii}.kappa2 = kappa2;
-                ii = ii + 1;
+        for iy = 1:4
+            for kappa0 = kappa_0s
+                for kappa1 = kappa_1s
+                    for kappa2 = kappa_2s
+                        params = [params {calibrations{icalibration}}];
+                        params{ii}.name = sprintf('%s, kappa0=%g, kappa1=%g, kappa2=%g',...
+                            calibration_labels{icalibration}, kappa0, kappa1, kappa2);
+                        params{ii}.kappa0 = kappa0;
+                        params{ii}.kappa1 = kappa1;
+                        params{ii}.kappa2 = kappa2;
+                        params{ii}.income_dir = incomedirs{iy};
+                        params{ii}.IncomeDescr = IncomeDescriptions{iy};
+                        ii = ii + 1;
+                    end
+                end
             end
         end
-    end
     end
     
     %% DO NOT CHANGE THIS SECTION
