@@ -17,7 +17,7 @@ function [outparams, n] = params_one_asset(param_opts)
     shared_params.b_gcurv_pos = 0.2;
     shared_params.OneAsset = true;
     shared_params.Bequests = true;
-    shared_params.no_transitory_incrisk = true;
+    shared_params.no_transitory_incrisk = false;
 
     shared_params.bmax = 500;
     shared_params.rho = 0.005;
@@ -51,15 +51,44 @@ function [outparams, n] = params_one_asset(param_opts)
     params{ii} = median_calibration;
     params{ii}.name = 'baseline'; 
     params{ii}.income_dir = 'continuous_a';
+    params{ii}.IncomeDescr = 'cont_a';
     params{ii}.rho = 0.003902728727572;
     ii = ii + 1;
     
-    params{ii} = shared_params;
+    params{ii} = median_calibration;
     params{ii}.name = 'cont_b'; 
     params{ii}.income_dir = 'continuous_b';
+    params{ii}.IncomeDescr = 'cont_b';
+    params{ii}.rho = 0.003902728727572;
+    ii = ii + 1;
+    
+    params{ii} = median_calibration;
+    params{ii}.name = 'cont_a_no_meas_error'; 
+    params{ii}.income_dir = 'continuous_a/no_measurement_error';
+    params{ii}.IncomeDescr = 'cont_a_no_meas_error';
     params{ii}.rho = 0.003902728727572;
     ii = ii + 1;
 
+    params{ii} = median_calibration;
+    params{ii}.name = 'cont_a_20pc_meas_error'; 
+    params{ii}.income_dir = 'continuous_a/measurement_error_20pc';
+    params{ii}.IncomeDescr = 'cont_a_20pc_meas_error';
+    params{ii}.rho = 0.003902728727572;
+    ii = ii + 1;
+    
+    params{ii} = median_calibration;
+    params{ii}.name = 'cont_a_33pc_meas_error'; 
+    params{ii}.income_dir = 'continuous_a/measurement_error_33pc';
+    params{ii}.IncomeDescr = 'cont_a_33pc_meas_error';
+    params{ii}.rho = 0.003902728727572;
+    ii = ii + 1;
+    
+    params{ii} = median_calibration;
+    params{ii}.name = 'cont_a_50pc_meas_error'; 
+    params{ii}.income_dir = 'continuous_a/measurement_error_50pc';
+    params{ii}.IncomeDescr = 'cont_a_50pc_meas_error';
+    params{ii}.rho = 0.003902728727572;
+    ii = ii + 1;
     
     %% --------------------------------------------------------------------
     % HOUSEKEEPING, DO NOT CHANGE

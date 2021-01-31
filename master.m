@@ -38,11 +38,11 @@ param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
 param_opts.ComputeMPCS_news = false;
 param_opts.SimulateMPCS_news = false;
 param_opts.DealWithSpecialCase = false; % need to recode this
-param_opts.param_index = 1;
+param_opts.param_index = 6;
 param_opts.makePlots = false; % not coded yet
 
 run_opts.check_nparams = false;
-run_opts.param_script = 'main_calibrations';
+run_opts.param_script = 'params_one_asset';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE
