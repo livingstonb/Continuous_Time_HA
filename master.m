@@ -41,8 +41,8 @@ param_opts.DealWithSpecialCase = false; % need to recode this
 param_opts.param_index = 6;
 param_opts.makePlots = false; % not coded yet
 
-run_opts.check_nparams = false;
-run_opts.param_script = 'params_one_asset';
+run_opts.check_nparams = true;
+run_opts.param_script = 'main_calibrations';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE

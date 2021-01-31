@@ -46,7 +46,7 @@ function [outparams, n] = main_calibrations(param_opts)
     median_calibration.calibration_scales = [1, 10];
     
     kappa_0s = [0];
-    kappa_1s = [0.025 0.05 0.075 0.1:0.1:1 1.25:0.25:10];
+    kappa_1s = [0.025 0.05 0.075 0.1:0.1:1 1.25:0.25:1.75 2:1:10];
     kappa_2s = [0.1, 0.5, 1.0, 2.0];
 
     % Since ra << kappa1 ^ (-1 / kappa2) to prevent illiquid
@@ -63,19 +63,15 @@ function [outparams, n] = main_calibrations(param_opts)
     calibrations = {median_calibration};
     calibration_labels = {'MEDIAN TARGETS'};
 
-    incomedirs = {'continuous_a/no_measurement_error',...
-        'continuous_a/measurement_error_20pc',...
-        'continuous_a/measurement_error_33pc',...
-        'continuous_a/measurement_error_50pc'};
+    incomedirs = {'results_feb_2020_3pt/continuous_a/no_measurement_error',...
+        'results_feb_2020_3pt/continuous_a/measurement_error_50pc'};
 
-    IncomeDescriptions = {'cont_a, no meas err',...
-        'cont_a, meas err 20pc',...
-        'cont_a, meas err 33pc',...
-        'cont_a, meas err 50pc'};
+    IncomeDescriptions = {'cont_a 2/20, no meas err',...
+        'cont_a 2/20, meas err 50pc'};
     
     ii = 1;
     for icalibration = [1]
-        for iy = 1
+        for iy = 1:2
             for kappa0 = kappa_0s
                 for kappa1 = kappa_1s
                     for kappa2 = kappa_2s
