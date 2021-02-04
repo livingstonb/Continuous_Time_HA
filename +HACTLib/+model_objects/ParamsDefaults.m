@@ -182,7 +182,7 @@ classdef ParamsDefaults < handle
         calibration_targets;
         calibration_bounds;
         calibration_backup_x0;
-        calibration_maxiters = 60;
+        calibration_maxiters = 200;
         calibration_crit = 1e-5;
         calibration_scales = [];
 

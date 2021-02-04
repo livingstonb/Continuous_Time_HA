@@ -84,7 +84,7 @@ classdef InterpObj < handle
 				obj.x, obj.y, 'pchip', 'nearest');
 
 			% Interpolant for inv cdf
-			[y_u, iu] = unique(obj.y);
+			[y_u, iu] = unique(obj.y, 'last');
 			x_u = obj.x(iu);
 			obj.linear_interpolant.icdf = griddedInterpolant(...
 				y_u, x_u, 'pchip', 'nearest');
