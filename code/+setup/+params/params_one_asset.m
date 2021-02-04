@@ -83,10 +83,23 @@ function [outparams, n] = params_one_asset(param_opts)
     params{ii}.rho = 0.003902728727572;
     ii = ii + 1;
     
-    params{ii} = median_calibration;
+     params{ii} = median_calibration;
     params{ii}.name = 'cont_a_50pc_meas_error'; 
     params{ii}.income_dir = 'continuous_a/measurement_error_50pc';
     params{ii}.IncomeDescr = 'cont_a_50pc_meas_error';
+    params{ii}.rho = 0.003902728727572;
+    ii = ii + 1;
+    
+    params{ii} = median_calibration;
+    params{ii}.name = 'cont_a_no_meas_error'; 
+    params{ii}.income_dir = 'results_feb_2020_3pt/continuous_a/no_meas_error';
+    params{ii}.IncomeDescr = 'feb20_3pt_no_meas_error';
+    params{ii}.rho = 0.003902728727572;
+    ii = ii + 1;
+    params{ii} = median_calibration;
+    params{ii}.name = 'feb20_3pt_50pc_meas_error'; 
+    params{ii}.income_dir = 'results_feb_2020_3pt/continuous_a/measurement_error_50pc';
+    params{ii}.IncomeDescr = 'feb20_3pt_50pc_meas_error';
     params{ii}.rho = 0.003902728727572;
     ii = ii + 1;
     

@@ -135,5 +135,5 @@ end
 
 function x_scaled = rescale_and_log_x(x, xbounds)
 	x_scaled = (x - xbounds(1)) / (xbounds(2) - xbounds(1));
-	x_scaled = log(1 + 100 * x);
+	x_scaled = log(1 + 100 * x_scaled);
 end

@@ -71,14 +71,21 @@ function compute_constrained(obj)
 
 	% Liquid wealth / (quarterly earnings) < epsilon
     kopts = obj.kernel_options;
+    ktype0 = kopts.ktype;
+    h0 = kopts.h;
+    rescale_and_log0 = kopts.rescale_and_log;
+
+    kopts.ktype = 'gaussian';
     kopts.h = 0.15;
+%     kopts.force_fit_cdf_low = [0.07, 0.5];
+    kopts.rescale_and_log = true;
 
 	by_ratio = obj.bgrid ./ obj.income.y.wide;
 	pmf_by = multi_sum(obj.pmf, [2, 3]);
 
 	tmp = sortrows([by_ratio(:), pmf_by(:)]);
 	by_interp = obj.get_interpolant(kopts,...
-		tmp(:,1), tmp(:,2));
+		tmp(:,1), tmp(:,2), 0.4, []);
 	
 	tmp = by_interp.cdf(1/6);
 	obj.liqw_lt_ysixth = obj.sfill(...
@@ -94,7 +101,7 @@ function compute_constrained(obj)
 
 	tmp = sortrows([wy_ratio(:), pmf_wy(:)]);
 	wy_interp = obj.get_interpolant(kopts,...
-		tmp(:,1), tmp(:,2));
+		tmp(:,1), tmp(:,2), 0.4);
 	
 	tmp = wy_interp.cdf(1/6);
 	obj.w_lt_ysixth = obj.sfill(...
@@ -112,4 +119,8 @@ function compute_constrained(obj)
 	tmp = 1 - obj.w_lt_ytwelfth.value / obj.liqw_lt_ytwelfth.value;
 	obj.WHtM_over_HtM_weekly = obj.sfill(tmp,...
 		'P(WHtM) / P(HtM), HtM in terms of y/12', 2);
+    
+    kopts.rescale_and_log = rescale_and_log0;
+    kopts.ktype = ktype0;
+    kopts.h = h0;
 end

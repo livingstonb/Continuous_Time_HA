@@ -87,10 +87,10 @@ function [stats, stats_alt] = main(p, varargin)
     fprintf_internal('\nComputing statistics\n')    
     stats = HACTLib.Statistics(p, income, grdKFE, KFE);
     
-    kernel_options.ktype = 'gaussian';
+    kernel_options.ktype = 'linear';
     kernel_options.h = 0.2;
     kernel_options.force_fit_cdf_low = [];
-    kernel_options.rescale_and_log = true;
+    kernel_options.rescale_and_log = false;
     stats.compute_statistics(kernel_options);
 
     %% ----------------------------------------------------------------

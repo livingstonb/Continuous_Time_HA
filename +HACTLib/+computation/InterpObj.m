@@ -13,13 +13,26 @@ classdef InterpObj < handle
 		function obj = InterpObj()
 		end
 
-		function set_dist(obj, values, pmf, dims_to_keep)
+		function set_dist(obj, values, pmf, ub, dims_to_keep)
 			import HACTLib.aux.multi_sum
+            
+            if (nargin <= 3)
+                ub = [];   
+            end
+            
+            if numel(ub) == 0
+                ub = 1.0;
+            end
+            
+            if (nargin <= 4)
+                dims_to_keep = [];
+            end
 
-			if (nargin == 3) || isequal(dims_to_keep, []);
+			if isequal(dims_to_keep, [])
 				% Already sorted
 				[v_u, iu] = unique(values(:), 'last');
 				cdf_u = cumsum(pmf(:));
+                
 			else
 				sum_dims = 1:4;
 				sum_dims = sum_dims(...
@@ -30,16 +43,22 @@ classdef InterpObj < handle
 				sorted_mat = sortrows([values(:), pmf_x(:)]);
 				[v_u, iu] = unique(sorted_mat(:,1), 'last');
 				cdf_u = cumsum(sorted_mat(:,2));
-			end
+            end
+            
+            cdf_u = cdf_u(iu);
+            mask = cdf_u <= ub; % Restrict high cdf values
+            cdf_u = cdf_u(mask);
+            v_u = v_u(mask);
 
 			if numel(v_u) > 5000
-				[obj.x, obj.y] = thin_cdf(v_u, cdf_u(iu), 5000);
+				[obj.x, obj.y] = thin_cdf(v_u, cdf_u, 5000);
 			elseif numel(v_u) <= 5
 				obj.insufficient_grid_pts = true;
 			else
 				obj.x = v_u;
-				obj.y = cdf_u(iu);
-			end
+				obj.y = cdf_u;
+            end
+           
 		end
 
 		function configure(obj, kernel_options)
@@ -50,8 +69,10 @@ classdef InterpObj < handle
 			obj.configure_interpolants();
 			
 			if numel(kernel_options) == 1
-				obj.kernel_smoothing = true;
-				obj.configure_kernel_smoother(kernel_options);
+                if ~strcmp(kernel_options.ktype, 'linear')
+                    obj.kernel_smoothing = true;
+                    obj.configure_kernel_smoother(kernel_options);
+                end
 			end
 		end
 
