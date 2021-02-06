@@ -31,7 +31,7 @@ function [outparams, n] = main_calibrations(param_opts)
     shared_params.r_b = 0.02 / 4;
     shared_params.transfer = 0;
     shared_params.Bequests = true;
-    shared_params.no_transitory_incrisk = false;
+    shared_params.no_transitory_incrisk = true;
     
     params = {};
     
@@ -47,7 +47,7 @@ function [outparams, n] = main_calibrations(param_opts)
     
     kappa_0s = [0];
     kappa_1s = [0.025 0.05 0.075 0.1:0.1:1 1.25:0.25:1.75 2:1:10];
-    kappa_2s = [0.1, 0.5, 1.0, 2.0];
+    kappa_2s = [0.1, 0.5, 0.75, 1.0, 2.0];
 
     % Since ra << kappa1 ^ (-1 / kappa2) to prevent illiquid
     % asset overaccumulation at the top, want to avoid
@@ -81,7 +81,7 @@ function [outparams, n] = main_calibrations(param_opts)
     
     ii = 1;
     for icalibration = [1]
-        for iy = 1:2
+        for iy = 1
             for kappa0 = kappa_0s
                 for kappa1 = kappa_1s
                     for kappa2 = kappa_2s
