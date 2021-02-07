@@ -24,8 +24,6 @@ function [outparams, n] = main_calibrations(param_opts)
     shared_params.a_lb = 0.25;
     shared_params.bmax = 25;
     shared_params.amax = 200;
-    shared_params.rho = 0.015;
-    shared_params.r_a = 0.009;
     shared_params.OneAsset = 0;
     shared_params.income_dir = 'continuous_a';
     shared_params.r_b = 0.02 / 4;
@@ -39,8 +37,17 @@ function [outparams, n] = main_calibrations(param_opts)
     % Iterate over r_a, rho
     median_calibration = shared_params;
     median_calibration.calibration_vars = {'rho', 'r_a'};
-    median_calibration.calibration_bounds = {[0.001, 0.05], [shared_params.r_b + 0.0005, 0.05]};
-    median_calibration.calibration_backup_x0 = {[0.004, 0.0065]};
+
+    if median_calibration.no_transitory_incrisk
+        median_calibration.rho = 0.001;
+        median_calibration.r_a = 0.0052;
+        median_calibration.calibration_bounds = {[0.0001, 0.01], [shared_params.r_b + 0.00005, 0.02]};
+    else
+        median_calibration.rho = 0.015;
+        median_calibration.r_a = 0.009;
+        median_calibration.calibration_bounds = {[0.001, 0.05], [shared_params.r_b + 0.0005, 0.05]};
+        median_calibration.calibration_backup_x0 = {[0.004, 0.0065]};
+    end
     median_calibration.calibration_stats = {'median_totw', 'median_liqw'};
     median_calibration.calibration_targets = [scf.median_totw, scf.median_liqw];
     median_calibration.calibration_scales = [1, 10];
