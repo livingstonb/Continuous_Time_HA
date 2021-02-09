@@ -30,7 +30,7 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-param_opts.calibrate = false;
+param_opts.calibrate = true;
 param_opts.fast = false; % use small grid for debugging
 param_opts.ComputeMPCS = true;
 param_opts.ComputeMPCS_illiquid = false;
@@ -41,8 +41,8 @@ param_opts.DealWithSpecialCase = false; % need to recode this
 param_opts.param_index = 1;
 param_opts.makePlots = false; % not coded yet
 
-run_opts.check_nparams = false;
-run_opts.param_script = 'rho_ra_tests';
+run_opts.check_nparams = true;
+run_opts.param_script = 'main_calibrations';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE
@@ -65,7 +65,7 @@ taskid_from_server = str2num(getenv('SLURM_ARRAY_TASK_ID'));
 if ~isempty(taskid_from_server)
 	param_opts.param_index = taskid_from_server;
 	param_opts.fast = false;
-%     param_opts.calibrate = true;
+    param_opts.calibrate = true;
     run_opts.check_nparams = false;
 end
 addpath('code');

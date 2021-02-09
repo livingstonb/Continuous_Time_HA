@@ -37,21 +37,6 @@ function [outparams, n] = main_calibrations(param_opts)
     % Iterate over r_a, rho
     median_calibration = shared_params;
     median_calibration.calibration_vars = {'rho', 'r_a'};
-
-    if median_calibration.no_transitory_incrisk
-        median_calibration.rho = 0.001;
-        median_calibration.r_a = 0.0052;
-        median_calibration.calibration_bounds = {[0.0008, 0.003], [shared_params.r_b + 0.0003, 0.009]};
-        median_calibration.calibration_backup_x0 = {[0.004, 0.0065]};
-    else
-        median_calibration.rho = 0.015;
-        median_calibration.r_a = 0.009;
-        median_calibration.calibration_bounds = {[0.001, 0.05], [shared_params.r_b + 0.0005, 0.05]};
-        median_calibration.calibration_backup_x0 = {[0.004, 0.0065]};
-    end
-    median_calibration.calibration_stats = {'median_totw', 'median_liqw'};
-    median_calibration.calibration_targets = [scf.median_totw, scf.median_liqw];
-    median_calibration.calibration_scales = [1, 10];
     
     kappa_0s = [0];
     kappa_1s = [0.025 0.05 0.075 0.1:0.1:1 1.25:0.25:1.75 2:1:10];
@@ -101,6 +86,29 @@ function [outparams, n] = main_calibrations(param_opts)
                         params{ii}.kappa2 = kappa2;
                         params{ii}.income_dir = incomedirs{iy};
                         params{ii}.IncomeDescr = IncomeDescriptions{iy};
+                        
+                        if params{ii}.no_transitory_incrisk
+                            params{ii}.rho = 0.001;
+                            params{ii}.r_a = 0.0052;
+                            params{ii}.calibration_bounds = {[0.0008, 0.003], [shared_params.r_b + 0.0003, 0.009]};
+                            params{ii}.calibration_backup_x0 = {[0.004, 0.0065]};
+                        else
+                            if (kappa1 > 1) && (kappa2 <= 0.5)
+                                params{ii}.rho = 0.015;
+                                params{ii}.r_a = 0.015;
+                                params{ii}.calibration_bounds = {[0.005, 0.02], [0.01, 0.04]};
+                                params{ii}.calibration_backup_x0 = {[0.004, 0.0065]};
+                            else
+                                params{ii}.rho = 0.015;
+                                params{ii}.r_a = 0.009;
+                                params{ii}.calibration_bounds = {[0.001, 0.05], [shared_params.r_b + 0.0005, 0.05]};
+                                params{ii}.calibration_backup_x0 = {[0.004, 0.0065]};
+                            end
+                        end
+                        params{ii}.calibration_stats = {'median_totw', 'median_liqw'};
+                        params{ii}.calibration_targets = [scf.median_totw, scf.median_liqw];
+                        params{ii}.calibration_scales = [1, 10];
+    
                         ii = ii + 1;
                     end
                 end
