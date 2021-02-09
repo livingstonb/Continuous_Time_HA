@@ -44,6 +44,9 @@ function [outparams, n] = rho_ra_tests(param_opts)
     rhos = 0.0009:0.0002:0.0022;
     r_as = 0.00505:0.00005:0.006;
     
+    rho = 0.0011;
+    r_a = 0.0052;
+    
     ii = 1;
     for rho = rhos
         for r_a = r_as
@@ -63,8 +66,8 @@ function [outparams, n] = rho_ra_tests(param_opts)
     high_kappa1_mid_kappa2.kappa1 = 5;
     high_kappa1_mid_kappa2.kappa2 = 0.5;
     
-    rhos = 0.0009:0.0002:0.003;
-    r_as = 0.00505:0.002:0.03;
+    rhos = 0.001:0.001:0.02;
+    r_as = 0.00505:0.0025:0.03;
     
     for rho = rhos
         for r_a = r_as

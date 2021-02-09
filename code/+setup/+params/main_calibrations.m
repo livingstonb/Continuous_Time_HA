@@ -41,7 +41,7 @@ function [outparams, n] = main_calibrations(param_opts)
     if median_calibration.no_transitory_incrisk
         median_calibration.rho = 0.001;
         median_calibration.r_a = 0.0052;
-        median_calibration.calibration_bounds = {[0.0001, 0.03], [shared_params.r_b + 0.00005, 0.02]};
+        median_calibration.calibration_bounds = {[0.0008, 0.003], [shared_params.r_b + 0.0003, 0.009]};
         median_calibration.calibration_backup_x0 = {[0.004, 0.0065]};
     else
         median_calibration.rho = 0.015;
