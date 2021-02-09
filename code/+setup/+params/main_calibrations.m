@@ -29,7 +29,7 @@ function [outparams, n] = main_calibrations(param_opts)
     shared_params.r_b = 0.02 / 4;
     shared_params.transfer = 0;
     shared_params.Bequests = true;
-    shared_params.no_transitory_incrisk = true;
+    shared_params.no_transitory_incrisk = false;
     
     params = {};
     
