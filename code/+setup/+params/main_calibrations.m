@@ -94,9 +94,9 @@ function [outparams, n] = main_calibrations(param_opts)
                             params{ii}.calibration_backup_x0 = {[0.004, 0.0065]};
                         else
                             if (kappa1 > 1) && (kappa2 <= 0.5)
-                                params{ii}.rho = 0.015;
-                                params{ii}.r_a = 0.015;
-                                params{ii}.calibration_bounds = {[0.005, 0.02], [0.01, 0.04]};
+                                params{ii}.rho = 0.016;
+                                params{ii}.r_a = 0.018;
+                                params{ii}.calibration_bounds = {[0.014, 0.035], [0.014, 0.04]};
                                 params{ii}.calibration_backup_x0 = {[0.004, 0.0065]};
                             else
                                 params{ii}.rho = 0.015;
@@ -107,7 +107,7 @@ function [outparams, n] = main_calibrations(param_opts)
                         end
                         params{ii}.calibration_stats = {'median_totw', 'median_liqw'};
                         params{ii}.calibration_targets = [scf.median_totw, scf.median_liqw];
-                        params{ii}.calibration_scales = [1, 10];
+                        params{ii}.calibration_scales = [1, 100];
     
                         ii = ii + 1;
                     end
