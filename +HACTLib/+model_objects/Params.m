@@ -185,7 +185,10 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
                 calibrator.set_fscale(obj.calibration_scales);
             end
             
-            calibrator.add_backup_x0(obj.calibration_backup_x0{:});
+            if ~isempty(obj.calibration_backup_x0)
+                calibrator.add_backup_x0(obj.calibration_backup_x0{:});
+            end
+
             calibrator.set_param_bounds(obj.calibration_bounds{:});
             calibrator.set_handle(obj);
             obj.calibrator = calibrator;

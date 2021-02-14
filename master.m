@@ -41,7 +41,7 @@ param_opts.DealWithSpecialCase = false; % need to recode this
 param_opts.param_index = 1;
 param_opts.makePlots = false; % not coded yet
 
-run_opts.check_nparams = true;
+run_opts.check_nparams = false;
 run_opts.param_script = 'main_calibrations';
 
 %% ------------------------------------------------------------------------
@@ -91,6 +91,7 @@ p.print();
 %% ------------------------------------------------------------------------
 % CALIBRATING WITH SOLVER
 % -------------------------------------------------------------------------
+runFinal = true;
 if ~isempty(p.calibrator)
     options = optimoptions(@lsqnonlin,...
 	    	'MaxFunctionEvaluations', p.calibration_maxiters,...
@@ -108,17 +109,27 @@ if ~isempty(p.calibrator)
                 p.calibrator.lbounds, p.calibrator.ubounds, options);
 	end
 
-    if (p.calibrator.dnorm >= 1e-3)
-        error('Could not match targets')
+    % if (p.calibrator.dnorm >= 1e-3)
+    %     error('Could not match targets')
+    %     runFinal = false;
+    % end
+
+    zval = p.calibrator.target_result;
+    z1bad = (zval(1) < 1.0) || (zval(1) > 2.0);
+    z2bad = (zval(2) < 0.01) || (zval(2) > 0.2);
+
+    if z1bad || z2bad
+        runFinal = false;
     end
 end
 
-save_results = true;
-stats = main(p, 'final', true, 'quiet', false);
+if runFinal
+    stats = main(p, 'final', true, 'quiet', false);
 
-table_gen = HACTLib.tables.StatsTable(p, {stats});
-results_table = table_gen.create(p, {stats})
+    table_gen = HACTLib.tables.StatsTable(p, {stats});
+    results_table = table_gen.create(p, {stats})
 
-xlx_path = sprintf('run%d_table.xlsx', p.param_index);
-xlx_path = fullfile('output', xlx_path);
-writetable(results_table, xlx_path, 'WriteRowNames', true)
+    xlx_path = sprintf('run%d_table.xlsx', p.param_index);
+    xlx_path = fullfile('output', xlx_path);
+    writetable(results_table, xlx_path, 'WriteRowNames', true)
+end
