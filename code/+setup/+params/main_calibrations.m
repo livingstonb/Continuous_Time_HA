@@ -74,7 +74,7 @@ function [outparams, n] = main_calibrations(param_opts)
     
     ii = 1;
     for icalibration = [1]
-        for iy = 1:2
+        for iy = 1:4
             for kappa0 = kappa_0s
                 for kappa1 = kappa_1s
                     for kappa2 = kappa_2s
@@ -93,17 +93,15 @@ function [outparams, n] = main_calibrations(param_opts)
                             params{ii}.calibration_bounds = {[0.0008, 0.003], [shared_params.r_b + 0.0003, 0.009]};
                             params{ii}.calibration_backup_x0 = {};
                         else
-                            if (kappa1 > 1) && (kappa2 <= 0.5)
-                                params{ii}.rho = 0.016;
-                                params{ii}.r_a = 0.018;
-                                params{ii}.calibration_bounds = {[0.014, 0.035], [0.014, 0.04]};
-                                params{ii}.calibration_backup_x0 = {};
-                            else
-                                params{ii}.rho = 0.015;
-                                params{ii}.r_a = 0.009;
-                                params{ii}.calibration_bounds = {[0.001, 0.05], [shared_params.r_b + 0.0005, 0.05]};
-                                params{ii}.calibration_backup_x0 = {};
-                            end
+                            printbds = (ii == param_opts.param_index);
+                            [rho_bds, r_a_bds] = setup.params.get_rho_ra_bounds(kappa1, kappa2, printbds);
+    
+                            params{ii}.rho = mean(rho_bds);
+                            params{ii}.r_a = mean(r_a_bds);
+
+                            % Set calibrator
+                            params{ii}.calibration_bounds = {rho_bds, r_a_bds};
+                            params{ii}.calibration_backup_x0 = {};
                         end
                         params{ii}.calibration_stats = {'median_totw', 'median_liqw'};
                         params{ii}.calibration_targets = [scf.median_totw, scf.median_liqw];
