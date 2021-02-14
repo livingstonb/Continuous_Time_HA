@@ -9,7 +9,7 @@ classdef HACTCalibrator < EconToolsML.Calibrator
 			obj = obj@EconToolsML.Calibrator(params, variables, target_names, target_values);
 			
 			obj.main_handle = @(curr_params) main(curr_params,...
-				'quiet', false, 'final', false);
+				'quiet', false, 'final', false, 'save_iteration_results', true);
 		end
 
 		function construct_options_struct(obj, params)

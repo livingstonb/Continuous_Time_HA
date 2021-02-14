@@ -22,9 +22,11 @@ function [stats, stats_alt] = main(p, varargin)
     parser = inputParser;
     addOptional(parser, 'quiet', false);
     addOptional(parser, 'final', false);
+    addOptional(parser, 'save_iteration_results', false);
     parse(parser, varargin{:});
     quiet = parser.Results.quiet;
     final = parser.Results.final;
+    save_iteration_results = parser.Results.save_iteration_results;
 
     if quiet
         fprintf_internal = @(varargin) fprintf('');
@@ -224,6 +226,33 @@ function [stats, stats_alt] = main(p, varargin)
         fname = sprintf('output_%d.mat', p.param_index);
         fpath = fullfile('output', fname);
         save(fpath,'stats','grd','grdKFE','p','KFE','income')
+    end
+
+    if save_iteration_results
+        fname = sprintf('rho_ra_iterations_%d.mat', p.param_index);
+        fpath = fullfile('output', fname);
+
+        if p.calibrator.iter == 1
+            results = struct();
+            results.kappa1 = p.kappa1;
+            results.kappa2 = p.kappa2;
+            results.median_w = stats.median_totw.value;
+            results.median_b = stats.median_liqw.value;
+            results.rho = p.rho;
+            results.r_a = p.r_a;
+            results.rho_bounds = p.calibration_bounds{1};
+            results.r_a_bounds = p.calibration_bounds{2};
+        else
+            results = load(fpath);
+            results.kappa1(end+1) = p.kappa1;
+            results.kappa2(end+1) = p.kappa2;
+            results.median_w(end+1) = stats.median_totw.value;
+            results.median_b(end+1) = stats.median_liqw.value;
+            results.rho(end+1) = p.rho;
+            results.r_a(end+1) = p.r_a;
+        end
+
+        save(fpath, '-struct', 'results')
     end
 
     clear solver.two_asset.solver
