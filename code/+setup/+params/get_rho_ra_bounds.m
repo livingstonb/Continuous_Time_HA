@@ -15,8 +15,11 @@ function [rho_bds, r_a_bds] = get_rho_ra_bounds(kappa1, kappa2, printbds)
         elseif kappa1 <= 1.5
             rho_bds = [0.007, 0.03];
             r_a_bds = [0.01, 0.03];
+        elseif kappa1 <= 5
+            rho_bds = [0.03, 0.1];
+            r_a_bds = [0.03, 0.06];
         else
-            rho_bds = [0.01, 0.03];
+            rho_bds = [0.05, 0.1];
             r_a_bds = [0.03, 0.06];
         end
     elseif (kappa2 == 0.5)
@@ -29,8 +32,11 @@ function [rho_bds, r_a_bds] = get_rho_ra_bounds(kappa1, kappa2, printbds)
         elseif kappa1 <= 1.5
             rho_bds = [0.005, 0.01];
             r_a_bds = [0.0085, 0.015];
+        elseif kappa1 <= 5
+            rho_bds = [0.01, 0.05];
+            r_a_bds = [0.011, 0.04];
         else
-            rho_bds = [0.0065, 0.02];
+            rho_bds = [0.03, 0.1];
             r_a_bds = [0.011, 0.04];
         end
     elseif (kappa2 == 0.75)
