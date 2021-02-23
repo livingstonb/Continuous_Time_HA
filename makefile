@@ -5,7 +5,7 @@ all :
 
 batch :
 	sbatch "code/batch/server1.sbatch"
-	sbatch "code/batch/server2.sbatch"
+	# sbatch "code/batch/server2.sbatch"
 
 combine :
 	sbatch "code/batch/combine_runs.sbatch"

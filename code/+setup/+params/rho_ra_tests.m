@@ -25,7 +25,7 @@ function [outparams, n] = rho_ra_tests(param_opts)
     shared_params.bmax = 25;
     shared_params.amax = 200;
     shared_params.OneAsset = 0;
-    shared_params.income_dir = 'continuous_a/no_measurement_error';
+    shared_params.income_dir = 'continuous_a/measurement_error_33pc';
     shared_params.r_b = 0.02 / 4;
     shared_params.transfer = 0;
     shared_params.Bequests = true;
@@ -34,28 +34,28 @@ function [outparams, n] = rho_ra_tests(param_opts)
     
     %% NO TRANSITORY INCOME RISK
     % Iterate over r_a, rho
-    no_trans_inc_risk = shared_params;
-    no_trans_inc_risk.no_transitory_incrisk = true;
-    no_trans_inc_risk.income_dir = 'continuous_a/no_measurement_error';
+    % no_trans_inc_risk = shared_params;
+    % no_trans_inc_risk.no_transitory_incrisk = true;
+    % no_trans_inc_risk.income_dir = 'continuous_a/no_measurement_error';
     
-    no_trans_inc_risk.kappa1 = 5;
-    no_trans_inc_risk.kappa2 = 2;
+    % no_trans_inc_risk.kappa1 = 5;
+    % no_trans_inc_risk.kappa2 = 2;
     
     rhos = 0.0009:0.0002:0.0022;
     r_as = 0.00505:0.00005:0.006;
     
-    rho = 0.0011;
-    r_a = 0.0052;
+    % rho = 0.0011;
+    % r_a = 0.0052;
     
     ii = 1;
-    for rho = rhos
-        for r_a = r_as
-            params = [params no_trans_inc_risk];
-            params{ii}.rho = rho;
-            params{ii}.r_a = r_a;
-            ii = ii + 1;
-        end
-    end
+    % for rho = rhos
+    %     for r_a = r_as
+    %         params = [params no_trans_inc_risk];
+    %         params{ii}.rho = rho;
+    %         params{ii}.r_a = r_a;
+    %         ii = ii + 1;
+    %     end
+    % end
     
     %% OTHER
     % Iterate over r_a, rho
@@ -66,9 +66,11 @@ function [outparams, n] = rho_ra_tests(param_opts)
     high_kappa1_mid_kappa2.kappa1 = 5;
     high_kappa1_mid_kappa2.kappa2 = 0.5;
     
-    rhos = 0.001:0.001:0.02;
-    r_as = 0.00505:0.0025:0.03;
-    
+%     rhos = 0.001:0.001:0.02;
+%     r_as = 0.00505:0.0025:0.03;
+    rhos = 0.026;
+    r_as = 0.017;
+    ii = 1;
     for rho = rhos
         for r_a = r_as
             params = [params high_kappa1_mid_kappa2];
