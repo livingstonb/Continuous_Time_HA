@@ -31,6 +31,12 @@ function [outparams, n] = kappa2_075_runs(param_opts)
     shared_params.Bequests = true;
 
     shared_params.kappa2 = 0.75;
+
+    shared_params.calibration_stats = {'median_totw', 'median_liqw'};
+    shared_params.calibration_targets = [scf.median_totw, scf.median_liqw];
+    shared_params.calibration_scales = [1, 100];
+    shared_params.calibration_backup_x0 = {};
+    shared_params.calibration_vars = {'rho', 'r_a'};
     
     params = {};
     
