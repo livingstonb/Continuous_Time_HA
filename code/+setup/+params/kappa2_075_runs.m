@@ -30,13 +30,12 @@ function [outparams, n] = kappa2_075_runs(param_opts)
     shared_params.transfer = 0;
     shared_params.Bequests = true;
 
-    shared_params.kappa2 = 0.75;
-
     shared_params.calibration_stats = {'median_totw', 'median_liqw'};
     shared_params.calibration_targets = [scf.median_totw, scf.median_liqw];
     shared_params.calibration_scales = [1, 100];
     shared_params.calibration_backup_x0 = {};
     shared_params.calibration_vars = {'rho', 'r_a'};
+    shared_params.KFE_maxiters = 1e6;
     
     params = {};
     
@@ -50,12 +49,13 @@ function [outparams, n] = kappa2_075_runs(param_opts)
         'continuous_a/measurement_error_33pc',...
         'continuous_a/measurement_error_50pc'};
 
-    IncomeDescriptions = {'cont_a, no meas err',...
-        'cont_a, meas err 20pc',...
-        'cont_a, meas err 33pc',...
-        'cont_a, meas err 50pc'};
+    IncomeDescriptions = {'cont_a (no meas err)',...
+        'cont_a (meas err 20pc)',...
+        'cont_a (meas err 33pc)',...
+        'cont_a (meas err 50pc)'};
 
     kappa1s = [5, 7, 8, 9, 10];
+    kappa2 = 0.75;
 
     ii = 1;
     for iy = 1:5
@@ -63,42 +63,72 @@ function [outparams, n] = kappa2_075_runs(param_opts)
             params = [params shared_params];
 
             params{ii}.kappa1 = kappa1;
+            params{ii}.kappa2 = kappa2;
 
             if (iy == 5)
+                incdescr = 'cont_a (no trans risk)';
                 params{ii}.no_transitory_incrisk = true;
                 params{ii}.income_dir = incomedirs{1};
-                params{ii}.IncomeDescr = 'No trans risk';
             else
+                incdescr = IncomeDescriptions{iy};
                 params{ii}.no_transitory_incrisk = false;
                 params{ii}.income_dir = incomedirs{iy};
-                params{ii}.IncomeDescr = IncomeDescriptions{iy};
             end
+            params{ii}.IncomeDescr = incdescr;
 
-            if (kappa1 == 5)
-                rho_bds = [0.011, 0.013];
-                r_a_bds = [0.014, 0.015];
-                params{ii}.rho = 0.012;
-                params{ii}.r_a = 0.0145;
-            elseif (kappa1 == 7)
-                rho_bds = [0.011, 0.013];
-                r_a_bds = [0.0133, 0.0148];
-                params{ii}.rho = 0.0122;
-                params{ii}.r_a = 0.0141;
-            elseif (kappa1 == 8)
-                rho_bds = [0.011, 0.013];
-                r_a_bds = [0.013, 0.0145];
-                params{ii}.rho = 0.012;
-                params{ii}.r_a = 0.0137;
-            elseif (kappa1 == 9)
-                rho_bds = [0.011, 0.013];
-                r_a_bds = [0.0125, 0.014];
-                params{ii}.rho = 0.012;
-                params{ii}.r_a = 0.0134;
-            elseif (kappa1 == 10)
-                rho_bds = [0.011, 0.013];
-                r_a_bds = [0.012, 0.014];
-                params{ii}.rho = 0.012;
-                params{ii}.r_a = 0.013;
+            params{ii}.name = sprintf('%s, kappa1=%g, kappa2=%g',...
+                            incdescr, kappa1, kappa2);
+
+            if (iy == 5)
+                if (kappa1 == 5)
+                    rho_bds = [0.011, 0.013];
+                    r_a_bds = [0.014, 0.015];
+                    params{ii}.r_a = 0.0145;
+                elseif (kappa1 == 7)
+                    rho_bds = [0.01, 0.011];
+                    r_a_bds = [0.012, 0.013];
+                elseif (kappa1 == 8)
+                    rho_bds = [0.011, 0.013];
+                    r_a_bds = [0.013, 0.0145];
+                    params{ii}.r_a = 0.0137;
+                elseif (kappa1 == 9)
+                    rho_bds = [0.011, 0.013];
+                    r_a_bds = [0.0125, 0.014];
+                    params{ii}.r_a = 0.0134;
+                elseif (kappa1 == 10)
+                    rho_bds = [0.011, 0.013];
+                    r_a_bds = [0.012, 0.014];
+                    params{ii}.r_a = 0.013;
+                end
+                params{ii}.rho = mean(rho_bds);
+                params{ii}.r_a = mean(r_a_bds);
+            else
+                if (kappa1 == 5)
+                    rho_bds = [0.011, 0.013];
+                    r_a_bds = [0.014, 0.015];
+                    params{ii}.rho = 0.012;
+                    params{ii}.r_a = 0.0145;
+                elseif (kappa1 == 7)
+                    rho_bds = [0.011, 0.013];
+                    r_a_bds = [0.0133, 0.0148];
+                    params{ii}.rho = mean(rho_bds);
+                    params{ii}.r_a = 0.0141;
+                elseif (kappa1 == 8)
+                    rho_bds = [0.011, 0.013];
+                    r_a_bds = [0.013, 0.0145];
+                    params{ii}.rho = 0.012;
+                    params{ii}.r_a = 0.0137;
+                elseif (kappa1 == 9)
+                    rho_bds = [0.011, 0.013];
+                    r_a_bds = [0.0125, 0.014];
+                    params{ii}.rho = 0.012;
+                    params{ii}.r_a = 0.0134;
+                elseif (kappa1 == 10)
+                    rho_bds = [0.011, 0.013];
+                    r_a_bds = [0.012, 0.014];
+                    params{ii}.rho = 0.012;
+                    params{ii}.r_a = 0.013;
+                end
             end
 
             params{ii}.calibration_bounds = {rho_bds, r_a_bds};
