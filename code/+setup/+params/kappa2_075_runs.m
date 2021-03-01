@@ -81,9 +81,8 @@ function [outparams, n] = kappa2_075_runs(param_opts)
 
             if (iy == 5)
                 if (kappa1 == 5)
-                    rho_bds = [0.011, 0.013];
+                    rho_bds = [0.01, 0.011];
                     r_a_bds = [0.014, 0.015];
-                    params{ii}.r_a = 0.0145;
                 elseif (kappa1 == 7)
                     rho_bds = [0.01, 0.011];
                     r_a_bds = [0.012, 0.013];
@@ -94,40 +93,38 @@ function [outparams, n] = kappa2_075_runs(param_opts)
                 elseif (kappa1 == 9)
                     rho_bds = [0.011, 0.013];
                     r_a_bds = [0.0125, 0.014];
-                    params{ii}.r_a = 0.0134;
                 elseif (kappa1 == 10)
                     rho_bds = [0.011, 0.013];
                     r_a_bds = [0.012, 0.014];
-                    params{ii}.r_a = 0.013;
                 end
                 params{ii}.rho = mean(rho_bds);
                 params{ii}.r_a = mean(r_a_bds);
             else
                 if (kappa1 == 5)
-                    rho_bds = [0.011, 0.013];
-                    r_a_bds = [0.014, 0.015];
-                    params{ii}.rho = 0.012;
+                    rho_bds = [0.011, 0.014];
+                    r_a_bds = [0.014, 0.016];
+                    params{ii}.rho = mean(rho_bds);
                     params{ii}.r_a = 0.0145;
                 elseif (kappa1 == 7)
-                    rho_bds = [0.011, 0.013];
+                    rho_bds = [0.0115, 0.014];
                     r_a_bds = [0.0133, 0.0148];
                     params{ii}.rho = mean(rho_bds);
                     params{ii}.r_a = 0.0141;
                 elseif (kappa1 == 8)
-                    rho_bds = [0.011, 0.013];
-                    r_a_bds = [0.013, 0.0145];
-                    params{ii}.rho = 0.012;
-                    params{ii}.r_a = 0.0137;
+                    rho_bds = [0.012, 0.014];
+                    r_a_bds = [0.0133, 0.015];
+                    params{ii}.rho = 0.013;
+                    params{ii}.r_a = 0.014;
                 elseif (kappa1 == 9)
-                    rho_bds = [0.011, 0.013];
-                    r_a_bds = [0.0125, 0.014];
-                    params{ii}.rho = 0.012;
-                    params{ii}.r_a = 0.0134;
+                    rho_bds = [0.0125, 0.014];
+                    r_a_bds = [0.0138, 0.0154];
+                    params{ii}.rho = 0.013;
+                    params{ii}.r_a = 0.0142;
                 elseif (kappa1 == 10)
-                    rho_bds = [0.011, 0.013];
-                    r_a_bds = [0.012, 0.014];
-                    params{ii}.rho = 0.012;
-                    params{ii}.r_a = 0.013;
+                    rho_bds = [0.0125, 0.014];
+                    r_a_bds = [0.0138, 0.0154];
+                    params{ii}.rho = 0.013;
+                    params{ii}.r_a = 0.0142;
                 end
             end
 
