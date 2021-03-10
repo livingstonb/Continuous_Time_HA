@@ -4,8 +4,8 @@ function [rho_bds, r_a_bds] = get_rho_ra_bounds_a_lb_runs(a_lb, printbds)
     end
 
     if a_lb <= 50000
-        rho_bds = [0.06, 0.08];
-        r_a_bds = [0.055, 0.08];
+        rho_bds = [0.065, 0.075];
+        r_a_bds = [0.065, 0.075];
     else
         rho_bds = [];
         r_a_bds = [];
