@@ -3,14 +3,18 @@ function [rho_bds, r_a_bds] = get_rho_ra_bounds_a_lb_runs(a_lb, printbds)
         printbds = false;
     end
 
-    r_b = 0.005;
-
-    if (a_lb )
+    if a_lb <= 50000
+        rho_bds = [0.06, 0.08];
+        r_a_bds = [0.055, 0.08];
+    else
+        rho_bds = [];
+        r_a_bds = [];
+    end
 
     % [100, 500, 1000, 2000, 5000, 10000, 20000]
 
-    rho_bds = [0.008, 0.013];
-    r_a_bds = [0.06, 0.13];
+%     rho_bds = [0.008, 0.013];
+%     r_a_bds = [0.06, 0.13];
 
     if printbds
         % fprintf('kappa1 = %f\n', kappa1)
@@ -35,4 +39,6 @@ function [rho_bds, r_a_bds] = get_rho_ra_bounds_a_lb_runs(a_lb, printbds)
     % elseif r_a_bds(2) > inf
     %     error('r_a ub too large')
     % end
+%     rho_bds
+%     r_a_bds
 end
