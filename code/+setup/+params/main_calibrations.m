@@ -83,7 +83,7 @@ function [outparams, n] = main_calibrations(param_opts)
     
     ii = 1;
     for icalibration = [1]
-        for iy = 4
+        for iy = 2
             for a_lb_dollar = a_lbs_dollars
                 a_lb = a_lb_dollar / anninc;
                 for kappa0 = kappa_0s
