@@ -115,8 +115,8 @@ if ~isempty(p.calibrator)
     % end
 
     zval = p.calibrator.target_result;
-    z1bad = (zval(1) < 1.0) || (zval(1) > 2.0);
-    z2bad = (zval(2) < 0.01) || (zval(2) > 0.2);
+    z1bad = (zval(1) < 3.0) || (zval(1) > 4.0);
+    z2bad = (zval(2) < 0.01) || (zval(2) > 0.1);
 
     if z1bad || z2bad
         runFinal = false;

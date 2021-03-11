@@ -12,6 +12,7 @@ function [outparams, n] = mean_wealth_target(param_opts)
     shared_params.nb_KFE = 50;
     shared_params.na = 50;
     shared_params.na_KFE = 50;
+    shared_params.KFE_maxiters = 5e5;
     
     shared_params.bgrid_term1_weight = 0.01;
     shared_params.bgrid_term1_curv = 0.8;
