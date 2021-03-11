@@ -6,6 +6,7 @@ function scf = scf2019struct()
     scf.median_liqw = 0.05;
     scf.htm = 0.39;
     scf.phtm = 0.135;
+    scf.mean_totw = 3.5;
 
     %% Notes
     % HtM defined as household with b < y / 6
