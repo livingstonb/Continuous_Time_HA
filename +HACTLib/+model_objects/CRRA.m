@@ -8,7 +8,12 @@ classdef CRRA
 
 			u_log = log(c);
 			u_other = c .^ (1 - invies) ./ (1 - invies);
-			u = replace_where(invies==1, u_log, u_other);
+
+			u_log(~isfinite(u_log)) = 0;
+			u_other(~isfinite(u_other)) = 0;
+
+			mask = (invies == 1);
+			u = mask .* u_log + (~mask) .* u_other;
 		end
 
 		function muc = marginal_utility(c, invies)
