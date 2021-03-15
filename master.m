@@ -54,12 +54,6 @@ if ~strcmp(currdir, 'Continuous_Time_HA')
     throw(bad_dir);
 end
 
-if exist('../EconTools', 'dir')
-    addpath('../EconTools')
-else
-    error("EconTools not found")
-end
-
 taskid_from_server = str2num(getenv('SLURM_ARRAY_TASK_ID'));
 
 if ~isempty(taskid_from_server)

@@ -1,4 +1,4 @@
-classdef HACTCalibrator < EconToolsML.Calibrator
+classdef HACTCalibrator < HACTLib.model_objects.Calibrator
 	% Brian Livingston, 2020
 	% livingstonb@uchicago.edu
 
@@ -6,7 +6,7 @@ classdef HACTCalibrator < EconToolsML.Calibrator
 		function obj = HACTCalibrator(params, variables,...
 			target_names, target_values)
 
-			obj = obj@EconToolsML.Calibrator(params, variables, target_names, target_values);
+			obj = obj@HACTLib.model_objects.Calibrator(params, variables, target_names, target_values);
 			
 			obj.main_handle = @(curr_params) main(curr_params,...
 				'quiet', false, 'final', false, 'save_iteration_results', true);
