@@ -7,32 +7,34 @@ function compute_inequality(obj)
 	pmf_w = multi_sum(obj.pmf, [3, 4]);
 	tmp = sortrows([obj.wealthmat(:), pmf_w(:)]);
 	values_w = cumsum(tmp(:,1) .* tmp(:,2) / obj.totw.value);
-	wcumshare_interp = obj.get_interpolant(obj.kernel_options,...
-		values_w, tmp(:,2));
 
-	tmp = 1 - wcumshare_interp.icdf(0.9);
+	[cdf_u, iu] = unique(cumsum(tmp(:,2)), 'last');
+	values_u = values_w(iu);
+
+	wcumshare_interp = griddedInterpolant(cdf_u, values_u, 'pchip', 'nearest');
+
+	tmp = 1 - wcumshare_interp(0.9);
 	obj.w_top10share = obj.sfill(tmp, 'w, Top 10% share', 2);
 
-	tmp = 1 - wcumshare_interp.icdf(0.99);
+	tmp = 1 - wcumshare_interp(0.99);
 	obj.w_top1share = obj.sfill(tmp, 'w, Top 1% share', 2);
 
 	% Top liquid wealth shares
 	values_b = cumsum(obj.bgrid .* obj.pmf_b / obj.liqw.value);
-	bcumshare_interp = obj.get_interpolant(obj.kernel_options,...
-		values_b, obj.pmf_b);
-	tmp = 1 - bcumshare_interp.icdf(0.9);
+	bcumshare_interp = griddedInterpolant(cumsum(obj.pmf_b), values_b, 'pchip', 'nearest');
+
+	tmp = 1 - bcumshare_interp(0.9);
 	obj.lw_top10share = obj.sfill(tmp, 'b, Top 10% share');
 
-	tmp = 1 - bcumshare_interp.icdf(0.99);
+	tmp = 1 - bcumshare_interp(0.99);
 	obj.lw_top1share = obj.sfill(tmp, 'b, Top 1% share', 2);
 
 	% Top illiquid wealth shares
 	if ~obj.p.OneAsset
 		values_a = cumsum(obj.agrid .* obj.pmf_a(:) / obj.illiqw.value);
-		acumshare_interp = obj.get_interpolant(obj.kernel_options,...
-			obj.agrid, obj.pmf_a(:));
+		acumshare_interp = griddedInterpolant(cumsum(obj.pmf_a), values_a, 'pchip', 'nearest');
 
-		iwshare_interp = @(x) acumshare_interp.icdf(x);
+		iwshare_interp = @(x) acumshare_interp(x);
 	else
 		iwshare_interp = @(x) NaN;
 	end
