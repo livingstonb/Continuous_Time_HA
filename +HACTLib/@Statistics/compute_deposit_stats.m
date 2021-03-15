@@ -68,24 +68,11 @@ function compute_deposit_stats(obj)
         condpmf = condpmf(nonzdeposits(:));
         condpmf = condpmf / sum(condpmf);
 
-        sorted_mat = sortrows([chi_div_d(:) condpmf(:)]);
-        pct_interpolant = pct_interp(sorted_mat(:,1), cumsum(sorted_mat(:,2)));
+        interpolant = HACTLib.aux.pctile_interpolant(chi_div_d, condpmf);
         obj.adjcosts.mean_chi_div_d.value = condpmf' * chi_div_d;
 		for ip = 1:npct
 			pct_at = obj.p.wpercentiles(ip);
-			obj.adjcosts.chi_div_d_pctiles{ip}.value = pct_interpolant(pct_at / 100);
+			obj.adjcosts.chi_div_d_pctiles{ip}.value = interpolant(pct_at / 100);
 		end
-	end
-end
-
-function interp_out = pct_interp(values, cdf_x)
-	[cdf_x_u, iu] = unique(cdf_x(:), 'first');
-	values_u = values(iu);
-
-	if numel(cdf_x_u) >= 2
-		interp_out = griddedInterpolant(...
-			cdf_x_u, values_u, 'pchip', 'nearest');
-	else
-		interp_out = @(x) NaN;
 	end
 end

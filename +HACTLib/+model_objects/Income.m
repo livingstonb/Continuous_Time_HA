@@ -145,11 +145,8 @@ classdef Income < handle
         	% If labor is endogenous, a function handle is returned, otherwise an
         	% array is returned.
 
-        	import HACTLib.computation.Returns.liq_returns_incl_borrowing
-        	import HACTLib.computation.Returns.net_illiquid_returns
-
-        	r_b_HJB = liq_returns_incl_borrowing(gridsHJB.b.vec, p.r_b, p.r_b_borr);
-        	r_b_KFE = liq_returns_incl_borrowing(gridsKFE.b.vec, p.r_b, p.r_b_borr);
+        	r_b_HJB = p.r_b .* (gridsHJB.b.vec >=0 ) +  p.r_b_borr .* (gridsHJB.b.vec < 0);
+        	r_b_KFE = p.r_b .* (gridsKFE.b.vec >=0 ) +  p.r_b_borr .* (gridsKFE.b.vec < 0);
 
 			% Income to liquid asset
 			obj.nety_HJB_liq_hourly = @(h) (1-p.directdeposit) * (1-p.wagetax) * obj.y.wide .* h ...
@@ -159,12 +156,7 @@ classdef Income < handle
 
 		    % Income to illiquid asset
 		    r_a_effective = p.r_a + p.deathrate * p.perfectannuities;
-		    if isfinite(p.illiquid_tax_threshold)
-		    	illiquid_returns = @(agrid) net_illiquid_returns(...
-		    		agrid, r_a_effective, p.illiquid_tax_threshold, p.illiquid_tax_midpt);
-			else
-				illiquid_returns = @(agrid) r_a_effective .* agrid;
-			end
+		    illiquid_returns = @(agrid) r_a_effective .* agrid;
 
 		    obj.nety_HJB_illiq_hourly = @(h) p.directdeposit * (1-p.wagetax) * obj.y.wide .* h ...
 		    	+ illiquid_returns(gridsHJB.a.wide);

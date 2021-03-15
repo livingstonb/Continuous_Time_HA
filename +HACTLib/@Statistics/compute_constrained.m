@@ -1,6 +1,14 @@
 function compute_constrained(obj)
 	import HACTLib.aux.multi_sum
 
+	lw_interp = griddedInterpolant(obj.bgrid, cumsum(obj.pmf_b), 'pchip', 'nearest');
+	iw_interp = griddedInterpolant(obj.agrid, cumsum(obj.pmf_a), 'pchip', 'nearest');
+
+	sorted_mat = sortrows([obj.wealthmat(:), obj.pmf_w(:)]);
+	[w_u, iu] = unique(sorted_mat(:,1), 'last');
+	cdf_w = cumsum(sorted_mat(:,2));
+	w_interp = griddedInterpolant(w_u, cdf_w(iu), 'pchip', 'nearest');
+
     neps = numel(obj.p.epsilon_HtM);
     obj.constrained_illiq = cell(1, neps);
     obj.constrained_illiq_pct = cell(1, neps);
@@ -14,21 +22,21 @@ function compute_constrained(obj)
     for ip = 1:neps
 		htm = obj.p.epsilon_HtM(ip);
 
-		tmp = obj.lw_interp.cdf(htm);
+		tmp = lw_interp(htm);
 		obj.constrained_liq{ip} = obj.sfill(tmp,...
 			sprintf('b <= %g', htm));
 
 		obj.constrained_liq_pct{ip} = obj.sfill(tmp,...
 			sprintf('b <= %g%% mean ann inc', htm * 100));
 
-		tmp = obj.iw_interp.cdf(htm);
+		tmp = iw_interp(htm);
 		obj.constrained_illiq{ip} = obj.sfill(tmp,...
 			sprintf('a <= %g', htm), 2);
 
 		obj.constrained_illiq_pct{ip} = obj.sfill(tmp,...
 			sprintf('a <= %g%% mean ann inc', htm * 100), 2);
 
-		tmp = obj.w_interp.cdf(htm);
+		tmp = w_interp(htm);
 		obj.constrained{ip} = obj.sfill(tmp,...
 			sprintf('w <= %g', htm), 2);
 
@@ -40,9 +48,9 @@ function compute_constrained(obj)
 	for ip = 1:ndollars
 		if ~isempty(obj.p.numeraire_in_dollars)
 			htm = obj.p.dollars_HtM(ip) / obj.p.numeraire_in_dollars;
-			illiq_htm = obj.iw_interp.cdf(htm);
-			liq_htm = obj.lw_interp.cdf(htm);
-			w_htm = obj.w_interp.cdf(htm);
+			illiq_htm = iw_interp(htm);
+			liq_htm = lw_interp(htm);
+			w_htm = w_interp(htm);
 		else
 			illiq_htm = NaN;
 			liq_htm = NaN;
@@ -58,16 +66,6 @@ function compute_constrained(obj)
 		obj.constrained_dollars{ip} = obj.sfill(w_htm,...
 			sprintf('w <= $%g', obj.p.dollars_HtM(ip)), 2);
 	end
-
-	% Fraction paying illiquid asset tax
-	z = obj.p.illiquid_tax_threshold;
-	if isfinite(z)
-		tmp = 1 - obj.iw_interp.cdf(z);
-	else
-		tmp = 0;
-	end
-	obj.hhs_paying_wealth_tax = obj.sfill(tmp,...
-		'HHs paying tax on illiquid returns', 2);
 
 	% Liquid wealth / (quarterly earnings) < epsilon
     kopts = obj.kernel_options;

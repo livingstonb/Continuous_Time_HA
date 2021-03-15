@@ -90,10 +90,6 @@ classdef Statistics < handle
 		pmf_w;
         
         kernel_options;
-
-        lw_interp;
-        iw_interp;
-        w_interp;
 	end
 
 	methods
@@ -161,9 +157,6 @@ classdef Statistics < handle
 			obj.wealthmat = [];
 			obj.wealth_sorted = [];
 			obj.pmf_w = [];
-			obj.lw_interp = [];
-			obj.iw_interp = [];
-			obj.w_interp = [];
 		end
 	end
 
@@ -194,13 +187,6 @@ classdef Statistics < handle
 		    [obj.pmf_a, obj.cdf_a] = obj.marginal_dists(2);
 		    obj.pmf_w = obj.marginal_dists([1, 2]);
 		    obj.pmf_b_a = multi_sum(obj.pmf, [3, 4]);
-
-		    obj.lw_interp = obj.get_interpolant([],...
-		    	obj.bgrid, obj.pmf, [], [1]);
-		    obj.iw_interp = obj.get_interpolant([],...
-		    	obj.agrid, obj.pmf, [], [2]);
-		    obj.w_interp = obj.get_interpolant([],...
-		    	obj.wealthmat, obj.pmf, [], [1, 2]);
 		end
 
 		function out = expectation(obj, vals)
