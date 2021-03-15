@@ -4,8 +4,6 @@ classdef CRRA
 
 	methods (Static)
 		function u = utility(c, invies)
-			import HACTLib.aux.replace_where
-
 			u_log = log(c);
 			u_other = c .^ (1 - invies) ./ (1 - invies);
 
