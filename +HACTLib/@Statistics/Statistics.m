@@ -44,7 +44,6 @@ classdef Statistics < handle
 		constrained_illiq;
 		constrained_illiq_pct;
 		constrained_illiq_dollars;
-		hhs_paying_wealth_tax;
 		
 		w_lt_ysixth;
 		w_lt_ytwelfth;

@@ -30,7 +30,7 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-param_opts.calibrate = false;
+param_opts.calibrate = true;
 param_opts.fast = false; % use small grid for debugging
 param_opts.ComputeMPCS = true;
 param_opts.ComputeMPCS_illiquid = false;
@@ -42,7 +42,7 @@ param_opts.param_index = 1;
 param_opts.makePlots = false; % not coded yet
 
 run_opts.check_nparams = false;
-run_opts.param_script = 'main_calibrations';
+run_opts.param_script = 'overall_htm_target';
 
 %% ------------------------------------------------------------------------
 % HOUSEKEEPING, DO NOT CHANGE
