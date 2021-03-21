@@ -9,9 +9,7 @@ function compute_inequality(obj)
 	values_w = cumsum(tmp(:,1) .* tmp(:,2) / obj.totw.value);
 
 	[cdf_u, iu] = unique(cumsum(tmp(:,2)), 'last');
-	values_u = values_w(iu);
-
-	wcumshare_interp = griddedInterpolant(cdf_u, values_u, 'pchip', 'nearest');
+	wcumshare_interp = griddedInterpolant(cdf_u, values_w(iu), 'pchip', 'nearest');
 
 	tmp = 1 - wcumshare_interp(0.9);
 	obj.w_top10share = obj.sfill(tmp, 'w, Top 10% share', 2);
@@ -21,7 +19,8 @@ function compute_inequality(obj)
 
 	% Top liquid wealth shares
 	values_b = cumsum(obj.bgrid .* obj.pmf_b / obj.liqw.value);
-	bcumshare_interp = griddedInterpolant(cumsum(obj.pmf_b), values_b, 'pchip', 'nearest');
+	[cdf_b_u, iu_b] = unique(cumsum(obj.pmf_b), 'last');
+	bcumshare_interp = griddedInterpolant(cdf_b_u, values_b(iu_b), 'pchip', 'nearest');
 
 	tmp = 1 - bcumshare_interp(0.9);
 	obj.lw_top10share = obj.sfill(tmp, 'b, Top 10% share');
