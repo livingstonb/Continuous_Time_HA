@@ -33,7 +33,7 @@ function compute_inequality(obj)
 	if ~obj.p.OneAsset
 		values_a = cumsum(obj.agrid .* obj.pmf_a(:) / obj.illiqw.value);
 		[cdf_a_u, iu_a] = unique(cumsum(obj.pmf_a), 'last');
-		acumshare_interp = griddedInterpolant(cdf_a_u, values_a(iu), 'pchip', 'nearest');
+		acumshare_interp = griddedInterpolant(cdf_a_u, values_a(iu_a), 'pchip', 'nearest');
 
 		iwshare_interp = @(x) acumshare_interp(x);
 	else
