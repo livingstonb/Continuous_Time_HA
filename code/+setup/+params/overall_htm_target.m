@@ -76,12 +76,12 @@ function [outparams, n] = overall_htm_target(param_opts)
                     params{ii}.calibration_backup_x0 = {};
                 else
                     params{ii}.kappa1 = 0.5;
-                    params{ii}.rho = 0.0092;
+                    params{ii}.rho = 0.01;
                     params{ii}.r_a = 0.015;
 
                     kappa1_bds = [0.2, 5];
-                    rho_bds = [0.007, 0.015];
-                    r_a_bds = [0.007, 0.02];
+                    rho_bds = [0.009, 0.018];
+                    r_a_bds = [0.006, 0.02];
                     params{ii}.KFE_maxiters = 3e5;
 
                     % params{ii}.rho = mean(rho_bds);
