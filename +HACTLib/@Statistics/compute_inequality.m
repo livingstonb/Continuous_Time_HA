@@ -32,7 +32,8 @@ function compute_inequality(obj)
 	% Top illiquid wealth shares
 	if ~obj.p.OneAsset
 		values_a = cumsum(obj.agrid .* obj.pmf_a(:) / obj.illiqw.value);
-		acumshare_interp = griddedInterpolant(cumsum(obj.pmf_a), values_a, 'pchip', 'nearest');
+		[cdf_a_u, iu_a] = unique(cumsum(obj.pmf_a), 'last');
+		acumshare_interp = griddedInterpolant(cdf_a_u, values_a(iu), 'pchip', 'nearest');
 
 		iwshare_interp = @(x) acumshare_interp(x);
 	else
