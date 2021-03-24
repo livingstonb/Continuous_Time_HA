@@ -18,6 +18,9 @@ classdef Model < handle
 		% Instance of KFESolver class.
 		kfe_solver;
 
+		% Risk adjustment for SDU and risky asset
+		risk_adj;
+
 		% Instance of TransitionMatrixConstructor class.
 		A_constructor_HJB;
 
@@ -161,13 +164,14 @@ classdef Model < handle
 
 		        % Update value function
 		        if obj.p.SDU
-			    	risk_adj = compute_risk_adjustment_for_nodrift_case(...
+			    	hjb_solver.risk_adj = compute_risk_adjustment_for_nodrift_case(...
 			    		obj.p, obj.grids_HJB, V_deriv_risky_asset_nodrift,...
 			    		stationary, Vn);
-			    	Vn1 = obj.hjb_solver.solve(A, HJB.u, Vn, risk_adj);
 			    else
-			    	Vn1 = obj.hjb_solver.solve(A, HJB.u, Vn);
+			    	hjb_solver.risk_adj = [];
 			    end
+
+			    Vn1 = obj.hjb_solver.solve(A, HJB.u, Vn);
 
 				% check for convergence
 			    Vdiff = Vn1 - Vn;

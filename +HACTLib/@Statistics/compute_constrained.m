@@ -81,13 +81,8 @@ function compute_constrained(obj)
 	by_interp = get_interpolant(kernel_options,...
 		tmp(:,1), tmp(:,2), 0.4, []);
 	
-	tmp = by_interp.cdf(1/6);
-	obj.liqw_lt_ysixth = obj.sfill(...
-		tmp, 'b_i <= y_i / 6');
-    
-    tmp = by_interp.cdf(1/12);
-	obj.liqw_lt_ytwelfth = obj.sfill(...
-		tmp, 'b_i <= y_i / 12');
+	obj.liqw_lt_ysixth = obj.sfill(by_interp.cdf(1/6), 'b_i <= y_i / 6');
+   	obj.liqw_lt_ytwelfth = obj.sfill(by_interp.cdf(1/12), 'b_i <= y_i / 12');
 
 	% Wealth / (quarterly earnings) < epsilon
 	wy_ratio = obj.wealthmat ./ obj.income.y.wide;
@@ -97,13 +92,8 @@ function compute_constrained(obj)
 	wy_interp = get_interpolant(kernel_options,...
 		tmp(:,1), tmp(:,2), 0.4);
 	
-	tmp = wy_interp.cdf(1/6);
-	obj.w_lt_ysixth = obj.sfill(...
-		tmp, 'w_i <= y_i / 6', 2);
-	
-	tmp = wy_interp.cdf(1/12);
-	obj.w_lt_ytwelfth = obj.sfill(...
-		tmp, 'w_i <= y_i / 12', 2);
+	obj.w_lt_ysixth = obj.sfill(wy_interp.cdf(1/6), 'w_i <= y_i / 6', 2);
+	obj.w_lt_ytwelfth = obj.sfill(wy_interp.cdf(1/12), 'w_i <= y_i / 12', 2);
 
 	% HtM Ratios
 	tmp = 1 - obj.w_lt_ysixth.value / obj.liqw_lt_ysixth.value;

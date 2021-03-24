@@ -46,7 +46,7 @@ function [outparams, n] = overall_htm_target(param_opts)
         'cont_a, meas err 33pc',...
         'cont_a, meas err 50pc'};
 
-    experiment = true;
+    experiment = false;
     if experiment
         iy = 1;
         params = shared_params;

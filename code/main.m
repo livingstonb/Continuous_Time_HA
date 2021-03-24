@@ -96,12 +96,9 @@ function stats = main(p, varargin)
     % -----------------------------------------------------------------
     import HACTLib.computation.MPCs
 
+    % MPCs out of shock in current period
     mpc_finder = MPCs(p, income, grdKFE, p.mpc_options);
     mpc_finder_illiquid = MPCs(p, income, grdKFE, p.mpc_options_illiquid);
-
-    shocks = [4, 5, 6];
-    import HACTLib.computation.MPCsNews
-    trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks, p.mpcs_news_options);
     
     if p.ComputeMPCS
     	fprintf_internal('\nComputing MPCs out of an immediate shock...\n')
@@ -115,7 +112,12 @@ function stats = main(p, varargin)
     
     stats.add_mpcs(mpc_finder);
     stats.add_mpcs(mpc_finder_illiquid);
-    
+
+    % MPCs out of news
+    shocks = [4, 5, 6];
+    import HACTLib.computation.MPCsNews
+    trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks, p.mpcs_news_options);
+
     if p.ComputeMPCS_news
     	fprintf_internal('Computing MPCs out of news...\n')
     	trans_dyn_solver.solve(KFE,stats.pmf,mpc_finder.cum_con_baseline);
@@ -158,6 +160,7 @@ function stats = main(p, varargin)
         fprintf_internal('\nSimulating MPCs...\n')
         mpc_simulator.solve(stats.pmf);
     end
+
     for ii = 1:6
         stats.other.sim_mpcs(ii).avg_4_quarterly = mpc_simulator.sim_mpcs(ii).quarterly;
         stats.other.sim_mpcs(ii).avg_4_annual = mpc_simulator.sim_mpcs(ii).annual;
