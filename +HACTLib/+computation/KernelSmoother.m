@@ -2,7 +2,6 @@ classdef KernelSmoother < handle
 	properties (Constant)
 		defaults = struct(...
 			'ktype', 'gaussian',...
-			'force_fit_cdf_low', [],...
 			'rescale_and_log', true,...
 			'h', 0.2...
 			)
@@ -16,59 +15,46 @@ classdef KernelSmoother < handle
 
 		ktype;
         rescale_and_log;
-		force_fit_cdf_low;
 		x_transform;
 
 		p_lower;
 	end
 
 	methods
-		function obj = KernelSmoother(varargin)
+		function obj = KernelSmoother(values, pmf, ub, varargin)
 			import HACTLib.aux.parse_keyvalue_pairs
 			options = parse_keyvalue_pairs(obj.defaults, varargin{:});
 
 			obj.ktype = options.ktype;
-			obj.force_fit_cdf_low = options.force_fit_cdf_low;
             obj.rescale_and_log = options.rescale_and_log;
 			obj.h = options.h;
-		end
 
-		function set(obj, x, y)
-			obj.x = x;
-			obj.y = y;
+			[x, iu] = unique(values(:), 'last');
 
-            if obj.rescale_and_log
-                xb = [min(x), max(x)];
+			y = cumsum(pmf(:));
+			y = y(iu);
+
+            mask = (x <= ub); % Restrict to low values
+            y = y(mask);
+            x = x(mask);
+
+			if numel(x) > 5000
+				[obj.x, obj.y] = thin_cdf(x, y, 5000);
+			else
+				obj.x = x;
+				obj.y = y;
+            end
+
+			if obj.rescale_and_log
+                xb = [min(obj.x), max(obj.x)];
                 obj.x_transform = @(x) rescale_and_log_x(x, xb);
             else
             	obj.x_transform = @(x) x;
             end
-
-			% [y_hat, iu] = unique(obj.keval(obj.x));
-			% obj.inv_interp = griddedInterpolant(y_hat,...
-			% 	obj.x(iu), 'spline', 'nearest');
 		end
 
-		% function set_reflection(obj)
-		% 	preflect0 = 
-		% end
-
-		% function fit_polys(obj)
-		% 	xlower = (obj.y <= 0.1);
-		% 	obj.p_lower = polyfit(obj.x(xlower), obj.y(xlower), 3);
-		% end
-
 		function y_out = keval(obj, x_query)
-			if numel(obj.force_fit_cdf_low) == 2
-				adj_range = (obj.y >= obj.force_fit_cdf_low(1)) ...
-					& (obj.y <= obj.force_fit_cdf_low(2));
-
-				adjustment = ones(size(obj.x));
-				adjustment(adj_range) = linspace(0.1, 1, sum(adj_range));
-				h_adj = adjustment .* obj.h;
-			else
-				h_adj = obj.h;
-			end
+			h_adj = obj.h;
 			
 			y_out = zeros(size(x_query));
 			x_qtrans = obj.x_transform(reshape(x_query, 1, []));
@@ -136,4 +122,18 @@ end
 function x_scaled = rescale_and_log_x(x, xbounds)
 	x_scaled = (x - xbounds(1)) / (xbounds(2) - xbounds(1));
 	x_scaled = log(1 + 100 * x_scaled);
+end
+
+function [x, y] = thin_cdf(x, y, nmax)
+	n = numel(x);
+
+	pct_to_drop = 100 * (n - nmax) / n;
+
+	dydx = diff(y) ./ diff(x);
+	dydx_pctile = prctile(dydx, pct_to_drop);
+	keep = (dydx > dydx_pctile);
+	keep = [true; keep];
+
+    x = x(keep);
+    y = y(keep);
 end
