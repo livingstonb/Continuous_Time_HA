@@ -44,9 +44,9 @@ classdef KernelSmoother < handle
             	obj.x_transform = @(x) x;
             end
 
-			[y_hat, iu] = unique(obj.keval(obj.x));
-			obj.inv_interp = griddedInterpolant(y_hat,...
-				obj.x(iu), 'spline', 'nearest');
+			% [y_hat, iu] = unique(obj.keval(obj.x));
+			% obj.inv_interp = griddedInterpolant(y_hat,...
+			% 	obj.x(iu), 'spline', 'nearest');
 		end
 
 		% function set_reflection(obj)

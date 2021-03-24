@@ -1,4 +1,4 @@
-function [stats, stats_alt] = main(p, varargin)
+function stats = main(p, varargin)
     % Instantiates necessary classes and calls functions to solve the
     % model and compute statistics
     %
@@ -15,10 +15,7 @@ function [stats, stats_alt] = main(p, varargin)
     import HACTLib.model_objects.Grid
     import HACTLib.model_objects.Income
 
-    if p.OneAsset
-        p.set("ComputeMPCS_illiquid", false, true);
-    end
-
+    % Parse options
     parser = inputParser;
     addOptional(parser, 'quiet', false);
     addOptional(parser, 'final', false);
@@ -29,6 +26,7 @@ function [stats, stats_alt] = main(p, varargin)
     save_iteration_results = parser.Results.save_iteration_results;
 
     if quiet
+        % Turn printing off
         fprintf_internal = @(varargin) fprintf('');
     else
         fprintf_internal = @(varargin) fprintf(varargin{:});
@@ -37,17 +35,18 @@ function [stats, stats_alt] = main(p, varargin)
     %% --------------------------------------------------------------------
     % CREATE GRID, INCOME OBJECTS
     % ---------------------------------------------------------------------
-	income_path = fullfile('input', p.income_dir);
-
     % Main income process
-	income = Income(income_path, p, false);
+    norisk = false;
+	income = Income(fullfile('input', p.income_dir), p, norisk);
 
     % Turn off income risk (set y equal to the mean)
-    income_norisk = Income('', p, true);
+    norisk = true;
+    income_norisk = Income('', p, norisk);
 
+    % Update number of income points
     p.set("ny", income.ny, true);
 
-    % Natural borrowing limit
+    % Borrowing limit
     NBL = - min(income.y.vec + p.transfer) ...
             / (p.r_b_borr + p.deathrate * p.perfectannuities);
     if p.bmin <= -1e10
@@ -68,11 +67,13 @@ function [stats, stats_alt] = main(p, varargin)
     income.set_net_income(p, grd, grdKFE);
     income_norisk.set_net_income(p, grd_norisk, grdKFE_norisk);
 
+    % Instantiate and solve Model instance
     model = HACTLib.model_objects.Model(p, grd, grdKFE, income, 'quiet', quiet);
     model.initialize();
     [~, KFE, Au] = model.solve();
 
-    if p.NoRisk == 1
+    if p.SolveNoRisk == 1
+        % Solve model without income risk
         model_nr = HACTLib.model_objects.Model(...
             p, grd_norisk, grdKFE_norisk, income_norisk);
         model_nr.initialize();
@@ -88,12 +89,7 @@ function [stats, stats_alt] = main(p, varargin)
     % -----------------------------------------------------------------
     fprintf_internal('\nComputing statistics\n')    
     stats = HACTLib.Statistics(p, income, grdKFE, KFE);
-    
-    kernel_options.ktype = 'linear';
-    kernel_options.h = 0.2;
-    kernel_options.force_fit_cdf_low = [];
-    kernel_options.rescale_and_log = false;
-    stats.compute_statistics(kernel_options);
+    stats.compute_statistics();
 
     %% ----------------------------------------------------------------
     % COMPUTE MPCs
@@ -129,7 +125,6 @@ function [stats, stats_alt] = main(p, varargin)
     end
     stats.add_mpcs_news(trans_dyn_solver);
 
-
     %% ----------------------------------------------------------------
     % SIMULATE MPCs
     % -----------------------------------------------------------------
@@ -150,7 +145,7 @@ function [stats, stats_alt] = main(p, varargin)
 
     clear mpc_simulator
 
-     %% ----------------------------------------------------------------
+    %% ----------------------------------------------------------------
     % SIMULATE MPCs OUT OF NEWS
     % -----------------------------------------------------------------
     shocks = [4,5,6];
@@ -176,7 +171,7 @@ function [stats, stats_alt] = main(p, varargin)
     mpc_finder_norisk = HACTLib.computation.MPCs(...
     	p, income_norisk, grdKFE_norisk, 'no_inc_risk', true);
     
-    if (p.ComputeMPCS == 1) && (p.NoRisk == 1)
+    if (p.ComputeMPCS == 1) && (p.SolveNoRisk == 1)
     	fprintf_internal('\nComputing MPCs for model without income risk...\n')
     	mpc_finder_norisk.solve(KFE_nr, Au_nr);
     end
@@ -210,13 +205,7 @@ function [stats, stats_alt] = main(p, varargin)
     income = to_structure(income);
 
     if p.saveGrids
-        nx = max(p.nb, p.na);
-        bgrid = [grd.b.vec; NaN(nx-p.nb, 1)];
-        agrid = [grd.a.vec; NaN(nx-p.na, 1)];
-        grids = table(bgrid, agrid);
-        fpath = fullfile('output',...
-            sprintf('grids%d.xlsx', p.param_index));
-        writetable(grids, fpath, 'WriteVariableNames', true);
+        save_grids(p, grd);
     end
 
 	stats.clean();
@@ -256,4 +245,14 @@ function [stats, stats_alt] = main(p, varargin)
     end
 
     clear solver.two_asset.solver
+end
+
+function save_grids(p, grd)
+    nx = max(p.nb, p.na);
+    bgrid = [grd.b.vec; NaN(nx-p.nb, 1)];
+    agrid = [grd.a.vec; NaN(nx-p.na, 1)];
+    grids = table(bgrid, agrid);
+    fpath = fullfile('output',...
+        sprintf('grids%d.xlsx', p.param_index));
+    writetable(grids, fpath, 'WriteVariableNames', true);
 end

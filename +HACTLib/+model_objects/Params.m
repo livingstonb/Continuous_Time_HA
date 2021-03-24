@@ -63,6 +63,7 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
                 obj.na_KFE = 2;
                 obj.kappa0 = 1e8;
                 obj.r_a = obj.r_b;
+                obj.ComputeMPCS_illiquid = false;
             end
 
             if obj.fast
@@ -234,7 +235,6 @@ classdef Params < HACTLib.model_objects.ParamsDefaults
             fprintf('\tdeathrate = %f\n',obj.deathrate)
             fprintf('\n\n')
         end
-
 
         function label_out = quantity2label(obj, val)
             if ~isempty(obj.numeraire_in_dollars)

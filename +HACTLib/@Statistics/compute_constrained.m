@@ -68,21 +68,17 @@ function compute_constrained(obj)
 	end
 
 	% Liquid wealth / (quarterly earnings) < epsilon
-    kopts = obj.kernel_options;
-    ktype0 = kopts.ktype;
-    h0 = kopts.h;
-    rescale_and_log0 = kopts.rescale_and_log;
-
-    kopts.ktype = 'gaussian';
-    kopts.h = 0.15;
-%     kopts.force_fit_cdf_low = [0.07, 0.5];
-    kopts.rescale_and_log = true;
+	kernel_options = struct();
+	kernel_options.ktype = 'guassian';
+    kernel_options.h = 0.15;
+    kernel_options.rescale_and_log = true;
+    kernel_options.force_fit_cdf_low = [];
 
 	by_ratio = obj.bgrid ./ obj.income.y.wide;
 	pmf_by = multi_sum(obj.pmf, [2, 3]);
 
 	tmp = sortrows([by_ratio(:), pmf_by(:)]);
-	by_interp = obj.get_interpolant(kopts,...
+	by_interp = get_interpolant(kernel_options,...
 		tmp(:,1), tmp(:,2), 0.4, []);
 	
 	tmp = by_interp.cdf(1/6);
@@ -98,7 +94,7 @@ function compute_constrained(obj)
 	pmf_wy = sum(obj.pmf, 3);
 
 	tmp = sortrows([wy_ratio(:), pmf_wy(:)]);
-	wy_interp = obj.get_interpolant(kopts,...
+	wy_interp = get_interpolant(kernel_options,...
 		tmp(:,1), tmp(:,2), 0.4);
 	
 	tmp = wy_interp.cdf(1/6);
@@ -117,8 +113,11 @@ function compute_constrained(obj)
 	tmp = 1 - obj.w_lt_ytwelfth.value / obj.liqw_lt_ytwelfth.value;
 	obj.WHtM_over_HtM_weekly = obj.sfill(tmp,...
 		'P(WHtM) / P(HtM), HtM in terms of y/12', 2);
-    
-    kopts.rescale_and_log = rescale_and_log0;
-    kopts.ktype = ktype0;
-    kopts.h = h0;
+end
+
+function interp_obj = get_interpolant(kernel_options, varargin)
+	import HACTLib.computation.InterpObj
+	interp_obj = InterpObj();
+	interp_obj.set_dist(varargin{:});
+	interp_obj.configure(kernel_options);
 end

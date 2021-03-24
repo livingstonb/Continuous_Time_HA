@@ -19,7 +19,7 @@ classdef HACTCalibrator < HACTLib.model_objects.Calibrator
 			obj.options.SimulateMPCS = params.SimulateMPCS;
 			obj.options.ComputeMPCS_news = params.ComputeMPCS_news;
 			obj.options.SimulateMPCS_news = params.SimulateMPCS_news;
-			obj.options.NoRisk = params.NoRisk;
+			obj.options.SolveNoRisk = params.SolveNoRisk;
 		end
 
 		function value = get_results_value(obj, results, variable_name)

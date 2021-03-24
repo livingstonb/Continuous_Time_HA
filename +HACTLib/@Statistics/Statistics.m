@@ -87,8 +87,6 @@ classdef Statistics < handle
 		wealthmat;
 
 		pmf_w;
-        
-        kernel_options;
 	end
 
 	methods
@@ -112,11 +110,7 @@ classdef Statistics < handle
 			obj.pmf = model.g .* grdKFE.trapezoidal.matrix;
 		end
 
-		function compute_statistics(obj, kernel_options)
-			if nargin == 2
-				obj.kernel_options = kernel_options;
-            end
-
+		function compute_statistics(obj)
 			obj.add_params();
 			obj.compute_intro_stats();
 			obj.construct_distributions();
@@ -232,14 +226,6 @@ classdef Statistics < handle
 				'label', label,...
 				'indicator', asset_indicator...
 			);
-		end
-
-		function interp_obj = get_interpolant(kernel_options, varargin)
-			import HACTLib.computation.InterpObj
-
-			interp_obj = InterpObj();
-			interp_obj.set_dist(varargin{:});
-			interp_obj.configure(kernel_options);
 		end
 	end
 end

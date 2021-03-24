@@ -9,7 +9,7 @@ classdef ParamsDefaults < handle
         Bequests = false;
         OneAsset = true;
         DealWithSpecialCase;
-        NoRisk = true;
+        SolveNoRisk = true;
         fast = false;
         saveGrids = false;
         makePlots = false;

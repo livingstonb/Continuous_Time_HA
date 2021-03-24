@@ -129,9 +129,10 @@ classdef Model < handle
 				wealth = NaN;
 			else
 				KFE.g = obj.kfe_solver.solve(Au);
-				wealth = compute_wealth(KFE.g, obj.grids_KFE);
+				[mu_b, mu_a] = compute_wealth(KFE.g, obj.grids_KFE);
 				if ~obj.options.quiet
-					fprintf('    --- MEAN WEALTH = %f ---\n\n', wealth)
+					fprintf('    --- E[b] = %f ---\n', mu_b)
+					fprintf('    --- E[a] = %f ---\n\n', mu_a)
 				end
 			end
 		end
@@ -250,10 +251,12 @@ function check_if_not_converging(dst, nn)
 	end
 end
 
-function wealth = compute_wealth(g, grdKFE)
+function [mu_b, mu_a] = compute_wealth(g, grdKFE)
 	pmf = g .* grdKFE.trapezoidal.matrix;
-	wealth_grid = grdKFE.b.vec + grdKFE.a.wide;
 
-	tmp = pmf .* wealth_grid;
-	wealth = sum(tmp(:));
+	vals_b = pmf .* grdKFE.b.vec;
+	mu_b = sum(vals_b(:));
+
+	vals_a = pmf .* grdKFE.a.wide;
+	mu_a = sum(vals_a(:));
 end

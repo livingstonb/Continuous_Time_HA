@@ -97,7 +97,7 @@ Some parameters are expected to take true/false values, which may activate or di
 
 	This feature has gone out of date and should be left as false at the moment.
 
-* *NoRisk*
+* *SolveNoRisk*
 
 	When true, the model is solved both with and without income risk. In some cases, turning off income risk leads convergence to fail, so set this to false if it's causing problems and you don't need the model solved for the case of no income risk.
 

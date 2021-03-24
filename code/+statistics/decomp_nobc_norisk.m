@@ -20,7 +20,7 @@ function decomp = decomp_nobc_norisk(baseline, no_bc)
     end
 
     % Check if required MPCs are available
-    mpcs_available = (p.ComputeMPCS == 1) && (p.OneAsset == 1) && (p.NoRisk == 1);
+    mpcs_available = (p.ComputeMPCS == 1) && (p.OneAsset == 1) && (p.SolveNoRisk == 1);
     if ~mpcs_available
         return
     end

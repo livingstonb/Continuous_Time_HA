@@ -60,12 +60,12 @@ function [outparams, n] = overall_htm_target(param_opts)
 
         params.kappa1 = 1;
         params.kappa2 = 1;
-        params.rho = 0.01;
+        params.rho = 0.009;
         params.r_b = 0.005;
-        params.r_a = 0.008;
+        params.r_a = 0.009;
 
-        rho_bds = [0.0075, 0.018];
-        r_b_bds = [0.002, 0.007];
+        rho_bds = [0.007, 0.015];
+        r_b_bds = [0.004, 0.008];
         params.KFE_maxiters = 3e5;
 
         % Set calibrator
