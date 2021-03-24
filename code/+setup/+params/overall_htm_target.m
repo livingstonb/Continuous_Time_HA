@@ -58,17 +58,18 @@ function [outparams, n] = overall_htm_target(param_opts)
         params.IncomeDescr = IncomeDescriptions{iy};
         param_opts.param_index = 1;
 
-        params.kappa1 = 5;
+        params.kappa1 = 2;
         params.kappa2 = 0.5;
-        params.rho = 0.009;
+        params.rho = 0.012;
         params.r_b = 0.005;
-        params.r_a = 0.02;
+        params.r_a = 0.013;
 
         params.sd_r = 0.01;
         params.SDU = true;
         params.invies = 1 / 1.5;
         params.riskaver = 2;
         params.kappa1 = 0.1;
+        params.r_a = 0.02;
 
         rho_bds = [0.005, 0.02];
         r_b_bds = [0.004, 0.0085];

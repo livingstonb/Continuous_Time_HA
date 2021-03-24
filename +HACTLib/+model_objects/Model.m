@@ -44,9 +44,14 @@ classdef Model < handle
 		function initialize(obj)
 			import HACTLib.computation.TransitionMatrixConstructor
 			import HACTLib.computation.HJBSolver
+			import HACTLib.computation.HJBSolverSDU
 			import HACTLib.computation.KFESolver
 
-			obj.hjb_solver = HJBSolver(obj.p, obj.income, obj.p.hjb_options);
+			if obj.p.SDU
+				obj.hjb_solver = HJBSolverSDU(obj.p, obj.income, obj.p.hjb_options);
+			else
+				obj.hjb_solver = HJBSolver(obj.p, obj.income, obj.p.hjb_options);
+			end
 
 			returns_risk = obj.p.sigma_r > 0;
 			obj.A_constructor_HJB = TransitionMatrixConstructor(obj.p, obj.income,...
@@ -56,7 +61,7 @@ classdef Model < handle
 				obj.grids_KFE, obj.p.kfe_options, 'quiet', obj.options.quiet);
 		end
 
-		function [HJB, KFE, Au] = solve(obj)
+		function [HJB, KFE, Au] = solve(obj, varargin)
 			if obj.p.endogenous_labor
 				% Find hours policy function at bmin over wage values.
 				import HACTLib.model_objects.CRRA
@@ -163,15 +168,8 @@ classdef Model < handle
 		        [A, stationary] = obj.A_constructor_HJB.construct(HJB, Vn);
 
 		        % Update value function
-		        if obj.p.SDU
-			    	hjb_solver.risk_adj = compute_risk_adjustment_for_nodrift_case(...
-			    		obj.p, obj.grids_HJB, V_deriv_risky_asset_nodrift,...
-			    		stationary, Vn);
-			    else
-			    	hjb_solver.risk_adj = [];
-			    end
-
-			    Vn1 = obj.hjb_solver.solve(A, HJB.u, Vn);
+			    Vn1 = obj.hjb_solver.solve(obj.grids_HJB, A, HJB.u, Vn,...
+			    	V_deriv_risky_asset_nodrift, stationary); % ignored unless SDU
 
 				% check for convergence
 			    Vdiff = Vn1 - Vn;
@@ -197,51 +195,6 @@ classdef Model < handle
 		    % Store value function and policies on both grids
 		    HJB.Vn = Vn;
 		end
-	end
-end
-
-function risk_adj = compute_risk_adjustment_for_nodrift_case(...
-	p, grd, V_deriv_risky_asset_nodrift, stationary, Vn)
-	% computes the adjustment term when returns are risky
-	% and there is no drift in the risky assets for some
-	% asset > 0 cases
-	
-	% Parameters
-	% ---------
-	% p : a Params object
-	%
-	% grd : a Grid object
-	%
-	% V_deriv_risky_asset_nodrift : approximation of the
-    %	first derivative of V for the case with no drift
-    %	in the risky asset
-    %
-    % stationary : boolean mask to indicate states where
-    %	there is no drift in risky asset
-    %
-    % Vn : the value function over states
-    %
-    % Returns
-    % -------
-    % risk_adj : an array of shape (nb, na, nz, ny) with
-    % 	zeros everywhere except for states where risky
-    %	asset drift is zero, where the array contains
-    %	the term with Va^2 
-
-	if ~isempty(stationary)
-		% there are states with neither backward nor forward drift,
-		% need to compute additional term for risk
-		if p.invies == 1
-			risk_adj = (1-p.riskaver) * V_deriv_risky_asset_nodrift .^ 2;
-		else
-			risk_adj = V_deriv_risky_asset_nodrift .^ 2 ./ Vn * (p.invies - p.riskaver) / (1-p.invies);
-		end
-
-		risk_adj = risk_adj .* (grd.a.wide * p.sigma_r) .^ 2 / 2;
-		risk_adj(~stationary) = 0;
-		risk_adj = reshape(risk_adj, [], p.ny);
-	else
-		risk_adj = [];
 	end
 end
 

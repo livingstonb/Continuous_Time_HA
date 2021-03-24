@@ -23,10 +23,6 @@ classdef HJBSolver < handle
  
 	end
 
-	properties
-		risk_adj = [];
-	end
-
 	properties (SetAccess=protected)
 		%	An object with the following required attributes:
 		%
@@ -87,6 +83,10 @@ classdef HJBSolver < handle
 
         % Current iteration, needed for the HIS.
         current_iteration = 0;
+
+        % Used only for SDU
+        sdu_k_adj = 0;
+        risk_adj = 0;
 	end
 
 	methods
@@ -116,9 +116,8 @@ classdef HJBSolver < handle
 			obj.create_rho_matrix();
 		end
 
-		function V_update = solve(obj, A, u, V)
-			% Updates the value function.
-
+		function V_update = solve(obj, grd, A, u, V, varargin)
+			% Updates the value function (grd only used for SDU derived class)
 			obj.check_inputs(A, u, V);
 
 			if obj.options.implicit
@@ -139,11 +138,8 @@ classdef HJBSolver < handle
 
 			A_income = obj.income.full_income_transition_matrix(obj.p, V);
 
-			if obj.returns_risk && obj.p.SDU
-		        RHS = obj.options.delta * (u(:) + obj.risk_adj(:)) + Vn(:);
-		    else
-		    	RHS = obj.options.delta * u(:) + Vn(:);
-		    end
+			% Note: risk_adj = 0 unless using SDU w/risky asset
+		    RHS = obj.options.delta * (u(:) + obj.risk_adj(:)) + Vn(:);
 	        
 	        B = (obj.rho_mat - A - A_income) * obj.options.delta + speye(obj.n_states);
 	        Vn1 = B \ RHS;
@@ -154,33 +150,16 @@ classdef HJBSolver < handle
 	    % Implicit-Explicit Updating
 	    % --------------------------------------------------------------
 		function [Vn1, Bk_inv] = solve_implicit_explicit(obj, A, u, V)
-			% Variable risk_adj only used for SDU
-
 			import HACTLib.computation.hjb_divisor
 			obj.current_iteration = obj.current_iteration + 1;
 
-			% Variables for SDU only
-			if obj.p.SDU
-				sdu_adj = obj.income.income_transitions_SDU(obj.p, V);
-				if (obj.p.sigma_r > 0) && (numel(obj.risk_adj) == 0)
-					error('Risk adjustment array not set')
-				end
-			end
-			
 			% Update value function
 			u_k = reshape(u, [], obj.income.ny);
 			Vn_k = reshape(V, [], obj.income.ny);
 			Vn1 = zeros(obj.states_per_income, obj.income.ny);
 			for k = 1:obj.income.ny
-				% Income transitions
-				if obj.p.SDU
-					inctrans = HACTLib.aux.sparse_diags(sdu_adj(:,k,k), 0);
-					inctrans_k = squeeze(sdu_adj(:,k,:));
-				else
-					inctrans = obj.income.ytrans(k,k) * speye(obj.states_per_income);
-					inctrans_k = repmat(obj.income.ytrans(k,:), obj.states_per_income, 1);
-				end
-
+				[inctrans, inctrans_k] = obj.get_implicit_explicit_inctrans(k);
+				
 				% Solve HJB
 				Bk = hjb_divisor(obj.options.delta, obj.p.deathrate, k,...
 					A, inctrans, obj.rho_mat);
@@ -193,20 +172,15 @@ classdef HJBSolver < handle
 
 		function Vn1_k = update_Vk_implicit_explicit(...
 			obj, V_k, u_k, k, Bk, inctrans_k)
-			% Variable risk_adj only used for SDU
-        	
         	indx_k = ~ismember(1:obj.income.ny, k);
 
             offdiag_inc_term = sum(...
             	squeeze(inctrans_k(:,indx_k)) .* V_k(:,indx_k), 2);
 
-            RHSk = obj.options.delta * (u_k(:,k) + offdiag_inc_term)...
-            		+ V_k(:,k);
+            RHSk = obj.options.delta * (u_k(:,k) + offdiag_inc_term) + V_k(:,k);
             
-            if obj.p.SDU && (obj.p.sigma_r > 0)
-           		RHSk = RHSk + obj.options.delta * obj.risk_adj(:,k);
-           	end
-            Vn1_k = Bk \ RHSk;
+            % Note: sdu_k_adj = 0 unless using SDU w/risky asset
+            Vn1_k = Bk \ (RHSk + obj.sdu_k_adj);
         end
 
 		function options = parse_options(obj, varargin)
@@ -291,6 +265,11 @@ classdef HJBSolver < handle
 		            break
 		        end
     		end
+		end
+
+		function [inctrans, inctrans_k] = get_implicit_explicit_inctrans(obj, k)
+			inctrans = obj.income.ytrans(k,k) * speye(obj.states_per_income);
+			inctrans_k = repmat(obj.income.ytrans(k,:), obj.states_per_income, 1);
 		end
 	end
 end
