@@ -21,6 +21,7 @@ copy_for_download :
 	-cp output/*.xlsx "$(dldir)"
 	-cp output/*.out "$(dldir)"
 	-cp output/*.err "$(dldir)"
+	-cp output/output_table.mat "$(dldir)"
 
 spath := "$$MW:/home/livingstonb/GitHub/Continuous_Time_HA/output/download/*"
 cdate := $(shell date +"%m-%d-%Y-%T")

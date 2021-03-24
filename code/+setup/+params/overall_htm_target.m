@@ -41,12 +41,12 @@ function [outparams, n] = overall_htm_target(param_opts)
     %% TARGET MEDIAN TOTAL WEALTH AND MEDIAN LIQUID WEALTH
     % Iterate over r_a, rho
     median_calibration = shared_params;
-    median_calibration.calibration_vars = {'rho', 'r_a', 'kappa1'};
+    median_calibration.calibration_vars = {'rho', 'r_a'};
 
+    kappa_1s = [0.2:0.2:1, 1.5:0.5:5];
     kappa_2s = [0.5, 1.0, 1.5];
 
     calibrations = {median_calibration};
-    calibration_labels = {'MEDIAN TARGETS'};
 
     incomedirs = {'continuous_a/no_measurement_error',...
         'continuous_a/measurement_error_20pc',...
@@ -59,43 +59,47 @@ function [outparams, n] = overall_htm_target(param_opts)
         'cont_a, meas err 50pc'};
     
     ii = 1;
+    group_num = 0;
     for icalibration = [1]
         for kappa2 = kappa_2s
             for iy = 1:3
-                params = [params {calibrations{icalibration}}];
-                params{ii}.name = sprintf('iy=%d, kappa2=%g', iy, kappa2);
-                params{ii}.kappa2 = kappa2;
-                params{ii}.income_dir = incomedirs{iy};
-                params{ii}.IncomeDescr = IncomeDescriptions{iy};
-                
-                if params{ii}.no_transitory_incrisk
-                    params{ii}.rho = 0.001;
-                    params{ii}.r_a = 0.0052;
-                    params{ii}.calibration_bounds = {[0.0008, 0.003],...
-                    [shared_params.r_b + 0.0003, 0.009]};
-                    params{ii}.calibration_backup_x0 = {};
-                else
-                    params{ii}.kappa1 = 0.5;
-                    params{ii}.rho = 0.01;
-                    params{ii}.r_a = 0.015;
+                group_num = group_num + 1;
+                for kappa1 = kappa_1s
+                    params = [params {calibrations{icalibration}}];
+                    params{ii}.name = sprintf('iy=%d, kappa2=%g', iy, kappa2);
+                    params{ii}.kappa2 = kappa2;
+                    params{ii}.income_dir = incomedirs{iy};
+                    params{ii}.IncomeDescr = IncomeDescriptions{iy};
+                    params{ii}.group_num = group_num;
+                    
+                    if params{ii}.no_transitory_incrisk
+                        % params{ii}.rho = 0.001;
+                        % params{ii}.r_a = 0.0052;
+                        % params{ii}.calibration_bounds = {[0.0008, 0.003],...
+                        % [shared_params.r_b + 0.0003, 0.009]};
+                        % params{ii}.calibration_backup_x0 = {};
+                    else
+                        params{ii}.kappa1 = kappa1;
+                        params{ii}.rho = 0.01;
+                        params{ii}.r_a = 0.015;
 
-                    kappa1_bds = [0.2, 5];
-                    rho_bds = [0.009, 0.018];
-                    r_a_bds = [0.006, 0.02];
-                    params{ii}.KFE_maxiters = 3e5;
+                        rho_bds = [0.0075, 0.018];
+                        r_a_bds = [0.006, 0.023];
+                        params{ii}.KFE_maxiters = 3e5;
 
-                    % params{ii}.rho = mean(rho_bds);
-                    % params{ii}.r_a = mean(r_a_bds);
+                        % params{ii}.rho = mean(rho_bds);
+                        % params{ii}.r_a = mean(r_a_bds);
 
-                    % Set calibrator
-                    params{ii}.calibration_bounds = {rho_bds, r_a_bds, kappa1_bds};
-                    params{ii}.calibration_backup_x0 = {};
+                        % Set calibrator
+                        params{ii}.calibration_bounds = {rho_bds, r_a_bds};
+                        params{ii}.calibration_backup_x0 = {};
+                    end
+                    params{ii}.calibration_stats = {'median_totw', 'median_liqw'};
+                    params{ii}.calibration_targets = [1.54, 0.5];
+                    params{ii}.calibration_scales = [1, 100];
+
+                    ii = ii + 1;
                 end
-                params{ii}.calibration_stats = {'median_totw', 'median_liqw', 'liqw_lt_ysixth'};
-                params{ii}.calibration_targets = [1.54, 0.5, 0.39];
-                params{ii}.calibration_scales = [1, 100, 5];
-
-                ii = ii + 1;
             end
         end
     end

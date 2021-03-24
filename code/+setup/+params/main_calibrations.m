@@ -8,10 +8,10 @@ function [outparams, n] = main_calibrations(param_opts)
     shared_params = param_opts;
     shared_params.mpc_shocks = shocks / (scf.quarterly_earnings * 4);
     shared_params.numeraire_in_dollars = (scf.quarterly_earnings * 4);
-    shared_params.nb = 50;
-    shared_params.nb_KFE = 50;
-    shared_params.na = 50;
-    shared_params.na_KFE = 50;
+    shared_params.nb = 45;
+    shared_params.nb_KFE = 45;
+    shared_params.na = 45;
+    shared_params.na_KFE = 45;
     
     shared_params.bgrid_term1_weight = 0.01;
     shared_params.bgrid_term1_curv = 0.8;
@@ -22,8 +22,8 @@ function [outparams, n] = main_calibrations(param_opts)
     shared_params.a_gcurv = 0.2;
 
     shared_params.a_lb = 0.25;
-    shared_params.bmax = 25;
-    shared_params.amax = 200;
+    shared_params.bmax = 20;
+    shared_params.amax = 500;
     shared_params.OneAsset = 0;
     shared_params.income_dir = 'continuous_a';
     shared_params.r_b = 0.02 / 4;

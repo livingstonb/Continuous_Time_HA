@@ -300,6 +300,7 @@ classdef StatsTable < HACTLib.tables.BaseTable
 			out = obj.new_table_with_header(panel_name);
 
 			new_entries = {
+				stats.params.group_num
 				stats.params.r_b
 				stats.params.r_a
 				stats.params.deathrate

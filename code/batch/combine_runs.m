@@ -48,6 +48,9 @@ try
 
     xlxpath = fullfile('output', 'output_table.xlsx');
     writetable(output_table, xlxpath, 'WriteRowNames', true);
+
+    matpath = fullfile('output', 'output_table.mat');
+    save(matpath, 'output_table');
 catch ME
     HACTLib.aux.display_exception_stack(ME);
     rethrow(ME);

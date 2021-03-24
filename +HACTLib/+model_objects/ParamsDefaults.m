@@ -15,9 +15,9 @@ classdef ParamsDefaults < handle
         makePlots = false;
         IncomeDescr = '';
         
-        % Name for the parameterization
+        % Name/nums for the parameterization
         name = 'unnamed';
-        group;
+        group_num = NaN;
         label;
 
         % Numeric identifier for the parameterization
