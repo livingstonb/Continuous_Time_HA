@@ -1,32 +1,8 @@
 classdef Grid < handle
     % This class creates and stores the asset grids.
-    % There are two recommended ways to use this class:
-    %
-    %	(1) Call the auto_construct() after instantiating
-    %		a Grid object.
-    %
-    %	(2) Construct the b and a grids manually as vectors
-    %		and pass them to create_agrids() and create_bgrids(),
-    %		then call the generate_variables() method.
    
 	properties (SetAccess=protected)
-		%	Model parameters. Must contain at least the
-		%	following fields:
-    	%
-    	%		nb (nb_KFE if gtype = 'KFE')
-    	%		-  Number of grid points for the liquid asset.
-    	%
-    	%		nb (nb_KFE if gtype = 'KFE')
-    	%		- Number of grid points for the illiquid asset.
-    	%		nz 
-    	%		- Number of grid points in extra heterogeneity
-    	%		  dimension, typically 1.
-    	%
-    	%	and if auto_construct() will be used, the following
-    	%	fields are also required:
-    	%	
-    	%		nb_pos / nb_pos_KFE
-    	%		nb_neg / nb_neg_KFE
+		% Model parameters
         p;
         
         % The liquid asset grids.
@@ -89,29 +65,11 @@ classdef Grid < handle
         % A grid of rho values. In particular, the sum of
         % rho and rho_grid, a vector.
         rhos;
-
-        % Indicator of whether or not the all of the grids
-        % have been initialized.
-        fully_initialized = false;
 	end
 
 	methods
 	    function obj = Grid(p, ny, gtype)
-	    	% Class constructor.
-	    	%
-	    	% Required Parameters
-	    	% -------------------
-	    	% p : An object containing the model parameters. See
-	    	%	the help documentation of 'p' for more information.
-	    	%
-	    	% ny : The number of points on the income grid.
-	    	%
-	    	% Optional Parameters
-	    	% -------------------
-	    	% gtype : Type of grid, specify 'KFE' to construct the grids for the KFE.
-	    	%	The user may want different grid sizes for the HJB and KFE.
-
-            obj.p = p;
+	    	obj.p = p;
 
 	    	% Pass gtype = 'HJB' or 'KFE'
 	    	obj.gtype = gtype;
@@ -145,17 +103,10 @@ classdef Grid < handle
 
                 obj.na = p.na;
             end
-        end
-        
-        function obj = auto_construct(obj)
-            % Automatically constructs all the
-            % necessary grids from the parameters
-            % used to initialize the Grid object.
-            
+
             obj.create_agrids();
             obj.create_bgrids();
             obj.generate_variables();
-            obj.fully_initialized = true;
         end
 
         function obj = generate_variables(obj)
@@ -175,18 +126,10 @@ classdef Grid < handle
             
             obj.construct_trapezoidal_grid();
             obj.create_zgrids();
-            obj.fully_initialized = true;
         end
 
-	    function create_agrids(obj, grid_vec)
+	    function create_agrids(obj)
 	    	% Creates the illiquid asset grids.
-	    	%
-	    	% Optional Parameters
-	    	% ----------
-	    	% grid_vec : Optionally, the user can supply the
-	    	%	illiquid asset grid as a vector, and the
-	    	%	other variables will be automatically created.
-	    	%	This vector must include 0.
 	    	%
 	    	% Modifies
 	    	% -------
@@ -196,14 +139,9 @@ classdef Grid < handle
 	    	%
 	    	% obj.a.matrix : An array the full size of the model, (nb, na, nz, ny)
 
-	    	if nargin == 1
-				grid_vec = HACTLib.model_objects.GridConstruction.create_positive_asset_grid(...
-					obj.p.amax, obj.p.a_gcurv, obj.na, 'term1_curv', obj.p.agrid_term1_curv,...
-					'term1_wt', obj.p.agrid_term1_weight);
-            elseif nargin > 1
-	        	assert(isvector(grid_vec), "Input agrid must be a vector")
-	        	assert(sum(grid_vec==0) == 1, "Input grid must include 0")
-	        end
+			grid_vec = HACTLib.model_objects.GridConstruction.create_positive_asset_grid(...
+				obj.p.amax, obj.p.a_gcurv, obj.na, 'term1_curv', obj.p.agrid_term1_curv,...
+				'term1_wt', obj.p.agrid_term1_weight);
             obj.a.vec = grid_vec(:);
             obj.a.wide = shiftdim(grid_vec, -1);
 			assert(all(diff(obj.a.vec)>0), 'agrid not strictly increasing')
@@ -211,13 +149,6 @@ classdef Grid < handle
 
 	    function create_bgrids(obj, bgrid_vec)
 	    	% Creates the liquid asset grids.
-	    	%
-	    	% Optional Parameters
-	    	% -------------------
-	    	% bgrid_vec : Optionally, the user can supply the
-	    	%	liquid asset grid as a vector, and the
-	    	%	other variables will be automatically created.
-	    	%	This vector must include 0.
 	    	%
 	    	% Modifies
 	    	% --------
@@ -230,23 +161,19 @@ classdef Grid < handle
 	    			'do not sum to total number of liquid grid points'];
 	    	assert(obj.nb == obj.nb_pos + obj.nb_neg, msg)
 	    
-	    	if nargin == 1
-				bgridpos = HACTLib.model_objects.GridConstruction.create_positive_asset_grid(...
-					obj.p.bmax, obj.p.b_gcurv_pos, obj.nb_pos, 'term1_curv', obj.p.bgrid_term1_curv,...
-					'term1_wt', obj.p.bgrid_term1_weight);
+			bgridpos = HACTLib.model_objects.GridConstruction.create_positive_asset_grid(...
+				obj.p.bmax, obj.p.b_gcurv_pos, obj.nb_pos, 'term1_curv', obj.p.bgrid_term1_curv,...
+				'term1_wt', obj.p.bgrid_term1_weight);
 
-				if obj.nb_neg > 0
-					bgridneg = HACTLib.model_objects.GridConstruction.create_negative_asset_grid(...
-						obj.p.bmin, obj.p.b_gcurv_neg, obj.nb_neg);
+			if obj.nb_neg > 0
+				bgridneg = HACTLib.model_objects.GridConstruction.create_negative_asset_grid(...
+					obj.p.bmin, obj.p.b_gcurv_neg, obj.nb_neg);
 
-				    obj.b.vec = [bgridneg; bgridpos];
-				else
-				    obj.b.vec = bgridpos;
-				end
+			    obj.b.vec = [bgridneg; bgridpos];
 			else
-				assert(isvector(bgrid_vec), "Input bgrid must be a vector")
-				obj.b.vec = bgrid_vec(:);
+			    obj.b.vec = bgridpos;
 			end
+
 		    assert(all(diff(obj.b.vec)>0), 'bgrid not strictly increasing')
 	    end
 
@@ -255,6 +182,7 @@ classdef Grid < handle
 	    end
 
 	    function clean(obj)
+	    	% Clears some variables to reduce object size
         	obj.trapezoidal = [];
         	obj.z = [];
         	obj.da_tilde = [];

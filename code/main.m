@@ -58,10 +58,10 @@ function stats = main(p, varargin)
         assert(p.bmin > NBL, msg);
     end
 
-	grd = Grid(p, income.ny, 'HJB').auto_construct(); % grid for HJB
-    grd_norisk = Grid(p, 1, 'HJB').auto_construct();
-	grdKFE = Grid(p, income.ny, 'KFE').auto_construct();% grid for KFE
-    grdKFE_norisk = Grid(p, 1, 'KFE').auto_construct();
+	grd = Grid(p, income.ny, 'HJB'); % grid for HJB
+    grd_norisk = Grid(p, 1, 'HJB');
+	grdKFE = Grid(p, income.ny, 'KFE');% grid for KFE
+    grdKFE_norisk = Grid(p, 1, 'KFE');
 
     % Add net income variables
     income.set_net_income(p, grd, grdKFE);

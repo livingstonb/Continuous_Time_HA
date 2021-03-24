@@ -77,7 +77,6 @@ classdef KFESolver
 			% ---------------------------------------------------------			
 			obj.check_parameters(p);
 			obj.check_income(income);
-			check_grid(grdKFE);
 
 			obj.options = parse_options(varargin{:});
 		end
@@ -248,11 +247,6 @@ classdef KFESolver
 				p, obj.required_parameters);
 		end
 	end
-end
-
-function check_grid(grd)
-	assert(grd.fully_initialized,...
-		"Asset grids have not been fully initialized");
 end
 
 function check_A(A)
