@@ -168,7 +168,7 @@ classdef ParamsDefaults < handle
     	rhos;
 
     	% Grid to accomodate rho heterogeneity
-    	rho_grid;
+    	rho_grid = [0];
 
         %% -------------------------------------------
         % CALIBRATION
