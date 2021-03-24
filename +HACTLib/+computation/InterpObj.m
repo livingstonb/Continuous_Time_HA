@@ -1,6 +1,6 @@
 
 classdef InterpObj < handle
-	properties (Access=protected)
+	properties
 		x;
 		y;
 		kernel_smoother;
@@ -21,7 +21,7 @@ classdef InterpObj < handle
             end
             
             if numel(ub) == 0
-                ub = 1.0;
+                ub = inf;
             end
             
             if (nargin <= 4)
@@ -46,7 +46,7 @@ classdef InterpObj < handle
             end
             
             cdf_u = cdf_u(iu);
-            mask = cdf_u <= ub; % Restrict high cdf values
+            mask = v_u <= ub; % Restrict high values
             cdf_u = cdf_u(mask);
             v_u = v_u(mask);
 

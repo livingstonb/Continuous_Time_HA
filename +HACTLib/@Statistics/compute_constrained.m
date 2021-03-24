@@ -69,8 +69,8 @@ function compute_constrained(obj)
 
 	% Liquid wealth / (quarterly earnings) < epsilon
 	kernel_options = struct();
-	kernel_options.ktype = 'guassian';
-    kernel_options.h = 0.15;
+	kernel_options.ktype = 'triweight';
+    kernel_options.h = 0.3;
     kernel_options.rescale_and_log = true;
     kernel_options.force_fit_cdf_low = [];
 
@@ -79,7 +79,7 @@ function compute_constrained(obj)
 
 	tmp = sortrows([by_ratio(:), pmf_by(:)]);
 	by_interp = get_interpolant(kernel_options,...
-		tmp(:,1), tmp(:,2), 0.4, []);
+		tmp(:,1), tmp(:,2), 0.3, []);
 	
 	obj.liqw_lt_ysixth = obj.sfill(by_interp.cdf(1/6), 'b_i <= y_i / 6');
    	obj.liqw_lt_ytwelfth = obj.sfill(by_interp.cdf(1/12), 'b_i <= y_i / 12');
@@ -90,7 +90,7 @@ function compute_constrained(obj)
 
 	tmp = sortrows([wy_ratio(:), pmf_wy(:)]);
 	wy_interp = get_interpolant(kernel_options,...
-		tmp(:,1), tmp(:,2), 0.4);
+		tmp(:,1), tmp(:,2), 0.3);
 	
 	obj.w_lt_ysixth = obj.sfill(wy_interp.cdf(1/6), 'w_i <= y_i / 6', 2);
 	obj.w_lt_ytwelfth = obj.sfill(wy_interp.cdf(1/12), 'w_i <= y_i / 12', 2);

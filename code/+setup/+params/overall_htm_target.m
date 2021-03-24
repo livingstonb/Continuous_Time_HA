@@ -46,7 +46,7 @@ function [outparams, n] = overall_htm_target(param_opts)
         'cont_a, meas err 33pc',...
         'cont_a, meas err 50pc'};
 
-    experiment = true;
+    experiment = false;
     if experiment
         iy = 1;
         params = shared_params;
@@ -118,8 +118,8 @@ function [outparams, n] = overall_htm_target(param_opts)
                             params{ii}.rho = 0.01;
                             params{ii}.r_a = 0.015;
 
-                            rho_bds = [0.0075, 0.018];
-                            r_a_bds = [0.006, 0.023];
+                            rho_bds = [0.0075, 0.02];
+                            r_a_bds = [0.008, 0.023];
                             params{ii}.KFE_maxiters = 3e5;
 
                             % params{ii}.rho = mean(rho_bds);
