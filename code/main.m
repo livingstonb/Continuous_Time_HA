@@ -196,8 +196,6 @@ function stats = main(p, varargin)
     %% ----------------------------------------------------------------
     % HOUSEKEEPING
     % -----------------------------------------------------------------
-    import HACTLib.aux.to_structure
-
     grd.clean();
     grdKFE.clean();
     income.clean();
@@ -212,7 +210,7 @@ function stats = main(p, varargin)
     end
 
 	stats.clean();
-    stats = HACTLib.aux.to_structure(stats);
+    stats = to_structure(stats);
 
     if final
         fname = sprintf('output_%d.mat', p.param_index);
@@ -258,4 +256,17 @@ function save_grids(p, grd)
     fpath = fullfile('output',...
         sprintf('grids%d.xlsx', p.param_index));
     writetable(grids, fpath, 'WriteVariableNames', true);
+end
+
+function s = to_structure(objs)
+    % Converts an object to a structure
+    % by copying its fields. Not guaranteed
+    % to work on all objects.
+    
+    ofields = fields(objs);
+    for is = 1:numel(objs)
+        for ifield = 1:numel(ofields)
+            s(is).(ofields{ifield}) = objs(is).(ofields{ifield});
+        end
+    end
 end

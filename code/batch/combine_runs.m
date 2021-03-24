@@ -52,10 +52,23 @@ try
     matpath = fullfile('output', 'output_table.mat');
     save(matpath, 'output_table');
 catch ME
-    HACTLib.aux.display_exception_stack(ME);
+    display_exception_stack(ME);
     rethrow(ME);
 end
 
 if ~isempty(getenv('SLURM_ARRAY_TASK_ID'))
     exit
+end
+
+function display_exception_stack(me)
+    disp(me.message)
+
+    filestack = {me.stack.file};
+    namestack = {me.stack.name};
+    linestack = [me.stack.line];
+    
+    for istack = 1:numel(me.stack)
+        fprintf("File: %s, Name: %s, Line: %d\n",...
+            me.stack(istack).file, me.stack(istack).name, me.stack(istack).line)
+    end
 end

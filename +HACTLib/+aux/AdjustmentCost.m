@@ -9,22 +9,15 @@ classdef AdjustmentCost < handle
 	methods
 		function obj = AdjustmentCost(a_lb, kappa0, kappa1, kappa2)
 			if nargin > 0
-				obj.set_form2(a_lb, kappa0, kappa1, kappa2);
+				obj.set_kappas(a_lb, kappa0, kappa1, kappa2);
 			end
 		end
 
 		function set_from_params(obj, p)
-			obj.set_form2(p.a_lb, p.kappa0, p.kappa1, p.kappa2);
+			obj.set_kappas(p.a_lb, p.kappa0, p.kappa1, p.kappa2);
 		end
 
-		function set_form1(obj, a_lb, chi0, chi1, chi2)
-			obj.a_lb = a_lb;
-			obj.kappa0 = chi0;
-			obj.kappa1 = chi1 ^ (-chi2);
-			obj.kappa2 = chi2;
-		end
-
-		function set_form2(obj, a_lb, kappa0, kappa1, kappa2)
+		function set_kappas(obj, a_lb, kappa0, kappa1, kappa2)
 			obj.a_lb = a_lb;
 			obj.kappa0 = kappa0;
 			obj.kappa1 = kappa1;
