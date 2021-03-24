@@ -159,16 +159,15 @@ classdef Model < handle
 			    % Construct transition matrix 
 		        [A, stationary] = obj.A_constructor_HJB.construct(HJB, Vn);
 
+		        % Update value function
 		        if obj.p.SDU
-			    	risk_adj = {compute_risk_adjustment_for_nodrift_case(...
+			    	risk_adj = compute_risk_adjustment_for_nodrift_case(...
 			    		obj.p, obj.grids_HJB, V_deriv_risky_asset_nodrift,...
-			    		stationary, Vn)};
+			    		stationary, Vn);
+			    	Vn1 = obj.hjb_solver.solve(A, HJB.u, Vn, risk_adj);
 			    else
-			    	risk_adj = {};
+			    	Vn1 = obj.hjb_solver.solve(A, HJB.u, Vn);
 			    end
-		        
-				% Update value function
-				Vn1 = obj.hjb_solver.solve(A, HJB.u, Vn, risk_adj{:});
 
 				% check for convergence
 			    Vdiff = Vn1 - Vn;
@@ -236,6 +235,7 @@ function risk_adj = compute_risk_adjustment_for_nodrift_case(...
 
 		risk_adj = risk_adj .* (grd.a.wide * p.sigma_r) .^ 2 / 2;
 		risk_adj(~stationary) = 0;
+		risk_adj = reshape(risk_adj, [], p.ny);
 	else
 		risk_adj = [];
 	end

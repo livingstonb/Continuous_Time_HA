@@ -58,14 +58,14 @@ function [outparams, n] = overall_htm_target(param_opts)
         params.IncomeDescr = IncomeDescriptions{iy};
         param_opts.param_index = 1;
 
-        params.kappa1 = 1;
-        params.kappa2 = 1;
+        params.kappa1 = 5;
+        params.kappa2 = 0.5;
         params.rho = 0.009;
         params.r_b = 0.005;
         params.r_a = 0.009;
 
-        rho_bds = [0.007, 0.015];
-        r_b_bds = [0.004, 0.008];
+        rho_bds = [0.005, 0.02];
+        r_b_bds = [0.004, 0.0085];
         params.KFE_maxiters = 3e5;
 
         % Set calibrator

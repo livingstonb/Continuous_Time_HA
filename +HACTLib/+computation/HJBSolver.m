@@ -129,15 +129,14 @@ classdef HJBSolver < handle
 		%%--------------------------------------------------------------
 	    % Implicit Updating
 	    % --------------------------------------------------------------
-		function Vn1 = solve_implicit(obj, A, u, V, varargin)
+		function Vn1 = solve_implicit(obj, A, u, V, risk_adj)
 			assert(obj.p.deathrate == 0,...
 				"Fully implicit updating does not support death.")
 
 			A_income = obj.income.full_income_transition_matrix(obj.p, V);
 
 			if obj.returns_risk && obj.p.SDU
-				risk_adj = reshape(vargin{1}, [], 1);
-		        RHS = obj.options.delta * (u(:) + risk_adj) + Vn(:);
+		        RHS = obj.options.delta * (u(:) + risk_adj(:)) + Vn(:);
 		    else
 		    	RHS = obj.options.delta * u(:) + Vn(:);
 		    end
@@ -150,19 +149,20 @@ classdef HJBSolver < handle
 		%%--------------------------------------------------------------
 	    % Implicit-Explicit Updating
 	    % --------------------------------------------------------------
-		function [Vn1, Bk_inv] = solve_implicit_explicit(obj, A, u, V, varargin)
+		function [Vn1, Bk_inv] = solve_implicit_explicit(obj, A, u, V, risk_adj)
 			import HACTLib.computation.hjb_divisor
 			obj.current_iteration = obj.current_iteration + 1;
 
-			if obj.p.SDU
-				sdu_adj = obj.income.income_transitions_SDU(obj.p, V);
+			if nargin < 5
+				risk_adj = [];
 			end
 
-			if obj.p.SDU && (obj.p.sigma_r > 0)
-				risk_adj_k = reshape(varargin{1}, [], obj.income.ny);
-				args2 = {risk_adj_k};
-			else
-				args2 = {};
+			if obj.p.SDU
+				sdu_adj = obj.income.income_transitions_SDU(obj.p, V);
+
+				if (obj.p.sigma_r > 0) && (numel(risk_adj) == 0)
+					error('Risk adjustment array not passed')
+				end
 			end
 			
 			u_k = reshape(u, [], obj.income.ny);
@@ -183,7 +183,7 @@ classdef HJBSolver < handle
 					A, inctrans, obj.rho_mat);
 
 	        	Vn1_k(:,k) = obj.update_Vk_implicit_explicit(...
-	        		Vn_k, u_k, k, Bk, inctrans_k, args2{:}, varargin{:});
+	        		Vn_k, u_k, k, Bk, inctrans_k, risk_adj);
 	        end
 
 	        Vn1 = reshape(Vn1_k, obj.p.nb, obj.p.na, obj.p.nz, obj.income.ny);
