@@ -6,8 +6,8 @@ classdef ParamsDefaults < handle
         SimulateMPCS = false;
         ComputeMPCS_news = false;
         SimulateMPCS_news = false;
-        Bequests = false;
-        OneAsset = true;
+        Bequests = true;
+        OneAsset = false;
         DealWithSpecialCase;
         SolveNoRisk = true;
         fast = false;
@@ -40,22 +40,22 @@ classdef ParamsDefaults < handle
     	b_soft_constraint = 0;
 
     	% Max value for liquid assets
-    	bmax = 50;
+    	bmax = 20;
 
         bgrid_term1_weight = 0.01;
 
-        bgrid_term1_curv = 1;
+        bgrid_term1_curv = 0.8;
         
     	% Curvature of positive section of liquid asset,
     	% lower value implies more curvature
-    	b_gcurv_pos = 0.2;
+    	b_gcurv_pos = 0.1;
 
     	% Curvature of negative section of liquid asset,
     	% lower value implies more curvature
     	b_gcurv_neg = 0.4;
 
     	% Number of points on liquid asset grid
-        nb = 150;
+        nb = 45;
         
         % Number of points on positive section of liquid
         % asset grid, defaults to nb
@@ -66,7 +66,7 @@ classdef ParamsDefaults < handle
         nb_neg;
 
             % Number of points on liquid asset grid for the KFE
-    	nb_KFE = 150;
+    	nb_KFE = 45;
 
     	% Number of points on positive section of liquid
     	% asset grid for the KFE, defaults to nb_KFE
@@ -83,22 +83,22 @@ classdef ParamsDefaults < handle
     	amin = 0;
 
     	% Max value of illiquid assets
-        amax = 100;
+        amax = 500;
 
         % Number of points on the illiquid asset grid
-        na = 80;
+        na = 45;
 
         agrid_term1_weight = 0.01;
 
-        agrid_term1_curv = 1;
+        agrid_term1_curv = 0.6;
         
         % Curvature of positive section of illiquid asset,
 		% lower value implies more curvature
-        a_gcurv = 0.25;
+        a_gcurv = 0.2;
 
         % Number of points on illiquid asset grid for
         % the KFE
-        na_KFE = 80;
+        na_KFE = 45;
 
         %% -------------------------------------------
     	% Other Parameters
@@ -116,7 +116,7 @@ classdef ParamsDefaults < handle
     	r_b = 0.02 / 4;
 
     	% Illiquid returns, at a quarterly rate
-        r_a = 0.06/4;
+        r_a = 0.06 / 4;
 
         % Annuities, 0 turns off annuities
 		perfectannuities = 0;

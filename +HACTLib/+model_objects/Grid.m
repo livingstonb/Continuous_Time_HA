@@ -113,11 +113,12 @@ classdef Grid < handle
 
             obj.p = p;
 
-	    	% pass gtype = 'HJB' or 'KFE'
+	    	% Pass gtype = 'HJB' or 'KFE'
 	    	obj.gtype = gtype;
 	    	obj.ny = ny;
             obj.nz = p.nz;
 
+            % Set grid sizes from params
 	    	if strcmp(gtype,'KFE')
 	    		% Use different-sized KFE grid
                 obj.nb = p.nb_KFE;

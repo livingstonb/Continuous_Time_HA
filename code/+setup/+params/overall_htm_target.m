@@ -8,30 +8,7 @@ function [outparams, n] = overall_htm_target(param_opts)
     shared_params = param_opts;
     shared_params.mpc_shocks = shocks / (scf.quarterly_earnings * 4);
     shared_params.numeraire_in_dollars = (scf.quarterly_earnings * 4);
-    shared_params.nb = 45;
-    shared_params.nb_KFE = 45;
-    shared_params.na = 45;
-    shared_params.na_KFE = 45;
-    
-    shared_params.bgrid_term1_weight = 0.01;
-    shared_params.bgrid_term1_curv = 0.8;
-    shared_params.agrid_term1_weight = 0.01;
-    shared_params.agrid_term1_curv = 0.6;
-
-    shared_params.b_gcurv_pos = 0.1;
-    shared_params.a_gcurv = 0.2;
-
-    shared_params.a_lb = 0.25;
-    shared_params.bmax = 20;
-    shared_params.amax = 500;
-    shared_params.OneAsset = 0;
-    shared_params.income_dir = 'continuous_a';
-    shared_params.r_b = 0.02 / 4;
-    shared_params.transfer = 0;
-    shared_params.Bequests = true;
     shared_params.no_transitory_incrisk = false;
-
-    shared_params.kappa0 = 0;
 
     anninc = shared_params.numeraire_in_dollars;
     shared_params.a_lb = 500 / anninc;
