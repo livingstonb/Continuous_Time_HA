@@ -202,11 +202,6 @@ classdef Statistics < handle
 
 			flatten = true;
 			pmf_x = multi_sum(obj.pmf, sum_dims, flatten);
-
-			if isequal(dims, [1, 2])
-				dist_sorted = sortrows([obj.wealthmat(:), pmf_x]);
-				pmf_x = dist_sorted(:,2);
-			end
 			cdf_x = cumsum(pmf_x);
 		end
 	end

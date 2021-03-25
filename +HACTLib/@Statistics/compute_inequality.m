@@ -44,9 +44,9 @@ function compute_inequality(obj)
 
 	tmp = 1 - iwshare_interp(0.99);
 	obj.iw_top1share = obj.sfill(tmp, 'a, Top 1% share', 2);
-	
+
 	% Gini coefficient
-	tmp = direct_gini(obj.wealth_sorted, obj.pmf_w);
+	tmp = direct_gini(obj.wealthmat, obj.pmf_w);
 	obj.wgini = obj.sfill(tmp, 'Gini coefficient, wealth');
 
 	% Share of illiquid wealth owned by households in
