@@ -10,13 +10,6 @@ classdef MPCs < handle
 	% the MPCs.
 
 	properties (Constant)
-		% Update this array when the required parameters change.
-		required_parameters = {'nb_KFE', 'na_KFE', 'nz', 'deathrate'};
-
-		% Update this array when the required income variables
-		% change.
-		required_income_vars = {'ny', 'ytrans'};
-
 		% Default option values.
 		defaults = struct(...
 					'delta', 0.01,...
@@ -326,22 +319,6 @@ classdef MPCs < handle
 				obj.mpcs(ishock).annual = dot(sum(mpcs, 2), pmf(:));
 			end
 		end
-
-		function check_income(obj, income)
-			HACTLib.Checks.has_attributes('MPCs',...
-				income, obj.required_income_vars);
-			assert(ismatrix(income.ytrans), "Income transition matrix must be a matrix");
-			assert(size(income.ytrans, 1) == income.ny,...
-				"Income transition matrix has different size than (ny, ny)");
-			assert(numel(income.ydist(:)) == income.ny,...
-				"Income distribution has does not have ny elements");
-			assert(income.ny > 0, "Must have ny >= 1");
-		end
-
-		function check_parameters(obj, p)
-			HACTLib.Checks.has_attributes('MPCs',...
-				p, obj.required_parameters);
-		end
 	end
 end
 
@@ -351,12 +328,4 @@ function options = parse_options(varargin)
 
 	defaults = MPCs.defaults;
 	options = parse_keyvalue_pairs(defaults, varargin{:});
-
-	mustBePositive(options.delta);
-	if ~ismember(options.interp_method, {'linear', 'nearest',...
-		'next', 'previous', 'pchip', 'cubic', 'spline', 'makima'})
-		error("HACTLib:MPCs:InvalidArgument",...
-			strcat("Invalid interpolation method entered.",...
-				"Check griddedInterpolant documentation."))
-	end
 end

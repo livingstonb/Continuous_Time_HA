@@ -487,19 +487,7 @@ end
 function options = parse_options(varargin)
 	import HACTLib.computation.MPCSimulator
 	import HACTLib.aux.parse_keyvalue_pairs
-	import HACTLib.Checks
 
 	defaults = MPCSimulator.defaults;
 	options = parse_keyvalue_pairs(defaults, varargin{:});
-
-	mustBePositive(options.T);
-	mustBePositive(options.n);
-	Checks.is_integer("MPCSimulator", options.T);
-	Checks.is_integer("MPCSimulator", options.n);
-	if ~ismember(options.interp_method, {'linear', 'nearest',...
-		'next', 'previous', 'pchip', 'cubic', 'spline', 'makima'})
-		error("HACTLib:MPCs:InvalidArgument",...
-			strcat("Invalid interpolation method entered.",...
-				"Check griddedInterpolant documentation."))
-	end
 end

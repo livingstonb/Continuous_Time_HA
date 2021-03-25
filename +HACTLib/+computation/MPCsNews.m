@@ -502,17 +502,7 @@ end
 function options = parse_options(varargin)
 	import HACTLib.computation.MPCsNews
 	import HACTLib.aux.parse_keyvalue_pairs
-    import HACTLib.Checks
 
 	defaults = MPCsNews.defaults;
 	options = parse_keyvalue_pairs(defaults, varargin{:});
-
-	mustBePositive(options.delta);
-	if 1/options.delta ~= round(1/options.delta)
-		msg = "delta must be chosen so that 1/delta is an integer";
-		Checks.HACTexception(msg, "MPCsNews", "InvalidEntry");
-	end
-
-	mustBePositive(options.delta_terminal);
-	Checks.is_logical("MPCsNews", options.save_policies);
 end

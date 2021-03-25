@@ -5,13 +5,6 @@ classdef KFESolver
 	% See the documentation with the 'help KFESolver' command.
 
 	properties (Constant)
-		% Update this array when the required parameters change.
-		required_parameters = {'nb_KFE', 'na_KFE', 'nz', 'deathrate'};
-
-		% Update this array when the required income variables
-		% change.
-		required_income_vars = {'ny', 'ytrans', 'ydist'};
-
 		% Default option values.
 		defaults = struct(...
 			'iterative', true,...
@@ -72,12 +65,6 @@ classdef KFESolver
 			obj.grdKFE = grdKFE;
 			obj.n_states = p.nb_KFE * p.na_KFE * p.nz * income.ny;
 
-			% ---------------------------------------------------------
-			% Validate Input Arguments and Set Options
-			% ---------------------------------------------------------			
-			obj.check_parameters(p);
-			obj.check_income(income);
-
 			obj.options = parse_options(varargin{:});
 		end
 
@@ -94,8 +81,6 @@ classdef KFESolver
 			% -------
 			% g : The stationary distribution, of shape
 			%	(nb_KFE, na_KFE, nz, ny).
-
-			check_A(A);
 
 			if obj.options.iterative
 				if ~exist('g0')
@@ -230,36 +215,12 @@ classdef KFESolver
 				error('KFE did not converge')
 			end
 		end
-
-		function check_income(obj, income)
-			HACTLib.Checks.has_attributes('KFESolver',...
-				income, obj.required_income_vars);
-			assert(ismatrix(income.ytrans), "Income transition matrix must be a matrix");
-			assert(size(income.ytrans, 1) == income.ny,...
-				"Income transition matrix has different size than (ny, ny)");
-			assert(numel(income.ydist(:)) == income.ny,...
-				"Income distribution has does not have ny elements");
-			assert(income.ny > 0, "Must have ny >= 1");
-		end
-
-		function check_parameters(obj, p)
-			HACTLib.Checks.has_attributes('KFESolver',...
-				p, obj.required_parameters);
-		end
 	end
-end
-
-function check_A(A)
-	size_A = size(A);
-	assert(issparse(A), "KFESolver requires a sparse transition matrix")
-	assert(ismatrix(A), "KFESolver requires a square transition matrix")	
-	assert(size_A(1) == size_A(2), "KFESolver requires a square transition matrix")	
 end
 
 function options = parse_options(varargin)
 	import HACTLib.computation.KFESolver
 	import HACTLib.aux.parse_keyvalue_pairs
-	import HACTLib.Checks
 
 	defaults = KFESolver.defaults;
 	options = parse_keyvalue_pairs(defaults, varargin{:});
@@ -267,10 +228,6 @@ function options = parse_options(varargin)
 	mustBePositive(options.delta);
 	mustBePositive(options.tol);
 	mustBePositive(options.maxiters);
-
-	Checks.is_integer('KFESolver', options.maxiters);
-	Checks.is_logical('KFESolver', options.iterative);
-	Checks.is_logical('KFESolver', options.intermediate_check);
 end
 
 function check_if_not_converging(dst, iter)
