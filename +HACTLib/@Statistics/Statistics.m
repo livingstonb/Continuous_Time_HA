@@ -31,8 +31,6 @@ classdef Statistics < handle
 		lw_top1share;
 		iw_top10share
 		iw_top1share
-		iwshare_b10;
-		iwshare_b25;
 		wgini;
 
 		constrained;
@@ -221,6 +219,10 @@ classdef Statistics < handle
 				'label', label,...
 				'indicator', asset_indicator...
 			);
+		end
+
+		function out = empty_stat(varargin)
+			out = HACTLib.Statistics.sfill(NaN, varargin{:});
 		end
 	end
 end

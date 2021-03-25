@@ -343,11 +343,8 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				stats.constrained_dollars{3}
 				stats.constrained_dollars{4}
 				stats.constrained_dollars{5}
-				% stats.hhs_paying_wealth_tax
 				stats.w_lt_ysixth
 				stats.w_lt_ytwelfth
-				stats.iwshare_b10
-				stats.iwshare_b25
 			};
 
 			obj.update_current_column(out, new_entries);
