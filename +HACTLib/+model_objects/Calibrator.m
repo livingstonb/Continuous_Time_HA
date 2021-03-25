@@ -133,10 +133,9 @@ classdef Calibrator < handle
 			dv = obj.adjust_dv(results, current_params, dv);
 
 			% temporary
-			dv = [dv; 0.1 * max(obj.target_values(1) - 300, 0)];
-
-			wdiff = min(obj.target_values(1) - obj.target_values(2) - 0.05, 0);
-			dv = [dv; 100 * wdiff];
+			% dv(1) = v(1) - v(2) - 1.49;
+			dv = [dv; 0.1 * max(v(1) - 300, 0)];
+			dv = [dv; 50 * min(v(1) - 1, 0) * (0.1 - current_params.r_a)];
 
 			obj.reset_param_options(current_params);
 			obj.iter = obj.iter + 1;
