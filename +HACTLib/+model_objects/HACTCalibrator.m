@@ -27,19 +27,20 @@ classdef HACTCalibrator < HACTLib.model_objects.Calibrator
 		end
 
 		function dv = adjust_dv(obj, results, current_params, dv)
-			if ismember('r_a', obj.target_names)
-                % If illiquid wealth is very close to zero, introduce an
-                % ad-hoc reward on increasing the illiquid return. The
-                % effect of this vanishes as illiquid wealth gets larger.
-				z = results.stats.illiqw.value - 0.01;
+			% if ismember('r_a', obj.target_names)
+   %              % If illiquid wealth is very close to zero, introduce an
+   %              % ad-hoc reward on increasing the illiquid return. The
+   %              % effect of this vanishes as illiquid wealth gets larger.
+			% 	z = results.stats.illiqw.value - 0.01;
 
-				c = min(max(z, 0), 0.5);
-				m = (1 + cos(c * pi * 2)) / 10;
-				dv(end+1) = (0.01 / (0.2 + current_params.r_a)) * m;
-			else
-				% Do nothing
-				dv = dv;
-			end
+			% 	c = min(max(z, 0), 0.5);
+			% 	m = (1 + cos(c * pi * 2)) / 10;
+			% 	dv(end+1) = (0.01 / (0.2 + current_params.r_a)) * m;
+			% else
+			% 	% Do nothing
+			% 	dv = dv;
+			% end
+			dv = dv;
 		end
 	end
 end

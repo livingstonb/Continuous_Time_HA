@@ -92,11 +92,11 @@ function [outparams, n] = overall_htm_target(param_opts)
                             % params{ii}.calibration_backup_x0 = {};
                         else
                             params{ii}.kappa1 = kappa1;
-                            params{ii}.rho = 0.01;
+                            params{ii}.rho = 0.03;
                             params{ii}.r_a = 0.015;
 
-                            rho_bds = [0.0075, 0.02];
-                            r_a_bds = [0.008, 0.023];
+                            rho_bds = [0.007, 0.04];
+                            r_a_bds = [0.008, 0.02];
                             params{ii}.KFE_maxiters = 3e5;
 
                             % params{ii}.rho = mean(rho_bds);
@@ -108,7 +108,7 @@ function [outparams, n] = overall_htm_target(param_opts)
                         end
                         params{ii}.calibration_stats = {'median_totw', 'median_liqw'};
                         params{ii}.calibration_targets = [1.54, 0.05];
-                        params{ii}.calibration_scales = [1, 100];
+                        params{ii}.calibration_scales = [1, 10];
 
                         ii = ii + 1;
                     end

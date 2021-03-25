@@ -42,7 +42,7 @@ classdef Calibrator < handle
 				error("Too many/few values provided for targets")
 			end
 
-			obj.fscale = ones(1, obj.n);
+			obj.fscale = ones(obj.n, 1);
 
 			x0_1 = zeros(1, obj.n);
 			for i_var = 1:obj.n
@@ -64,7 +64,7 @@ classdef Calibrator < handle
 
 		function set_fscale(obj, fscale_in)
 			assert(numel(fscale_in) == obj.n, 'Invalid number of scaling factors');
-			obj.fscale = fscale_in;
+			obj.fscale = fscale_in(:);
 		end
 
 		function set_param_bounds(obj, varargin)
@@ -131,6 +131,9 @@ classdef Calibrator < handle
 			fprintf('\n    norm: %f\n', norm(dv))
 
 			dv = obj.adjust_dv(results, current_params, dv);
+
+			% temporary
+			dv = [dv; max(obj.target_values(1) - 300, 0)];
 
 			obj.reset_param_options(current_params);
 			obj.iter = obj.iter + 1;
