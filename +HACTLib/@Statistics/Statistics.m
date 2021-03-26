@@ -24,6 +24,7 @@ classdef Statistics < handle
 		median_liqw;
 		median_illiqw;
 		median_totw;
+		diff_median;
 
 		w_top10share;
 		w_top1share;

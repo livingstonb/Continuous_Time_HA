@@ -33,4 +33,5 @@ function compute_percentiles(obj)
 	obj.median_liqw.value = lw_pctile_interp(0.5);
 	obj.median_illiqw.value = iw_pctile_interp(0.5);
 	obj.median_totw.value = w_pctile_interp(0.5);
+	obj.diff_median = struct('value', obj.median_totw.value - obj.median_liqw.value);
 end
