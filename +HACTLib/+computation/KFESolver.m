@@ -171,7 +171,7 @@ classdef KFESolver
 		        	check_if_not_converging(dst, iter);
 		        end
 		        
-			    if ((iter==1) || (mod(iter, 100) == 0)) & ~obj.options.quiet
+			    if ((iter==1) || (mod(iter, 1000) == 0)) & ~obj.options.quiet
 			        fprintf('\tKFE iteration  = %i, distance = %e\n', iter, dst);
 			    end
 			    g = g1;

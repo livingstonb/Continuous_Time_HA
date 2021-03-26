@@ -42,13 +42,13 @@ classdef ParamsDefaults < handle
     	% Max value for liquid assets
     	bmax = 20;
 
-        bgrid_term1_weight = 0.01;
+        bgrid_term1_weight = 0;
 
         bgrid_term1_curv = 0.8;
         
     	% Curvature of positive section of liquid asset,
     	% lower value implies more curvature
-    	b_gcurv_pos = 0.1;
+    	b_gcurv_pos = 0.35;
 
     	% Curvature of negative section of liquid asset,
     	% lower value implies more curvature
@@ -88,13 +88,13 @@ classdef ParamsDefaults < handle
         % Number of points on the illiquid asset grid
         na = 45;
 
-        agrid_term1_weight = 0.01;
+        agrid_term1_weight = 0;
 
         agrid_term1_curv = 0.6;
         
         % Curvature of positive section of illiquid asset,
 		% lower value implies more curvature
-        a_gcurv = 0.2;
+        a_gcurv = 0.3;
 
         % Number of points on illiquid asset grid for
         % the KFE
