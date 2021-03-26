@@ -5,35 +5,6 @@ classdef TransitionMatrixConstructor < handle
     % and value function as arguments.
 
     properties (SetAccess = protected)
-    	%	An object with the following required attributes:
-    	%
-    	%		deathrate
-    	%		- The Poisson rate at which households die.
-    	%
-    	%		perfectannuities
-    	%		- Boolean, true turns on annuities, false
-    	%		  leaves them off.
-    	%
-    	%		directdeposit
-    	%		- Fraction of income being paid out to the
-    	%		  illiquid asset.
-    	%
-    	%		SDU
-    	%		- A boolean indicator of whether or not stochastic
-    	%		  differential utility is present.
-    	%		
-    	%		sigma_r
-    	%		- The standard deviation of returns risk, typically
-    	%		  zero.
-    	%
-    	%    and if SDU evaluates to true, then 'p' must also include:
-    	%		
-    	%		riskaver
-    	%		- The coefficient of risk aversion.
-    	%
-    	%		invies
-    	%		- The inverse of the intertemporal elasticity of
-    	%		  substitution.
     	p;
 
     	income;
@@ -266,10 +237,6 @@ classdef TransitionMatrixConstructor < handle
         function Arisk_Vaa = compute_Vaa_terms(obj)
             % This function computes the (1/2) * (a * sigma_r) ^2 * Vaa component
             % of the A matrix.
-
-            % Parameters
-            % ----------
-            % nb, na, nz, ny : grid lengths
             %
             % Returns
             % -------

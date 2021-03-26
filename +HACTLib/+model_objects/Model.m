@@ -188,7 +188,7 @@ classdef Model < handle
 				check_if_not_converging(dst, nn);
 		    end
 
-		    if (nn >= obj.p.HJB_maxiters)
+		    if (dst > obj.p.HJB_tol)
 		        error("HJB didn't converge");
 		    end
 		    

@@ -42,34 +42,11 @@ classdef Income < handle
 
 	methods
 		function obj = Income(income_path, p, norisk)
-  	 		% Class constructor, object can be initialized with an
-  	 		% income path or passed no arguments if process is being
-  	 		% set manually.
-  	 		%
-  	 		% Parameters
-  	 		% ----------
-  	 		% income_path : a string containing the path of the input
-  	 		%	directory relative to the <root of this repository>/input
-  	 		%
-  	 		% p : An object containing at least the following fields:
-  	 		%
-  	 		%	nb, na, nb_KFE, na_KFE, and nz
-  	 		%	- Grid sizes.
-  	 		%
-  	 		%	MPL
-  	 		%	- Mean efficiency of labor. The income process will be
-  	 		%	normalized so that mean income is MPL / 4.
-  	 		%
-  	 		% norisk : A flag which is true if income risk is turned off,
-  	 		%	in which case income is equal to the mean for all households.
-  	 		%	Default = false.
-
   	 		if nargin > 0
   	 			obj.norisk = norisk;
 	  	 		if norisk
 	  	 			obj.ydist = 1;
 	  	 			obj.ytrans = 0;
-
 	  	 			obj.y.vec = 1/4;
 	  	 			obj.logy.vec = log(obj.y.vec);
 	  	 		else
@@ -83,10 +60,10 @@ classdef Income < handle
 			            obj.ytrans = load(fullfile(income_path, 'ymarkov_combined.txt'));
 		            end
 
-		            y = exp(logy);
 		            obj.ydist = HACTLib.aux.stat_dist(obj.ytrans');
 		            
 					% normalize
+					y = exp(logy);
 					obj.y.vec = y ./ (y' * obj.ydist * 4);
 					obj.y.vec = p.MPL * obj.y.vec;
 					
@@ -96,45 +73,8 @@ classdef Income < handle
 	        end
         end
 
-        function set_ydist(obj, ydist)
-        	% Manually set the stationary distribution of income.
-        	assert(isvector(ydist), "ydist must be a vector")
-        	obj.ydist = ydist(:);
-
-        	obj.ny = numel(ydist);
-        end
-
-        function set_ygrid(obj, ygrid, MPL)
-        	% Manually set the values on the income grid.
-
-        	assert(isvector(ydist), "ygrid must be a vector.")
-        	assert(~isempty(obj.ydist), "Must set ydist before ygrid.")
-        	assert(numel(obj.ydist) == numel(ygrid),...
-        		"ygrid and ydist have inconsistent shapes.")
-
-        	% normalize to mean MPL / 4
-        	obj.y.vec = ygrid(:) ./ (ygrid(:)' * obj.ydist * 4);
-			obj.y.vec = MPL * obj.y.vec;
-        end
-
-        function set_ytrans(obj, ytrans)
-        	% Manually set the income transition matrix.
-        	assert(ismatrix(ytrans), "ytrans must be a square matrix.")
-			assert(size(ytrans, 1) == size(ytrans, 2),...
-				"ytrans must be a square matrix.")
-			assert(~isempty(obj.ydist), "Must set ydist before ytrans.")
-			assert(obj.ny == size(ytrans, 1),...
-				"ytrans and ydist have inconsistent shapes.")
-
-			obj.ytrans = ytrans;
-        end
-
         function generate(obj, p)
         	% Generates useful income variables.
-        	if isempty(obj.ytrans) || isempty(obj.y) || isempty(obj.ydist)
-	        	error("Must set ygrid, ytrans, and ydist before calling 'generate'");
-	        end
-
         	obj.ny = numel(obj.y.vec);
         	obj.y.wide = shiftdim(obj.y.vec, -3);
             obj.fully_initialized = true;
@@ -169,18 +109,6 @@ classdef Income < handle
 		    % for solving the HJB when using stochastic differential
 		    % utility.
 		    %
-		    % Parameters
-		    % ----------
-		    % p : An object containing at least the following fields:
-  	 		%
-  	 		%	nb, na, nb_KFE, na_KFE, and nz
-  	 		%	- Grid sizes.
-		    %
-		    % ez_adj : An array of shape (nb*na*nz, ny, ny) which contains the
-		    %	income transitions adjusted for stochastic differential
-		    %	utility. This argument is required if SDU is used, otherwise
-		    %	it is ignored.
-		   	%
 		    % Returns
 		    % -------
 		    % inctrans : A sparse matrix of income transition rates, risk adjusted
@@ -205,20 +133,6 @@ classdef Income < handle
 		    %
 		    % Parameters
 		    % ----------
-		    % p : An object with at least the following required fields:
-		    %
-		    %		SDU
-		    %		- Boolean indicator for the use of stochastic differential
-		    %	  	  utility.
-		    %
-		    %		riskaver
-		    %		- Coefficient of risk aversion.
-		    %	
-		    %	and if SDU is true, then p must also have the field:
-		    %
-		    %		invies
-		    %		- The inverse of the intertemporal elasticity of substitution.
-		    %
 		    % V : the value function, of shape (nb, na, nz, ny)
 		    %
 		    % Returns

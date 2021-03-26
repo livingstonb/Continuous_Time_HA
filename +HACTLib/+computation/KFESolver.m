@@ -224,10 +224,6 @@ function options = parse_options(varargin)
 
 	defaults = KFESolver.defaults;
 	options = parse_keyvalue_pairs(defaults, varargin{:});
-
-	mustBePositive(options.delta);
-	mustBePositive(options.tol);
-	mustBePositive(options.maxiters);
 end
 
 function check_if_not_converging(dst, iter)

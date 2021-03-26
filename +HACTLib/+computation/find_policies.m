@@ -1,7 +1,7 @@
 function [policies, V_deriv_risky_asset_nodrift] = find_policies(...
     p, income, grd, Vn, hours_bc)
     % computes policy functions on either the HJB or KFE grid
-
+    %
     % Parameters
     % ----------
     % p : a Params object

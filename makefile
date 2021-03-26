@@ -1,5 +1,5 @@
 
-.PHONY : all batch combine check_combine copy_for_download
+.PHONY : all batch combine check_combine copy_for_download download_final download_txt
 
 all :
 
@@ -25,9 +25,15 @@ copy_for_download :
 
 spath := "$$MW:/home/livingstonb/GitHub/Continuous_Time_HA/output/download/*"
 cdate := $(shell date +"%m-%d-%Y-%T")
-download :
+download_final :
 	-mkdir -p output/server-$(cdate)
 	-scp $(spath) output/server-$(cdate)
+
+spath := "$$MW:/home/livingstonb/GitHub/Continuous_Time_HA/output/*.out"
+cdate := $(shell date +"%m-%d-%Y-%T")
+download_txt :
+	-mkdir -p output/server-txt-$(cdate)
+	-scp $(spath) output/server-txt-$(cdate)
 
 readme :
 	-pandoc readme.md -o readme.pdf

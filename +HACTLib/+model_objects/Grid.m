@@ -80,27 +80,13 @@ classdef Grid < handle
 	    	if strcmp(gtype,'KFE')
 	    		% Use different-sized KFE grid
                 obj.nb = p.nb_KFE;
-
-                if isprop(p, 'nb_neg_KFE')
-                	obj.nb_neg = p.nb_neg_KFE;
-                end
-
-                if isprop(p, 'nb_pos_KFE')
-                	obj.nb_pos = p.nb_pos_KFE;
-                end
-                
+				obj.nb_neg = p.nb_neg_KFE;
+                obj.nb_pos = p.nb_pos_KFE;
                 obj.na = p.na_KFE;
 	    	else
                 obj.nb = p.nb;
-
-                if isprop(p, 'nb_neg')
-                	obj.nb_neg = p.nb_neg;
-                end
-
-                if isprop(p, 'nb_pos')
-                	obj.nb_pos = p.nb_pos;
-                end
-
+				obj.nb_neg = p.nb_neg;
+                obj.nb_pos = p.nb_pos;
                 obj.na = p.na;
             end
 
@@ -110,9 +96,6 @@ classdef Grid < handle
         end
 
         function obj = generate_variables(obj)
-        	assert(~isempty(obj.a), "agrid has not been constructed")
-        	assert(~isempty(obj.b), "bgrid has not been constructed")
-
         	obj.finite_diff('a');
 		    obj.finite_diff('b');
 
