@@ -38,7 +38,7 @@ param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
 param_opts.ComputeMPCS_news = false;
 param_opts.SimulateMPCS_news = false;
 param_opts.DealWithSpecialCase = false; % need to recode this
-param_opts.param_index = 7;
+param_opts.param_index = 59;
 param_opts.makePlots = false; % not coded yet
 
 run_opts.check_nparams = false;

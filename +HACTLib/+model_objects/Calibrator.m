@@ -134,7 +134,7 @@ classdef Calibrator < handle
 
 			% temporary
 			% dv(1) = v(1) - v(2) - 1.49;
-			dv = [dv; 0.1 * max(v(1) - 300, 0)];
+			dv = [dv; max(v(1) - 200, 0) * current_params.r_a];
 			dv = [dv; 50 * min(v(1) - 1, 0) * (0.1 - current_params.r_a)];
 
 			obj.reset_param_options(current_params);
