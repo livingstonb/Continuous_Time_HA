@@ -9,6 +9,8 @@ function [outparams, n] = overall_htm_target(param_opts)
     shared_params.mpc_shocks = shocks / (scf.quarterly_earnings * 4);
     shared_params.numeraire_in_dollars = (scf.quarterly_earnings * 4);
     shared_params.no_transitory_incrisk = false;
+    shared_params.Bequests = false;
+    shared_params.r_b = 0.01 / 4;
 
     anninc = shared_params.numeraire_in_dollars;
     shared_params.a_lb = 500 / anninc;
@@ -96,7 +98,8 @@ function [outparams, n] = overall_htm_target(param_opts)
                             params{ii}.r_a = 0.01;
 
                             rho_bds = [0.006, 0.02];
-                            r_a_bds = [0.008, 0.02];
+                            % r_a_bds = [0.008, 0.02];
+                            r_a_bds = [0.004, 0.02];
                             params{ii}.KFE_maxiters = 1e6;
                             % params{ii}.a_lb = 0.3;
 
@@ -107,8 +110,12 @@ function [outparams, n] = overall_htm_target(param_opts)
                             params{ii}.calibration_bounds = {rho_bds, r_a_bds};
                             params{ii}.calibration_backup_x0 = {};
                         end
-                        params{ii}.calibration_stats = {'diff_median', 'median_liqw'};
-                        params{ii}.calibration_targets = [1.49, 0.05];
+                        % params{ii}.calibration_stats = {'diff_median', 'median_liqw'};
+                        % params{ii}.calibration_targets = [1.49, 0.05];
+                        % params{ii}.calibration_scales = [1, 10];
+
+                        params{ii}.calibration_stats = {'diff_mean', 'mean_liqw'};
+                        params{ii}.calibration_targets = [4.1-0.56, 0.56];
                         params{ii}.calibration_scales = [1, 10];
 
                         ii = ii + 1;

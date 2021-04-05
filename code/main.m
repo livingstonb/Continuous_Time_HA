@@ -39,6 +39,12 @@ function stats = main(p, varargin)
     norisk = false;
 	income = Income(fullfile('input', p.income_dir), p, norisk);
 
+    if final
+       incstats = HACTLib.aux.simulate_income(income.ytrans, income.y.vec);
+    else
+        incstats = [];
+    end
+
     % Turn off income risk (set y equal to the mean)
     norisk = true;
     income_norisk = Income('', p, norisk);
@@ -90,6 +96,12 @@ function stats = main(p, varargin)
     fprintf_internal('\nComputing statistics\n')    
     stats = HACTLib.Statistics(p, income, grdKFE, KFE);
     stats.compute_statistics();
+
+    if ~isempty(incstats)
+        stats.mean_gross_y_annual.value = incstats.meany;
+        stats.std_log_gross_y_annual.value = incstats.std_logy;
+        stats.std_log_net_y_annual.value = incstats.std_logy;
+    end
 
     %% ----------------------------------------------------------------
     % COMPUTE MPCs
@@ -218,7 +230,7 @@ function stats = main(p, varargin)
         save(fpath,'stats','grd','grdKFE','p','KFE','income')
     end
 
-    if save_iteration_results
+    if false % save_iteration_results
         fname = sprintf('rho_ra_iterations_%d.mat', p.param_index);
         fpath = fullfile('output', fname);
 

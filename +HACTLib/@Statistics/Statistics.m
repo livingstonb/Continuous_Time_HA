@@ -25,6 +25,7 @@ classdef Statistics < handle
 		median_illiqw;
 		median_totw;
 		diff_median;
+		diff_mean;
 
 		w_top10share;
 		w_top1share;
@@ -71,6 +72,10 @@ classdef Statistics < handle
 		na;
 		nz;
 		ny;
+
+		mean_gross_y_annual;
+		std_log_gross_y_annual;
+		std_log_net_y_annual;
 
 		params = struct();
 
@@ -170,8 +175,14 @@ classdef Statistics < handle
 		    	obj.bgrid + shiftdim(obj.agrid, -1));
 		    obj.totw = obj.sfill(tmp, 'Mean total wealth', 2);
 
+		    obj.diff_mean = obj.sfill(obj.totw.value - obj.liqw.value, 'NA', 2);
+
 		    tmp = obj.expectation(obj.model.s==0);
 		    obj.sav0 = obj.sfill(tmp, 's = 0');
+
+		    obj.mean_gross_y_annual = obj.sfill(NaN, 'Mean gross annual income');
+			obj.std_log_gross_y_annual = obj.sfill(NaN, 'Stdev log gross annual income');
+			obj.std_log_net_y_annual = obj.sfill(NaN, 'Stdev log net annual income');
 		end
 
 		function construct_distributions(obj)

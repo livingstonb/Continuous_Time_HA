@@ -9,7 +9,7 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				obj.current_column = table();
 				obj.intro_stats_table(p_ip, stats_ip);
 
-				obj.income_stats_table();
+				obj.income_stats_table(stats_ip);
 				obj.wealth_stats_table(stats_ip);
 				obj.mpc_size_table(stats_ip);
 				obj.mpc_sign_table(stats_ip);
@@ -51,26 +51,26 @@ classdef StatsTable < HACTLib.tables.BaseTable
 			obj.update_current_column(out, new_entries);
 		end
 
-		function income_stats_table(obj)
+		function income_stats_table(obj, stats)
 			panel_name = 'Income Statistics';
 			out = obj.new_table_with_header(panel_name);
 
-			mean_ann_earnings.value = 1.0;
-			mean_ann_earnings.label = 'Mean gross annual earnings';
-			mean_ann_earnings.indicator = 0;
+			% mean_ann_earnings.value = 1.0;
+			% mean_ann_earnings.label = 'Mean gross annual earnings';
+			% mean_ann_earnings.indicator = 0;
 
-			stdev_log_gross_earnings.value = 0.710;
-			stdev_log_gross_earnings.label = 'Stdev log ann gross earnings';
-			stdev_log_gross_earnings.indicator = 0;
+			% stdev_log_gross_earnings.value = 0.710;
+			% stdev_log_gross_earnings.label = 'Stdev log ann gross earnings';
+			% stdev_log_gross_earnings.indicator = 0;
 
-			stdev_log_net_earnings.value = 0.710;
-			stdev_log_net_earnings.label = 'Stdev log ann net earnings';
-			stdev_log_net_earnings.indicator = 0;
+			% stdev_log_net_earnings.value = 0.710;
+			% stdev_log_net_earnings.label = 'Stdev log ann net earnings';
+			% stdev_log_net_earnings.indicator = 0;
 
 			new_entries = {
-				mean_ann_earnings
-				stdev_log_gross_earnings
-				stdev_log_net_earnings
+				stats.mean_gross_y_annual
+				stats.std_log_gross_y_annual
+				stats.std_log_net_y_annual
 			};
 
 			obj.update_current_column(out, new_entries);
