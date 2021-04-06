@@ -114,7 +114,7 @@ function [outparams, n] = overall_htm_target(param_opts)
                         % params{ii}.calibration_targets = [1.49, 0.05];
                         % params{ii}.calibration_scales = [1, 10];
 
-                        params{ii}.calibration_stats = {'diff_mean', 'mean_liqw'};
+                        params{ii}.calibration_stats = {'diff_mean', 'liqw'};
                         params{ii}.calibration_targets = [4.1-0.56, 0.56];
                         params{ii}.calibration_scales = [1, 10];
 
