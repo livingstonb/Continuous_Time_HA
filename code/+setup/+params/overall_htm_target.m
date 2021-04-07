@@ -50,7 +50,7 @@ function [outparams, n] = overall_htm_target(param_opts)
         params.kappa1 = 0.1;
         params.r_a = 0.02;
 
-        rho_bds = [0.005, 0.02];
+        rho_bds = [0.003, 0.02];
         r_b_bds = [0.004, 0.0085];
         params.KFE_maxiters = 1e6;
 

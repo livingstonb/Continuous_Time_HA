@@ -13,6 +13,7 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				obj.wealth_stats_table(stats_ip);
 				obj.mpc_size_table(stats_ip);
 				obj.mpc_sign_table(stats_ip);
+				obj.mpc_htm_table(stats_ip);
 
 				obj.decomp_norisk_table(p_ip, stats_ip);
 
@@ -135,6 +136,22 @@ classdef StatsTable < HACTLib.tables.BaseTable
 				stats.mpcs(1).annual
 				stats.mpcs(2).annual
 				stats.mpcs(3).annual
+			};
+
+			obj.update_current_column(out, new_entries);
+		end
+
+		function mpc_htm_table(obj, stats)
+			panel_name = 'MPC for HtM households';
+			out = obj.new_table_with_header(panel_name);
+
+			new_entries = {
+				stats.mpcs(5).quarterly_htm
+				stats.mpcs(5).quarterly_whtm
+				stats.mpcs(5).quarterly_phtm
+				stats.mpcs(5).annual_htm
+				stats.mpcs(5).annual_whtm
+				stats.mpcs(5).annual_phtm
 			};
 
 			obj.update_current_column(out, new_entries);

@@ -101,6 +101,13 @@ classdef MPCs < handle
 				obj.mpcs(ii).mpcs = NaN;
 				obj.mpcs(ii).quarterly = NaN(4,1);
                 obj.mpcs(ii).annual = NaN;
+
+                obj.mpcs(ii).quarterly_htm = NaN;
+                obj.mpcs(ii).annual_htm = NaN;
+                obj.mpcs(ii).quarterly_whtm = NaN;
+                obj.mpcs(ii).annual_whtm = NaN;
+                obj.mpcs(ii).quarterly_phtm = NaN;
+                obj.mpcs(ii).annual_phtm = NaN;
 			end
 		end
 
@@ -315,8 +322,39 @@ classdef MPCs < handle
 			end
 
 			if ~obj.options.no_inc_risk
+				% Unconditional mean MPC
 				obj.mpcs(ishock).quarterly = dot(mpcs(:,1), pmf(:));
 				obj.mpcs(ishock).annual = dot(sum(mpcs, 2), pmf(:));
+
+				% Conditional on HtM
+				assets = obj.grids.b.vec;
+				biweekly_y = shiftdim(obj.income.y.vec, -3) / 6;
+				htm = assets <= biweekly_y;
+				htm = repmat(htm, [1, obj.p.na_KFE, obj.p.nz, 1]);
+				pmf_htm = pmf;
+				pmf_htm(~htm) = 0;
+				pmf_htm = pmf_htm ./ sum(pmf_htm(:));
+				obj.mpcs(ishock).quarterly_htm = dot(mpcs(:,1), pmf_htm(:));
+				obj.mpcs(ishock).annual_htm = dot(sum(mpcs, 2), pmf_htm(:));
+
+				% Conditional on PHtM
+				assets = obj.grids.b.vec + shiftdim(obj.grids.a.vec, -1);
+				biweekly_y = shiftdim(obj.income.y.vec, -3) / 6;
+				phtm = assets <= biweekly_y;
+				phtm = repmat(phtm, [1, 1, obj.p.nz, 1]);
+				pmf_phtm = pmf;
+				pmf_phtm(~phtm) = 0;
+				pmf_phtm = pmf_phtm ./ sum(pmf_phtm(:));
+				obj.mpcs(ishock).quarterly_phtm = dot(mpcs(:,1), pmf_phtm(:));
+				obj.mpcs(ishock).annual_phtm = dot(sum(mpcs, 2), pmf_phtm(:));
+
+				% Conditional on WHtM
+				whtm = htm & (~phtm);
+				pmf_whtm = pmf;
+				pmf_whtm(~whtm) = 0;
+				pmf_whtm = pmf_whtm ./ sum(pmf_whtm(:));
+				obj.mpcs(ishock).quarterly_whtm = dot(mpcs(:,1), pmf_whtm(:));
+				obj.mpcs(ishock).annual_whtm = dot(sum(mpcs, 2), pmf_whtm(:));
 			end
 		end
 	end
