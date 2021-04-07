@@ -2,7 +2,7 @@
 % This is the main script for this code repository
 % HA model with a liquid asset and an illiquid asset
 %
-% Prior to running this script:
+% Prior to running this script (THE FOLLOWING DOCUMENTATION MAY BE OUTDATED):
 %
 % (1) Set options in the section below.
 %
@@ -30,7 +30,7 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % SET OPTIONS
 % -------------------------------------------------------------------------
 
-param_opts.calibrate = true;
+param_opts.calibrate = false;
 param_opts.fast = false; % use small grid for debugging
 param_opts.ComputeMPCS = true;
 param_opts.ComputeMPCS_illiquid = false;

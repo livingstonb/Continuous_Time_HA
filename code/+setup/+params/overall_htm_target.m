@@ -97,7 +97,7 @@ function [outparams, n] = overall_htm_target(param_opts)
                             params{ii}.rho = 0.009;
                             params{ii}.r_a = 0.01;
 
-                            rho_bds = [0.006, 0.02];
+                            rho_bds = [0.003, 0.02];
                             % r_a_bds = [0.008, 0.02];
                             r_a_bds = [0.004, 0.02];
                             params{ii}.KFE_maxiters = 1e6;

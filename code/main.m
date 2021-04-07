@@ -40,7 +40,7 @@ function stats = main(p, varargin)
 	income = Income(fullfile('input', p.income_dir), p, norisk);
 
     if final
-       incstats = HACTLib.aux.simulate_income(income.ytrans, income.y.vec);
+        incstats = HACTLib.aux.simulate_income(income.ytrans, income.y.vec);
     else
         incstats = [];
     end
