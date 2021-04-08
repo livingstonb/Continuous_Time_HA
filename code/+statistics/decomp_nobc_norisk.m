@@ -1,7 +1,7 @@
 function decomp = decomp_nobc_norisk(baseline, no_bc)
     % Decomposition w.r.t. the no-risk model and the no-bc model
 
-    import HACTLib.aux.interpolate_integral
+    import aux.interpolate_integral
 
     grdKFE = baseline.grdKFE;
     p = baseline.p;

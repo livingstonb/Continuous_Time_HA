@@ -12,8 +12,8 @@ function stats = main(p, varargin)
     %
     % p : the Params object used to solve the model
 
-    import HACTLib.model_objects.Grid
-    import HACTLib.model_objects.Income
+    import model_objects.Grid
+    import model_objects.Income
 
     % Parse options
     parser = inputParser;
@@ -40,7 +40,7 @@ function stats = main(p, varargin)
 	income = Income(fullfile('input', p.income_dir), p, norisk);
 
     if final
-        incstats = HACTLib.aux.simulate_income(income.ytrans, income.y.vec);
+        incstats = aux.simulate_income(income.ytrans, income.y.vec);
     else
         incstats = [];
     end
@@ -74,27 +74,27 @@ function stats = main(p, varargin)
     income_norisk.set_net_income(p, grd_norisk, grdKFE_norisk);
 
     % Instantiate and solve Model instance
-    model = HACTLib.model_objects.Model(p, grd, grdKFE, income, 'quiet', quiet);
+    model = model_objects.Model(p, grd, grdKFE, income, 'quiet', quiet);
     model.initialize();
     [~, KFE, Au] = model.solve();
 
     if p.SolveNoRisk == 1
         % Solve model without income risk
-        model_nr = HACTLib.model_objects.Model(...
+        model_nr = model_objects.Model(...
             p, grd_norisk, grdKFE_norisk, income_norisk);
         model_nr.initialize();
         [~, KFE_nr, Au_nr] = model_nr.solve();
     end
 
     % if p.makePlots
-    %     HACTLib.plots.make_wealth_histograms(model);
+    %     plots.make_wealth_histograms(model);
     % end
 
     %% ----------------------------------------------------------------
     % COMPUTE STATISTICS
     % -----------------------------------------------------------------
     fprintf_internal('\nComputing statistics\n')    
-    stats = HACTLib.Statistics(p, income, grdKFE, KFE);
+    stats = statistics.Statistics(p, income, grdKFE, KFE);
     stats.compute_statistics();
 
     if ~isempty(incstats)
@@ -106,11 +106,9 @@ function stats = main(p, varargin)
     %% ----------------------------------------------------------------
     % COMPUTE MPCs
     % -----------------------------------------------------------------
-    import HACTLib.computation.MPCs
-
     % MPCs out of shock in current period
-    mpc_finder = MPCs(p, income, grdKFE, p.mpc_options);
-    mpc_finder_illiquid = MPCs(p, income, grdKFE, p.mpc_options_illiquid);
+    mpc_finder = computation.MPCs(p, income, grdKFE, p.mpc_options);
+    mpc_finder_illiquid = computation.MPCs(p, income, grdKFE, p.mpc_options_illiquid);
     
     if p.ComputeMPCS
     	fprintf_internal('\nComputing MPCs out of an immediate shock...\n')
@@ -127,7 +125,7 @@ function stats = main(p, varargin)
 
     % MPCs out of news
     shocks = [4, 5, 6];
-    import HACTLib.computation.MPCsNews
+    import computation.MPCsNews
     trans_dyn_solver = MPCsNews(p, income, grdKFE, shocks, p.mpcs_news_options);
 
     if p.ComputeMPCS_news
@@ -144,7 +142,7 @@ function stats = main(p, varargin)
     % -----------------------------------------------------------------
     shocks = [4,5,6];
     shockperiod = 0;
-    mpc_simulator = HACTLib.computation.MPCSimulator(...
+    mpc_simulator = computation.MPCSimulator(...
     	p, income, grdKFE, KFE, shocks, shockperiod, p.mpcsim_options);
 
     if p.SimulateMPCS
@@ -164,7 +162,7 @@ function stats = main(p, varargin)
     % -----------------------------------------------------------------
     shocks = [4,5,6];
     shockperiod = 4;
-    mpc_simulator = HACTLib.computation.MPCSimulator(...
+    mpc_simulator = computation.MPCSimulator(...
         p, income, grdKFE, KFE, shocks, shockperiod,...
         trans_dyn_solver.savedTimesUntilShock, p.mpcsim_options);
 
@@ -183,7 +181,7 @@ function stats = main(p, varargin)
     %% ----------------------------------------------------------------
     % MPCs WITHOUT INCOME RISK
     % -----------------------------------------------------------------
-    mpc_finder_norisk = HACTLib.computation.MPCs(...
+    mpc_finder_norisk = computation.MPCs(...
     	p, income_norisk, grdKFE_norisk, 'no_inc_risk', true);
     
     if (p.ComputeMPCS == 1) && (p.SolveNoRisk == 1)
@@ -195,7 +193,7 @@ function stats = main(p, varargin)
     %% ----------------------------------------------------------------
     % DECOMPOSITIONS
     % -----------------------------------------------------------------
-    import HACTLib.computation.Decomp
+    import computation.Decomp
     decomp_obj = Decomp(p, grdKFE.b.vec, stats, income);
 
     if p.ComputeMPCS && p.OneAsset
@@ -228,33 +226,6 @@ function stats = main(p, varargin)
         fname = sprintf('output_%d.mat', p.param_index);
         fpath = fullfile('output', fname);
         save(fpath,'stats','grd','grdKFE','p','KFE','income')
-    end
-
-    if false % save_iteration_results
-        fname = sprintf('rho_ra_iterations_%d.mat', p.param_index);
-        fpath = fullfile('output', fname);
-
-        if p.calibrator.iter == 1
-            results = struct();
-            results.kappa1 = p.kappa1;
-            results.kappa2 = p.kappa2;
-            results.median_w = stats.median_totw.value;
-            results.median_b = stats.median_liqw.value;
-            results.rho = p.rho;
-            results.r_a = p.r_a;
-            results.rho_bounds = p.calibration_bounds{1};
-            results.r_a_bounds = p.calibration_bounds{2};
-        else
-            results = load(fpath);
-            results.kappa1(end+1) = p.kappa1;
-            results.kappa2(end+1) = p.kappa2;
-            results.median_w(end+1) = stats.median_totw.value;
-            results.median_b(end+1) = stats.median_liqw.value;
-            results.rho(end+1) = p.rho;
-            results.r_a(end+1) = p.r_a;
-        end
-
-        save(fpath, '-struct', 'results')
     end
 
     clear solver.two_asset.solver

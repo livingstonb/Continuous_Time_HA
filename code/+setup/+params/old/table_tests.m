@@ -4,7 +4,7 @@ function [outparams, nparams] = table_tests(param_opts)
     
     nparams = -1;
 
-    import HACTLib.aux.set_shared_fields
+    import aux.set_shared_fields
 
     shocks = [-1, -500, -5000, 1, 500, 5000];
     dollars = 72000;

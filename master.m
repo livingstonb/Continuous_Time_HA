@@ -31,7 +31,7 @@ warning('off', 'MATLAB:nearlySingularMatrix')
 % -------------------------------------------------------------------------
 
 param_opts.calibrate = false;
-param_opts.fast = false; % use small grid for debugging
+param_opts.fast = true; % use small grid for debugging
 param_opts.ComputeMPCS = true;
 param_opts.ComputeMPCS_illiquid = false;
 param_opts.SimulateMPCS = false; % also estimate MPCs by simulation
@@ -79,7 +79,7 @@ if run_opts.check_nparams
 end
 
 % Create Params object
-p = HACTLib.model_objects.Params(p);
+p = model_objects.Params(p);
 p.print();
 
 %% ------------------------------------------------------------------------
@@ -120,7 +120,7 @@ end
 if runFinal
     stats = main(p, 'final', true, 'quiet', false);
 
-    table_gen = HACTLib.tables.StatsTable(p, {stats});
+    table_gen = tables.StatsTable(p, {stats});
     results_table = table_gen.create(p, {stats})
 
     xlx_path = sprintf('run%d_table.xlsx', p.param_index);

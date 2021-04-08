@@ -248,5 +248,5 @@ function outparams = SDU_tests(param_opts, param_index)
     chosen_param = params{param_index};
 
     % Create Params object
-    outparams = HACTLib.model_objects.Params(chosen_param);
+    outparams = model_objects.Params(chosen_param);
 end

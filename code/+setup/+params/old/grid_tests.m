@@ -2,7 +2,7 @@ function outparams = grid_tests(param_opts, param_index)
     % Create structure array 'params', and output a Params instance
     % of the structure in the 'index' entry, i.e. 1,2,3,.
 
-    import HACTLib.aux.set_shared_fields
+    import aux.set_shared_fields
 
     shared_params = param_opts;
     shared_params.chi0 = 0;

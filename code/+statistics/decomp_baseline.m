@@ -31,13 +31,13 @@ function decomp = decomp_baseline(s0, s1)
 
     m0 = reshape(stats0.mpcs_over_ss{5}, reshape_dims);
     pmf0 = stats0.pmf;
-    [m0_x, pmf0_x] = HACTLib.aux.collapse_mpcs(m0, pmf0);
+    [m0_x, pmf0_x] = aux.collapse_mpcs(m0, pmf0);
     Em0 = dot(m0(:), pmf0(:));
 
     reshape_dims = [p1.nb_KFE, p1.na_KFE, p1.nz*ny];
     m1 = reshape(stats1.mpcs_over_ss{5}, reshape_dims);
     pmf1 = stats1.pmf;
-    [m1_x, pmf1_x] = HACTLib.aux.collapse_mpcs(m1, pmf1);
+    [m1_x, pmf1_x] = aux.collapse_mpcs(m1, pmf1);
     Em1 = dot(m1(:), pmf1(:));
 
     if p0.OneAsset
@@ -46,7 +46,7 @@ function decomp = decomp_baseline(s0, s1)
         grids = {bgrid, agrid};
     end
 
-    import HACTLib.aux.interp_integral_alt
+    import aux.interp_integral_alt
     m0g0interp = interp_integral_alt(grids, m0_x, pmf0_x);
     m1g0interp = interp_integral_alt(grids, m1_x, pmf0_x);
     m0g1interp = interp_integral_alt(grids, m0_x, pmf1_x);

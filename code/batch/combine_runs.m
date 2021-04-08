@@ -33,14 +33,14 @@ try
             % perform decomp wrt one-asset model
             % decomp_oneasset(ind) = statistics.decomp_twoasset_oneasset(oneasset,s(ind));
             
-            stats{ind} = HACTLib.aux.add_comparison_decomps(params(ind),...
+            stats{ind} = aux.add_comparison_decomps(params(ind),...
                 stats{ind}, decomp_base(ind));
         end
     end
 
     fprintf('%d experiments were found..\n\n', ind)
 
-    tobj = HACTLib.tables.StatsTable(params, stats);
+    tobj = tables.StatsTable(params, stats);
     output_table = tobj.create(params, stats);
 
     csvpath = fullfile('output', 'output_table.csv');
